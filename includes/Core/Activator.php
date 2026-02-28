@@ -172,6 +172,7 @@ class Activator
 		add_option('mhb_stripe_mode', 'test');
 		add_option('mhb_paypal_mode', 'sandbox');
 		add_option('mhb_ical_token', wp_generate_password(32, false));
+		add_option('mhb_powered_by_link', 1);
 
 		// Tax System Options
 		add_option('mhb_tax_mode', 'disabled');
@@ -247,6 +248,7 @@ class Activator
 		add_option('mhb_ical_email_notifications', 0);
 		add_option('mhb_ical_notification_email', get_option('admin_email'));
 		add_option('mhb_ical_sync_lock_timeout', 30);
+		add_option('mhb_powered_by_link', 1);
 
 		// Add new indexes for performance (for existing installations)
 		self::add_performance_indexes();

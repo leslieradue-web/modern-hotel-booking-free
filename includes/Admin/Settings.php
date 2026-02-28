@@ -987,14 +987,8 @@ class Settings
         update_option('mhb_children_enabled', $children_enabled);
 
         // Boolean: Powered by link
-        $is_pro = false; // Free version
-        if ($is_pro) {
-            $powered_by = isset($_POST['mhb_powered_by_link']) ? 1 : 0;
-            update_option('mhb_powered_by_link', $powered_by);
-        } else {
-            // Free users must show it
-            update_option('mhb_powered_by_link', 1);
-        }
+        $powered_by = isset($_POST['mhb_powered_by_link']) ? 1 : 0;
+        update_option('mhb_powered_by_link', $powered_by);
 
         // Custom Fields
         if (isset($_POST['mhb_custom_fields']) && is_array($_POST['mhb_custom_fields'])) {
