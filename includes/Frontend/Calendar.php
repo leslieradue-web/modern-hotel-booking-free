@@ -28,7 +28,7 @@ class Calendar
         // Register assets if they aren't already (e.g. if Block.php didn't run or we need them early)
         // We register them here to ensure they exist before enqueueing
         if (!wp_style_is('mhb-calendar-style', 'registered')) {
-             wp_register_style(
+            wp_register_style(
                 'mhb-calendar-style',
                 MHB_PLUGIN_URL . 'assets/css/mhb-calendar.css',
                 ['mhb-flatpickr-css', 'mhb-style'],
@@ -36,7 +36,7 @@ class Calendar
             );
         }
         if (!wp_style_is('mhb-flatpickr-css', 'registered')) {
-             wp_register_style(
+            wp_register_style(
                 'mhb-flatpickr-css',
                 MHB_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css',
                 [],
@@ -44,7 +44,7 @@ class Calendar
             );
         }
         if (!wp_style_is('mhb-style', 'registered')) {
-             wp_register_style(
+            wp_register_style(
                 'mhb-style',
                 MHB_PLUGIN_URL . 'assets/css/mhb-style.css',
                 [],
@@ -52,7 +52,7 @@ class Calendar
             );
         }
         if (!wp_script_is('mhb-calendar-js', 'registered')) {
-             wp_register_script(
+            wp_register_script(
                 'mhb-calendar-js',
                 MHB_PLUGIN_URL . 'assets/js/mhb-calendar.js',
                 ['jquery', 'mhb-flatpickr-js'],
@@ -61,7 +61,7 @@ class Calendar
             );
         }
         if (!wp_script_is('mhb-flatpickr-js', 'registered')) {
-             wp_register_script(
+            wp_register_script(
                 'mhb-flatpickr-js',
                 MHB_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
                 [],
@@ -95,39 +95,39 @@ class Calendar
         $current_lang = I18n::get_current_language();
         // Check if a locale file exists for the current language
         $locale_path = MHB_PLUGIN_DIR . 'assets/js/vendor/flatpickr.' . $current_lang . '.js';
-        
+
         if (file_exists($locale_path)) {
-             if (!wp_script_is('mhb-flatpickr-' . $current_lang, 'registered')) {
-                 wp_register_script(
+            if (!wp_script_is('mhb-flatpickr-' . $current_lang, 'registered')) {
+                wp_register_script(
                     'mhb-flatpickr-' . $current_lang,
                     MHB_PLUGIN_URL . 'assets/js/vendor/flatpickr.' . $current_lang . '.js',
                     ['mhb-flatpickr-js'],
                     '4.6.13',
                     true
                 );
-             }
-             if (!wp_script_is('mhb-flatpickr-' . $current_lang, 'enqueued')) {
+            }
+            if (!wp_script_is('mhb-flatpickr-' . $current_lang, 'enqueued')) {
                 wp_enqueue_script('mhb-flatpickr-' . $current_lang);
-             }
+            }
         } elseif (strlen($current_lang) > 2) {
             // Try 2-letter code if full locale (e.g. pt_BR -> pt) not found
             $short_lang = substr($current_lang, 0, 2);
             $locale_path = MHB_PLUGIN_DIR . 'assets/js/vendor/flatpickr.' . $short_lang . '.js';
             if (file_exists($locale_path)) {
-                 if (!wp_script_is('mhb-flatpickr-' . $short_lang, 'registered')) {
-                     wp_register_script(
+                if (!wp_script_is('mhb-flatpickr-' . $short_lang, 'registered')) {
+                    wp_register_script(
                         'mhb-flatpickr-' . $short_lang,
                         MHB_PLUGIN_URL . 'assets/js/vendor/flatpickr.' . $short_lang . '.js',
                         ['mhb-flatpickr-js'],
                         '4.6.13',
                         true
                     );
-                 }
-                 if (!wp_script_is('mhb-flatpickr-' . $short_lang, 'enqueued')) {
+                }
+                if (!wp_script_is('mhb-flatpickr-' . $short_lang, 'enqueued')) {
                     wp_enqueue_script('mhb-flatpickr-' . $short_lang);
-                 }
-                 // Update current_lang passed to JS to match the loaded locale
-                 $current_lang = $short_lang;
+                }
+                // Update current_lang passed to JS to match the loaded locale
+                $current_lang = $short_lang;
             }
         }
 
@@ -206,8 +206,7 @@ class Calendar
         // Room-specific calendars (room_id > 0) show prices, aggregated views (room_id = 0) do not.
         $show_pricing = ($room_id > 0);
         ?>
-        <div class="mhb-calendar-container mhb-calendar-wrapper"
-            data-room-id="<?php echo esc_attr((string) $room_id); ?>"
+        <div class="mhb-calendar-container mhb-calendar-wrapper" data-room-id="<?php echo esc_attr((string) $room_id); ?>"
             data-show-price="<?php echo $show_pricing ? '1' : '0'; ?>">
             <div class="mhb-calendar-guide">
                 <?php echo esc_html(I18n::get_label('label_select_check_in')); ?>

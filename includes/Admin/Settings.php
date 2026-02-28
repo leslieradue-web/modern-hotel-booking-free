@@ -133,7 +133,7 @@ class Settings
         ));
         add_settings_field('mhb_powered_by_link', __('Show Powered By Link', 'modern-hotel-booking'), array($this, 'render_checkbox_field'), 'mhb-settings', 'mhb_general_section', array(
             'label_for' => 'mhb_powered_by_link',
-            'description' => __('Display a small "Powered by MHB" link below the calendar. Pro users can disable this.', 'modern-hotel-booking')
+            'description' => __('Display a small "Powered by MHB" link below the calendar.', 'modern-hotel-booking')
         ));
 
         add_settings_section('mhb_currency_section', __('Currency Settings', 'modern-hotel-booking'), '__return_null', 'mhb-settings');

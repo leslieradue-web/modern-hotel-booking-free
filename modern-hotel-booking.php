@@ -1,14 +1,14 @@
 <?php
 /*
  * Plugin Name:       Modern Hotel Booking
- * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking
+ * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
  * Version:           2.2.5.7
  * Tested up to:      6.9
  * Requires at least: 5.6
  * Requires PHP:      7.4
  * Author:            StartMySuccess
- * Author URI:        https://startmysuccess.com/
+ * Author URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       modern-hotel-booking

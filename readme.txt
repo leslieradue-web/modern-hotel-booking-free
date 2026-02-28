@@ -123,12 +123,14 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 
 == Changelog ==
 
-= 2.2.5.6 =
+= 2.2.5.7 =
 * Added: Fallback to English for empty translations in backend.
 * Improved: Robustness of multi-language decoding for international locales.
 * Improved: PHP 7.4-8.5 compatibility audit and fixes (explicit nullables, switch vs match).
 * Verified: Full compatibility with WordPress 7.0 (beta).
 * Security: Comprehensive audit of output escaping in Shortcode and Tax systems.
+* Updated: Repository and Author links for consistency.
+* Feature: Powered By link can now be disabled by all users.
 
 = 2.2.5.5 =
 * Updated: Author information.
