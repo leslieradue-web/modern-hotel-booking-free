@@ -1,0 +1,3927 @@
+# Copyright (C) 2026 Modern Hotel Booking
+# This file is distributed under the same license as the Modern Hotel Booking plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Hotel Booking 2.2.4.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
+"Last-Translator: \n"
+"Language-Team: French (France) <fr_FR@wordpress.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-21T10:32:00+00:00\n"
+"PO-Revision-Date: 2026-02-27 18:00+0100\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: modern-hotel-booking\n"
+"Language: fr_FR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form"
+msgstr "Formulaire de réservation d'hôtel"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form Preview"
+msgstr "Aperçu du formulaire de réservation"
+
+#: assets\block\booking-form\block.js
+msgid "Booking Settings"
+msgstr "Réglages de réservation"
+
+#: assets\block\booking-form\block.js
+msgid "Room ID (optional)"
+msgstr "ID de la chambre (optionnel)"
+
+#: assets\block\booking-form\block.js
+msgid "Leave as 0 to show the general search form."
+msgstr "Laissez à 0 pour afficher le formulaire de recherche général."
+
+#: assets\block\room-calendar\block.js
+msgid "Room Availability Calendar"
+msgstr "Calendrier de disponibilité des chambres"
+
+#: assets\block\room-calendar\block.js
+msgid "Calendar Settings"
+msgstr "Réglages du calendrier"
+
+#: assets\block\room-calendar\block.js
+#: includes\Core\Privacy.php
+msgid "Room ID"
+msgstr "ID de la chambre"
+
+#: assets\block\room-calendar\block.js
+msgid "Enter the ID of the room to display the calendar for."
+msgstr "Entrez l'ID de la chambre pour laquelle afficher le calendrier."
+
+#: assets\block\room-calendar\block.js
+msgid "Room ID: "
+msgstr "ID de la chambre : "
+
+#: assets\block\room-calendar\block.js
+msgid "Please select a Room ID in the sidebar."
+msgstr "Veuillez sélectionner un ID de chambre dans la barre latérale."
+
+#: assets\block\room-calendar\block.js
+msgid "(Preview only - real calendar shows on frontend)"
+msgstr "(Aperçu uniquement - le calendrier réel s'affiche sur le site)"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking Overview"
+msgstr "Vue d'ensemble des réservations"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Total"
+msgstr "Total"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Pending"
+msgstr "En attente"
+
+#: includes\Admin\Menu.php
+msgid "Today"
+msgstr "Aujourd'hui"
+
+#: includes\Admin\Menu.php
+msgid "Manage Bookings"
+msgstr "Gérer les réservations"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking"
+msgstr "Réservation d'hôtel"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Bookings"
+msgstr "Réservations"
+
+#: includes\Admin\Menu.php
+msgid "Room Types"
+msgstr "Types de chambres"
+
+#: includes\Admin\Menu.php
+msgid "Rooms"
+msgstr "Chambres"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Rules"
+msgstr "Règles de tarification"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Plugin.php
+msgid "Settings"
+msgstr "Réglages"
+
+#: includes\Admin\Menu.php
+msgid "PRO Features"
+msgstr "Fonctionnalités PRO"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Extras"
+msgstr "Extras"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "iCal Sync"
+msgstr "Synchro iCal"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Payments"
+msgstr "Paiements"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Webhooks"
+msgstr "Webhooks"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Analytics"
+msgstr "Analyses"
+
+#: includes\Admin\Menu.php
+msgid "Appearance"
+msgstr "Apparence"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Advanced Pricing"
+msgstr "Tarification avancée"
+
+#: includes\Admin\Menu.php
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Vous n'avez pas les permissions suffisantes pour accéder à cette page."
+
+#: includes\Admin\Menu.php
+msgid "Hotel Control Center"
+msgstr "Centre de contrôle de l'hôtel"
+
+#: includes\Admin\Menu.php
+msgid "Unlock Premium Hospitality Features"
+msgstr "Débloquez les fonctionnalités hôtelières Premium"
+
+#: includes\Admin\Menu.php
+msgid "Power up with iCal Sync, Stripe/PayPal integration, Advanced Pricing rules, and Deep Analytics."
+msgstr "Améliorez votre site avec la synchro iCal, l'intégration Stripe/PayPal, les règles de tarification avancées et les analyses détaillées."
+
+#: includes\Admin\Menu.php
+msgid "Upgrade to Pro"
+msgstr "Passer à la version Pro"
+
+#: includes\Admin\Menu.php
+msgid "Stay Revenue"
+msgstr "Revenus des séjours"
+
+#: includes\Admin\Menu.php
+msgid "Target Pipeline"
+msgstr "Objectif Pipeline"
+
+#: includes\Admin\Menu.php
+msgid "Total Volume"
+msgstr "Volume total"
+
+#: includes\Admin\Menu.php
+msgid "Attention Needed"
+msgstr "Action requise"
+
+#: includes\Admin\Menu.php
+msgid "Today's Arrivals"
+msgstr "Arrivées du jour"
+
+#: includes\Admin\Menu.php
+msgid "No arrivals scheduled for today."
+msgstr "Aucune arrivée prévue aujourd'hui."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+#: includes\Core\ICal.php
+msgid "Guest"
+msgstr "Voyageur"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+#: includes\Pro\ICalManager.php
+msgid "Room"
+msgstr "Chambre"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Recent Bookings"
+msgstr "Réservations récentes"
+
+#: includes\Admin\Menu.php
+msgid "View All"
+msgstr "Voir tout"
+
+#: includes\Admin\Menu.php
+msgid "Date"
+msgstr "Date"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\Privacy.php
+#: includes\Pro\Analytics.php
+msgid "Status"
+msgstr "Statut"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Quick Actions"
+msgstr "Actions rapides"
+
+#: includes\Admin\Menu.php
+msgid "Create New Booking"
+msgstr "Créer une nouvelle réservation"
+
+#: includes\Admin\Menu.php
+msgid "Manage Inventory"
+msgstr "Gérer l'inventaire"
+
+#: includes\Admin\Menu.php
+msgid "Global Settings"
+msgstr "Réglages globaux"
+
+#: includes\Admin\Menu.php
+msgid "System Status"
+msgstr "État du système"
+
+#: includes\Admin\Menu.php
+msgid "License Status:"
+msgstr "État de la licence :"
+
+#: includes\Admin\Menu.php
+msgid "PRO Active"
+msgstr "PRO Actif"
+
+#: includes\Admin\Menu.php
+msgid "Free Version"
+msgstr "Version gratuite"
+
+#: includes\Admin\Menu.php
+msgid "Plugin Version:"
+msgstr "Version du plugin :"
+
+#: includes\Admin\Menu.php
+msgid "Database Status:"
+msgstr "État de la base de données :"
+
+#: includes\Admin\Menu.php
+msgid "Healthy"
+msgstr "Sain"
+
+#: includes\Admin\Menu.php
+msgid "Need Assistance?"
+msgstr "Besoin d'aide ?"
+
+#: includes\Admin\Menu.php
+msgid "Explore our documentation or contact the support team for property management advice."
+msgstr "Explorez notre documentation ou contactez l'équipe de support pour des conseils de gestion."
+
+#: includes\Admin\Menu.php
+msgid "Open Self-Service Portal →"
+msgstr "Ouvrir le portail libre-service →"
+
+#: includes\Admin\Menu.php
+msgid "Security check failed."
+msgstr "La vérification de sécurité a échoué."
+
+#: includes\Admin\Menu.php
+msgid "Booking Confirmed & Email Sent!"
+msgstr "Réservation confirmée & e-mail envoyé !"
+
+#: includes\Admin\Menu.php
+msgid "Booking Cancelled."
+msgstr "Réservation annulée."
+
+#: includes\Admin\Menu.php
+msgid "Booking Deleted."
+msgstr "Réservation supprimée."
+
+#: includes\Admin\Menu.php
+msgid "Manual booking added by admin."
+msgstr "Réservation manuelle ajoutée par l'administrateur."
+
+#: includes\Admin\Menu.php
+msgid "Manual Booking Added!"
+msgstr "Réservation manuelle ajoutée !"
+
+#: includes\Admin\Menu.php
+msgid "Booking Updated!"
+msgstr "Réservation mise à jour !"
+
+#: includes\Admin\Menu.php
+msgid "Add New Booking"
+msgstr "Ajouter une réservation"
+
+#: includes\Admin\Menu.php
+msgid "Filtering by status: %s"
+msgstr "Filtrer par statut : %s"
+
+#: includes\Admin\Menu.php
+msgid "Clear Filter"
+msgstr "Effacer le filtre"
+
+#: includes\Admin\Menu.php
+msgid "Add Manual Booking"
+msgstr "Ajouter une réservation manuelle"
+
+#: includes\Admin\Menu.php
+msgid "Customer Details"
+msgstr "Détails du client"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Customer Name"
+msgstr "Nom du client"
+
+#: includes\Admin\Menu.php
+msgid "Email"
+msgstr "E-mail"
+
+#: includes\Admin\Menu.php
+msgid "Phone"
+msgstr "Téléphone"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Guests"
+msgstr "Voyageurs"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Children"
+msgstr "Enfants"
+
+#: includes\Admin\Menu.php
+msgid "Child Ages"
+msgstr "Âges des enfants"
+
+#: includes\Admin\Menu.php
+msgid "Extra Guest Information"
+msgstr "Informations supplémentaires sur les invités"
+
+#: includes\Admin\Menu.php
+msgid "Room & Dates"
+msgstr "Chambre & Dates"
+
+#: includes\Admin\Menu.php
+msgid "-- Select Room --"
+msgstr "-- Sélectionner une chambre --"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-in"
+msgstr "Arrivée"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-out"
+msgstr "Départ"
+
+#: includes\Admin\Menu.php
+msgid "Extras & Discounts"
+msgstr "Extras & Réductions"
+
+#: includes\Admin\Menu.php
+msgid "No extras configured."
+msgstr "Aucun extra configuré."
+
+#: includes\Admin\Menu.php
+msgid "Discount Amount"
+msgstr "Montant de la réduction"
+
+#: includes\Admin\Menu.php
+msgid "Payment Info"
+msgstr "Info paiement"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+#: includes\Core\Tax.php
+msgid "Total Price"
+msgstr "Prix total"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Amount"
+msgstr "Montant de l'acompte"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Received"
+msgstr "Acompte reçu"
+
+#: includes\Admin\Menu.php
+msgid "Mark as received"
+msgstr "Marquer comme reçu"
+
+#: includes\Admin\Menu.php
+msgid "Payment Method"
+msgstr "Moyen de paiement"
+
+#: includes\Admin\Menu.php
+msgid "Onsite / Manual"
+msgstr "Sur place / Manuel"
+
+#: includes\Admin\Menu.php
+msgid "Stripe"
+msgstr "Stripe"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\PaymentGateways.php
+msgid "PayPal"
+msgstr "PayPal"
+
+#: includes\Admin\Menu.php
+msgid "Payment Received"
+msgstr "Paiement reçu"
+
+#: includes\Admin\Menu.php
+msgid "Mark full payment as received"
+msgstr "Marquer le paiement complet comme reçu"
+
+#: includes\Admin\Menu.php
+msgid "Amount Outstanding"
+msgstr "Montant restant dû"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Booking Management"
+msgstr "Gestion des réservations"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Confirmed"
+msgstr "Confirmé"
+
+#: includes\Admin\Menu.php
+msgid "Language"
+msgstr "Langue"
+
+#: includes\Admin\Menu.php
+msgid "Admin Notes"
+msgstr "Notes administrateur"
+
+#: includes\Admin\Menu.php
+msgid "Add Booking"
+msgstr "Ajouter une réservation"
+
+#: includes\Admin\Menu.php
+msgid "Cancel"
+msgstr "Annuler"
+
+#: includes\Admin\Menu.php
+msgid "Edit Booking #%d"
+msgstr "Modifier la réservation #%d"
+
+#: includes\Admin\Menu.php
+msgid "Child %d:"
+msgstr "Enfant %d :"
+
+#: includes\Admin\Menu.php
+msgid "Payment Status"
+msgstr "Statut du paiement"
+
+#: includes\Admin\Menu.php
+msgid "Processing"
+msgstr "En traitement"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Completed"
+msgstr "Terminé"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Failed"
+msgstr "Échoué"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Refunded"
+msgstr "Remboursé"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID"
+msgstr "ID de transaction"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID from payment gateway (read-only)."
+msgstr "ID de transaction de la passerelle de paiement (lecture seule)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Amount"
+msgstr "Montant du paiement"
+
+#: includes\Admin\Menu.php
+msgid "Actual amount paid (may differ from total)."
+msgstr "Montant réel payé (peut différer du total)."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Payment Date"
+msgstr "Date de paiement"
+
+#: includes\Admin\Menu.php
+msgid "Date/time payment was completed (read-only)."
+msgstr "Date/heure à laquelle le paiement a été effectué (lecture seule)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Error"
+msgstr "Erreur de paiement"
+
+#: includes\Admin\Menu.php
+msgid "Error message from failed payment."
+msgstr "Message d'erreur du paiement échoué."
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "%s Breakdown"
+msgstr "Détail %s"
+
+#: includes\Admin\Menu.php
+msgid "Cancelled"
+msgstr "Annulé"
+
+#: includes\Admin\Menu.php
+msgid "Update Booking"
+msgstr "Mettre à jour la réservation"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this booking? This action cannot be undone."
+msgstr "Êtes-vous sûr de vouloir supprimer cette réservation ? Cette action est irréversible."
+
+#: includes\Admin\Menu.php
+msgid "Delete Booking"
+msgstr "Supprimer la réservation"
+
+#: includes\Admin\Menu.php
+msgid "ID"
+msgstr "ID"
+
+#: includes\Admin\Menu.php
+msgid "Dates"
+msgstr "Dates"
+
+#: includes\Admin\Menu.php
+msgid "Payment"
+msgstr "Paiement"
+
+#: includes\Admin\Menu.php
+msgid "Lang"
+msgstr "Langue"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Actions"
+msgstr "Actions"
+
+#: includes\Admin\Menu.php
+msgid "Paid in full"
+msgstr "Payé en totalité"
+
+#: includes\Admin\Menu.php
+msgid "Outstanding: %s"
+msgstr "Reste à payer : %s"
+
+#: includes\Admin\Menu.php
+msgid "Edit"
+msgstr "Modifier"
+
+#: includes\Admin\Menu.php
+msgid "Confirm"
+msgstr "Confirmer"
+
+#: includes\Admin\Menu.php
+msgid "Delete this booking?"
+msgstr "Supprimer cette réservation ?"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Delete"
+msgstr "Supprimer"
+
+#: includes\Admin\Menu.php
+msgid "No bookings found."
+msgstr "Aucune réservation trouvée."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Deleted."
+msgstr "Type de chambre supprimé."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Updated!"
+msgstr "Type de chambre mis à jour !"
+
+#: includes\Admin\Menu.php
+msgid "Room Type Added!"
+msgstr "Type de chambre ajouté !"
+
+#: includes\Admin\Menu.php
+msgid "Manage Room Types"
+msgstr "Gérer les types de chambres"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room Type"
+msgstr "Modifier le type de chambre"
+
+#: includes\Admin\Menu.php
+msgid "Add New Type"
+msgstr "Ajouter un nouveau type"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Name"
+msgstr "Nom"
+
+#: includes\Admin\Menu.php
+msgid "Description"
+msgstr "Description"
+
+#: includes\Admin\Menu.php
+msgid "Base Price"
+msgstr "Prix de base"
+
+#: includes\Admin\Menu.php
+msgid "Max Adults"
+msgstr "Max. adultes"
+
+#: includes\Admin\Menu.php
+msgid "Max Children"
+msgstr "Max. enfants"
+
+#: includes\Admin\Menu.php
+msgid "Child Free Age Limit"
+msgstr "Limite d'âge gratuité enfant"
+
+#: includes\Admin\Menu.php
+msgid "Children at or under this age stay free."
+msgstr "Les enfants de cet âge ou moins séjournent gratuitement."
+
+#: includes\Admin\Menu.php
+msgid "Child Rate (per night)"
+msgstr "Tarif enfant (par nuit)"
+
+#: includes\Admin\Menu.php
+msgid "Image URL"
+msgstr "URL de l'image"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Amenities"
+msgstr "Équipements"
+
+#: includes\Admin\Menu.php
+msgid "Update Room Type"
+msgstr "Mettre à jour le type de chambre"
+
+#: includes\Admin\Menu.php
+msgid "Add Room Type"
+msgstr "Ajouter un type de chambre"
+
+#: includes\Admin\Menu.php
+msgid "Image"
+msgstr "Image"
+
+#: includes\Admin\Menu.php
+msgid "Price"
+msgstr "Prix"
+
+#: includes\Admin\Menu.php
+msgid "No Image"
+msgstr "Aucune image"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "None"
+msgstr "Aucun"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this room type? This may affect existing rooms."
+msgstr "Êtes-vous sûr de vouloir supprimer ce type de chambre ? Cela peut affecter les chambres existantes."
+
+#: includes\Admin\Menu.php
+msgid "Room Deleted."
+msgstr "Chambre supprimée."
+
+#: includes\Admin\Menu.php
+msgid "Manage Rooms"
+msgstr "Gérer les chambres"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "iCal Synchronization"
+msgstr "Synchronisation iCal"
+
+#: includes\Admin\Menu.php
+msgid "Back to Rooms"
+msgstr "Retour aux chambres"
+
+#: includes\Admin\Menu.php
+msgid "Feed Added!"
+msgstr "Flux ajouté !"
+
+#: includes\Admin\Menu.php
+msgid "Sync Completed."
+msgstr "Synchronisation terminée."
+
+#: includes\Admin\Menu.php
+msgid "Room Updated!"
+msgstr "Chambre mise à jour !"
+
+#: includes\Admin\Menu.php
+msgid "Room Added!"
+msgstr "Chambre ajoutée !"
+
+#: includes\Admin\Menu.php
+msgid "iCal Sync — Room %s"
+msgstr "Synchro iCal — Chambre %s"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Export URL"
+msgstr "URL d'exportation"
+
+#: includes\Admin\Menu.php
+msgid "Import Feeds"
+msgstr "Importer des flux"
+
+#: includes\Admin\Menu.php
+msgid "URL"
+msgstr "URL"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Last Synced"
+msgstr "Dernière synchro"
+
+#: includes\Admin\Menu.php
+msgid "Never"
+msgstr "Jamais"
+
+#: includes\Admin\Menu.php
+msgid "Delete?"
+msgstr "Supprimer ?"
+
+#: includes\Admin\Menu.php
+msgid "Add New Feed"
+msgstr "Ajouter un nouveau flux"
+
+#: includes\Admin\Menu.php
+msgid "Name (e.g. Airbnb)"
+msgstr "Nom (ex. Airbnb)"
+
+#: includes\Admin\Menu.php
+msgid "iCal URL"
+msgstr "URL iCal"
+
+#: includes\Admin\Menu.php
+msgid "Add Feed"
+msgstr "Ajouter le flux"
+
+#: includes\Admin\Menu.php
+msgid "Sync All Now"
+msgstr "Tout synchroniser maintenant"
+
+#: includes\Admin\Menu.php
+msgid "Back"
+msgstr "Retour"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room"
+msgstr "Modifier la chambre"
+
+#: includes\Admin\Menu.php
+msgid "Add Room"
+msgstr "Ajouter une chambre"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Type"
+msgstr "Type"
+
+#: includes\Admin\Menu.php
+msgid "Number/Name"
+msgstr "Numéro/Nom"
+
+#: includes\Admin\Menu.php
+msgid "Custom Price"
+msgstr "Prix personnalisé"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Available"
+msgstr "Disponible"
+
+#: includes\Admin\Menu.php
+msgid "Maintenance"
+msgstr "Maintenance"
+
+#: includes\Admin\Menu.php
+msgid "Update Room"
+msgstr "Mettre à jour la chambre"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Number"
+msgstr "Numéro"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\License.php
+msgid "Pro Feature"
+msgstr "Fonctionnalité Pro"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "to"
+msgstr "à"
+
+#: includes\Admin\Menu.php
+msgid "Modifier"
+msgstr "Modificateur"
+
+#: includes\Admin\Menu.php
+msgid "Fixed"
+msgstr "Fixe"
+
+#: includes\Admin\Menu.php
+msgid "All"
+msgstr "Tout"
+
+#: includes\Admin\Menu.php
+msgid "Add Rule"
+msgstr "Ajouter une règle"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Action"
+msgstr "Action"
+
+#: includes\Admin\Menu.php
+msgid "Delete this pricing rule?"
+msgstr "Supprimer cette règle de prix ?"
+
+#: includes\Admin\Menu.php
+msgid "Extras Saved!"
+msgstr "Extras enregistrés !"
+
+#: includes\Admin\Menu.php
+msgid "Booking Extras & Add-ons"
+msgstr "Extras de réservation & Options"
+
+#: includes\Admin\Menu.php
+msgid "+ Add New Extra"
+msgstr "+ Ajouter un nouvel extra"
+
+#: includes\Admin\Menu.php
+msgid "Save Changes"
+msgstr "Enregistrer les modifications"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Model"
+msgstr "Modèle de tarification"
+
+#: includes\Admin\Menu.php
+msgid "Fixed Price (Once)"
+msgstr "Prix fixe (Une fois)"
+
+#: includes\Admin\Menu.php
+msgid "Per Person"
+msgstr "Par personne"
+
+#: includes\Admin\Menu.php
+msgid "Per Night"
+msgstr "Par nuit"
+
+#: includes\Admin\Menu.php
+msgid "Per Person / Per Night"
+msgstr "Par personne / Par nuit"
+
+#: includes\Admin\Menu.php
+msgid "Control Type"
+msgstr "Type de contrôle"
+
+#: includes\Admin\Menu.php
+msgid "Checkbox (Yes/No)"
+msgstr "Case à cocher (Oui/Non)"
+
+#: includes\Admin\Menu.php
+msgid "Quantity Input"
+msgstr "Saisie de quantité"
+
+#: includes\Admin\Settings.php
+msgid "Please enter a license key."
+msgstr "Veuillez entrer une clé de licence."
+
+#: includes\Admin\Settings.php
+msgid "Connection error."
+msgstr "Erreur de connexion."
+
+#: includes\Admin\Settings.php
+msgid "Are you sure?"
+msgstr "Êtes-vous sûr ?"
+
+#: includes\Admin\Settings.php
+msgid "Are you sure you want to remove this field?"
+msgstr "Êtes-vous sûr de vouloir supprimer ce champ ?"
+
+#: includes\Admin\Settings.php
+msgid "No holidays added yet."
+msgstr "Aucun jour férié ajouté."
+
+#: includes\Admin\Settings.php
+msgid "General Settings"
+msgstr "Réglages généraux"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-in Time"
+msgstr "Heure d'arrivée par défaut"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-out Time"
+msgstr "Heure de départ par défaut"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Notification Email"
+msgstr "E-mail de notification"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page"
+msgstr "Page de réservation"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page URL (Override)"
+msgstr "URL de la page de réservation (Remplacer)"
+
+#: includes\Admin\Settings.php
+msgid "Same-day Turnover"
+msgstr "Rotation le jour même"
+
+#: includes\Admin\Settings.php
+msgid "If enabled, rooms cannot be checked-in on the same day someone else checks out."
+msgstr "Si activé, les chambres ne peuvent pas être occupées le jour même où quelqu'un d'autre part."
+
+#: includes\Admin\Settings.php
+msgid "Enable Children Management"
+msgstr "Activer la gestion des enfants"
+
+#: includes\Admin\Settings.php
+msgid "Show children selector in search and booking forms."
+msgstr "Afficher le sélecteur d'enfants dans les formulaires de recherche et de réservation."
+
+#: includes\Admin\Settings.php
+msgid "Custom Guest Fields"
+msgstr "Champs personnalisés pour les invités"
+
+#: includes\Admin\Settings.php
+msgid "Currency Settings"
+msgstr "Réglages de la devise"
+
+#: includes\Admin\Settings.php
+msgid "Currency Code (e.g. USD)"
+msgstr "Code devise (ex. EUR)"
+
+#: includes\Admin\Settings.php
+msgid "Currency Symbol (e.g. $)"
+msgstr "Symbole devise (ex. €)"
+
+#: includes\Admin\Settings.php
+msgid "Symbol Position"
+msgstr "Position du symbole"
+
+#: includes\Admin\Settings.php
+msgid "Before Amount ($100)"
+msgstr "Avant le montant (100€)"
+
+#: includes\Admin\Settings.php
+msgid "After Amount (100$)"
+msgstr "Après le montant (100 €)"
+
+#: includes\Admin\Settings.php
+msgid "— Select a Page —"
+msgstr "— Sélectionner une page —"
+
+#: includes\Admin\Settings.php
+msgid "Select the page where you have placed the [modern_hotel_booking] shortcode."
+msgstr "Sélectionnez la page où vous avez placé le shortcode [modern_hotel_booking]."
+
+#: includes\Admin\Settings.php
+msgid "Field ID (slug)"
+msgstr "ID du champ (slug)"
+
+#: includes\Admin\Settings.php
+msgid "Text"
+msgstr "Texte"
+
+#: includes\Admin\Settings.php
+msgid "Textarea"
+msgstr "Zone de texte"
+
+#: includes\Admin\Settings.php
+msgid "Label (Multilingual)"
+msgstr "Libellé (Multilingue)"
+
+#: includes\Admin\Settings.php
+msgid "Required Field"
+msgstr "Champ obligatoire"
+
+#: includes\Admin\Settings.php
+msgid "+ Add New Guest Field"
+msgstr "+ Ajouter un nouveau champ invité"
+
+#: includes\Admin\Settings.php
+msgid "Define extra fields for your booking form. Labels support multilingual tags."
+msgstr "Définissez des champs supplémentaires pour votre formulaire. Les libellés supportent les balises multilingues."
+
+#: includes\Admin\Settings.php
+msgid "Hotel Configuration"
+msgstr "Configuration de l'hôtel"
+
+#: includes\Admin\Settings.php
+msgid "License"
+msgstr "Licence"
+
+#: includes\Admin\Settings.php
+msgid "General"
+msgstr "Général"
+
+#: includes\Admin\Settings.php
+msgid "Email Templates"
+msgstr "Modèles d'e-mails"
+
+#: includes\Admin\Settings.php
+msgid "Frontend Labels"
+msgstr "Libellés Frontend"
+
+#: includes\Admin\Settings.php
+msgid "GDPR & Privacy"
+msgstr "RGPD & Confidentialité"
+
+#: includes\Admin\Settings.php
+msgid "Tax Settings"
+msgstr "Réglages des taxes"
+
+#: includes\Admin\Settings.php
+msgid "Performance"
+msgstr "Performance"
+
+#: includes\Admin\Settings.php
+msgid "License Management"
+msgstr "Gestion de la licence"
+
+#: includes\Admin\Settings.php
+msgid "Enter your license key to unlock Pro features and receive updates."
+msgstr "Entrez votre clé de licence pour débloquer les fonctionnalités Pro et recevoir les mises à jour."
+
+#: includes\Admin\Settings.php
+msgid "License Key"
+msgstr "Clé de licence"
+
+#: includes\Admin\Settings.php
+msgid "Active"
+msgstr "Actif"
+
+#: includes\Admin\Settings.php
+msgid "Expires: %s"
+msgstr "Expire le : %s"
+
+#: includes\Admin\Settings.php
+msgid "Deactivate License"
+msgstr "Désactiver la licence"
+
+#: includes\Admin\Settings.php
+msgid "Activate License"
+msgstr "Activer la licence"
+
+#: includes\Admin\Settings.php
+msgid "Performance Settings"
+msgstr "Réglages de performance"
+
+#: includes\Admin\Settings.php
+msgid "Configure caching and performance options for faster page loads."
+msgstr "Configurez les options de cache et de performance pour des chargements plus rapides."
+
+#: includes\Admin\Settings.php
+msgid "Enable Caching"
+msgstr "Activer le cache"
+
+#: includes\Admin\Settings.php
+msgid "Enable caching for room data and pricing"
+msgstr "Activer le cache pour les données des chambres et les prix"
+
+#: includes\Admin\Settings.php
+msgid "Cache room type data and pricing rules for faster calculations. Recommended for most sites."
+msgstr "Met en cache les données des types de chambres et les règles de prix pour des calculs plus rapides. Recommandé."
+
+#: includes\Admin\Settings.php
+msgid "Object Cache Status"
+msgstr "Statut du cache d'objet"
+
+#: includes\Admin\Settings.php
+msgid "A persistent object cache (Redis, Memcached, etc.) is detected. Cache data will persist across requests."
+msgstr "Un cache d'objet persistant (Redis, Memcached) est détecté. Les données persisteront entre les requêtes."
+
+#: includes\Admin\Settings.php
+msgid "Using Database Transients"
+msgstr "Utilisation des transients de base de données"
+
+#: includes\Admin\Settings.php
+msgid "No persistent object cache detected. Consider installing Redis or Memcached for better performance."
+msgstr "Aucun cache d'objet persistant détecté. Envisagez d'installer Redis ou Memcached."
+
+#: includes\Admin\Settings.php
+msgid "Clear Cache"
+msgstr "Vider le cache"
+
+#: includes\Admin\Settings.php
+msgid "Clear All Cache"
+msgstr "Tout vider"
+
+#: includes\Admin\Settings.php
+msgid "Clear all cached data. Use this if you see outdated pricing or room information."
+msgstr "Efface toutes les données en cache. Utilisez ceci si vous voyez des prix obsolètes."
+
+#: includes\Admin\Settings.php
+msgid "Pending Booking"
+msgstr "Réservation en attente"
+
+#: includes\Admin\Settings.php
+msgid "Confirmed Booking"
+msgstr "Réservation confirmée"
+
+#: includes\Admin\Settings.php
+msgid "Cancelled Booking"
+msgstr "Réservation annulée"
+
+#: includes\Admin\Settings.php
+#: includes\Core\Email.php
+#: includes\Core\I18n.php
+msgid "Payment Confirmation"
+msgstr "Confirmation de paiement"
+
+#: includes\Admin\Settings.php
+msgid "Subject"
+msgstr "Sujet"
+
+#: includes\Admin\Settings.php
+msgid "Message"
+msgstr "Message"
+
+#: includes\Admin\Settings.php
+msgid "Available placeholders: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+msgstr "Balises disponibles : {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance & Data Privacy (PRO)"
+msgstr "Conformité RGPD & Confidentialité (PRO)"
+
+#: includes\Admin\Settings.php
+msgid "Enable Pro Privacy Suite"
+msgstr "Activer la suite de confidentialité Pro"
+
+#: includes\Admin\Settings.php
+msgid "Enables automated data retention, custom cookie prefixing, and advanced privacy controls."
+msgstr "Active la rétention automatique des données, le préfixage des cookies et les contrôles avancés."
+
+#: includes\Admin\Settings.php
+msgid "Require Privacy Consent"
+msgstr "Exiger le consentement"
+
+#: includes\Admin\Settings.php
+msgid "Adds a mandatory checkbox to the booking form for guest consent."
+msgstr "Ajoute une case à cocher obligatoire au formulaire pour le consentement."
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Page"
+msgstr "Page Conditions Générales"
+
+#: includes\Admin\Settings.php
+msgid "Select the page for your Terms & Conditions. Use the [terms_and_conditions] link in your consent text."
+msgstr "Sélectionnez la page pour vos Conditions Générales. Utilisez le lien [terms_and_conditions]."
+
+#: includes\Admin\Settings.php
+msgid "Consent Text"
+msgstr "Texte de consentement"
+
+#: includes\Admin\Settings.php
+msgid "Text displayed next to the consent checkbox. Use the [privacy_policy] link in your text to link to your policy page."
+msgstr "Texte affiché à côté de la case à cocher. Utilisez le lien [privacy_policy]."
+
+#: includes\Admin\Settings.php
+msgid "Automated Data Retention"
+msgstr "Rétention automatique des données"
+
+#: includes\Admin\Settings.php
+msgid "days"
+msgstr "jours"
+
+#: includes\Admin\Settings.php
+msgid "Bookings older than this will be automatically anonymized. Set to 0 to disable."
+msgstr "Les réservations plus anciennes que cela seront anonymisées. Mettre à 0 pour désactiver."
+
+#: includes\Admin\Settings.php
+msgid "Cookie Name Prefix"
+msgstr "Préfixe du nom de cookie"
+
+#: includes\Admin\Settings.php
+msgid "Customize the prefix for all frontend cookies (e.g. for selection persistence). Helps with compatibility and auditing."
+msgstr "Personnalisez le préfixe pour tous les cookies frontend."
+
+#: includes\Admin\Settings.php
+msgid "Search Rooms Button"
+msgstr "Bouton Rechercher des chambres"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Label"
+msgstr "Libellé Arrivée"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Label"
+msgstr "Libellé Départ"
+
+#: includes\Admin\Settings.php
+msgid "Guests Label"
+msgstr "Libellé Voyageurs"
+
+#: includes\Admin\Settings.php
+msgid "Children Label"
+msgstr "Libellé Enfants"
+
+#: includes\Admin\Settings.php
+msgid "Child Ages Label"
+msgstr "Libellé Âges des enfants"
+
+#: includes\Admin\Settings.php
+msgid "Child %d Age Label"
+msgstr "Libellé Âge enfant %d"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Label"
+msgstr "Libellé Sélectionner dates"
+
+#: includes\Admin\Settings.php
+msgid "Dates Selected Message"
+msgstr "Message dates sélectionnées"
+
+#: includes\Admin\Settings.php
+msgid "Your Selection Label"
+msgstr "Libellé Votre sélection"
+
+#: includes\Admin\Settings.php
+msgid "Continue to Booking Button"
+msgstr "Bouton Continuer vers la réservation"
+
+#: includes\Admin\Settings.php
+msgid "Dates Not Available Error"
+msgstr "Erreur dates non disponibles"
+
+#: includes\Admin\Settings.php
+msgid "Stay Dates Label"
+msgstr "Libellé Dates de séjour"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-in Guide"
+msgstr "Guide sélection arrivée"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-out Guide"
+msgstr "Guide sélection départ"
+
+#: includes\Admin\Settings.php
+msgid "Calendar No ID Error"
+msgstr "Erreur calendrier sans ID"
+
+#: includes\Admin\Settings.php
+msgid "Calendar Config Error"
+msgstr "Erreur config calendrier"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Error"
+msgstr "Erreur sélection dates"
+
+#: includes\Admin\Settings.php
+msgid "Block No Room Error"
+msgstr "Erreur bloc sans chambre"
+
+#: includes\Admin\Settings.php
+msgid "Check-in in Past Error"
+msgstr "Erreur arrivée dans le passé"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Before Check-in Error"
+msgstr "Erreur départ avant arrivée"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Too Far Error"
+msgstr "Erreur arrivée trop lointaine"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Too Far Error"
+msgstr "Erreur départ trop lointain"
+
+#: includes\Admin\Settings.php
+msgid "Available Rooms Message"
+msgstr "Message chambres disponibles"
+
+#: includes\Admin\Settings.php
+msgid "No Rooms Found Message"
+msgstr "Message aucune chambre trouvée"
+
+#: includes\Admin\Settings.php
+msgid "Per Night Text"
+msgstr "Texte par nuit"
+
+#: includes\Admin\Settings.php
+msgid "Total Nights Price Summary"
+msgstr "Résumé prix total nuits"
+
+#: includes\Admin\Settings.php
+msgid "Max Guests Text"
+msgstr "Texte max invités"
+
+#: includes\Admin\Settings.php
+msgid "Loading Message"
+msgstr "Message chargement"
+
+#: includes\Admin\Settings.php
+msgid "To Separator"
+msgstr "Séparateur À"
+
+#: includes\Admin\Settings.php
+msgid "Book Now Button"
+msgstr "Bouton Réserver maintenant"
+
+#: includes\Admin\Settings.php
+msgid "Processing Button Text"
+msgstr "Texte bouton traitement"
+
+#: includes\Admin\Settings.php
+msgid "Complete Booking Title"
+msgstr "Titre finaliser la réservation"
+
+#: includes\Admin\Settings.php
+msgid "Total Price Label"
+msgstr "Libellé Prix total"
+
+#: includes\Admin\Settings.php
+msgid "Full Name Label"
+msgstr "Libellé Nom complet"
+
+#: includes\Admin\Settings.php
+msgid "Email Address Label"
+msgstr "Libellé Adresse e-mail"
+
+#: includes\Admin\Settings.php
+msgid "Phone Number Label"
+msgstr "Libellé Numéro de téléphone"
+
+#: includes\Admin\Settings.php
+msgid "Special Requests Label"
+msgstr "Libellé Demandes spéciales"
+
+#: includes\Admin\Settings.php
+msgid "Secure Payment Message"
+msgstr "Message paiement sécurisé"
+
+#: includes\Admin\Settings.php
+msgid "Security Error Message"
+msgstr "Message erreur sécurité"
+
+#: includes\Admin\Settings.php
+msgid "Rate Limit Error Message"
+msgstr "Message erreur limite de taux"
+
+#: includes\Admin\Settings.php
+msgid "Spam Honeypot Label"
+msgstr "Libellé antispam"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Booking Button"
+msgstr "Bouton Confirmer la réservation"
+
+#: includes\Admin\Settings.php
+msgid "Pay & Confirm Button"
+msgstr "Bouton Payer & Confirmer"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Request Message"
+msgstr "Message confirmer la demande"
+
+#: includes\Admin\Settings.php
+msgid "Room Not Found Error"
+msgstr "Erreur chambre introuvable"
+
+#: includes\Admin\Settings.php
+msgid "Name Too Long Error"
+msgstr "Erreur nom trop long"
+
+#: includes\Admin\Settings.php
+msgid "Phone Too Long Error"
+msgstr "Erreur téléphone trop long"
+
+#: includes\Admin\Settings.php
+msgid "Max Children Error"
+msgstr "Erreur max enfants"
+
+#: includes\Admin\Settings.php
+msgid "Max Adults Error"
+msgstr "Erreur max adultes"
+
+#: includes\Admin\Settings.php
+msgid "Price Calculation Error"
+msgstr "Erreur calcul prix"
+
+#: includes\Admin\Settings.php
+msgid "Missing Fields Error"
+msgstr "Erreur champs manquants"
+
+#: includes\Admin\Settings.php
+msgid "Required Field Error"
+msgstr "Erreur champ requis"
+
+#: includes\Admin\Settings.php
+msgid "Spam Detected Error"
+msgstr "Erreur spam détecté"
+
+#: includes\Admin\Settings.php
+msgid "Room Already Booked Error"
+msgstr "Erreur chambre déjà réservée"
+
+#: includes\Admin\Settings.php
+msgid "Booking Success Message"
+msgstr "Message succès réservation"
+
+#: includes\Admin\Settings.php
+msgid "Email Sent Message"
+msgstr "Message e-mail envoyé"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Title"
+msgstr "Titre demande reçue"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Detail"
+msgstr "Détail demande reçue"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Message"
+msgstr "Message payer à l'arrivée"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Required Warning"
+msgstr "Avertissement RGPD requis"
+
+#: includes\Admin\Settings.php
+msgid "Privacy Policy Link Text"
+msgstr "Texte lien politique confidentialité"
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Link Text"
+msgstr "Texte lien conditions générales"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Required Warning"
+msgstr "Avertissement PayPal requis"
+
+#: includes\Admin\Settings.php
+msgid "Payment Success Confirmation"
+msgstr "Confirmation succès paiement"
+
+#: includes\Admin\Settings.php
+msgid "Booking arrival confirmation"
+msgstr "Confirmation arrivée réservation"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Detail"
+msgstr "Détail échec paiement"
+
+#: includes\Admin\Settings.php
+msgid "Booking Received Pending Detail"
+msgstr "Détail réservation reçue en attente"
+
+#: includes\Admin\Settings.php
+msgid "Payment Method Label"
+msgstr "Libellé méthode de paiement"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Option"
+msgstr "Option payer à l'arrivée"
+
+#: includes\Admin\Settings.php
+msgid "Credit Card Option"
+msgstr "Option carte de crédit"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Option"
+msgstr "Option PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Label"
+msgstr "Libellé statut paiement"
+
+#: includes\Admin\Settings.php
+msgid "Paid Badge Text"
+msgstr "Badge Payé"
+
+#: includes\Admin\Settings.php
+msgid "Amount Paid Label"
+msgstr "Libellé montant payé"
+
+#: includes\Admin\Settings.php
+msgid "Transaction ID Label"
+msgstr "Libellé ID transaction"
+
+#: includes\Admin\Settings.php
+msgid "Failed Badge Text"
+msgstr "Badge Échoué"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Title"
+msgstr "Titre échec paiement"
+
+#: includes\Admin\Settings.php
+msgid "Dates Taken Error"
+msgstr "Erreur dates prises"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Calc Error"
+msgstr "Erreur calcul réservation invalide"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Not Configured Error"
+msgstr "Erreur Stripe non configuré"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Not Configured Error"
+msgstr "Erreur PayPal non configuré"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Connection Error"
+msgstr "Erreur connexion PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Auth Error"
+msgstr "Erreur auth PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Error"
+msgstr "Erreur commande PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Currency Error"
+msgstr "Erreur devise PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Generic Error"
+msgstr "Erreur générique PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Missing Order ID Error"
+msgstr "Erreur ID commande manquant"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Capture Error"
+msgstr "Erreur capture PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Already Processed Error"
+msgstr "Erreur paiement déjà traité"
+
+#: includes\Admin\Settings.php
+msgid "Payment Declined Error"
+msgstr "Erreur paiement refusé"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Intent Missing Error"
+msgstr "Erreur intention Stripe manquante"
+
+#: includes\Admin\Settings.php
+msgid "PayPal ID Missing Error"
+msgstr "Erreur ID PayPal manquant"
+
+#: includes\Admin\Settings.php
+msgid "Payment Required Error"
+msgstr "Erreur paiement requis"
+
+#: includes\Admin\Settings.php
+msgid "REST Pro Access Error"
+msgstr "Erreur accès REST Pro"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Nonce Error"
+msgstr "Erreur nonce invalide"
+
+#: includes\Admin\Settings.php
+msgid "API Rate Limit Error"
+msgstr "Erreur limite débit API"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Confirmation Title"
+msgstr "Email: Titre confirmation paiement"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Info Title"
+msgstr "Email: Titre info paiement"
+
+#: includes\Admin\Settings.php
+msgid "Email: Pay on Arrival Detail"
+msgstr "Email: Détail payer à l'arrivée"
+
+#: includes\Admin\Settings.php
+msgid "Email: Amount Due Label"
+msgstr "Email: Libellé montant dû"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Date Label"
+msgstr "Email: Libellé date paiement"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Creation Failed"
+msgstr "Échec création commande PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Security Verification Failed"
+msgstr "Échec vérification sécurité"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Client ID Missing"
+msgstr "ID Client PayPal manquant"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Secret Missing"
+msgstr "Secret PayPal manquant"
+
+#: includes\Admin\Settings.php
+msgid "API Key Not Configured"
+msgstr "Clé API non configurée"
+
+#: includes\Admin\Settings.php
+msgid "Invalid API Key"
+msgstr "Clé API invalide"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Signature Required"
+msgstr "Signature Webhook requise"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Webhook Secret Missing"
+msgstr "Secret Webhook Stripe manquant"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature Format"
+msgstr "Format signature Stripe invalide"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Expired"
+msgstr "Webhook expiré"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature"
+msgstr "Signature Stripe invalide"
+
+#: includes\Admin\Settings.php
+msgid "Missing PayPal Headers"
+msgstr "En-têtes PayPal manquants"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Customer Data"
+msgstr "Données client invalides"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Dates"
+msgstr "Dates de réservation invalides"
+
+#: includes\Admin\Settings.php
+msgid "Booking Creation Failed"
+msgstr "Échec création réservation"
+
+#: includes\Admin\Settings.php
+msgid "Permission Denied"
+msgstr "Permission refusée"
+
+#: includes\Admin\Settings.php
+msgid "Stripe PK Missing"
+msgstr "Clé publique Stripe manquante"
+
+#: includes\Admin\Settings.php
+msgid "Stripe SK Missing"
+msgstr "Clé secrète Stripe manquante"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe PK Format"
+msgstr "Format clé publique Stripe invalide"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Space Warning"
+msgstr "Avertissement espaces dans identifiants"
+
+#: includes\Admin\Settings.php
+msgid "Sandbox/Live Mismatch Warning"
+msgstr "Avertissement incohérence Sandbox/Live"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Expired Warning"
+msgstr "Avertissement identifiants expirés"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Success Message"
+msgstr "Message succès PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Success Message"
+msgstr "Message succès Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Connection Failed Error"
+msgstr "Erreur connexion échouée"
+
+#: includes\Admin\Settings.php
+msgid "Authentication Failed Error"
+msgstr "Erreur authentification échouée"
+
+#: includes\Admin\Settings.php
+msgid "Common Causes Title"
+msgstr "Causes communes"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Generic Error"
+msgstr "Erreur générique Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Enhance Your Stay Title"
+msgstr "Améliorez votre séjour"
+
+#: includes\Admin\Settings.php
+msgid "Per Person Text"
+msgstr "Texte par personne"
+
+#: includes\Admin\Settings.php
+msgid "Per Person / Night Text"
+msgstr "Texte par personne / nuit"
+
+#: includes\Admin\Settings.php
+msgid "Booking Summary Title"
+msgstr "Titre résumé réservation"
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Row Label"
+msgstr "Libellé ligne hébergement"
+
+#: includes\Admin\Settings.php
+msgid "Extras Row Label"
+msgstr "Libellé ligne extras"
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Label"
+msgstr "Libellé détail taxes"
+
+#: includes\Admin\Settings.php
+msgid "Tax Total Label"
+msgstr "Libellé total taxes"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Label"
+msgstr "Libellé enregistrement fiscal"
+
+#: includes\Admin\Settings.php
+msgid "Includes Tax Suffix"
+msgstr "Suffixe taxes incluses"
+
+#: includes\Admin\Settings.php
+msgid "Price Includes Tax Note"
+msgstr "Note prix taxes incluses"
+
+#: includes\Admin\Settings.php
+msgid "Tax Added at Checkout Note"
+msgstr "Note taxe ajoutée au paiement"
+
+#: includes\Admin\Settings.php
+msgid "Subtotal Label"
+msgstr "Libellé sous-total"
+
+#: includes\Admin\Settings.php
+msgid "Room Column Label"
+msgstr "Libellé colonne chambre"
+
+#: includes\Admin\Settings.php
+msgid "Extras Column Label"
+msgstr "Libellé colonne extras"
+
+#: includes\Admin\Settings.php
+msgid "Item Column Label"
+msgstr "Libellé colonne article"
+
+#: includes\Admin\Settings.php
+msgid "Amount Column Label"
+msgstr "Libellé colonne montant"
+
+#: includes\Admin\Settings.php
+msgid "Tax Accommodation Rate Label"
+msgstr "Libellé taux taxe hébergement"
+
+#: includes\Admin\Settings.php
+msgid "Tax Extras Rate Label"
+msgstr "Libellé taux taxe extras"
+
+#: includes\Admin\Settings.php
+msgid "Generic Tax Rate Label"
+msgstr "Libellé taux taxe générique"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (includes %s)"
+msgstr "Note taxe (inclut %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (plus %s)"
+msgstr "Note taxe (plus %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (includes %1$s: %2$s%% / %3$s%%)"
+msgstr "Note taxe multi (inclut %1$s : %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (plus %1$s: %2$s%% / %3$s%%)"
+msgstr "Note taxe multi (plus %1$s : %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Leave a field empty to use the default English text for that language. Use <code>%1$s</code> or <code>%2$d</code> as placeholders where they appear in the default text."
+msgstr "Laissez vide pour utiliser le texte anglais par défaut. Utilisez <code>%1$s</code> ou <code>%2$d</code> comme espaces réservés."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual settings saved successfully."
+msgstr "Réglages multilingues enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "GDPR settings saved successfully."
+msgstr "Réglages RGPD enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "General settings saved successfully."
+msgstr "Réglages généraux enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Theme settings saved successfully."
+msgstr "Réglages du thème enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Theme reset to default successfully."
+msgstr "Thème réinitialisé par défaut."
+
+#: includes\Admin\Settings.php
+msgid "Pro Experience"
+msgstr "Expérience Pro"
+
+#: includes\Admin\Settings.php
+msgid "Overview"
+msgstr "Aperçu"
+
+#: includes\Admin\Settings.php
+msgid "Booking Extras"
+msgstr "Extras de réservation"
+
+#: includes\Admin\Settings.php
+msgid "Pro Themes"
+msgstr "Thèmes Pro"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Active"
+msgstr "Licence Pro active"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Required"
+msgstr "Licence Pro requise"
+
+#: includes\Admin\Settings.php
+msgid "All Pro features are unlocked and ready to use."
+msgstr "Toutes les fonctionnalités Pro sont débloquées."
+
+#: includes\Admin\Settings.php
+msgid "Unlock all premium features to maximize your booking potential."
+msgstr "Débloquez toutes les fonctionnalités premium."
+
+#: includes\Admin\Settings.php
+msgid "Manage License"
+msgstr "Gérer la licence"
+
+#: includes\Admin\Settings.php
+msgid "Priority Support"
+msgstr "Support prioritaire"
+
+#: includes\Admin\Settings.php
+msgid "Lifetime Updates"
+msgstr "Mises à jour à vie"
+
+#: includes\Admin\Settings.php
+msgid "All Premium Features"
+msgstr "Toutes les fonctionnalités Premium"
+
+#: includes\Admin\Settings.php
+msgid "Version 2.2.2 - Security & Feature Enhancements"
+msgstr "Version 2.2.2 - Sécurité et améliorations"
+
+#: includes\Admin\Settings.php
+msgid "Enhanced Booking Extras:"
+msgstr "Extras de réservation améliorés :"
+
+#: includes\Admin\Settings.php
+msgid "\"Per person\" extras now include children in the guest count for accurate pricing calculations."
+msgstr "Les extras \"Par personne\" incluent maintenant les enfants."
+
+#: includes\Admin\Settings.php
+msgid "Unified Tax Breakdown:"
+msgstr "Détail des taxes unifié :"
+
+#: includes\Admin\Settings.php
+msgid "Consistent, detailed tax rendering across emails, success pages, and admin dashboard."
+msgstr "Affichage cohérent et détaillé des taxes partout."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhook Security:"
+msgstr "Sécurité Webhook HMAC :"
+
+#: includes\Admin\Settings.php
+msgid "Added SHA-256 cryptographic signatures to all outgoing webhooks for verified external integrations."
+msgstr "Ajout de signatures SHA-256 pour les webhooks sortants."
+
+#: includes\Admin\Settings.php
+msgid "Server-Side Pricing Logic:"
+msgstr "Logique de prix côté serveur :"
+
+#: includes\Admin\Settings.php
+msgid "Hardened payment gateway initialization with mandatory server-side price recalculation."
+msgstr "Initialisation renforcée des paiements avec recalcul côté serveur."
+
+#: includes\Admin\Settings.php
+msgid "Payment Processing"
+msgstr "Traitement des paiements"
+
+#: includes\Admin\Settings.php
+msgid "Configure"
+msgstr "Configurer"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Integration"
+msgstr "Intégration Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Accept payments with Stripe including Apple Pay and Google Pay support."
+msgstr "Acceptez les paiements Stripe, Apple Pay et Google Pay."
+
+#: includes\Admin\Settings.php
+msgid "Popular"
+msgstr "Populaire"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Integration"
+msgstr "Intégration PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Accept PayPal payments with automatic IPN verification and status updates."
+msgstr "Acceptez PayPal avec vérification IPN automatique."
+
+#: includes\Admin\Settings.php
+msgid "Pay On-site Option"
+msgstr "Option paiement sur place"
+
+#: includes\Admin\Settings.php
+msgid "Allow guests to pay upon arrival with flexible payment tracking."
+msgstr "Permettez aux clients de payer à l'arrivée."
+
+#: includes\Admin\Settings.php
+msgid "Payment Webhooks"
+msgstr "Webhooks de paiement"
+
+#: includes\Admin\Settings.php
+msgid "Automatic payment status updates from Stripe and PayPal webhooks."
+msgstr "Mises à jour automatiques du statut via webhooks."
+
+#: includes\Admin\Settings.php
+msgid "New"
+msgstr "Nouveau"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Tracking"
+msgstr "Suivi du statut de paiement"
+
+#: includes\Admin\Settings.php
+msgid "Full payment lifecycle management: pending, deposit paid, fully paid, refunded."
+msgstr "Gestion complète du cycle de vie du paiement."
+
+#: includes\Admin\Settings.php
+msgid "Tax Management"
+msgstr "Gestion des taxes"
+
+#: includes\Admin\Settings.php
+msgid "VAT/TAX System"
+msgstr "Système TVA/Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Three modes: VAT inclusive, Sales Tax exclusive, or Disabled. Flexible configuration."
+msgstr "Trois modes : TVA incluse, Taxe exclusive, ou Désactivé."
+
+#: includes\Admin\Settings.php
+msgid "Separate Tax Rates"
+msgstr "Taux de taxe séparés"
+
+#: includes\Admin\Settings.php
+msgid "Different tax rates for accommodation vs extras services."
+msgstr "Taux différents pour l'hébergement et les extras."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT"
+msgstr "TVA spécifique par pays"
+
+#: includes\Admin\Settings.php
+msgid "Set different VAT rates per country for international guests."
+msgstr "Définissez des taux de TVA différents par pays."
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Display"
+msgstr "Affichage du détail des taxes"
+
+#: includes\Admin\Settings.php
+msgid "Detailed tax display by room, children, and extras in booking confirmations."
+msgstr "Affichage détaillé des taxes par chambre, enfants et extras."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Tax Labels"
+msgstr "Libellés de taxe multilingues"
+
+#: includes\Admin\Settings.php
+msgid "Per-language tax terminology (VAT, IVA, TVA, MwSt, etc.)."
+msgstr "Terminologie fiscale par langue (TVA, VAT, etc.)."
+
+#: includes\Admin\Settings.php
+msgid "Updated"
+msgstr "Mis à jour"
+
+#: includes\Admin\Settings.php
+msgid "Seasonal Pricing"
+msgstr "Tarification saisonnière"
+
+#: includes\Admin\Settings.php
+msgid "Set automated weekend and holiday multipliers for dynamic pricing."
+msgstr "Définissez des multiplicateurs pour weekends et jours fériés."
+
+#: includes\Admin\Settings.php
+msgid "Offer guided tours, airport transfers, breakfast packages, and local experiences."
+msgstr "Offrez des visites, transferts et petits-déjeuners."
+
+#: includes\Admin\Settings.php
+msgid "Bi-directional sync with Airbnb, Booking.com, and Google Calendar."
+msgstr "Synchro bidirectionnelle avec Airbnb, Booking.com et Google Agenda."
+
+#: includes\Admin\Settings.php
+msgid "Analytics Dashboard"
+msgstr "Tableau de bord analytique"
+
+#: includes\Admin\Settings.php
+msgid "Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization."
+msgstr "Visualisations, taux d'occupation et suivi ADR."
+
+#: includes\Admin\Settings.php
+msgid "View"
+msgstr "Voir"
+
+#: includes\Admin\Settings.php
+msgid "Compliance & UX"
+msgstr "Conformité & UX"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance Tools"
+msgstr "Outils de conformité RGPD"
+
+#: includes\Admin\Settings.php
+msgid "Automated data retention, consent checkboxes, and cookie management."
+msgstr "Rétention automatique, consentement et gestion des cookies."
+
+#: includes\Admin\Settings.php
+msgid "Theme Customization"
+msgstr "Personnalisation du thème"
+
+#: includes\Admin\Settings.php
+msgid "6 designer presets, custom branding colors, and advanced CSS injection."
+msgstr "6 préconfigurations, couleurs de marque et CSS avancé."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Support"
+msgstr "Support multilingue"
+
+#: includes\Admin\Settings.php
+msgid "Compatible with qTranslate, WPML, and Polylang for full translation support."
+msgstr "Compatible avec qTranslate, WPML et Polylang."
+
+#: includes\Admin\Settings.php
+msgid "Developer Platform"
+msgstr "Plateforme développeur"
+
+#: includes\Admin\Settings.php
+msgid "REST API"
+msgstr "API REST"
+
+#: includes\Admin\Settings.php
+msgid "Full REST API access for external integrations and custom applications."
+msgstr "Accès complet API REST pour intégrations externes."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhooks"
+msgstr "Webhooks HMAC"
+
+#: includes\Admin\Settings.php
+msgid "Secure webhooks with HMAC-signed payloads for booking events."
+msgstr "Webhooks sécurisés avec signatures HMAC."
+
+#: includes\Admin\Settings.php
+msgid "Configure Payment Gateways"
+msgstr "Configurer les passerelles de paiement"
+
+#: includes\Admin\Settings.php
+msgid "Set Up Tax Settings"
+msgstr "Configurer les taxes"
+
+#: includes\Admin\Settings.php
+msgid "View Analytics"
+msgstr "Voir les analyses"
+
+#: includes\Admin\Settings.php
+msgid "Manage iCal Feeds"
+msgstr "Gérer les flux iCal"
+
+#: includes\Admin\Settings.php
+msgid "Save Payment Settings"
+msgstr "Enregistrer les réglages de paiement"
+
+#: includes\Admin\Settings.php
+msgid "Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more."
+msgstr "Débloquez cette fonctionnalité avec une licence Pro."
+
+#: includes\Admin\Settings.php
+msgid "View All Pro Features"
+msgstr "Voir toutes les fonctionnalités Pro"
+
+#: includes\Admin\Settings.php
+msgid "Pro features are not available."
+msgstr "Fonctionnalités Pro non disponibles."
+
+#: includes\Admin\Settings.php
+msgid "The REST API allows external systems to query room availability and manage bookings. API base:"
+msgstr "L'API REST permet aux systèmes externes de gérer les réservations."
+
+#: includes\Admin\Settings.php
+msgid "API Key"
+msgstr "Clé API"
+
+#: includes\Admin\Settings.php
+msgid "Generate"
+msgstr "Générer"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Copy"
+msgstr "Copier"
+
+#: includes\Admin\Settings.php
+msgid "Include as X-MHB-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id})."
+msgstr "Inclure comme en-tête X-MHB-API-Key pour les points de terminaison authentifiés."
+
+#: includes\Admin\Settings.php
+msgid "Webhook URL"
+msgstr "URL Webhook"
+
+#: includes\Admin\Settings.php
+msgid "Receive a JSON POST for booking events: booking_created, booking_confirmed, booking_cancelled. Payloads are HMAC-signed with your API key."
+msgstr "Recevez un JSON POST pour les événements de réservation."
+
+#: includes\Admin\Settings.php
+msgid "Available Endpoints"
+msgstr "Points de terminaison disponibles"
+
+#: includes\Admin\Settings.php
+msgid "Method"
+msgstr "Méthode"
+
+#: includes\Admin\Settings.php
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: includes\Admin\Settings.php
+msgid "Auth / Access"
+msgstr "Auth / Accès"
+
+#: includes\Admin\Settings.php
+msgid "Pro (Rate Limited)"
+msgstr "Pro (Débit limité)"
+
+#: includes\Admin\Settings.php
+msgid "Public (Rate Limited)"
+msgstr "Public (Débit limité)"
+
+#: includes\Admin\Settings.php
+msgid "API Key Required"
+msgstr "Clé API requise"
+
+#: includes\Admin\Settings.php
+msgid "Monday"
+msgstr "Lundi"
+
+#: includes\Admin\Settings.php
+msgid "Tuesday"
+msgstr "Mardi"
+
+#: includes\Admin\Settings.php
+msgid "Wednesday"
+msgstr "Mercredi"
+
+#: includes\Admin\Settings.php
+msgid "Thursday"
+msgstr "Jeudi"
+
+#: includes\Admin\Settings.php
+msgid "Friday"
+msgstr "Vendredi"
+
+#: includes\Admin\Settings.php
+msgid "Saturday"
+msgstr "Samedi"
+
+#: includes\Admin\Settings.php
+msgid "Sunday"
+msgstr "Dimanche"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Pricing"
+msgstr "Tarification week-end"
+
+#: includes\Admin\Settings.php
+msgid "Define which days are considered weekends and set the adjustment."
+msgstr "Définissez les jours de week-end et l'ajustement."
+
+#: includes\Admin\Settings.php
+msgid "Weekend Days"
+msgstr "Jours de week-end"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Adjustment"
+msgstr "Ajustement week-end"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\PaymentGateways.php
+msgid "Enable"
+msgstr "Activer"
+
+#: includes\Admin\Settings.php
+msgid "Multiplier (1.2 = +20%)"
+msgstr "Multiplicateur (1.2 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Percentage (20 = +20%)"
+msgstr "Pourcentage (20 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Fixed Amount (20 = +$20)"
+msgstr "Montant fixe (20 = +20€)"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Pricing"
+msgstr "Tarification jours fériés"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Date Picker"
+msgstr "Sélecteur de jours fériés"
+
+#: includes\Admin\Settings.php
+msgid "Add"
+msgstr "Ajouter"
+
+#: includes\Admin\Settings.php
+msgid "Add specific dates that should trigger holiday pricing."
+msgstr "Ajoutez des dates spécifiques pour la tarification spéciale."
+
+#: includes\Admin\Settings.php
+msgid "Holiday Adjustment"
+msgstr "Ajustement jours fériés"
+
+#: includes\Admin\Settings.php
+msgid "Conflict Resolution"
+msgstr "Résolution de conflit"
+
+#: includes\Admin\Settings.php
+msgid "Use larger of weekend vs holiday adjustment if they overlap"
+msgstr "Utiliser le plus grand ajustement si chevauchement"
+
+#: includes\Admin\Settings.php
+msgid "Midnight Coast"
+msgstr "Midnight Coast"
+
+#: includes\Admin\Settings.php
+msgid "Our signature classic luxury look."
+msgstr "Notre look de luxe classique signature."
+
+#: includes\Admin\Settings.php
+msgid "Emerald Forest"
+msgstr "Emerald Forest"
+
+#: includes\Admin\Settings.php
+msgid "Rich greens for nature-inspired properties."
+msgstr "Verts riches pour les propriétés inspirées par la nature."
+
+#: includes\Admin\Settings.php
+msgid "Oceanic Drift"
+msgstr "Oceanic Drift"
+
+#: includes\Admin\Settings.php
+msgid "Deep blues and bright highlights."
+msgstr "Bleus profonds et reflets lumineux."
+
+#: includes\Admin\Settings.php
+msgid "Ruby Sunset"
+msgstr "Ruby Sunset"
+
+#: includes\Admin\Settings.php
+msgid "Warm tones for cozy boutiques."
+msgstr "Tons chauds pour boutiques cosy."
+
+#: includes\Admin\Settings.php
+msgid "Urban Modern"
+msgstr "Urban Modern"
+
+#: includes\Admin\Settings.php
+msgid "Minimalist grays for city lofts."
+msgstr "Gris minimalistes pour lofts urbains."
+
+#: includes\Admin\Settings.php
+msgid "Lavender Breeze"
+msgstr "Lavender Breeze"
+
+#: includes\Admin\Settings.php
+msgid "Elegant purples for spa and wellness."
+msgstr "Violets élégants pour spa et bien-être."
+
+#: includes\Admin\Settings.php
+msgid "Theme Presets"
+msgstr "Préréglages de thème"
+
+#: includes\Admin\Settings.php
+msgid "Choose a professional color palette for your booking frontend."
+msgstr "Choisissez une palette de couleurs professionnelle."
+
+#: includes\Admin\Settings.php
+msgid "Custom Theme"
+msgstr "Thème personnalisé"
+
+#: includes\Admin\Settings.php
+msgid "Define your own brand colors below."
+msgstr "Définissez vos propres couleurs de marque ci-dessous."
+
+#: includes\Admin\Settings.php
+msgid "Custom Branding"
+msgstr "Marque personnalisée"
+
+#: includes\Admin\Settings.php
+msgid "Primary Color"
+msgstr "Couleur primaire"
+
+#: includes\Admin\Settings.php
+msgid "Secondary Color"
+msgstr "Couleur secondaire"
+
+#: includes\Admin\Settings.php
+msgid "Accent Color"
+msgstr "Couleur d'accent"
+
+#: includes\Admin\Settings.php
+msgid "Advanced Custom CSS"
+msgstr "CSS personnalisé avancé"
+
+#: includes\Admin\Settings.php
+msgid "Inject additional CSS directly into the booking frontend."
+msgstr "Injectez du CSS supplémentaire directement dans le frontend."
+
+#: includes\Admin\Settings.php
+msgid "Reset all theme settings to default?"
+msgstr "Réinitialiser tous les réglages du thème ?"
+
+#: includes\Admin\Settings.php
+msgid "Return to Default"
+msgstr "Revenir au défaut"
+
+#: includes\Admin\Settings.php
+#: includes\Core\I18n.php
+msgid "Permission denied."
+msgstr "Permission refusée."
+
+#: includes\Admin\Settings.php
+msgid "Room Amenities"
+msgstr "Équipements de la chambre"
+
+#: includes\Admin\Settings.php
+msgid "Manage the list of amenities available for rooms. After adding here, you can translate them in the \"Frontend Labels\" tab."
+msgstr "Gérez la liste des équipements disponibles pour les chambres."
+
+#: includes\Admin\Settings.php
+msgid "Add New Amenity"
+msgstr "Ajouter un nouvel équipement"
+
+#: includes\Admin\Settings.php
+msgid "Label"
+msgstr "Libellé"
+
+#: includes\Admin\Settings.php
+msgid "Key (Internal)"
+msgstr "Clé (Interne)"
+
+#: includes\Admin\Settings.php
+msgid "No amenities found."
+msgstr "Aucun équipement trouvé."
+
+#: includes\Admin\Settings.php
+msgid "API settings saved successfully."
+msgstr "Réglages API enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Payment settings saved successfully."
+msgstr "Réglages de paiement enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Pricing settings saved successfully."
+msgstr "Réglages de prix enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Amenity added successfully."
+msgstr "Équipement ajouté."
+
+#: includes\Admin\Settings.php
+msgid "Amenity removed successfully."
+msgstr "Équipement supprimé."
+
+#: includes\Admin\Settings.php
+msgid "Configure VAT/Sales Tax settings for your hotel bookings. Tax is disabled by default for backward compatibility."
+msgstr "Configurez les réglages de TVA/Taxe de vente."
+
+#: includes\Admin\Settings.php
+msgid "Tax Mode"
+msgstr "Mode de taxe"
+
+#: includes\Admin\Settings.php
+msgid "Disabled"
+msgstr "Désactivé"
+
+#: includes\Admin\Settings.php
+msgid "No tax calculation or display. Prices shown as-is."
+msgstr "Aucun calcul ou affichage de taxe."
+
+#: includes\Admin\Settings.php
+msgid "VAT Inclusive"
+msgstr "TVA incluse"
+
+#: includes\Admin\Settings.php
+msgid "Prices include tax (EU, UK, Australia). Shows breakdown: Net + Tax = Gross."
+msgstr "Les prix incluent la taxe (UE, UK)."
+
+#: includes\Admin\Settings.php
+msgid "Sales Tax Exclusive"
+msgstr "Taxe de vente exclusive"
+
+#: includes\Admin\Settings.php
+msgid "Tax added on top of prices (US, Canada). Shows: Subtotal + Tax = Total."
+msgstr "Taxe ajoutée aux prix (US, Canada)."
+
+#: includes\Admin\Settings.php
+msgid "Tax Label"
+msgstr "Libellé de taxe"
+
+#: includes\Admin\Settings.php
+msgid "Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA"
+msgstr "Exemples : TVA, GST, Taxe de vente"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Number"
+msgstr "Numéro d'immatriculation fiscale"
+
+#: includes\Admin\Settings.php
+msgid "Your VAT ID, GSTIN, or tax registration number. Displayed on invoices and receipts."
+msgstr "Votre ID TVA ou numéro d'enregistrement fiscal."
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Tax Rate"
+msgstr "Taux de taxe hébergement"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for rooms and children charges. Example: 10 for 10%"
+msgstr "Taux de taxe pour les chambres et enfants."
+
+#: includes\Admin\Settings.php
+msgid "Extras Tax Rate"
+msgstr "Taux de taxe extras"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for extras (add-ons like breakfast, transfers). Set same as accommodation if unsure."
+msgstr "Taux de taxe pour les extras."
+
+#: includes\Admin\Settings.php
+msgid "Display Options"
+msgstr "Options d'affichage"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown on frontend booking form"
+msgstr "Afficher le détail des taxes sur le formulaire"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown in confirmation emails"
+msgstr "Afficher le détail des taxes dans les e-mails"
+
+#: includes\Admin\Settings.php
+msgid "Rounding Mode"
+msgstr "Mode d'arrondi"
+
+#: includes\Admin\Settings.php
+msgid "Per Total (Recommended)"
+msgstr "Par total (Recommandé)"
+
+#: includes\Admin\Settings.php
+msgid "Per Line Item"
+msgstr "Par ligne d'article"
+
+#: includes\Admin\Settings.php
+msgid "Per Total: Round tax on final total. Per Line: Round each item's tax separately."
+msgstr "Par Total : Arrondir la taxe sur le total final."
+
+#: includes\Admin\Settings.php
+msgid "Decimal Places"
+msgstr "Décimales"
+
+#: includes\Admin\Settings.php
+msgid "Number of decimal places for tax amounts (usually 2)."
+msgstr "Nombre de décimales pour les montants de taxe (habituellement 2)."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT Rates Reference"
+msgstr "Référence des taux de TVA par pays"
+
+#: includes\Admin\Settings.php
+msgid "Country"
+msgstr "Pays"
+
+#: includes\Admin\Settings.php
+msgid "Standard Rate"
+msgstr "Taux standard"
+
+#: includes\Admin\Settings.php
+msgid "Hotel Rate"
+msgstr "Taux hôtel"
+
+#: includes\Admin\Settings.php
+msgid "Tax Name"
+msgstr "Nom de la taxe"
+
+#: includes\Admin\Settings.php
+msgid "Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities."
+msgstr "Note : Les taux hôteliers peuvent être réduits dans certains pays."
+
+#: includes\Admin\Settings.php
+msgid "Tax settings saved successfully."
+msgstr "Réglages de taxes enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Performance settings saved successfully."
+msgstr "Réglages de performance enregistrés."
+
+#: includes\Admin\Settings.php
+msgid "Cache cleared successfully."
+msgstr "Cache vidé avec succès."
+
+#: includes\Admin\Settings.php
+msgid "Failed to clear cache."
+msgstr "Échec du vidage du cache."
+
+#: includes\Admin\Settings.php
+msgid "Cache class not available."
+msgstr "Classe de cache non disponible."
+
+#: includes\Api\RestApi.php
+msgid "You do not have permission to access this booking."
+msgstr "Vous n'avez pas la permission d'accéder à cette réservation."
+
+#: includes\Api\RestApi.php
+msgid "Error generating calendar data."
+msgstr "Erreur lors de la génération des données du calendrier."
+
+#: includes\Api\RestApi.php
+msgid "Error calculating price. Please check input data."
+msgstr "Erreur de calcul du prix. Vérifiez les données."
+
+#: includes\Api\RestApi.php
+msgid "Invalid webhook request."
+msgstr "Requête webhook invalide."
+
+#: includes\Core\Email.php
+msgid "Price includes %1$s - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "Le prix inclut %1$s - Hébergement : %2$s%%, Extras : %3$s%%"
+
+#: includes\Core\Email.php
+msgid "%1$s added at checkout - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "%1$s ajouté au paiement - Hébergement : %2$s%%, Extras : %3$s%%"
+
+#: includes\Core\Email.php
+msgid "Dear %s,"
+msgstr "Cher %s,"
+
+#: includes\Core\Email.php
+msgid "Thank you for your payment. Your booking has been confirmed."
+msgstr "Merci pour votre paiement. Votre réservation a été confirmée."
+
+#: includes\Core\Email.php
+msgid "Booking Details"
+msgstr "Détails de la réservation"
+
+#: includes\Core\Email.php
+msgid "Booking ID:"
+msgstr "ID réservation :"
+
+#: includes\Core\Email.php
+msgid "Check-in:"
+msgstr "Arrivée :"
+
+#: includes\Core\Email.php
+msgid "Check-out:"
+msgstr "Départ :"
+
+#: includes\Core\Email.php
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Si vous avez des questions, n'hésitez pas à nous contacter."
+
+#: includes\Core\Email.php
+msgid "Best regards,"
+msgstr "Cordialement,"
+
+#: includes\Core\Email.php
+msgid "Payment Details"
+msgstr "Détails du paiement"
+
+#: includes\Core\Email.php
+msgid "Amount Paid:"
+msgstr "Montant payé :"
+
+#: includes\Core\Email.php
+msgid "Transaction ID:"
+msgstr "ID transaction :"
+
+#: includes\Core\Email.php
+msgid "Payment Method:"
+msgstr "Méthode de paiement :"
+
+#: includes\Core\Email.php
+msgid "Payment Date:"
+msgstr "Date de paiement :"
+
+#: includes\Core\I18n.php
+msgid "Search Rooms"
+msgstr "Rechercher des chambres"
+
+#: includes\Core\I18n.php
+msgid "Available Rooms from %1$s to %2$s"
+msgstr "Chambres disponibles du %1$s au %2$s"
+
+#: includes\Core\I18n.php
+msgid "No rooms available for these dates."
+msgstr "Aucune chambre disponible pour ces dates."
+
+#: includes\Core\I18n.php
+msgid "Dates are not available."
+msgstr "Les dates ne sont pas disponibles."
+
+#: includes\Core\I18n.php
+msgid "Room not found."
+msgstr "Chambre introuvable."
+
+#: includes\Core\I18n.php
+msgid "Secure Online Payment"
+msgstr "Paiement en ligne sécurisé"
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page."
+msgstr "Vérification de sécurité échouée. Veuillez rafraîchir la page."
+
+#: includes\Core\I18n.php
+msgid "Too many attempts. Please wait a minute."
+msgstr "Trop de tentatives. Veuillez patienter une minute."
+
+#: includes\Core\I18n.php
+msgid "Leave this field empty"
+msgstr "Laissez ce champ vide"
+
+#: includes\Core\I18n.php
+msgid "Room Image"
+msgstr "Image de la chambre"
+
+#: includes\Core\I18n.php
+msgid "No room ID specified for calendar."
+msgstr "Aucun ID de chambre spécifié pour le calendrier."
+
+#: includes\Core\I18n.php
+msgid "Booking Page URL not configured."
+msgstr "URL de la page de réservation non configurée."
+
+#: includes\Core\I18n.php
+msgid "Loading..."
+msgstr "Chargement..."
+
+#: includes\Core\I18n.php
+msgid "Processing..."
+msgstr "Traitement..."
+
+#: includes\Core\I18n.php
+msgid "Please accept the privacy policy to continue."
+msgstr "Veuillez accepter la politique de confidentialité pour continuer."
+
+#: includes\Core\I18n.php
+msgid "Please use the PayPal button to complete your payment."
+msgstr "Veuillez utiliser le bouton PayPal pour finaliser votre paiement."
+
+#: includes\Core\I18n.php
+msgid "Enhance Your Stay"
+msgstr "Améliorez votre séjour"
+
+#: includes\Core\I18n.php
+msgid "per person"
+msgstr "par personne"
+
+#: includes\Core\I18n.php
+msgid "per person / night"
+msgstr "par personne / nuit"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s"
+msgstr "Le prix inclut %s"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s"
+msgstr "Prix plus %s"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s (%s%%)"
+msgstr "Le prix inclut %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s (%s%%)"
+msgstr "Prix plus %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Please select check-in and check-out dates."
+msgstr "Veuillez sélectionner les dates d'arrivée et de départ."
+
+#: includes\Core\I18n.php
+msgid "Please select a Room ID in block settings."
+msgstr "Veuillez sélectionner un ID de chambre dans les réglages du bloc."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be in the past."
+msgstr "La date d'arrivée ne peut pas être dans le passé."
+
+#: includes\Core\I18n.php
+msgid "Check-out date must be after check-in date."
+msgstr "La date de départ doit être après la date d'arrivée."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be more than 2 years in the future."
+msgstr "La date d'arrivée ne peut pas être dans plus de 2 ans."
+
+#: includes\Core\I18n.php
+msgid "Check-out date cannot be more than 2 years in the future."
+msgstr "La date de départ ne peut pas être dans plus de 2 ans."
+
+#: includes\Core\I18n.php
+msgid "Name is too long (maximum 100 characters)."
+msgstr "Le nom est trop long (maximum 100 caractères)."
+
+#: includes\Core\I18n.php
+msgid "Phone number is too long (maximum 30 characters)."
+msgstr "Le numéro de téléphone est trop long (maximum 30 caractères)."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum children for this room is %d."
+msgstr "Erreur : Le maximum d'enfants pour cette chambre est %d."
+
+#: includes\Core\I18n.php
+msgid "Error calculating price. Please check dates."
+msgstr "Erreur de calcul du prix. Veuillez vérifier les dates."
+
+#: includes\Core\I18n.php
+msgid "Please fill in all required fields."
+msgstr "Veuillez remplir tous les champs obligatoires."
+
+#: includes\Core\I18n.php
+msgid "Please provide a valid email address."
+msgstr "Veuillez fournir une adresse e-mail valide."
+
+#: includes\Core\I18n.php
+msgid "The field \"%s\" is required."
+msgstr "Le champ \"%s\" est requis."
+
+#: includes\Core\I18n.php
+msgid "Spam detected."
+msgstr "Spam détecté."
+
+#: includes\Core\I18n.php
+msgid "Sorry, this room was just booked by someone else or is unavailable for these dates."
+msgstr "Désolé, cette chambre vient d'être réservée ou est indisponible."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum adults for this room is %d."
+msgstr "Erreur : Le maximum d'adultes pour cette chambre est %d."
+
+#: includes\Core\I18n.php
+msgid "REST API access is a Pro feature."
+msgstr "L'accès API REST est une fonctionnalité Pro."
+
+#: includes\Core\I18n.php
+msgid "Invalid nonce."
+msgstr "Nonce invalide."
+
+#: includes\Core\I18n.php
+msgid "Too many requests. Please try again later."
+msgstr "Trop de requêtes. Veuillez réessayer plus tard."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking details. Cannot calculate amount."
+msgstr "Détails de réservation invalides. Impossible de calculer le montant."
+
+#: includes\Core\I18n.php
+msgid "Stripe is not configured."
+msgstr "Stripe n'est pas configuré."
+
+#: includes\Core\I18n.php
+msgid "PayPal is not configured. Please contact the site administrator."
+msgstr "PayPal n'est pas configuré. Veuillez contacter l'administrateur."
+
+#: includes\Core\I18n.php
+msgid "Unable to connect to PayPal. Please try again later."
+msgstr "Impossible de se connecter à PayPal. Veuillez réessayer plus tard."
+
+#: includes\Core\I18n.php
+msgid "Failed to authenticate with PayPal. Please check your PayPal credentials."
+msgstr "Échec de l'authentification PayPal. Vérifiez vos identifiants."
+
+#: includes\Core\I18n.php
+msgid "Unable to create PayPal order. Please try again later."
+msgstr "Impossible de créer la commande PayPal. Réessayez plus tard."
+
+#: includes\Core\I18n.php
+msgid "Currency %s is not supported by your PayPal account."
+msgstr "La devise %s n'est pas supportée par votre compte PayPal."
+
+#: includes\Core\I18n.php
+msgid "PayPal error: %s"
+msgstr "Erreur PayPal : %s"
+
+#: includes\Core\I18n.php
+msgid "Missing order ID."
+msgstr "ID de commande manquant."
+
+#: includes\Core\I18n.php
+msgid "Unable to capture payment. Please try again later."
+msgstr "Impossible de capturer le paiement. Réessayez plus tard."
+
+#: includes\Core\I18n.php
+msgid "This payment has already been processed."
+msgstr "Ce paiement a déjà été traité."
+
+#: includes\Core\I18n.php
+msgid "The payment was declined by PayPal. Please try a different payment method."
+msgstr "Le paiement a été refusé par PayPal. Essayez une autre méthode."
+
+#: includes\Core\I18n.php
+msgid "privacy policy"
+msgstr "politique de confidentialité"
+
+#: includes\Core\I18n.php
+msgid "Terms & Conditions"
+msgstr "Conditions Générales"
+
+#: includes\Core\I18n.php
+msgid "Payment Information"
+msgstr "Information de paiement"
+
+#: includes\Core\I18n.php
+msgid "Payment will be collected upon arrival at the property."
+msgstr "Le paiement sera encaissé à l'arrivée à l'établissement."
+
+#: includes\Core\I18n.php
+msgid "Amount Due"
+msgstr "Montant dû"
+
+#: includes\Core\I18n.php
+msgid "Failed to create PayPal order."
+msgstr "Échec de la création de la commande PayPal."
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page and try again."
+msgstr "Vérification de sécurité échouée. Rafraîchissez la page."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Client ID is not configured."
+msgstr "L'ID Client PayPal %s n'est pas configuré."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Secret is not configured."
+msgstr "Le Secret PayPal %s n'est pas configuré."
+
+#: includes\Core\I18n.php
+msgid "Stripe payment failed: Payment intent missing."
+msgstr "Paiement Stripe échoué : Intention de paiement manquante."
+
+#: includes\Core\I18n.php
+msgid "Stripe API error: %s"
+msgstr "Erreur API Stripe : %s"
+
+#: includes\Core\I18n.php
+msgid "PayPal payment failed: Order ID missing."
+msgstr "Paiement PayPal échoué : ID de commande manquant."
+
+#: includes\Core\I18n.php
+msgid "Payment is required."
+msgstr "Le paiement est requis."
+
+#: includes\Core\I18n.php
+msgid "API key has not been configured. Set it in Hotel Booking → Settings."
+msgstr "Clé API non configurée. Réglez-la dans les réglages."
+
+#: includes\Core\I18n.php
+msgid "Invalid or missing API key."
+msgstr "Clé API invalide ou manquante."
+
+#: includes\Core\I18n.php
+msgid "Webhook signature required. Unauthorized requests are rejected."
+msgstr "Signature Webhook requise."
+
+#: includes\Core\I18n.php
+msgid "Stripe webhook secret not configured. Please set it in Settings."
+msgstr "Secret Webhook Stripe non configuré."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe signature format."
+msgstr "Format de signature Stripe invalide."
+
+#: includes\Core\I18n.php
+msgid "Webhook timestamp outside acceptable range."
+msgstr "Horodatage Webhook hors plage."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe webhook signature."
+msgstr "Signature Webhook Stripe invalide."
+
+#: includes\Core\I18n.php
+msgid "Missing required PayPal webhook headers."
+msgstr "En-têtes Webhook PayPal manquants."
+
+#: includes\Core\I18n.php
+msgid "Valid customer name and email are required."
+msgstr "Nom et email client valides requis."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking dates."
+msgstr "Dates de réservation invalides."
+
+#: includes\Core\I18n.php
+msgid "Failed to create the booking."
+msgstr "Échec de la création de la réservation."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Publishable Key is not configured."
+msgstr "La clé publique Stripe %s n'est pas configurée."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Secret Key is not configured."
+msgstr "La clé secrète Stripe %s n'est pas configurée."
+
+#: includes\Core\I18n.php
+msgid "Invalid publishable key format. Expected key starting with \"%1$s\" for %2$s mode."
+msgstr "Format de clé publique invalide."
+
+#: includes\Core\I18n.php
+msgid "Credentials contain extra spaces"
+msgstr "Les identifiants contiennent des espaces en trop"
+
+#: includes\Core\I18n.php
+msgid "Using Sandbox credentials in Live mode (or vice versa)"
+msgstr "Utilisation d'identifiants Sandbox en mode Live (ou inversement)"
+
+#: includes\Core\I18n.php
+msgid "Credentials have expired or been rotated"
+msgstr "Les identifiants ont expiré"
+
+#: includes\Core\I18n.php
+msgid "PayPal %s credentials are valid!"
+msgstr "Les identifiants PayPal %s sont valides !"
+
+#: includes\Core\I18n.php
+msgid "Stripe %s credentials are valid!"
+msgstr "Les identifiants Stripe %s sont valides !"
+
+#: includes\Core\I18n.php
+msgid "Connection failed: %s"
+msgstr "Connexion échouée : %s"
+
+#: includes\Core\I18n.php
+msgid "Authentication failed: %s"
+msgstr "Authentification échouée : %s"
+
+#: includes\Core\I18n.php
+msgid "Common causes:"
+msgstr "Causes courantes :"
+
+#: includes\Core\ICal.php
+msgid "Pro license required."
+msgstr "Licence Pro requise."
+
+#: includes\Core\ICal.php
+msgid "Invalid or missing iCal token."
+msgstr "Jeton iCal invalide ou manquant."
+
+#: includes\Core\ICal.php
+msgid "Security Error"
+msgstr "Erreur de sécurité"
+
+#: includes\Core\ICal.php
+msgid "Booking #%1$d - %2$s"
+msgstr "Réservation #%1$d - %2$s"
+
+#: includes\Core\ICal.php
+msgid "Check-in: %s"
+msgstr "Arrivée : %s"
+
+#: includes\Core\ICal.php
+msgid "Check-out: %s"
+msgstr "Départ : %s"
+
+#: includes\Core\ICal.php
+msgid "Guests: %d"
+msgstr "Voyageurs : %d"
+
+#: includes\Core\ICal.php
+msgid "Email: %s"
+msgstr "E-mail : %s"
+
+#: includes\Core\ICal.php
+msgid "Phone: %s"
+msgstr "Tél : %s"
+
+#: includes\Core\ICal.php
+msgid "Source: %s"
+msgstr "Source : %s"
+
+#: includes\Core\ICal.php
+msgid "External Booking"
+msgstr "Réservation externe"
+
+#: includes\Core\ICalParser.php
+msgid "Airbnb Reservation"
+msgstr "Réservation Airbnb"
+
+#: includes\Core\ICalParser.php
+msgid "Booking.com Reservation"
+msgstr "Réservation Booking.com"
+
+#: includes\Core\ICalParser.php
+msgid "Google Calendar Event"
+msgstr "Événement Google Agenda"
+
+#: includes\Core\License.php
+msgid "The %s feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "La fonctionnalité %s fait partie de l'expérience Pro."
+
+#: includes\Core\License.php
+msgid "This feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Cette fonctionnalité fait partie de l'expérience Modern Hotel Booking Pro."
+
+#: includes\Core\License.php
+msgid "Activate Pro Now"
+msgstr "Activer Pro maintenant"
+
+#: includes\Core\LicenseManager.php
+msgid "Too many attempts. Please wait a minute before trying again."
+msgstr "Trop de tentatives. Veuillez patienter une minute."
+
+#: includes\Core\LicenseManager.php
+msgid "License key cannot be empty."
+msgstr "La clé de licence ne peut pas être vide."
+
+#: includes\Core\LicenseManager.php
+msgid "License system not configured. Please contact support."
+msgstr "Système de licence non configuré."
+
+#: includes\Core\LicenseManager.php
+msgid "Invalid license key or server error."
+msgstr "Clé de licence invalide ou erreur serveur."
+
+#: includes\Core\LicenseManager.php
+msgid "License limit reached. No activations remaining."
+msgstr "Limite de licence atteinte."
+
+#: includes\Core\LicenseManager.php
+msgid "License activated successfully."
+msgstr "Licence activée avec succès."
+
+#: includes\Core\LicenseManager.php
+msgid "License deactivated."
+msgstr "Licence désactivée."
+
+#: includes\Core\LicenseManager.php
+msgid "No license key stored."
+msgstr "Aucune clé stockée."
+
+#: includes\Core\LicenseManager.php
+msgid "API credentials not configured."
+msgstr "Identifiants API non configurés."
+
+#: includes\Core\LicenseManager.php
+msgid "License is valid."
+msgstr "La licence est valide."
+
+#: includes\Core\LicenseManager.php
+msgid "License is not valid."
+msgstr "La licence n'est pas valide."
+
+#: includes\Core\LicenseValidator.php
+msgid "%d day"
+msgstr "%d jour"
+
+#: includes\Core\LicenseValidator.php
+msgid "%d hour"
+msgstr "%d heure"
+
+#: includes\Core\LicenseValidator.php
+msgid "License Warning:"
+msgstr "Avertissement Licence :"
+
+#: includes\Core\LicenseValidator.php
+msgid "Could not verify license. Grace period active: %s remaining."
+msgstr "Impossible de vérifier la licence. Période de grâce : %s restants."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Error:"
+msgstr "Erreur Licence :"
+
+#: includes\Core\LicenseValidator.php
+msgid "License verification failed. Pro features have been disabled. Please check your license or contact support."
+msgstr "Vérification de licence échouée. Fonctionnalités Pro désactivées."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Expired:"
+msgstr "Licence expirée :"
+
+#: includes\Core\LicenseValidator.php
+msgid "Your Pro license has expired. Please renew to continue using Pro features."
+msgstr "Votre licence Pro a expiré."
+
+#: includes\Core\Plugin.php
+msgid "Pro license required for iCal export."
+msgstr "Licence Pro requise pour l'export iCal."
+
+#: includes\Core\Privacy.php
+msgid "Modern Hotel Booking"
+msgstr "Modern Hotel Booking"
+
+#: includes\Core\Privacy.php
+msgid "This plugin collects the following personal data from guests during the booking process:"
+msgstr "Ce plugin collecte les données personnelles suivantes :"
+
+#: includes\Core\Privacy.php
+msgid "Email Address"
+msgstr "Adresse e-mail"
+
+#: includes\Core\Privacy.php
+msgid "Phone Number"
+msgstr "Numéro de téléphone"
+
+#: includes\Core\Privacy.php
+msgid "Booking Dates and Details"
+msgstr "Dates et détails de réservation"
+
+#: includes\Core\Privacy.php
+msgid "This data is stored in the database for the purpose of managing reservations and contacting guests regarding their stay."
+msgstr "Ces données sont stockées pour gérer les réservations."
+
+#: includes\Core\Privacy.php
+msgid "Booking ID"
+msgstr "ID réservation"
+
+#: includes\Core\Privacy.php
+msgid "Check-in Date"
+msgstr "Date d'arrivée"
+
+#: includes\Core\Privacy.php
+msgid "Check-out Date"
+msgstr "Date de départ"
+
+#: includes\Core\Privacy.php
+msgid "Customer Phone"
+msgstr "Téléphone client"
+
+#: includes\Core\Privacy.php
+msgid "Hotel Bookings"
+msgstr "Réservations d'hôtel"
+
+#: includes\Core\Tax.php
+msgid "Booking Summary"
+msgstr "Résumé de la réservation"
+
+#: includes\Core\Tax.php
+msgid "Item"
+msgstr "Article"
+
+#: includes\Core\Tax.php
+msgid "Amount"
+msgstr "Montant"
+
+#: includes\Core\Tax.php
+msgid "Subtotal"
+msgstr "Sous-total"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Accommodation (%2$s%%)"
+msgstr "%1$s - Hébergement (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Extras (%2$s%%)"
+msgstr "%1$s - Extras (%2$s%%)"
+
+#: includes\Frontend\BookingWidget.php
+msgid "MHB: Booking Search"
+msgstr "MHB: Recherche de réservation"
+
+#: includes\Frontend\BookingWidget.php
+msgid "A compact booking search form."
+msgstr "Un formulaire de recherche compact."
+
+#: includes\Frontend\BookingWidget.php
+msgid "Book Your Stay"
+msgstr "Réservez votre séjour"
+
+#: includes\Frontend\BookingWidget.php
+msgid "Title:"
+msgstr "Titre :"
+
+#: includes\Pro\Analytics.php
+msgid "Gross Revenue"
+msgstr "Revenu brut"
+
+#: includes\Pro\Analytics.php
+msgid "Collected"
+msgstr "Encaissé"
+
+#: includes\Pro\Analytics.php
+msgid "Tax"
+msgstr "Taxe"
+
+#: includes\Pro\Analytics.php
+msgid "Booked"
+msgstr "Réservé"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue"
+msgstr "Revenu"
+
+#: includes\Pro\Analytics.php
+msgid "Hotel Booking — Revenue Overview"
+msgstr "Réservation d'hôtel — Aperçu des revenus"
+
+#: includes\Pro\Analytics.php
+msgid "Collected (MTD)"
+msgstr "Encaissé (Mois en cours)"
+
+#: includes\Pro\Analytics.php
+msgid "Outstanding Balance"
+msgstr "Solde impayé"
+
+#: includes\Pro\Analytics.php
+msgid "Guests Now"
+msgstr "Clients actuels"
+
+#: includes\Pro\Analytics.php
+msgid "pending bookings"
+msgstr "réservations en attente"
+
+#: includes\Pro\Analytics.php
+msgid "partially paid"
+msgstr "partiellement payé"
+
+#: includes\Pro\Analytics.php
+msgid "View Full Analytics →"
+msgstr "Voir les analyses complètes →"
+
+#: includes\Pro\Analytics.php
+msgid "Analytics Intelligence"
+msgstr "Intelligence Analytique"
+
+#: includes\Pro\Analytics.php
+msgid "7D"
+msgstr "7J"
+
+#: includes\Pro\Analytics.php
+msgid "30D"
+msgstr "30J"
+
+#: includes\Pro\Analytics.php
+msgid "90D"
+msgstr "90J"
+
+#: includes\Pro\Analytics.php
+msgid "Year"
+msgstr "Année"
+
+#: includes\Pro\Analytics.php
+msgid "Starts"
+msgstr "Début"
+
+#: includes\Pro\Analytics.php
+msgid "Ends"
+msgstr "Fin"
+
+#: includes\Pro\Analytics.php
+msgid "Update"
+msgstr "Mettre à jour"
+
+#: includes\Pro\Analytics.php
+msgid "Key Performance Indicators"
+msgstr "Indicateurs clés de performance"
+
+#: includes\Pro\Analytics.php
+msgid "Total Revenue"
+msgstr "Revenu total"
+
+#: includes\Pro\Analytics.php
+msgid "vs previous period"
+msgstr "vs période précédente"
+
+#: includes\Pro\Analytics.php
+msgid "Includes"
+msgstr "Inclut"
+
+#: includes\Pro\Analytics.php
+msgid "tax"
+msgstr "taxe"
+
+#: includes\Pro\Analytics.php
+msgid "Collected Revenue"
+msgstr "Revenus encaissés"
+
+#: includes\Pro\Analytics.php
+msgid "of total"
+msgstr "du total"
+
+#: includes\Pro\Analytics.php
+msgid "Pending payments"
+msgstr "Paiements en attente"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy Rate"
+msgstr "Taux d'occupation"
+
+#: includes\Pro\Analytics.php
+msgid "ADR"
+msgstr "ADR"
+
+#: includes\Pro\Analytics.php
+msgid "Average Daily Rate"
+msgstr "Tarif Journalier Moyen"
+
+#: includes\Pro\Analytics.php
+msgid "RevPAR"
+msgstr "RevPAR"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Per Available Room"
+msgstr "Revenu par chambre disponible"
+
+#: includes\Pro\Analytics.php
+msgid "Total Bookings"
+msgstr "Total des réservations"
+
+#: includes\Pro\Analytics.php
+msgid "Confirmation Rate"
+msgstr "Taux de confirmation"
+
+#: includes\Pro\Analytics.php
+msgid "Avg. Booking Value"
+msgstr "Valeur moy. réservation"
+
+#: includes\Pro\Analytics.php
+msgid "Per booking"
+msgstr "Par réservation"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Collected"
+msgstr "Taxes perçues"
+
+#: includes\Pro\Analytics.php
+msgid "VAT / Sales Tax"
+msgstr "TVA / Taxe de vente"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Trends"
+msgstr "Tendances des revenus"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy by Day of Week"
+msgstr "Occupation par jour de la semaine"
+
+#: includes\Pro\Analytics.php
+msgid "30-Day Occupancy Forecast"
+msgstr "Prévision d'occupation à 30 jours"
+
+#: includes\Pro\Analytics.php
+msgid "Booking Sources"
+msgstr "Sources de réservation"
+
+#: includes\Pro\Analytics.php
+msgid "No booking data available"
+msgstr "Aucune donnée de réservation disponible"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue by Source"
+msgstr "Revenus par source"
+
+#: includes\Pro\Analytics.php
+msgid "Source"
+msgstr "Source"
+
+#: includes\Pro\Analytics.php
+msgid "Room Type Performance"
+msgstr "Performance par type de chambre"
+
+#: includes\Pro\Analytics.php
+msgid "No room performance data available"
+msgstr "Aucune donnée de performance disponible"
+
+#: includes\Pro\Analytics.php
+#: includes\Pro\ICalManager.php
+msgid "Room Type"
+msgstr "Type de chambre"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy"
+msgstr "Occupation"
+
+#: includes\Pro\Analytics.php
+msgid "Tax / VAT Analytics"
+msgstr "Analyses TVA / Taxes"
+
+#: includes\Pro\Analytics.php
+msgid "Total Tax Collected"
+msgstr "Total des taxes perçues"
+
+#: includes\Pro\Analytics.php
+msgid "taxed bookings"
+msgstr "réservations taxées"
+
+#: includes\Pro\Analytics.php
+msgid "Net Revenue"
+msgstr "Revenu net"
+
+#: includes\Pro\Analytics.php
+msgid "Before tax"
+msgstr "Avant impôt"
+
+#: includes\Pro\Analytics.php
+msgid "Including tax"
+msgstr "Taxes incluses"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Breakdown by Rate"
+msgstr "Répartition des taxes par taux"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Rate"
+msgstr "Taux de taxe"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Methods"
+msgstr "Méthodes de paiement"
+
+#: includes\Pro\Analytics.php
+msgid "No payment data available"
+msgstr "Aucune donnée de paiement disponible"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Status Breakdown"
+msgstr "Répartition des statuts de paiement"
+
+#: includes\Pro\Analytics.php
+msgid "Count"
+msgstr "Nombre"
+
+#: includes\Pro\Analytics.php
+msgid "Real-time Activity"
+msgstr "Activité en temps réel"
+
+#: includes\Pro\Analytics.php
+msgid "No recent bookings"
+msgstr "Aucune réservation récente"
+
+#: includes\Pro\Analytics.php
+msgid "Today's Operations"
+msgstr "Opérations du jour"
+
+#: includes\Pro\Analytics.php
+msgid "Check-ins"
+msgstr "Arrivées"
+
+#: includes\Pro\Analytics.php
+msgid "Check-outs"
+msgstr "Départs"
+
+#: includes\Pro\Analytics.php
+msgid "No check-ins or check-outs today"
+msgstr "Aucune arrivée ou départ aujourd'hui"
+
+#: includes\Pro\Analytics.php
+msgid "Alerts"
+msgstr "Alertes"
+
+#: includes\Pro\Analytics.php
+msgid "Failed Payments"
+msgstr "Paiements échoués"
+
+#: includes\Pro\Analytics.php
+msgid "Recent Cancellations"
+msgstr "Annulations récentes"
+
+#: includes\Pro\Analytics.php
+msgid "Monthly Demand"
+msgstr "Demande mensuelle"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time Analysis"
+msgstr "Analyse des délais de réservation"
+
+#: includes\Pro\Analytics.php
+msgid "No lead time data available"
+msgstr "Aucune donnée de délai disponible"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time"
+msgstr "Délai de réservation"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Tracking"
+msgstr "Suivi des annulations"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Rate"
+msgstr "Taux d'annulation"
+
+#: includes\Pro\Analytics.php
+msgid "Lost Revenue"
+msgstr "Revenu perdu"
+
+#: includes\Pro\Analytics.php
+msgid "From cancelled bookings"
+msgstr "Des réservations annulées"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations"
+msgstr "Annulations"
+
+#: includes\Pro\Analytics.php
+msgid "Total cancelled"
+msgstr "Total annulé"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations by Lead Time"
+msgstr "Annulations par délai de réservation"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Impact"
+msgstr "Impact sur le revenu"
+
+#: includes\Pro\Analytics.php
+msgid "Export Financial Report (CSV)"
+msgstr "Exporter le rapport financier (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Occupancy Report (CSV)"
+msgstr "Exporter le rapport d'occupation (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Tax Report (CSV)"
+msgstr "Exporter le rapport des taxes (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Payments (CSV)"
+msgstr "Exporter les paiements (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Security check failed. Please try again."
+msgstr "Échec de vérification de sécurité. Réessayez."
+
+#: includes\Pro\Analytics.php
+msgid "You do not have sufficient permissions to export data."
+msgstr "Permissions insuffisantes pour exporter les données."
+
+#: includes\Pro\ICalManager.php
+msgid "Every 6 Hours"
+msgstr "Toutes les 6 heures"
+
+#: includes\Pro\ICalManager.php
+msgid "Pro license required to sync calendars."
+msgstr "Licence Pro requise pour la synchro."
+
+#: includes\Pro\ICalManager.php
+msgid "%s Booking"
+msgstr "Réservation %s"
+
+#: includes\Pro\ICalManager.php
+msgid "Import Only"
+msgstr "Import uniquement"
+
+#: includes\Pro\ICalManager.php
+msgid "Export Only"
+msgstr "Export uniquement"
+
+#: includes\Pro\ICalManager.php
+msgid "Bidirectional"
+msgstr "Bidirectionnel"
+
+#: includes\Pro\ICalManager.php
+msgid "📅 iCal Calendar Sync"
+msgstr "📅 Synchronisation du calendrier iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "Share this URL with Airbnb, Booking.com, or other platforms to export your availability."
+msgstr "Partagez cette URL avec Airbnb, Booking.com ou d'autres plateformes pour exporter votre disponibilité."
+
+#: includes\Pro\ICalManager.php
+msgid "Calendar Connections"
+msgstr "Connexions au calendrier"
+
+#: includes\Pro\ICalManager.php
+msgid "Connection Name"
+msgstr "Nom de la connexion"
+
+#: includes\Pro\ICalManager.php
+msgid "Synced %s ago"
+msgstr "Synchronisé il y a %s"
+
+#: includes\Pro\ICalManager.php
+msgid "Never synced"
+msgstr "Jamais synchronisé"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync"
+msgstr "Synchroniser"
+
+#: includes\Pro\ICalManager.php
+msgid "+ Add Connection"
+msgstr "+ Ajouter une connexion"
+
+#: includes\Pro\ICalManager.php
+msgid "All rooms have been synced."
+msgstr "Toutes les chambres ont été synchronisées."
+
+#: includes\Pro\ICalManager.php
+msgid "Room #%s has been synced."
+msgstr "Chambre #%s synchronisée."
+
+#: includes\Pro\ICalManager.php
+msgid "Manage iCal feed imports and exports for each room. Sync with Airbnb, Booking.com, Google Calendar, and other platforms."
+msgstr "Gérez les flux iCal pour chaque chambre. Synchronisez avec Airbnb, Booking.com, Google Agenda, etc."
+
+#: includes\Pro\ICalManager.php
+msgid "⚙️ Sync Settings"
+msgstr "⚙️ Réglages de synchronisation"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Auto Sync"
+msgstr "Activer la synchro auto"
+
+#: includes\Pro\ICalManager.php
+msgid "Automatically sync calendars"
+msgstr "Synchroniser automatiquement les calendriers"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync Interval"
+msgstr "Intervalle de synchro"
+
+#: includes\Pro\ICalManager.php
+msgid "Every Hour"
+msgstr "Toutes les heures"
+
+#: includes\Pro\ICalManager.php
+msgid "Daily"
+msgstr "Quotidiennement"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Retry Logic"
+msgstr "Activer la logique de réessai"
+
+#: includes\Pro\ICalManager.php
+msgid "Retry failed syncs with exponential backoff (1h, 2h, 4h)"
+msgstr "Réessayer les échecs avec un délai exponentiel (1h, 2h, 4h)"
+
+#: includes\Pro\ICalManager.php
+msgid "Email Notifications"
+msgstr "Notifications par email"
+
+#: includes\Pro\ICalManager.php
+msgid "Send email on sync failure"
+msgstr "Envoyer un email en cas d'échec"
+
+#: includes\Pro\ICalManager.php
+msgid "Save Settings"
+msgstr "Enregistrer les réglages"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync all rooms? This may take a moment."
+msgstr "Synchroniser toutes les chambres ? Cela peut prendre un moment."
+
+#: includes\Pro\ICalManager.php
+msgid "Sync All Rooms"
+msgstr "Synchroniser toutes les chambres"
+
+#: includes\Pro\ICalManager.php
+msgid "Platforms"
+msgstr "Plateformes"
+
+#: includes\Pro\ICalManager.php
+msgid "Connections"
+msgstr "Connexions"
+
+#: includes\Pro\ICalManager.php
+msgid "No rooms found. Create rooms first."
+msgstr "Aucune chambre trouvée. Créez des chambres d'abord."
+
+#: includes\Pro\ICalManager.php
+msgid "%s ago"
+msgstr "il y a %s"
+
+#: includes\Pro\ICalManager.php
+msgid "How to set up calendar sync"
+msgstr "Comment configurer la synchro"
+
+#: includes\Pro\ICalManager.php
+msgid "Airbnb"
+msgstr "Airbnb"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to your Airbnb listing → Calendar → Availability"
+msgstr "Allez sur votre annonce Airbnb → Calendrier → Disponibilité"
+
+#: includes\Pro\ICalManager.php
+msgid "Under \"Connect calendars,\" click \"Export Calendar\""
+msgstr "Sous \"Connecter des calendriers\", cliquez sur \"Exporter le calendrier\""
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the iCal URL and add it as a new connection above"
+msgstr "Copiez l'URL iCal et ajoutez-la comme nouvelle connexion ci-dessus"
+
+#: includes\Pro\ICalManager.php
+msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb's import field"
+msgstr "Pour importer VOTRE calendrier dans Airbnb, utilisez l'URL d'exportation ci-dessus"
+
+#: includes\Pro\ICalManager.php
+msgid "Booking.com"
+msgstr "Booking.com"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to Booking.com Extranet → Rates & Availability → Sync calendars"
+msgstr "Allez sur l'Extranet Booking.com → Tarifs et disponibilités → Synchroniser les calendriers"
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the export URL from Booking.com and add it as a new connection above"
+msgstr "Copiez l'URL d'exportation de Booking.com et ajoutez-la ci-dessus"
+
+#: includes\Pro\ICalManager.php
+msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com's import field"
+msgstr "Pour exporter VOTRE calendrier vers Booking.com, utilisez l'URL d'exportation ci-dessus"
+
+#: includes\Pro\ICalManager.php
+msgid "iCal"
+msgstr "iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "connection"
+msgstr "connexion"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Payment Gateways"
+msgstr "Passerelles de paiement"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Enable and configure payment methods for your guests."
+msgstr "Activez et configurez les méthodes de paiement pour vos clients."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Stripe (Credit/Debit Cards)"
+msgstr "Stripe (Cartes de crédit/débit)"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept credit/debit card payments via Stripe"
+msgstr "Accepter les paiements par carte via Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Mode"
+msgstr "Mode"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test"
+msgstr "Test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live"
+msgstr "Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Publishable Key"
+msgstr "Clé publique de test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Secret Key"
+msgstr "Clé secrète de test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret key is stored securely. Enter a new value to update."
+msgstr "La clé secrète est stockée en toute sécurité. Entrez une nouvelle valeur pour mettre à jour."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Publishable Key"
+msgstr "Clé publique Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret Key"
+msgstr "Clé secrète Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Stripe Credentials"
+msgstr "Tester les identifiants Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept payments via PayPal"
+msgstr "Accepter les paiements via PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Client ID"
+msgstr "ID Client Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Secret"
+msgstr "Secret Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret is stored securely. Enter a new value to update."
+msgstr "Le secret est stocké en sécurité. Entrez une nouvelle valeur."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Client ID"
+msgstr "ID Client Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret"
+msgstr "Secret Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Connection"
+msgstr "Tester la connexion"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test PayPal Credentials"
+msgstr "Tester les identifiants PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Pay On-site"
+msgstr "Payer sur place"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Allow guests to pay at the property"
+msgstr "Permettre aux clients de payer sur place"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions"
+msgstr "Instructions"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions shown to guests who select pay on-site. Supports multilingual format [:en]..[:ro].."
+msgstr "Instructions affichées aux clients qui choisissent de payer sur place. Supporte le format multilingue [:en]..[:fr].."
+
+#: modern-hotel-booking.php
+msgid "Modern Hotel Booking Error"
+msgstr "Erreur Modern Hotel Booking"
+
+#: modern-hotel-booking.php
+msgid "This plugin requires PHP 7.4 or higher. You are running PHP %s. Please upgrade your PHP version."
+msgstr "Ce plugin nécessite PHP 7.4 ou supérieur. Vous utilisez PHP %s."
+
+#: modern-hotel-booking.php
+msgid "An error occurred while loading the plugin. Please check the debug log for details."
+msgstr "Une erreur est survenue lors du chargement du plugin. Vérifiez les logs."
+
+#: scripts\i18n-tool.php
+msgid "String"
+msgstr "Chaîne"

@@ -1,0 +1,22 @@
+.wp-block-modern-hotel-booking-booking-form {
+    border: 2px dashed #007cba;
+    padding: 20px;
+    background: #f0f0f1;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.wp-block-modern-hotel-booking-booking-form .mhb-block-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    color: #007cba;
+}
+
+.wp-block-modern-hotel-booking-booking-form p {
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.wp-block-modern-hotel-booking-booking-form small {
+    color: #646970;
+}

@@ -1,0 +1,715 @@
+# Copyright (C) 2026 StartMySuccess
+# This file is distributed under the same license as the Modern Hotel Booking package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Hotel Booking 2.0.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: __;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;_nx_noop:1,2,3c;esc_attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;esc_html_x:1,2c\n"
+"X-Domain: modern-hotel-booking\n"
+
+#: I18n.php:labels
+msgid "Search Rooms"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Check-in"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Check-out"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "from %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "by %s"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Guests"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Children"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Child Ages"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Child %d Age"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Guest"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Available Rooms from %1$s to %2$s"
+msgstr ""
+
+#: I18n.php:labels
+msgid "No rooms available for these dates."
+msgstr ""
+
+#: I18n.php:labels
+msgid "per night"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "%d nights: %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Max guests: %d"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Book Now"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Complete Your Booking"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Total Price"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Full Name"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Email Address"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Phone Number"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Confirm Booking"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Pay & Confirm"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Booking Confirmed!"
+msgstr ""
+
+#: I18n.php:labels
+msgid "A confirmation email has been sent to you."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Booking Pending"
+msgstr ""
+
+#: I18n.php:labels
+msgid "We have received your request and will contact you shortly."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "You will pay %s upon arrival at the hotel."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment Method"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Pay on Arrival"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Special Requests / Notes"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Select your check-in date"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Now select your check-out date"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Stay Dates"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Select Dates"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Your Selection"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Continue to Booking"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Dates selected. Complete the form below."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Credit Card"
+msgstr ""
+
+#: I18n.php:labels
+msgid "PayPal"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Click below to confirm your booking request."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "%s Breakdown"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Total %s: %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Tax Registration: %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "(includes %s)"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Price includes %s (%s%%)"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "%s (%s%%) will be added at checkout"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Subtotal"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Room"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Extras"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Item"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Amount"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Booking Summary"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Accommodation"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "%1$s - Accommodation (%2$s%%)"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "%1$s - Extras (%2$s%%)"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "%1$s (%2$s%%)"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Dates are not available."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Room not found."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Secure Online Payment"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Security verification failed. Please refresh the page."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Too many attempts. Please wait a minute."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Leave this field empty"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Room Image"
+msgstr ""
+
+#: I18n.php:labels
+msgid "No room ID specified for calendar."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Booking Page URL not configured."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Loading..."
+msgstr ""
+
+#: I18n.php:labels
+msgid "to"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Processing..."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Please accept the privacy policy to continue."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Please use the PayPal button to complete your payment."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Enhance Your Stay"
+msgstr ""
+
+#: I18n.php:labels
+msgid "per person"
+msgstr ""
+
+#: I18n.php:labels
+msgid "per person / night"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Price includes %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Price plus %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Price includes %1$s (%2$s%%)"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Price plus %1$s (%2$s%%)"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Please select check-in and check-out dates."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Booked"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Pending"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Available"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Please select a Room ID in block settings."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Check-in date cannot be in the past."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Check-out date must be after check-in date."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Check-in date cannot be more than 2 years in the future."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Check-out date cannot be more than 2 years in the future."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Name is too long (maximum 100 characters)."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Phone number is too long (maximum 30 characters)."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Error: Maximum children for this room is %d."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Error calculating price. Please check dates."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Please fill in all required fields."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Please provide a valid email address."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "The field \"%s\" is required."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Spam detected."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Sorry, this room was just booked by someone else or is unavailable for these dates."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Error: Maximum adults for this room is %d."
+msgstr ""
+
+#: I18n.php:labels
+msgid "REST API access is a Pro feature."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Invalid nonce."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Too many requests. Please try again later."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment received successfully. A confirmation email has been sent."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Your booking is confirmed. Payment will be collected on arrival. A confirmation email has been sent."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment Failed"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Your payment could not be processed. Please try again or contact us for assistance."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Your reservation is under review and needs to be approved before becoming reserved."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment Status:"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Paid"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Amount Paid:"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Transaction ID:"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Failed"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Sorry, these dates are no longer available. Please select different dates."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Invalid booking details. Cannot calculate amount."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Stripe is not configured."
+msgstr ""
+
+#: I18n.php:labels
+msgid "PayPal is not configured. Please contact the site administrator."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Unable to connect to PayPal. Please try again later."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Failed to authenticate with PayPal. Please check your PayPal credentials."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Unable to create PayPal order. Please try again later."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Currency %s is not supported by your PayPal account."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "PayPal error: %s"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Missing order ID."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Unable to capture payment. Please try again later."
+msgstr ""
+
+#: I18n.php:labels
+msgid "This payment has already been processed."
+msgstr ""
+
+#: I18n.php:labels
+msgid "The payment was declined by PayPal. Please try a different payment method."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment Confirmation"
+msgstr ""
+
+#: I18n.php:labels
+msgid "privacy policy"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Terms & Conditions"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment Information"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment will be collected upon arrival at the property."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Amount Due"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment Date"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Failed to create PayPal order."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Security verification failed. Please refresh the page and try again."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "PayPal %s Client ID is not configured."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "PayPal %s Secret is not configured."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Stripe payment failed: Payment intent missing."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Stripe API error: %s"
+msgstr ""
+
+#: I18n.php:labels
+msgid "PayPal payment failed: Order ID missing."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Payment is required."
+msgstr ""
+
+#: I18n.php:labels
+msgid "API key has not been configured. Set it in Hotel Booking → Settings."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Invalid or missing API key."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Webhook signature required. Unauthorized requests are rejected."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Stripe webhook secret not configured. Please set it in Settings."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Invalid Stripe signature format."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Webhook timestamp outside acceptable range."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Invalid Stripe webhook signature."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Missing required PayPal webhook headers."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Valid customer name and email are required."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Invalid booking dates."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Failed to create the booking."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Permission denied."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Stripe %s Publishable Key is not configured."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Stripe %s Secret Key is not configured."
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Invalid publishable key format. Expected key starting with \"%1$s\" for %2$s mode."
+msgstr ""
+
+#: I18n.php:labels
+msgid "Credentials contain extra spaces"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Using Sandbox credentials in Live mode (or vice versa)"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Credentials have expired or been rotated"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "PayPal %s credentials are valid!"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Stripe %s credentials are valid!"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Connection failed: %s"
+msgstr ""
+
+#: I18n.php:labels
+#, php-format
+msgid "Authentication failed: %s"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Common causes:"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Confirmed"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Cancelled"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Onsite / Manual"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Processing"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Completed"
+msgstr ""
+
+#: I18n.php:labels
+msgid "Refunded"
+msgstr ""

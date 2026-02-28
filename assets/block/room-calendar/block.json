@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "modern-hotel-booking/room-calendar",
+    "version": "2.2.5.7",
+    "title": "Room Availability Calendar",
+    "category": "theme",
+    "icon": "calendar-alt",
+    "description": "Show an interactive availability calendar for a specific room.",
+    "keywords": [
+        "hotel",
+        "calendar",
+        "availability"
+    ],
+    "textdomain": "modern-hotel-booking",
+    "attributes": {
+        "roomId": {
+            "type": "number",
+            "default": 0
+        }
+    },
+    "supports": {
+        "html": false,
+        "anchor": true
+    },
+    "editorScript": "file:./block.js",
+    "editorStyle": "file:./block.css",
+    "viewScript": [
+        "mhb-flatpickr-js",
+        "mhb-calendar-js"
+    ],
+    "style": [
+        "mhb-flatpickr-css",
+        "mhb-calendar-style"
+    ]
+}

@@ -1,0 +1,1082 @@
+﻿/* Modern Hotel Booking Styles */
+
+:root {
+    --mhb-primary: #1a365d;
+    --mhb-secondary: #f2e2c4;
+    --mhb-accent: #d4af37;
+    --mhb-bg: #fdfbf7;
+    --mhb-text: #2d3748;
+    --mhb-border: #e2e8f0;
+    --mhb-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --mhb-glass: rgba(255, 255, 255, 0.8);
+}
+
+/* Container */
+.mhb-wrapper {
+    font-family: inherit !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    color: var(--mhb-text) !important;
+}
+
+/* Search Form */
+.mhb-search-container {
+    background: var(--mhb-glass);
+    backdrop-filter: blur(10px);
+    padding: 35px;
+    border-radius: 24px;
+    box-shadow: var(--mhb-shadow);
+    margin-bottom: 60px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.mhb-search-form {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    box-sizing: border-box;
+}
+
+.mhb-form-group-btn {
+    flex: 0 0 auto !important;
+}
+
+/* Flatpickr Customization */
+.flatpickr-calendar {
+    font-family: inherit !important;
+    border-radius: 16px !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    border: none !important;
+    padding: 10px;
+}
+
+.flatpickr-day.selected {
+    background: var(--mhb-primary) !important;
+    border-color: var(--mhb-primary) !important;
+}
+
+.mhb-form-group {
+    flex: 1;
+    min-width: 180px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.mhb-form-group label {
+    display: block;
+    margin-bottom: 14px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--mhb-primary);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.mhb-form-group input,
+.mhb-form-group select {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid var(--mhb-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: #fff;
+    transition: all 0.3s ease;
+    color: var(--mhb-text);
+    font-weight: 500;
+    box-sizing: border-box;
+    height: 54px !important;
+}
+
+.mhb-form-group input:focus,
+.mhb-form-group select:focus,
+.mhb-form-group textarea:focus {
+    border-color: var(--mhb-accent);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+    outline: none;
+}
+
+.mhb-form-group input[type="number"] {
+    min-width: 100px;
+    width: auto;
+}
+
+/* Range Date Picker Polish */
+.mhb-range-datepicker {
+    cursor: pointer !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%231a365d'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'%3E%3C/path%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 16px center !important;
+    background-size: 20px !important;
+    padding-right: 48px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    height: 54px !important;
+}
+
+.mhb-form-group textarea {
+    width: 100%;
+    padding: 18px;
+    border: 1.5px solid var(--mhb-border);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    background: #fff;
+    transition: all 0.3s ease;
+    color: var(--mhb-text);
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.mhb-btn {
+    background: var(--mhb-primary) !important;
+    color: #ffffff !important;
+    padding: 12px 36px !important;
+    border: none !important;
+    border-radius: 60px !important;
+    font-family: inherit !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    height: 54px !important;
+    box-shadow: 0 12px 24px rgba(26, 42, 108, 0.25) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+    text-decoration: none !important;
+    line-height: normal !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+}
+
+.mhb-btn:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 18px 36px rgba(26, 42, 108, 0.35) !important;
+    filter: brightness(1.15) !important;
+}
+
+/* Loading Spinner */
+.mhb-btn.loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.mhb-btn.loading::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: mhb-spin 0.8s linear infinite;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes mhb-spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Room Grid */
+.mhb-rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 40px;
+}
+
+.mhb-room-card {
+    background: var(--mhb-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 24px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: var(--mhb-shadow);
+}
+
+.mhb-room-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 25px 35px -5px rgba(0, 0, 0, 0.15), 0 12px 15px -5px rgba(0, 0, 0, 0.08);
+}
+
+.mhb-room-content {
+    padding: 35px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mhb-room-title {
+    font-size: 1.6rem;
+    margin: 0 0 15px 0;
+    color: var(--mhb-primary);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.mhb-room-price {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--mhb-text);
+    margin-bottom: 20px;
+}
+
+.mhb-room-price span {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    margin-left: 5px;
+}
+
+.mhb-room-details {
+    margin-bottom: 25px;
+    color: #4a5568;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+.mhb-room-card form {
+    width: 100%;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 20px !important;
+}
+
+.mhb-payment-options {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.mhb-payment-options label {
+    background: #fff;
+    border: 1.5px solid var(--mhb-border);
+    padding: 18px 25px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 700;
+    flex: 1;
+    min-width: 180px;
+}
+
+.mhb-payment-options input[type="radio"]:checked+span,
+.mhb-payment-options label:has(input:checked) {
+    border-color: var(--mhb-accent);
+    background: #fdfcf6;
+    color: var(--mhb-primary);
+    box-shadow: 0 0 0 3px var(--mhb-accent);
+}
+
+/* Booking Form */
+.mhb-booking-wrapper {
+    background: var(--mhb-glass) !important;
+    backdrop-filter: blur(12px) !important;
+    padding: 60px !important;
+    border-radius: 28px !important;
+    box-shadow: var(--mhb-shadow) !important;
+    max-width: 800px !important;
+    margin: 50px auto !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    display: block !important;
+}
+
+.mhb-booking-summary {
+    background: rgba(240, 247, 251, 0.6);
+    padding: 35px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+    border-left: 8px solid var(--mhb-primary);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.mhb-booking-summary h3 {
+    margin-top: 0;
+    color: var(--mhb-primary);
+    font-weight: 900;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+}
+
+.mhb-booking-summary div {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: #2d3748;
+}
+
+/* Booking Form Check-in/out Time Display */
+.mhb-booking-times {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--mhb-border);
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.mhb-booking-time-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mhb-booking-time-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #718096;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.mhb-booking-time-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.mhb-booking-time-value .mhb-time-info {
+    display: inline;
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+    font-style: italic;
+    margin-left: 6px;
+}
+
+/* Extras Section (Pro) */
+.mhb-extras-section {
+    background: rgba(240, 247, 251, 0.4);
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    border: 1.5px solid var(--mhb-border);
+}
+
+.mhb-extras-section h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--mhb-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mhb-extra-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--mhb-border);
+}
+
+.mhb-extra-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.mhb-extra-item label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.mhb-extra-item input[type="checkbox"],
+.mhb-extra-item input[type="number"] {
+    width: 24px;
+    height: 24px;
+    margin-right: 15px;
+}
+
+.mhb-extra-item input[type="number"] {
+    width: 70px !important;
+    height: 40px !important;
+}
+
+.mhb-extra-info {
+    flex: 1;
+    margin-left: 10px;
+}
+
+.mhb-extra-name {
+    font-weight: 700;
+    color: var(--mhb-primary);
+}
+
+.mhb-extra-desc {
+    font-size: 0.95rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+.mhb-extra-price {
+    font-weight: 800;
+    color: var(--mhb-text);
+    margin-left: 15px;
+}
+
+/* Payment Section (Pro) */
+.mhb-payment-section {
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 2px solid var(--mhb-border);
+}
+
+.mhb-payment-section h4 {
+    margin-bottom: 20px;
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: var(--mhb-primary);
+    text-transform: uppercase;
+}
+
+.mhb-payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mhb-payment-option-wrapper {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid var(--mhb-border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+}
+
+.mhb-payment-option-wrapper:hover {
+    border-color: var(--mhb-accent);
+}
+
+.mhb-payment-option-wrapper:has(input:checked) {
+    border-color: var(--mhb-accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mhb-payment-option {
+    display: flex;
+    align-items: center;
+    padding: 18px 25px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+}
+
+.mhb-payment-option:hover {
+    background: rgba(240, 247, 251, 0.5);
+}
+
+.mhb-payment-option input[type="radio"] {
+    width: 22px;
+    height: 22px;
+    margin-right: 18px;
+    cursor: pointer;
+}
+
+.mhb-payment-option .icon {
+    font-size: 1.6rem;
+    margin-right: 12px;
+}
+
+.mhb-payment-option .label-text {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--mhb-primary);
+}
+
+.mhb-payment-detail {
+    padding: 20px 25px;
+    background: rgba(240, 247, 251, 0.5);
+    border-top: 1px solid var(--mhb-border);
+}
+
+/* Stripe Card Element Styling */
+#mhb-stripe-card-element {
+    padding: 5px 0;
+}
+
+#mhb-card-element {
+    padding: 16px 18px;
+    border: 1.5px solid var(--mhb-border);
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.3s ease;
+    min-height: 54px;
+}
+
+#mhb-card-element:focus-within {
+    border-color: var(--mhb-accent);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+}
+
+#mhb-card-errors {
+    margin-top: 12px;
+    color: #ef4444;
+    font-size: 0.95rem;
+    font-weight: 500;
+    min-height: 20px;
+}
+
+/* Stripe Element Label */
+.mhb-payment-detail label,
+#mhb-stripe-card-element .stripe-label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--mhb-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* PayPal Button Container */
+#mhb-paypal-button-container {
+    min-height: 50px;
+    display: flex;
+    justify-content: center;
+}
+
+#mhb-paypal-button-container>div {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Payment Summary Box */
+.mhb-payment-summary {
+    background: linear-gradient(135deg, rgba(26, 54, 93, 0.05) 0%, rgba(212, 175, 55, 0.08) 100%);
+    border: 1.5px solid var(--mhb-border);
+    border-radius: 16px;
+    padding: 25px;
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+.mhb-payment-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--mhb-border);
+}
+
+.mhb-payment-summary-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.mhb-payment-summary-row.total {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--mhb-primary);
+    border-top: 2px solid var(--mhb-primary);
+    margin-top: 10px;
+    padding-top: 18px;
+}
+
+.mhb-payment-summary-label {
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.mhb-payment-summary-value {
+    font-weight: 700;
+    color: var(--mhb-text);
+}
+
+/* Submit Button Container */
+.mhb-submit-container {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 2px solid var(--mhb-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.mhb-submit-container .mhb-btn {
+    min-width: 280px;
+}
+
+.mhb-secure-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.mhb-secure-badge svg {
+    width: 18px;
+    height: 18px;
+    color: #10b981;
+}
+
+.mhb-onsite-info {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.mhb-onsite-info p {
+    margin: 0;
+    color: #166534;
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* GDPR Consent (Pro) */
+.mhb-gdpr-consent {
+    margin-top: 25px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 15px !important;
+}
+
+.mhb-gdpr-consent input[type="checkbox"] {
+    width: 22px !important;
+    height: 22px !important;
+    margin-top: 4px !important;
+    cursor: pointer !important;
+}
+
+.mhb-gdpr-consent label {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    color: #4a5568 !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+}
+
+.mhb-gdpr-consent label a {
+    color: var(--mhb-primary) !important;
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+}
+
+/* Child Ages Layout */
+.mhb-child-age-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--mhb-border);
+}
+
+.mhb-child-age-group label {
+    margin-bottom: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.mhb-child-age-group input {
+    width: 80px !important;
+    text-align: center;
+}
+
+.mhb-success-message {
+    text-align: center;
+    padding: 40px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--mhb-shadow);
+    border-top: 5px solid #28a745;
+}
+
+.mhb-success-message h3 {
+    color: #28a745;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+/* Pending booking - Orange/Yellow styling */
+.mhb-success-message.mhb-pending-booking {
+    border-top: 5px solid #dd6b20;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+}
+
+.mhb-success-message.mhb-pending-booking h3 {
+    color: #e65100;
+}
+
+.mhb-success-message.mhb-pending-booking p {
+    color: #bf360c;
+}
+
+.mhb-success-message p {
+    font-size: 1.1rem;
+    color: #4a5568;
+    line-height: 1.6;
+}
+
+.mhb-payment-received {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--mhb-border);
+}
+
+.mhb-badge-success {
+    display: inline-block;
+    background: #d1fae5;
+    color: #065f46;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mhb-badge-pending {
+    display: inline-block;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mhb-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+/* Inline Error Notifications (Payment/Booking) */
+.mhb-inline-errors {
+    margin-bottom: 20px;
+}
+
+.mhb-error-notification {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
+    color: #991b1b;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1.5px solid #fecaca;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    animation: mhb-slide-in 0.3s ease-out;
+}
+
+.mhb-error-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.mhb-error-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #991b1b;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.mhb-error-close:hover {
+    opacity: 1;
+}
+
+@keyframes mhb-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mhb-badge-failed {
+    display: inline-block;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mhb-search-container {
+        padding: 24px;
+        margin-bottom: 40px;
+    }
+
+    .mhb-search-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .mhb-form-group {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .mhb-form-group-btn {
+        margin-top: 10px;
+    }
+
+    .mhb-form-group label {
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+
+    .mhb-form-group input,
+    .mhb-form-group select {
+        padding: 12px 16px;
+        font-size: 1rem;
+        height: 50px !important;
+    }
+
+    .mhb-booking-wrapper {
+        padding: 25px !important;
+        margin: 20px 10px !important;
+    }
+
+    .mhb-booking-summary {
+        padding: 20px;
+    }
+
+    .mhb-rooms-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .mhb-room-content {
+        padding: 25px;
+    }
+
+    .mhb-room-title {
+        font-size: 1.4rem;
+    }
+
+    .mhb-room-price {
+        font-size: 1.5rem;
+    }
+
+    .mhb-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 12px 28px !important;
+        height: 50px !important;
+        font-size: 0.9rem !important;
+        letter-spacing: 1.5px !important;
+        border-radius: 50px !important;
+    }
+
+    /* Date Range Picker Responsive */
+    .mhb-range-datepicker {
+        padding-right: 44px !important;
+        background-position: right 14px center !important;
+        background-size: 18px !important;
+        height: 50px !important;
+    }
+
+    .mhb-form-group input.mhb-range-datepicker,
+    .mhb-form-group .mhb-range-datepicker {
+        font-size: 0.95rem !important;
+        padding: 12px 44px 12px 16px !important;
+        height: 50px !important;
+    }
+}
+
+/* Extra Small Mobile Devices (480px and below) */
+@media (max-width: 480px) {
+    .mhb-search-container {
+        padding: 16px 12px;
+        border-radius: 16px;
+    }
+
+    .mhb-search-form {
+        gap: 12px;
+    }
+
+    .mhb-form-group label {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+
+    .mhb-form-group input,
+    .mhb-form-group select {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+
+    /* Search Button - Compact on small screens */
+    .mhb-btn {
+        padding: 12px 20px !important;
+        min-height: 44px !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 1px !important;
+        border-radius: 40px !important;
+    }
+
+    /* Date Range Picker - Compact on small screens */
+    .mhb-range-datepicker {
+        padding-right: 40px !important;
+        background-position: right 12px center !important;
+        background-size: 16px !important;
+        min-height: 44px !important;
+    }
+
+    .mhb-form-group input.mhb-range-datepicker,
+    .mhb-form-group .mhb-range-datepicker {
+        font-size: 0.85rem !important;
+        padding: 12px 40px 12px 14px !important;
+        min-height: 44px !important;
+    }
+}
+
+/* Tax Breakdown Styling */
+.mhb-tax-breakdown {
+    background: rgba(240, 247, 251, 0.4);
+    padding: 25px;
+    border-radius: 16px;
+    margin-top: 25px;
+    border: 1.5px solid var(--mhb-border);
+}
+
+.mhb-tax-breakdown h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--mhb-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mhb-tax-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mhb-tax-table th {
+    text-align: left;
+    padding: 10px 0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #718096;
+    border-bottom: 1.5px solid var(--mhb-border);
+    font-weight: 700;
+}
+
+.mhb-tax-table td {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 1rem;
+    color: var(--mhb-text);
+}
+
+.mhb-tax-total {
+    font-weight: 700;
+}
+
+.mhb-tax-grand-total td {
+    border-top: 2px solid var(--mhb-primary);
+    padding-top: 15px;
+    font-size: 1.2rem;
+    color: var(--mhb-primary);
+}
+
+.mhb-tax-registration {
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: #718096;
+    font-style: italic;
+}
+
+/* Widget Styles */
+.mhb-widget-search {
+    background: var(--mhb-glass);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: var(--mhb-shadow);
+}
+
+.mhb-widget-field {
+    margin-bottom: 15px;
+}
+
+.mhb-widget-field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--mhb-primary);
+}
+
+.mhb-widget-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--mhb-border);
+    border-radius: 8px;
+    background: white;
+    font-size: 0.9rem;
+}
+
+.mhb-widget-btn {
+    width: 100% !important;
+    margin-top: 10px !important;
+    padding: 12px !important;
+    min-height: 48px !important;
+    font-size: 0.9rem !important;
+}

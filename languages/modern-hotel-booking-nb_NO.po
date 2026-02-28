@@ -1,0 +1,3927 @@
+# Copyright (C) 2026 Modern Hotel Booking
+# This file is distributed under the same license as the Modern Hotel Booking plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Hotel Booking 2.2.4.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
+"Last-Translator: \n"
+"Language-Team: Norwegian (Bokmål) <nb_NO@wordpress.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-21T10:32:00+00:00\n"
+"PO-Revision-Date: 2026-02-27 19:30+0100\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: modern-hotel-booking\n"
+"Language: nb_NO\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form"
+msgstr "Hotellbookingskjema"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form Preview"
+msgstr "Forhåndsvisning av bookingskjema"
+
+#: assets\block\booking-form\block.js
+msgid "Booking Settings"
+msgstr "Bookinginnstillinger"
+
+#: assets\block\booking-form\block.js
+msgid "Room ID (optional)"
+msgstr "Rom-ID (valgfritt)"
+
+#: assets\block\booking-form\block.js
+msgid "Leave as 0 to show the general search form."
+msgstr "La stå som 0 for å vise det generelle søkeskjemaet."
+
+#: assets\block\room-calendar\block.js
+msgid "Room Availability Calendar"
+msgstr "Tilgjengelighetskalender for rom"
+
+#: assets\block\room-calendar\block.js
+msgid "Calendar Settings"
+msgstr "Kalenderinnstillinger"
+
+#: assets\block\room-calendar\block.js
+#: includes\Core\Privacy.php
+msgid "Room ID"
+msgstr "Rom-ID"
+
+#: assets\block\room-calendar\block.js
+msgid "Enter the ID of the room to display the calendar for."
+msgstr "Skriv inn ID-en til rommet du vil vise kalenderen for."
+
+#: assets\block\room-calendar\block.js
+msgid "Room ID: "
+msgstr "Rom-ID: "
+
+#: assets\block\room-calendar\block.js
+msgid "Please select a Room ID in the sidebar."
+msgstr "Vennligst velg en Rom-ID i sidefeltet."
+
+#: assets\block\room-calendar\block.js
+msgid "(Preview only - real calendar shows on frontend)"
+msgstr "(Kun forhåndsvisning - ekte kalender vises på nettsiden)"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking Overview"
+msgstr "Booking-oversikt"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Total"
+msgstr "Totalt"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Pending"
+msgstr "Ventende"
+
+#: includes\Admin\Menu.php
+msgid "Today"
+msgstr "I dag"
+
+#: includes\Admin\Menu.php
+msgid "Manage Bookings"
+msgstr "Administrer bookinger"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking"
+msgstr "Hotellbooking"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Bookings"
+msgstr "Bookinger"
+
+#: includes\Admin\Menu.php
+msgid "Room Types"
+msgstr "Romtyper"
+
+#: includes\Admin\Menu.php
+msgid "Rooms"
+msgstr "Rom"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Rules"
+msgstr "Prisregler"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Plugin.php
+msgid "Settings"
+msgstr "Innstillinger"
+
+#: includes\Admin\Menu.php
+msgid "PRO Features"
+msgstr "PRO-funksjoner"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Extras"
+msgstr "Ekstra"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "iCal Sync"
+msgstr "iCal Synkronisering"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Payments"
+msgstr "Betalinger"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Webhooks"
+msgstr "Webhooks"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Analytics"
+msgstr "Analyse"
+
+#: includes\Admin\Menu.php
+msgid "Appearance"
+msgstr "Utseende"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Advanced Pricing"
+msgstr "Avansert prising"
+
+#: includes\Admin\Menu.php
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Du har ikke tilstrekkelige rettigheter til å se denne siden."
+
+#: includes\Admin\Menu.php
+msgid "Hotel Control Center"
+msgstr "Hotellkontrollsenter"
+
+#: includes\Admin\Menu.php
+msgid "Unlock Premium Hospitality Features"
+msgstr "Lås opp premium hotellfunksjoner"
+
+#: includes\Admin\Menu.php
+msgid "Power up with iCal Sync, Stripe/PayPal integration, Advanced Pricing rules, and Deep Analytics."
+msgstr "Oppgrader med iCal-synk, Stripe/PayPal-integrasjon, avanserte prisregler og dyp analyse."
+
+#: includes\Admin\Menu.php
+msgid "Upgrade to Pro"
+msgstr "Oppgrader til Pro"
+
+#: includes\Admin\Menu.php
+msgid "Stay Revenue"
+msgstr "Inntekt fra opphold"
+
+#: includes\Admin\Menu.php
+msgid "Target Pipeline"
+msgstr "Målsetning"
+
+#: includes\Admin\Menu.php
+msgid "Total Volume"
+msgstr "Totalvolum"
+
+#: includes\Admin\Menu.php
+msgid "Attention Needed"
+msgstr "Krever oppmerksomhet"
+
+#: includes\Admin\Menu.php
+msgid "Today's Arrivals"
+msgstr "Dagens ankomster"
+
+#: includes\Admin\Menu.php
+msgid "No arrivals scheduled for today."
+msgstr "Ingen ankomster planlagt i dag."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+#: includes\Core\ICal.php
+msgid "Guest"
+msgstr "Gjest"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+#: includes\Pro\ICalManager.php
+msgid "Room"
+msgstr "Rom"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Recent Bookings"
+msgstr "Siste bookinger"
+
+#: includes\Admin\Menu.php
+msgid "View All"
+msgstr "Se alle"
+
+#: includes\Admin\Menu.php
+msgid "Date"
+msgstr "Dato"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\Privacy.php
+#: includes\Pro\Analytics.php
+msgid "Status"
+msgstr "Status"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Quick Actions"
+msgstr "Hurtighandlinger"
+
+#: includes\Admin\Menu.php
+msgid "Create New Booking"
+msgstr "Opprett ny booking"
+
+#: includes\Admin\Menu.php
+msgid "Manage Inventory"
+msgstr "Administrer inventar"
+
+#: includes\Admin\Menu.php
+msgid "Global Settings"
+msgstr "Globale innstillinger"
+
+#: includes\Admin\Menu.php
+msgid "System Status"
+msgstr "Systemstatus"
+
+#: includes\Admin\Menu.php
+msgid "License Status:"
+msgstr "Lisensstatus:"
+
+#: includes\Admin\Menu.php
+msgid "PRO Active"
+msgstr "PRO Aktiv"
+
+#: includes\Admin\Menu.php
+msgid "Free Version"
+msgstr "Gratisversjon"
+
+#: includes\Admin\Menu.php
+msgid "Plugin Version:"
+msgstr "Programtilleggsversjon:"
+
+#: includes\Admin\Menu.php
+msgid "Database Status:"
+msgstr "Databasestatus:"
+
+#: includes\Admin\Menu.php
+msgid "Healthy"
+msgstr "Sunn"
+
+#: includes\Admin\Menu.php
+msgid "Need Assistance?"
+msgstr "Trenger du hjelp?"
+
+#: includes\Admin\Menu.php
+msgid "Explore our documentation or contact the support team for property management advice."
+msgstr "Utforsk dokumentasjonen vår eller kontakt supportteamet for råd om eiendomsforvaltning."
+
+#: includes\Admin\Menu.php
+msgid "Open Self-Service Portal →"
+msgstr "Åpne selvbetjeningsportal →"
+
+#: includes\Admin\Menu.php
+msgid "Security check failed."
+msgstr "Sikkerhetskontroll feilet."
+
+#: includes\Admin\Menu.php
+msgid "Booking Confirmed & Email Sent!"
+msgstr "Booking bekreftet og e-post sendt!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Cancelled."
+msgstr "Booking kansellert."
+
+#: includes\Admin\Menu.php
+msgid "Booking Deleted."
+msgstr "Booking slettet."
+
+#: includes\Admin\Menu.php
+msgid "Manual booking added by admin."
+msgstr "Manuell booking lagt til av admin."
+
+#: includes\Admin\Menu.php
+msgid "Manual Booking Added!"
+msgstr "Manuell booking lagt til!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Updated!"
+msgstr "Booking oppdatert!"
+
+#: includes\Admin\Menu.php
+msgid "Add New Booking"
+msgstr "Legg til ny booking"
+
+#: includes\Admin\Menu.php
+msgid "Filtering by status: %s"
+msgstr "Filtrerer etter status: %s"
+
+#: includes\Admin\Menu.php
+msgid "Clear Filter"
+msgstr "Tøm filter"
+
+#: includes\Admin\Menu.php
+msgid "Add Manual Booking"
+msgstr "Legg til manuell booking"
+
+#: includes\Admin\Menu.php
+msgid "Customer Details"
+msgstr "Kundedetaljer"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Customer Name"
+msgstr "Kundenavn"
+
+#: includes\Admin\Menu.php
+msgid "Email"
+msgstr "E-post"
+
+#: includes\Admin\Menu.php
+msgid "Phone"
+msgstr "Telefon"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Guests"
+msgstr "Gjester"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Children"
+msgstr "Barn"
+
+#: includes\Admin\Menu.php
+msgid "Child Ages"
+msgstr "Barnas alder"
+
+#: includes\Admin\Menu.php
+msgid "Extra Guest Information"
+msgstr "Ekstra gjesteinformasjon"
+
+#: includes\Admin\Menu.php
+msgid "Room & Dates"
+msgstr "Rom og datoer"
+
+#: includes\Admin\Menu.php
+msgid "-- Select Room --"
+msgstr "-- Velg rom --"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-in"
+msgstr "Sjekk inn"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-out"
+msgstr "Sjekk ut"
+
+#: includes\Admin\Menu.php
+msgid "Extras & Discounts"
+msgstr "Ekstra og rabatter"
+
+#: includes\Admin\Menu.php
+msgid "No extras configured."
+msgstr "Ingen ekstravalg konfigurert."
+
+#: includes\Admin\Menu.php
+msgid "Discount Amount"
+msgstr "Rabattbeløp"
+
+#: includes\Admin\Menu.php
+msgid "Payment Info"
+msgstr "Betalingsinfo"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+#: includes\Core\Tax.php
+msgid "Total Price"
+msgstr "Totalpris"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Amount"
+msgstr "Depositumsbeløp"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Received"
+msgstr "Depositum mottatt"
+
+#: includes\Admin\Menu.php
+msgid "Mark as received"
+msgstr "Merk som mottatt"
+
+#: includes\Admin\Menu.php
+msgid "Payment Method"
+msgstr "Betalingsmetode"
+
+#: includes\Admin\Menu.php
+msgid "Onsite / Manual"
+msgstr "På stedet / Manuell"
+
+#: includes\Admin\Menu.php
+msgid "Stripe"
+msgstr "Stripe"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\PaymentGateways.php
+msgid "PayPal"
+msgstr "PayPal"
+
+#: includes\Admin\Menu.php
+msgid "Payment Received"
+msgstr "Betaling mottatt"
+
+#: includes\Admin\Menu.php
+msgid "Mark full payment as received"
+msgstr "Merk full betaling som mottatt"
+
+#: includes\Admin\Menu.php
+msgid "Amount Outstanding"
+msgstr "Utestående beløp"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Booking Management"
+msgstr "Bookingadministrasjon"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Confirmed"
+msgstr "Bekreftet"
+
+#: includes\Admin\Menu.php
+msgid "Language"
+msgstr "Språk"
+
+#: includes\Admin\Menu.php
+msgid "Admin Notes"
+msgstr "Admin-notater"
+
+#: includes\Admin\Menu.php
+msgid "Add Booking"
+msgstr "Legg til booking"
+
+#: includes\Admin\Menu.php
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: includes\Admin\Menu.php
+msgid "Edit Booking #%d"
+msgstr "Rediger booking #%d"
+
+#: includes\Admin\Menu.php
+msgid "Child %d:"
+msgstr "Barn %d:"
+
+#: includes\Admin\Menu.php
+msgid "Payment Status"
+msgstr "Betalingsstatus"
+
+#: includes\Admin\Menu.php
+msgid "Processing"
+msgstr "Behandler"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Completed"
+msgstr "Fullført"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Failed"
+msgstr "Feilet"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Refunded"
+msgstr "Refundert"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID"
+msgstr "Transaksjons-ID"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID from payment gateway (read-only)."
+msgstr "Transaksjons-ID fra betalingsgateway (skrivebeskyttet)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Amount"
+msgstr "Betalingsbeløp"
+
+#: includes\Admin\Menu.php
+msgid "Actual amount paid (may differ from total)."
+msgstr "Faktisk betalt beløp (kan avvike fra totalen)."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Payment Date"
+msgstr "Betalingsdato"
+
+#: includes\Admin\Menu.php
+msgid "Date/time payment was completed (read-only)."
+msgstr "Dato/tid betalingen ble fullført (skrivebeskyttet)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Error"
+msgstr "Betalingsfeil"
+
+#: includes\Admin\Menu.php
+msgid "Error message from failed payment."
+msgstr "Feilmelding fra mislykket betaling."
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "%s Breakdown"
+msgstr "%s Fordeling"
+
+#: includes\Admin\Menu.php
+msgid "Cancelled"
+msgstr "Kansellert"
+
+#: includes\Admin\Menu.php
+msgid "Update Booking"
+msgstr "Oppdater booking"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this booking? This action cannot be undone."
+msgstr "Er du sikker på at du vil slette denne bookingen? Denne handlingen kan ikke angres."
+
+#: includes\Admin\Menu.php
+msgid "Delete Booking"
+msgstr "Slett booking"
+
+#: includes\Admin\Menu.php
+msgid "ID"
+msgstr "ID"
+
+#: includes\Admin\Menu.php
+msgid "Dates"
+msgstr "Datoer"
+
+#: includes\Admin\Menu.php
+msgid "Payment"
+msgstr "Betaling"
+
+#: includes\Admin\Menu.php
+msgid "Lang"
+msgstr "Språk"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Actions"
+msgstr "Handlinger"
+
+#: includes\Admin\Menu.php
+msgid "Paid in full"
+msgstr "Fullt betalt"
+
+#: includes\Admin\Menu.php
+msgid "Outstanding: %s"
+msgstr "Utestående: %s"
+
+#: includes\Admin\Menu.php
+msgid "Edit"
+msgstr "Rediger"
+
+#: includes\Admin\Menu.php
+msgid "Confirm"
+msgstr "Bekreft"
+
+#: includes\Admin\Menu.php
+msgid "Delete this booking?"
+msgstr "Slette denne bookingen?"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Delete"
+msgstr "Slett"
+
+#: includes\Admin\Menu.php
+msgid "No bookings found."
+msgstr "Ingen bookinger funnet."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Deleted."
+msgstr "Romtype slettet."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Updated!"
+msgstr "Romtype oppdatert!"
+
+#: includes\Admin\Menu.php
+msgid "Room Type Added!"
+msgstr "Romtype lagt til!"
+
+#: includes\Admin\Menu.php
+msgid "Manage Room Types"
+msgstr "Administrer romtyper"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room Type"
+msgstr "Rediger romtype"
+
+#: includes\Admin\Menu.php
+msgid "Add New Type"
+msgstr "Legg til ny type"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Name"
+msgstr "Navn"
+
+#: includes\Admin\Menu.php
+msgid "Description"
+msgstr "Beskrivelse"
+
+#: includes\Admin\Menu.php
+msgid "Base Price"
+msgstr "Grunnpris"
+
+#: includes\Admin\Menu.php
+msgid "Max Adults"
+msgstr "Maks voksne"
+
+#: includes\Admin\Menu.php
+msgid "Max Children"
+msgstr "Maks barn"
+
+#: includes\Admin\Menu.php
+msgid "Child Free Age Limit"
+msgstr "Aldersgrense for gratis barn"
+
+#: includes\Admin\Menu.php
+msgid "Children at or under this age stay free."
+msgstr "Barn på eller under denne alderen bor gratis."
+
+#: includes\Admin\Menu.php
+msgid "Child Rate (per night)"
+msgstr "Barnepris (per natt)"
+
+#: includes\Admin\Menu.php
+msgid "Image URL"
+msgstr "Bilde-URL"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Amenities"
+msgstr "Fasiliteter"
+
+#: includes\Admin\Menu.php
+msgid "Update Room Type"
+msgstr "Oppdater romtype"
+
+#: includes\Admin\Menu.php
+msgid "Add Room Type"
+msgstr "Legg til romtype"
+
+#: includes\Admin\Menu.php
+msgid "Image"
+msgstr "Bilde"
+
+#: includes\Admin\Menu.php
+msgid "Price"
+msgstr "Pris"
+
+#: includes\Admin\Menu.php
+msgid "No Image"
+msgstr "Ingen bilde"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "None"
+msgstr "Ingen"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this room type? This may affect existing rooms."
+msgstr "Er du sikker på at du vil slette denne romtypen? Dette kan påvirke eksisterende rom."
+
+#: includes\Admin\Menu.php
+msgid "Room Deleted."
+msgstr "Rom slettet."
+
+#: includes\Admin\Menu.php
+msgid "Manage Rooms"
+msgstr "Administrer rom"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "iCal Synchronization"
+msgstr "iCal Synkronisering"
+
+#: includes\Admin\Menu.php
+msgid "Back to Rooms"
+msgstr "Tilbake til rom"
+
+#: includes\Admin\Menu.php
+msgid "Feed Added!"
+msgstr "Feed lagt til!"
+
+#: includes\Admin\Menu.php
+msgid "Sync Completed."
+msgstr "Synkronisering fullført."
+
+#: includes\Admin\Menu.php
+msgid "Room Updated!"
+msgstr "Rom oppdatert!"
+
+#: includes\Admin\Menu.php
+msgid "Room Added!"
+msgstr "Rom lagt til!"
+
+#: includes\Admin\Menu.php
+msgid "iCal Sync — Room %s"
+msgstr "iCal Synk — Rom %s"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Export URL"
+msgstr "Eksport-URL"
+
+#: includes\Admin\Menu.php
+msgid "Import Feeds"
+msgstr "Importer feeds"
+
+#: includes\Admin\Menu.php
+msgid "URL"
+msgstr "URL"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Last Synced"
+msgstr "Sist synkronisert"
+
+#: includes\Admin\Menu.php
+msgid "Never"
+msgstr "Aldri"
+
+#: includes\Admin\Menu.php
+msgid "Delete?"
+msgstr "Slett?"
+
+#: includes\Admin\Menu.php
+msgid "Add New Feed"
+msgstr "Legg til ny feed"
+
+#: includes\Admin\Menu.php
+msgid "Name (e.g. Airbnb)"
+msgstr "Navn (f.eks. Airbnb)"
+
+#: includes\Admin\Menu.php
+msgid "iCal URL"
+msgstr "iCal URL"
+
+#: includes\Admin\Menu.php
+msgid "Add Feed"
+msgstr "Legg til feed"
+
+#: includes\Admin\Menu.php
+msgid "Sync All Now"
+msgstr "Synkroniser alle nå"
+
+#: includes\Admin\Menu.php
+msgid "Back"
+msgstr "Tilbake"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room"
+msgstr "Rediger rom"
+
+#: includes\Admin\Menu.php
+msgid "Add Room"
+msgstr "Legg til rom"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Type"
+msgstr "Type"
+
+#: includes\Admin\Menu.php
+msgid "Number/Name"
+msgstr "Nummer/Navn"
+
+#: includes\Admin\Menu.php
+msgid "Custom Price"
+msgstr "Egendefinert pris"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Available"
+msgstr "Tilgjengelig"
+
+#: includes\Admin\Menu.php
+msgid "Maintenance"
+msgstr "Vedlikehold"
+
+#: includes\Admin\Menu.php
+msgid "Update Room"
+msgstr "Oppdater rom"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Number"
+msgstr "Nummer"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\License.php
+msgid "Pro Feature"
+msgstr "Pro-funksjon"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "to"
+msgstr "til"
+
+#: includes\Admin\Menu.php
+msgid "Modifier"
+msgstr "Modifikator"
+
+#: includes\Admin\Menu.php
+msgid "Fixed"
+msgstr "Fast"
+
+#: includes\Admin\Menu.php
+msgid "All"
+msgstr "Alle"
+
+#: includes\Admin\Menu.php
+msgid "Add Rule"
+msgstr "Legg til regel"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Action"
+msgstr "Handling"
+
+#: includes\Admin\Menu.php
+msgid "Delete this pricing rule?"
+msgstr "Slett denne prisregelen?"
+
+#: includes\Admin\Menu.php
+msgid "Extras Saved!"
+msgstr "Ekstravalg lagret!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Extras & Add-ons"
+msgstr "Bookingekstra og tillegg"
+
+#: includes\Admin\Menu.php
+msgid "+ Add New Extra"
+msgstr "+ Legg til nytt ekstravalg"
+
+#: includes\Admin\Menu.php
+msgid "Save Changes"
+msgstr "Lagre endringer"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Model"
+msgstr "Prismodell"
+
+#: includes\Admin\Menu.php
+msgid "Fixed Price (Once)"
+msgstr "Fast pris (én gang)"
+
+#: includes\Admin\Menu.php
+msgid "Per Person"
+msgstr "Per person"
+
+#: includes\Admin\Menu.php
+msgid "Per Night"
+msgstr "Per natt"
+
+#: includes\Admin\Menu.php
+msgid "Per Person / Per Night"
+msgstr "Per person / per natt"
+
+#: includes\Admin\Menu.php
+msgid "Control Type"
+msgstr "Kontrolltype"
+
+#: includes\Admin\Menu.php
+msgid "Checkbox (Yes/No)"
+msgstr "Avkrysningsboks (Ja/Nei)"
+
+#: includes\Admin\Menu.php
+msgid "Quantity Input"
+msgstr "Antall-inndata"
+
+#: includes\Admin\Settings.php
+msgid "Please enter a license key."
+msgstr "Vennligst skriv inn en lisensnøkkel."
+
+#: includes\Admin\Settings.php
+msgid "Connection error."
+msgstr "Tilkoblingsfeil."
+
+#: includes\Admin\Settings.php
+msgid "Are you sure?"
+msgstr "Er du sikker?"
+
+#: includes\Admin\Settings.php
+msgid "Are you sure you want to remove this field?"
+msgstr "Er du sikker på at du vil fjerne dette feltet?"
+
+#: includes\Admin\Settings.php
+msgid "No holidays added yet."
+msgstr "Ingen helligdager lagt til ennå."
+
+#: includes\Admin\Settings.php
+msgid "General Settings"
+msgstr "Generelle innstillinger"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-in Time"
+msgstr "Standard innsjekkingstid"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-out Time"
+msgstr "Standard utsjekkingstid"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Notification Email"
+msgstr "E-postvarsling"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page"
+msgstr "Bookingside"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page URL (Override)"
+msgstr "Bookingside URL (Overstyr)"
+
+#: includes\Admin\Settings.php
+msgid "Same-day Turnover"
+msgstr "Sammedags bytte"
+
+#: includes\Admin\Settings.php
+msgid "If enabled, rooms cannot be checked-in on the same day someone else checks out."
+msgstr "Hvis aktivert, kan rom ikke sjekkes inn samme dag som noen andre sjekker ut."
+
+#: includes\Admin\Settings.php
+msgid "Enable Children Management"
+msgstr "Aktiver barnehåndtering"
+
+#: includes\Admin\Settings.php
+msgid "Show children selector in search and booking forms."
+msgstr "Vis barnvelger i søke- og bookingskjemaer."
+
+#: includes\Admin\Settings.php
+msgid "Custom Guest Fields"
+msgstr "Egendefinerte gjestefelter"
+
+#: includes\Admin\Settings.php
+msgid "Currency Settings"
+msgstr "Valutainnstillinger"
+
+#: includes\Admin\Settings.php
+msgid "Currency Code (e.g. USD)"
+msgstr "Valutakode (f.eks. NOK)"
+
+#: includes\Admin\Settings.php
+msgid "Currency Symbol (e.g. $)"
+msgstr "Valutasymbol (f.eks. kr)"
+
+#: includes\Admin\Settings.php
+msgid "Symbol Position"
+msgstr "Symbolposisjon"
+
+#: includes\Admin\Settings.php
+msgid "Before Amount ($100)"
+msgstr "Før beløp (kr 100)"
+
+#: includes\Admin\Settings.php
+msgid "After Amount (100$)"
+msgstr "Etter beløp (100 kr)"
+
+#: includes\Admin\Settings.php
+msgid "— Select a Page —"
+msgstr "— Velg en side —"
+
+#: includes\Admin\Settings.php
+msgid "Select the page where you have placed the [modern_hotel_booking] shortcode."
+msgstr "Velg siden der du har plassert kortkoden [modern_hotel_booking]."
+
+#: includes\Admin\Settings.php
+msgid "Field ID (slug)"
+msgstr "Felt-ID (slug)"
+
+#: includes\Admin\Settings.php
+msgid "Text"
+msgstr "Tekst"
+
+#: includes\Admin\Settings.php
+msgid "Textarea"
+msgstr "Tekstområde"
+
+#: includes\Admin\Settings.php
+msgid "Label (Multilingual)"
+msgstr "Etikett (Flerspråklig)"
+
+#: includes\Admin\Settings.php
+msgid "Required Field"
+msgstr "Obligatorisk felt"
+
+#: includes\Admin\Settings.php
+msgid "+ Add New Guest Field"
+msgstr "+ Legg til nytt gjestefelt"
+
+#: includes\Admin\Settings.php
+msgid "Define extra fields for your booking form. Labels support multilingual tags."
+msgstr "Definer ekstra felt for bookingskjemaet ditt. Etiketter støtter flerspråklige koder."
+
+#: includes\Admin\Settings.php
+msgid "Hotel Configuration"
+msgstr "Hotellkonfigurasjon"
+
+#: includes\Admin\Settings.php
+msgid "License"
+msgstr "Lisens"
+
+#: includes\Admin\Settings.php
+msgid "General"
+msgstr "Generelt"
+
+#: includes\Admin\Settings.php
+msgid "Email Templates"
+msgstr "E-postmaler"
+
+#: includes\Admin\Settings.php
+msgid "Frontend Labels"
+msgstr "Frontend-etiketter"
+
+#: includes\Admin\Settings.php
+msgid "GDPR & Privacy"
+msgstr "GDPR & Personvern"
+
+#: includes\Admin\Settings.php
+msgid "Tax Settings"
+msgstr "Skatteinnstillinger"
+
+#: includes\Admin\Settings.php
+msgid "Performance"
+msgstr "Ytelse"
+
+#: includes\Admin\Settings.php
+msgid "License Management"
+msgstr "Lisensadministrasjon"
+
+#: includes\Admin\Settings.php
+msgid "Enter your license key to unlock Pro features and receive updates."
+msgstr "Skriv inn lisensnøkkelen for å låse opp Pro-funksjoner og motta oppdateringer."
+
+#: includes\Admin\Settings.php
+msgid "License Key"
+msgstr "Lisensnøkkel"
+
+#: includes\Admin\Settings.php
+msgid "Active"
+msgstr "Aktiv"
+
+#: includes\Admin\Settings.php
+msgid "Expires: %s"
+msgstr "Utløper: %s"
+
+#: includes\Admin\Settings.php
+msgid "Deactivate License"
+msgstr "Deaktiver lisens"
+
+#: includes\Admin\Settings.php
+msgid "Activate License"
+msgstr "Aktiver lisens"
+
+#: includes\Admin\Settings.php
+msgid "Performance Settings"
+msgstr "Ytelsesinnstillinger"
+
+#: includes\Admin\Settings.php
+msgid "Configure caching and performance options for faster page loads."
+msgstr "Konfigurer hurtigbuffer og ytelsesalternativer for raskere sideinnlasting."
+
+#: includes\Admin\Settings.php
+msgid "Enable Caching"
+msgstr "Aktiver hurtigbufring"
+
+#: includes\Admin\Settings.php
+msgid "Enable caching for room data and pricing"
+msgstr "Aktiver hurtigbufring for romdata og priser"
+
+#: includes\Admin\Settings.php
+msgid "Cache room type data and pricing rules for faster calculations. Recommended for most sites."
+msgstr "Hurtigbuffre romtypedata og prisregler for raskere beregninger. Anbefalt for de fleste nettsteder."
+
+#: includes\Admin\Settings.php
+msgid "Object Cache Status"
+msgstr "Objektbufferstatus"
+
+#: includes\Admin\Settings.php
+msgid "A persistent object cache (Redis, Memcached, etc.) is detected. Cache data will persist across requests."
+msgstr "En vedvarende objektbuffer (Redis, Memcached, etc.) er oppdaget."
+
+#: includes\Admin\Settings.php
+msgid "Using Database Transients"
+msgstr "Bruker database-transients"
+
+#: includes\Admin\Settings.php
+msgid "No persistent object cache detected. Consider installing Redis or Memcached for better performance."
+msgstr "Ingen vedvarende objektbuffer oppdaget. Vurder å installere Redis eller Memcached for bedre ytelse."
+
+#: includes\Admin\Settings.php
+msgid "Clear Cache"
+msgstr "Tøm hurtigbuffer"
+
+#: includes\Admin\Settings.php
+msgid "Clear All Cache"
+msgstr "Tøm all hurtigbuffer"
+
+#: includes\Admin\Settings.php
+msgid "Clear all cached data. Use this if you see outdated pricing or room information."
+msgstr "Tøm all bufret data. Bruk dette hvis du ser utdaterte priser eller rominformasjon."
+
+#: includes\Admin\Settings.php
+msgid "Pending Booking"
+msgstr "Ventende booking"
+
+#: includes\Admin\Settings.php
+msgid "Confirmed Booking"
+msgstr "Bekreftet booking"
+
+#: includes\Admin\Settings.php
+msgid "Cancelled Booking"
+msgstr "Kansellert booking"
+
+#: includes\Admin\Settings.php
+#: includes\Core\Email.php
+#: includes\Core\I18n.php
+msgid "Payment Confirmation"
+msgstr "Betalingsbekreftelse"
+
+#: includes\Admin\Settings.php
+msgid "Subject"
+msgstr "Emne"
+
+#: includes\Admin\Settings.php
+msgid "Message"
+msgstr "Melding"
+
+#: includes\Admin\Settings.php
+msgid "Available placeholders: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+msgstr "Tilgjengelige plassholdere: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance & Data Privacy (PRO)"
+msgstr "GDPR-samsvar og personvern (PRO)"
+
+#: includes\Admin\Settings.php
+msgid "Enable Pro Privacy Suite"
+msgstr "Aktiver Pro personvernsuite"
+
+#: includes\Admin\Settings.php
+msgid "Enables automated data retention, custom cookie prefixing, and advanced privacy controls."
+msgstr "Aktiverer automatisert datalagring, egendefinert informasjonskapselprefiks og avanserte personvernkontroller."
+
+#: includes\Admin\Settings.php
+msgid "Require Privacy Consent"
+msgstr "Krev samtykke til personvern"
+
+#: includes\Admin\Settings.php
+msgid "Adds a mandatory checkbox to the booking form for guest consent."
+msgstr "Legger til en obligatorisk avkrysningsboks i bookingskjemaet for gjestesamtykke."
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Page"
+msgstr "Vilkår og betingelser-side"
+
+#: includes\Admin\Settings.php
+msgid "Select the page for your Terms & Conditions. Use the [terms_and_conditions] link in your consent text."
+msgstr "Velg siden for dine vilkår og betingelser. Bruk lenken [terms_and_conditions] i samtykketeksten."
+
+#: includes\Admin\Settings.php
+msgid "Consent Text"
+msgstr "Samtykketekst"
+
+#: includes\Admin\Settings.php
+msgid "Text displayed next to the consent checkbox. Use the [privacy_policy] link in your text to link to your policy page."
+msgstr "Tekst som vises ved siden av samtykkeboksen. Bruk [privacy_policy]-lenken i teksten for å lenke til personvernsiden."
+
+#: includes\Admin\Settings.php
+msgid "Automated Data Retention"
+msgstr "Automatisert datalagring"
+
+#: includes\Admin\Settings.php
+msgid "days"
+msgstr "dager"
+
+#: includes\Admin\Settings.php
+msgid "Bookings older than this will be automatically anonymized. Set to 0 to disable."
+msgstr "Bookinger eldre enn dette vil automatisk bli anonymisert. Sett til 0 for å deaktivere."
+
+#: includes\Admin\Settings.php
+msgid "Cookie Name Prefix"
+msgstr "Prefiks for informasjonskapselnavn"
+
+#: includes\Admin\Settings.php
+msgid "Customize the prefix for all frontend cookies (e.g. for selection persistence). Helps with compatibility and auditing."
+msgstr "Tilpass prefikset for alle frontend-informasjonskapsler."
+
+#: includes\Admin\Settings.php
+msgid "Search Rooms Button"
+msgstr "Søk etter rom-knapp"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Label"
+msgstr "Sjekk inn etikett"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Label"
+msgstr "Sjekk ut etikett"
+
+#: includes\Admin\Settings.php
+msgid "Guests Label"
+msgstr "Gjester etikett"
+
+#: includes\Admin\Settings.php
+msgid "Children Label"
+msgstr "Barn etikett"
+
+#: includes\Admin\Settings.php
+msgid "Child Ages Label"
+msgstr "Barnas alder etikett"
+
+#: includes\Admin\Settings.php
+msgid "Child %d Age Label"
+msgstr "Barn %d alder etikett"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Label"
+msgstr "Velg datoer etikett"
+
+#: includes\Admin\Settings.php
+msgid "Dates Selected Message"
+msgstr "Datoer valgt melding"
+
+#: includes\Admin\Settings.php
+msgid "Your Selection Label"
+msgstr "Ditt valg etikett"
+
+#: includes\Admin\Settings.php
+msgid "Continue to Booking Button"
+msgstr "Fortsett til booking knapp"
+
+#: includes\Admin\Settings.php
+msgid "Dates Not Available Error"
+msgstr "Datoer ikke tilgjengelig feil"
+
+#: includes\Admin\Settings.php
+msgid "Stay Dates Label"
+msgstr "Oppholdsdatoer etikett"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-in Guide"
+msgstr "Velg innsjekkguide"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-out Guide"
+msgstr "Velg utsjekkguide"
+
+#: includes\Admin\Settings.php
+msgid "Calendar No ID Error"
+msgstr "Kalender ingen ID feil"
+
+#: includes\Admin\Settings.php
+msgid "Calendar Config Error"
+msgstr "Kalender konfig feil"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Error"
+msgstr "Velg datoer feil"
+
+#: includes\Admin\Settings.php
+msgid "Block No Room Error"
+msgstr "Blokk ingen rom feil"
+
+#: includes\Admin\Settings.php
+msgid "Check-in in Past Error"
+msgstr "Innsjekk i fortiden feil"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Before Check-in Error"
+msgstr "Utsjekk før innsjekk feil"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Too Far Error"
+msgstr "Innsjekk for langt fremme feil"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Too Far Error"
+msgstr "Utsjekk for langt fremme feil"
+
+#: includes\Admin\Settings.php
+msgid "Available Rooms Message"
+msgstr "Tilgjengelige rom melding"
+
+#: includes\Admin\Settings.php
+msgid "No Rooms Found Message"
+msgstr "Ingen rom funnet melding"
+
+#: includes\Admin\Settings.php
+msgid "Per Night Text"
+msgstr "Per natt tekst"
+
+#: includes\Admin\Settings.php
+msgid "Total Nights Price Summary"
+msgstr "Totalpris netter sammendrag"
+
+#: includes\Admin\Settings.php
+msgid "Max Guests Text"
+msgstr "Maks gjester tekst"
+
+#: includes\Admin\Settings.php
+msgid "Loading Message"
+msgstr "Laster melding"
+
+#: includes\Admin\Settings.php
+msgid "To Separator"
+msgstr "Til separator"
+
+#: includes\Admin\Settings.php
+msgid "Book Now Button"
+msgstr "Bestill nå knapp"
+
+#: includes\Admin\Settings.php
+msgid "Processing Button Text"
+msgstr "Behandler knapp tekst"
+
+#: includes\Admin\Settings.php
+msgid "Complete Booking Title"
+msgstr "Fullfør booking tittel"
+
+#: includes\Admin\Settings.php
+msgid "Total Price Label"
+msgstr "Totalpris etikett"
+
+#: includes\Admin\Settings.php
+msgid "Full Name Label"
+msgstr "Fullt navn etikett"
+
+#: includes\Admin\Settings.php
+msgid "Email Address Label"
+msgstr "E-postadresse etikett"
+
+#: includes\Admin\Settings.php
+msgid "Phone Number Label"
+msgstr "Telefonnummer etikett"
+
+#: includes\Admin\Settings.php
+msgid "Special Requests Label"
+msgstr "Spesielle ønsker etikett"
+
+#: includes\Admin\Settings.php
+msgid "Secure Payment Message"
+msgstr "Sikker betaling melding"
+
+#: includes\Admin\Settings.php
+msgid "Security Error Message"
+msgstr "Sikkerhetsfeil melding"
+
+#: includes\Admin\Settings.php
+msgid "Rate Limit Error Message"
+msgstr "Hastighetsbegrensning feilmelding"
+
+#: includes\Admin\Settings.php
+msgid "Spam Honeypot Label"
+msgstr "Spam felle etikett"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Booking Button"
+msgstr "Bekreft booking knapp"
+
+#: includes\Admin\Settings.php
+msgid "Pay & Confirm Button"
+msgstr "Betal & Bekreft knapp"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Request Message"
+msgstr "Bekreft forespørsel melding"
+
+#: includes\Admin\Settings.php
+msgid "Room Not Found Error"
+msgstr "Rom ikke funnet feil"
+
+#: includes\Admin\Settings.php
+msgid "Name Too Long Error"
+msgstr "Navn for langt feil"
+
+#: includes\Admin\Settings.php
+msgid "Phone Too Long Error"
+msgstr "Telefon for lang feil"
+
+#: includes\Admin\Settings.php
+msgid "Max Children Error"
+msgstr "Maks barn feil"
+
+#: includes\Admin\Settings.php
+msgid "Max Adults Error"
+msgstr "Maks voksne feil"
+
+#: includes\Admin\Settings.php
+msgid "Price Calculation Error"
+msgstr "Prisberegningsfeil"
+
+#: includes\Admin\Settings.php
+msgid "Missing Fields Error"
+msgstr "Manglende felt feil"
+
+#: includes\Admin\Settings.php
+msgid "Required Field Error"
+msgstr "Obligatorisk felt feil"
+
+#: includes\Admin\Settings.php
+msgid "Spam Detected Error"
+msgstr "Spam oppdaget feil"
+
+#: includes\Admin\Settings.php
+msgid "Room Already Booked Error"
+msgstr "Rom allerede booket feil"
+
+#: includes\Admin\Settings.php
+msgid "Booking Success Message"
+msgstr "Booking suksess melding"
+
+#: includes\Admin\Settings.php
+msgid "Email Sent Message"
+msgstr "E-post sendt melding"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Title"
+msgstr "Forespørsel mottatt tittel"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Detail"
+msgstr "Forespørsel mottatt detalj"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Message"
+msgstr "Betal ved ankomst melding"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Required Warning"
+msgstr "GDPR påkrevd advarsel"
+
+#: includes\Admin\Settings.php
+msgid "Privacy Policy Link Text"
+msgstr "Personvernerklæring lenketekst"
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Link Text"
+msgstr "Vilkår og betingelser lenketekst"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Required Warning"
+msgstr "PayPal påkrevd advarsel"
+
+#: includes\Admin\Settings.php
+msgid "Payment Success Confirmation"
+msgstr "Betalingssuksess bekreftelse"
+
+#: includes\Admin\Settings.php
+msgid "Booking arrival confirmation"
+msgstr "Booking ankomst bekreftelse"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Detail"
+msgstr "Betaling feilet detalj"
+
+#: includes\Admin\Settings.php
+msgid "Booking Received Pending Detail"
+msgstr "Booking mottatt ventende detalj"
+
+#: includes\Admin\Settings.php
+msgid "Payment Method Label"
+msgstr "Betalingsmetode etikett"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Option"
+msgstr "Betal ved ankomst alternativ"
+
+#: includes\Admin\Settings.php
+msgid "Credit Card Option"
+msgstr "Kredittkort alternativ"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Option"
+msgstr "PayPal alternativ"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Label"
+msgstr "Betalingsstatus etikett"
+
+#: includes\Admin\Settings.php
+msgid "Paid Badge Text"
+msgstr "Betalt merke tekst"
+
+#: includes\Admin\Settings.php
+msgid "Amount Paid Label"
+msgstr "Beløp betalt etikett"
+
+#: includes\Admin\Settings.php
+msgid "Transaction ID Label"
+msgstr "Transaksjons-ID etikett"
+
+#: includes\Admin\Settings.php
+msgid "Failed Badge Text"
+msgstr "Feilet merke tekst"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Title"
+msgstr "Betaling feilet tittel"
+
+#: includes\Admin\Settings.php
+msgid "Dates Taken Error"
+msgstr "Datoer opptatt feil"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Calc Error"
+msgstr "Ugyldig booking beregningsfeil"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Not Configured Error"
+msgstr "Stripe ikke konfigurert feil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Not Configured Error"
+msgstr "PayPal ikke konfigurert feil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Connection Error"
+msgstr "PayPal tilkoblingsfeil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Auth Error"
+msgstr "PayPal autentiseringsfeil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Error"
+msgstr "PayPal ordrefeil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Currency Error"
+msgstr "PayPal valutafeil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Generic Error"
+msgstr "PayPal generisk feil"
+
+#: includes\Admin\Settings.php
+msgid "Missing Order ID Error"
+msgstr "Manglende ordre-ID feil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Capture Error"
+msgstr "PayPal fangstfeil"
+
+#: includes\Admin\Settings.php
+msgid "Payment Already Processed Error"
+msgstr "Betaling allerede behandlet feil"
+
+#: includes\Admin\Settings.php
+msgid "Payment Declined Error"
+msgstr "Betaling avvist feil"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Intent Missing Error"
+msgstr "Stripe intensjon mangler feil"
+
+#: includes\Admin\Settings.php
+msgid "PayPal ID Missing Error"
+msgstr "PayPal ID mangler feil"
+
+#: includes\Admin\Settings.php
+msgid "Payment Required Error"
+msgstr "Betaling påkrevd feil"
+
+#: includes\Admin\Settings.php
+msgid "REST Pro Access Error"
+msgstr "REST Pro tilgangsfeil"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Nonce Error"
+msgstr "Ugyldig nonce feil"
+
+#: includes\Admin\Settings.php
+msgid "API Rate Limit Error"
+msgstr "API hastighetsbegrensning feil"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Confirmation Title"
+msgstr "E-post: Betalingsbekreftelse tittel"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Info Title"
+msgstr "E-post: Betalingsinfo tittel"
+
+#: includes\Admin\Settings.php
+msgid "Email: Pay on Arrival Detail"
+msgstr "E-post: Betal ved ankomst detalj"
+
+#: includes\Admin\Settings.php
+msgid "Email: Amount Due Label"
+msgstr "E-post: Beløp forfall etikett"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Date Label"
+msgstr "E-post: Betalingsdato etikett"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Creation Failed"
+msgstr "Opprettelse av PayPal-ordre feilet"
+
+#: includes\Admin\Settings.php
+msgid "Security Verification Failed"
+msgstr "Sikkerhetsverifisering feilet"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Client ID Missing"
+msgstr "PayPal Client ID mangler"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Secret Missing"
+msgstr "PayPal Secret mangler"
+
+#: includes\Admin\Settings.php
+msgid "API Key Not Configured"
+msgstr "API-nøkkel ikke konfigurert"
+
+#: includes\Admin\Settings.php
+msgid "Invalid API Key"
+msgstr "Ugyldig API-nøkkel"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Signature Required"
+msgstr "Webhook-signatur påkrevd"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Webhook Secret Missing"
+msgstr "Stripe Webhook Secret mangler"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature Format"
+msgstr "Ugyldig Stripe signaturformat"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Expired"
+msgstr "Webhook utløpt"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature"
+msgstr "Ugyldig Stripe-signatur"
+
+#: includes\Admin\Settings.php
+msgid "Missing PayPal Headers"
+msgstr "Manglende PayPal-headers"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Customer Data"
+msgstr "Ugyldige kundedata"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Dates"
+msgstr "Ugyldige bookingdatoer"
+
+#: includes\Admin\Settings.php
+msgid "Booking Creation Failed"
+msgstr "Opprettelse av booking feilet"
+
+#: includes\Admin\Settings.php
+msgid "Permission Denied"
+msgstr "Tilgang nektet"
+
+#: includes\Admin\Settings.php
+msgid "Stripe PK Missing"
+msgstr "Stripe PK mangler"
+
+#: includes\Admin\Settings.php
+msgid "Stripe SK Missing"
+msgstr "Stripe SK mangler"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe PK Format"
+msgstr "Ugyldig Stripe PK format"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Space Warning"
+msgstr "Advarsel om mellomrom i legitimasjon"
+
+#: includes\Admin\Settings.php
+msgid "Sandbox/Live Mismatch Warning"
+msgstr "Advarsel om Sandbox/Live uoverensstemmelse"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Expired Warning"
+msgstr "Advarsel om utløpt legitimasjon"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Success Message"
+msgstr "PayPal suksessmelding"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Success Message"
+msgstr "Stripe suksessmelding"
+
+#: includes\Admin\Settings.php
+msgid "Connection Failed Error"
+msgstr "Tilkobling feilet"
+
+#: includes\Admin\Settings.php
+msgid "Authentication Failed Error"
+msgstr "Autentisering feilet"
+
+#: includes\Admin\Settings.php
+msgid "Common Causes Title"
+msgstr "Vanlige årsaker tittel"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Generic Error"
+msgstr "Stripe generisk feil"
+
+#: includes\Admin\Settings.php
+msgid "Enhance Your Stay Title"
+msgstr "Forbedre oppholdet tittel"
+
+#: includes\Admin\Settings.php
+msgid "Per Person Text"
+msgstr "Per person tekst"
+
+#: includes\Admin\Settings.php
+msgid "Per Person / Night Text"
+msgstr "Per person / natt tekst"
+
+#: includes\Admin\Settings.php
+msgid "Booking Summary Title"
+msgstr "Bookingsammendrag tittel"
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Row Label"
+msgstr "Overnatting rad etikett"
+
+#: includes\Admin\Settings.php
+msgid "Extras Row Label"
+msgstr "Ekstra rad etikett"
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Label"
+msgstr "Skattefordeling etikett"
+
+#: includes\Admin\Settings.php
+msgid "Tax Total Label"
+msgstr "Skatt total etikett"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Label"
+msgstr "Skattenummer etikett"
+
+#: includes\Admin\Settings.php
+msgid "Includes Tax Suffix"
+msgstr "Inkluderer skatt suffiks"
+
+#: includes\Admin\Settings.php
+msgid "Price Includes Tax Note"
+msgstr "Pris inkluderer skatt notat"
+
+#: includes\Admin\Settings.php
+msgid "Tax Added at Checkout Note"
+msgstr "Skatt lagt til ved utsjekk notat"
+
+#: includes\Admin\Settings.php
+msgid "Subtotal Label"
+msgstr "Delsum etikett"
+
+#: includes\Admin\Settings.php
+msgid "Room Column Label"
+msgstr "Rom kolonne etikett"
+
+#: includes\Admin\Settings.php
+msgid "Extras Column Label"
+msgstr "Ekstra kolonne etikett"
+
+#: includes\Admin\Settings.php
+msgid "Item Column Label"
+msgstr "Vare kolonne etikett"
+
+#: includes\Admin\Settings.php
+msgid "Amount Column Label"
+msgstr "Beløp kolonne etikett"
+
+#: includes\Admin\Settings.php
+msgid "Tax Accommodation Rate Label"
+msgstr "Skatt overnatting sats etikett"
+
+#: includes\Admin\Settings.php
+msgid "Tax Extras Rate Label"
+msgstr "Skatt ekstra sats etikett"
+
+#: includes\Admin\Settings.php
+msgid "Generic Tax Rate Label"
+msgstr "Generisk skattesats etikett"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (includes %s)"
+msgstr "Skattenotat (inkluderer %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (plus %s)"
+msgstr "Skattenotat (pluss %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (includes %1$s: %2$s%% / %3$s%%)"
+msgstr "Skattenotat multi (inkluderer %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (plus %1$s: %2$s%% / %3$s%%)"
+msgstr "Skattenotat multi (pluss %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Leave a field empty to use the default English text for that language. Use <code>%1$s</code> or <code>%2$d</code> as placeholders where they appear in the default text."
+msgstr "La feltet stå tomt for å bruke standard engelsk tekst. Bruk <code>%1$s</code> eller <code>%2$d</code> som plassholdere."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual settings saved successfully."
+msgstr "Flerspråklige innstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "GDPR settings saved successfully."
+msgstr "GDPR-innstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "General settings saved successfully."
+msgstr "Generelle innstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Theme settings saved successfully."
+msgstr "Temainnstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Theme reset to default successfully."
+msgstr "Tema tilbakestilt til standard."
+
+#: includes\Admin\Settings.php
+msgid "Pro Experience"
+msgstr "Pro Opplevelse"
+
+#: includes\Admin\Settings.php
+msgid "Overview"
+msgstr "Oversikt"
+
+#: includes\Admin\Settings.php
+msgid "Booking Extras"
+msgstr "Bookingekstra"
+
+#: includes\Admin\Settings.php
+msgid "Pro Themes"
+msgstr "Pro-temaer"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Active"
+msgstr "Pro-lisens aktiv"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Required"
+msgstr "Pro-lisens påkrevd"
+
+#: includes\Admin\Settings.php
+msgid "All Pro features are unlocked and ready to use."
+msgstr "Alle Pro-funksjoner er låst opp."
+
+#: includes\Admin\Settings.php
+msgid "Unlock all premium features to maximize your booking potential."
+msgstr "Lås opp alle premiumfunksjoner."
+
+#: includes\Admin\Settings.php
+msgid "Manage License"
+msgstr "Administrer lisens"
+
+#: includes\Admin\Settings.php
+msgid "Priority Support"
+msgstr "Prioritert støtte"
+
+#: includes\Admin\Settings.php
+msgid "Lifetime Updates"
+msgstr "Livstidsoppdateringer"
+
+#: includes\Admin\Settings.php
+msgid "All Premium Features"
+msgstr "Alle premiumfunksjoner"
+
+#: includes\Admin\Settings.php
+msgid "Version 2.2.2 - Security & Feature Enhancements"
+msgstr "Versjon 2.2.2 - Sikkerhet og funksjonsforbedringer"
+
+#: includes\Admin\Settings.php
+msgid "Enhanced Booking Extras:"
+msgstr "Forbedret bookingekstra:"
+
+#: includes\Admin\Settings.php
+msgid "\"Per person\" extras now include children in the guest count for accurate pricing calculations."
+msgstr "\"Per person\" ekstra inkluderer nå barn."
+
+#: includes\Admin\Settings.php
+msgid "Unified Tax Breakdown:"
+msgstr "Enhetlig skattefordeling:"
+
+#: includes\Admin\Settings.php
+msgid "Consistent, detailed tax rendering across emails, success pages, and admin dashboard."
+msgstr "Konsekvent, detaljert skattevisning."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhook Security:"
+msgstr "HMAC Webhook-sikkerhet:"
+
+#: includes\Admin\Settings.php
+msgid "Added SHA-256 cryptographic signatures to all outgoing webhooks for verified external integrations."
+msgstr "Lagt til SHA-256 kryptografiske signaturer."
+
+#: includes\Admin\Settings.php
+msgid "Server-Side Pricing Logic:"
+msgstr "Server-side prissetting:"
+
+#: includes\Admin\Settings.php
+msgid "Hardened payment gateway initialization with mandatory server-side price recalculation."
+msgstr "Forsterket betalingsgateway-initialisering."
+
+#: includes\Admin\Settings.php
+msgid "Payment Processing"
+msgstr "Betalingsbehandling"
+
+#: includes\Admin\Settings.php
+msgid "Configure"
+msgstr "Konfigurer"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Integration"
+msgstr "Stripe-integrasjon"
+
+#: includes\Admin\Settings.php
+msgid "Accept payments with Stripe including Apple Pay and Google Pay support."
+msgstr "Godta betalinger med Stripe, inkludert Apple Pay og Google Pay."
+
+#: includes\Admin\Settings.php
+msgid "Popular"
+msgstr "Populær"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Integration"
+msgstr "PayPal-integrasjon"
+
+#: includes\Admin\Settings.php
+msgid "Accept PayPal payments with automatic IPN verification and status updates."
+msgstr "Godta PayPal-betalinger med automatisk IPN."
+
+#: includes\Admin\Settings.php
+msgid "Pay On-site Option"
+msgstr "Betal på stedet-alternativ"
+
+#: includes\Admin\Settings.php
+msgid "Allow guests to pay upon arrival with flexible payment tracking."
+msgstr "Tillat gjester å betale ved ankomst."
+
+#: includes\Admin\Settings.php
+msgid "Payment Webhooks"
+msgstr "Betalings-webhooks"
+
+#: includes\Admin\Settings.php
+msgid "Automatic payment status updates from Stripe and PayPal webhooks."
+msgstr "Automatiske betalingsoppdateringer."
+
+#: includes\Admin\Settings.php
+msgid "New"
+msgstr "Ny"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Tracking"
+msgstr "Betalingsstatus-sporing"
+
+#: includes\Admin\Settings.php
+msgid "Full payment lifecycle management: pending, deposit paid, fully paid, refunded."
+msgstr "Full betalingslivssyklus."
+
+#: includes\Admin\Settings.php
+msgid "Tax Management"
+msgstr "Skatteforvaltning"
+
+#: includes\Admin\Settings.php
+msgid "VAT/TAX System"
+msgstr "MVA/Skattesystem"
+
+#: includes\Admin\Settings.php
+msgid "Three modes: VAT inclusive, Sales Tax exclusive, or Disabled. Flexible configuration."
+msgstr "Tre moduser: MVA inkludert, eksklusiv, eller deaktivert."
+
+#: includes\Admin\Settings.php
+msgid "Separate Tax Rates"
+msgstr "Separate skattesatser"
+
+#: includes\Admin\Settings.php
+msgid "Different tax rates for accommodation vs extras services."
+msgstr "Ulike skattesatser for overnatting vs ekstra."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT"
+msgstr "Landsspesifikk MVA"
+
+#: includes\Admin\Settings.php
+msgid "Set different VAT rates per country for international guests."
+msgstr "Sett ulike MVA-satser per land."
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Display"
+msgstr "Visning av skattefordeling"
+
+#: includes\Admin\Settings.php
+msgid "Detailed tax display by room, children, and extras in booking confirmations."
+msgstr "Detaljert skattevisning per rom, barn og ekstra."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Tax Labels"
+msgstr "Flerspråklige skatteetiketter"
+
+#: includes\Admin\Settings.php
+msgid "Per-language tax terminology (VAT, IVA, TVA, MwSt, etc.)."
+msgstr "Per-språk skatteterminologi."
+
+#: includes\Admin\Settings.php
+msgid "Updated"
+msgstr "Oppdatert"
+
+#: includes\Admin\Settings.php
+msgid "Seasonal Pricing"
+msgstr "Sesongprising"
+
+#: includes\Admin\Settings.php
+msgid "Set automated weekend and holiday multipliers for dynamic pricing."
+msgstr "Sett automatiske helg- og helligdagsmultiplikatorer."
+
+#: includes\Admin\Settings.php
+msgid "Offer guided tours, airport transfers, breakfast packages, and local experiences."
+msgstr "Tilby guidede turer, transport, frokost."
+
+#: includes\Admin\Settings.php
+msgid "Bi-directional sync with Airbnb, Booking.com, and Google Calendar."
+msgstr "Toveis synkronisering med Airbnb, Booking.com."
+
+#: includes\Admin\Settings.php
+msgid "Analytics Dashboard"
+msgstr "Analyse-dashbord"
+
+#: includes\Admin\Settings.php
+msgid "Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization."
+msgstr "Visualiseringer, beleggsprosent, ADR-sporing."
+
+#: includes\Admin\Settings.php
+msgid "View"
+msgstr "Vis"
+
+#: includes\Admin\Settings.php
+msgid "Compliance & UX"
+msgstr "Samsvar & Brukeropplevelse"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance Tools"
+msgstr "GDPR-verktøy"
+
+#: includes\Admin\Settings.php
+msgid "Automated data retention, consent checkboxes, and cookie management."
+msgstr "Automatisert datalagring, samtykke, informasjonskapsler."
+
+#: includes\Admin\Settings.php
+msgid "Theme Customization"
+msgstr "Tematilpasning"
+
+#: includes\Admin\Settings.php
+msgid "6 designer presets, custom branding colors, and advanced CSS injection."
+msgstr "6 designer-forhåndsinnstillinger, egendefinerte farger."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Support"
+msgstr "Flerspråklig støtte"
+
+#: includes\Admin\Settings.php
+msgid "Compatible with qTranslate, WPML, and Polylang for full translation support."
+msgstr "Kompatibel med qTranslate, WPML, Polylang."
+
+#: includes\Admin\Settings.php
+msgid "Developer Platform"
+msgstr "Utviklerplattform"
+
+#: includes\Admin\Settings.php
+msgid "REST API"
+msgstr "REST API"
+
+#: includes\Admin\Settings.php
+msgid "Full REST API access for external integrations and custom applications."
+msgstr "Full REST API-tilgang."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhooks"
+msgstr "HMAC Webhooks"
+
+#: includes\Admin\Settings.php
+msgid "Secure webhooks with HMAC-signed payloads for booking events."
+msgstr "Sikre webhooks med HMAC."
+
+#: includes\Admin\Settings.php
+msgid "Configure Payment Gateways"
+msgstr "Konfigurer betalingsgatewayer"
+
+#: includes\Admin\Settings.php
+msgid "Set Up Tax Settings"
+msgstr "Konfigurer skatteinnstillinger"
+
+#: includes\Admin\Settings.php
+msgid "View Analytics"
+msgstr "Vis analyse"
+
+#: includes\Admin\Settings.php
+msgid "Manage iCal Feeds"
+msgstr "Administrer iCal-feeder"
+
+#: includes\Admin\Settings.php
+msgid "Save Payment Settings"
+msgstr "Lagre betalingsinnstillinger"
+
+#: includes\Admin\Settings.php
+msgid "Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more."
+msgstr "Lås opp denne funksjonen med en Pro-lisens."
+
+#: includes\Admin\Settings.php
+msgid "View All Pro Features"
+msgstr "Se alle Pro-funksjoner"
+
+#: includes\Admin\Settings.php
+msgid "Pro features are not available."
+msgstr "Pro-funksjoner ikke tilgjengelig."
+
+#: includes\Admin\Settings.php
+msgid "The REST API allows external systems to query room availability and manage bookings. API base:"
+msgstr "REST API lar eksterne systemer spørre om tilgjengelighet."
+
+#: includes\Admin\Settings.php
+msgid "API Key"
+msgstr "API-nøkkel"
+
+#: includes\Admin\Settings.php
+msgid "Generate"
+msgstr "Generer"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Copy"
+msgstr "Kopier"
+
+#: includes\Admin\Settings.php
+msgid "Include as X-MHB-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id})."
+msgstr "Inkluder som X-MHB-API-Key header."
+
+#: includes\Admin\Settings.php
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
+#: includes\Admin\Settings.php
+msgid "Receive a JSON POST for booking events: booking_created, booking_confirmed, booking_cancelled. Payloads are HMAC-signed with your API key."
+msgstr "Motta JSON POST for bookinghendelser."
+
+#: includes\Admin\Settings.php
+msgid "Available Endpoints"
+msgstr "Tilgjengelige endepunkter"
+
+#: includes\Admin\Settings.php
+msgid "Method"
+msgstr "Metode"
+
+#: includes\Admin\Settings.php
+msgid "Endpoint"
+msgstr "Endepunkt"
+
+#: includes\Admin\Settings.php
+msgid "Auth / Access"
+msgstr "Auth / Tilgang"
+
+#: includes\Admin\Settings.php
+msgid "Pro (Rate Limited)"
+msgstr "Pro (Begrenset)"
+
+#: includes\Admin\Settings.php
+msgid "Public (Rate Limited)"
+msgstr "Offentlig (Begrenset)"
+
+#: includes\Admin\Settings.php
+msgid "API Key Required"
+msgstr "API-nøkkel påkrevd"
+
+#: includes\Admin\Settings.php
+msgid "Monday"
+msgstr "Mandag"
+
+#: includes\Admin\Settings.php
+msgid "Tuesday"
+msgstr "Tirsdag"
+
+#: includes\Admin\Settings.php
+msgid "Wednesday"
+msgstr "Onsdag"
+
+#: includes\Admin\Settings.php
+msgid "Thursday"
+msgstr "Torsdag"
+
+#: includes\Admin\Settings.php
+msgid "Friday"
+msgstr "Fredag"
+
+#: includes\Admin\Settings.php
+msgid "Saturday"
+msgstr "Lørdag"
+
+#: includes\Admin\Settings.php
+msgid "Sunday"
+msgstr "Søndag"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Pricing"
+msgstr "Helgeprising"
+
+#: includes\Admin\Settings.php
+msgid "Define which days are considered weekends and set the adjustment."
+msgstr "Definer helgedager og justering."
+
+#: includes\Admin\Settings.php
+msgid "Weekend Days"
+msgstr "Helgedager"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Adjustment"
+msgstr "Helgejustering"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\PaymentGateways.php
+msgid "Enable"
+msgstr "Aktiver"
+
+#: includes\Admin\Settings.php
+msgid "Multiplier (1.2 = +20%)"
+msgstr "Multiplikator (1.2 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Percentage (20 = +20%)"
+msgstr "Prosent (20 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Fixed Amount (20 = +$20)"
+msgstr "Fast beløp (20 = +20 kr)"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Pricing"
+msgstr "Helligdagsprising"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Date Picker"
+msgstr "Helligdagsvelger"
+
+#: includes\Admin\Settings.php
+msgid "Add"
+msgstr "Legg til"
+
+#: includes\Admin\Settings.php
+msgid "Add specific dates that should trigger holiday pricing."
+msgstr "Legg til spesifikke datoer for helligdagsprising."
+
+#: includes\Admin\Settings.php
+msgid "Holiday Adjustment"
+msgstr "Helligdagsjustering"
+
+#: includes\Admin\Settings.php
+msgid "Conflict Resolution"
+msgstr "Konfliktløsning"
+
+#: includes\Admin\Settings.php
+msgid "Use larger of weekend vs holiday adjustment if they overlap"
+msgstr "Bruk største av helg vs helligdag hvis overlapp"
+
+#: includes\Admin\Settings.php
+msgid "Midnight Coast"
+msgstr "Midnattkyst"
+
+#: includes\Admin\Settings.php
+msgid "Our signature classic luxury look."
+msgstr "Vårt klassiske luksusutseende."
+
+#: includes\Admin\Settings.php
+msgid "Emerald Forest"
+msgstr "Smaragdskog"
+
+#: includes\Admin\Settings.php
+msgid "Rich greens for nature-inspired properties."
+msgstr "Rike grønntoner for naturinspirerte eiendommer."
+
+#: includes\Admin\Settings.php
+msgid "Oceanic Drift"
+msgstr "Havbris"
+
+#: includes\Admin\Settings.php
+msgid "Deep blues and bright highlights."
+msgstr "Dype blåtoner og lyse høydepunkter."
+
+#: includes\Admin\Settings.php
+msgid "Ruby Sunset"
+msgstr "Rubin solnedgang"
+
+#: includes\Admin\Settings.php
+msgid "Warm tones for cozy boutiques."
+msgstr "Varme toner for koselige butikker."
+
+#: includes\Admin\Settings.php
+msgid "Urban Modern"
+msgstr "Urban moderne"
+
+#: includes\Admin\Settings.php
+msgid "Minimalist grays for city lofts."
+msgstr "Minimalistiske gråtoner for byleiligheter."
+
+#: includes\Admin\Settings.php
+msgid "Lavender Breeze"
+msgstr "Lavendelbris"
+
+#: includes\Admin\Settings.php
+msgid "Elegant purples for spa and wellness."
+msgstr "Elegante lillatoner for spa og velvære."
+
+#: includes\Admin\Settings.php
+msgid "Theme Presets"
+msgstr "Temaforhåndsinnstillinger"
+
+#: includes\Admin\Settings.php
+msgid "Choose a professional color palette for your booking frontend."
+msgstr "Velg en profesjonell fargepalett."
+
+#: includes\Admin\Settings.php
+msgid "Custom Theme"
+msgstr "Egendefinert tema"
+
+#: includes\Admin\Settings.php
+msgid "Define your own brand colors below."
+msgstr "Definer dine egne merkefarger nedenfor."
+
+#: includes\Admin\Settings.php
+msgid "Custom Branding"
+msgstr "Egendefinert merkevarebygging"
+
+#: includes\Admin\Settings.php
+msgid "Primary Color"
+msgstr "Primærfarge"
+
+#: includes\Admin\Settings.php
+msgid "Secondary Color"
+msgstr "Sekundærfarge"
+
+#: includes\Admin\Settings.php
+msgid "Accent Color"
+msgstr "Aksentfarge"
+
+#: includes\Admin\Settings.php
+msgid "Advanced Custom CSS"
+msgstr "Avansert egendefinert CSS"
+
+#: includes\Admin\Settings.php
+msgid "Inject additional CSS directly into the booking frontend."
+msgstr "Sett inn ekstra CSS direkte i bookingsystemet."
+
+#: includes\Admin\Settings.php
+msgid "Reset all theme settings to default?"
+msgstr "Tilbakestille alle temainnstillinger til standard?"
+
+#: includes\Admin\Settings.php
+msgid "Return to Default"
+msgstr "Tilbake til standard"
+
+#: includes\Admin\Settings.php
+#: includes\Core\I18n.php
+msgid "Permission denied."
+msgstr "Tilgang nektet."
+
+#: includes\Admin\Settings.php
+msgid "Room Amenities"
+msgstr "Romfasiliteter"
+
+#: includes\Admin\Settings.php
+msgid "Manage the list of amenities available for rooms. After adding here, you can translate them in the \"Frontend Labels\" tab."
+msgstr "Administrer listen over fasiliteter for rom."
+
+#: includes\Admin\Settings.php
+msgid "Add New Amenity"
+msgstr "Legg til ny fasilitet"
+
+#: includes\Admin\Settings.php
+msgid "Label"
+msgstr "Etikett"
+
+#: includes\Admin\Settings.php
+msgid "Key (Internal)"
+msgstr "Nøkkel (Intern)"
+
+#: includes\Admin\Settings.php
+msgid "No amenities found."
+msgstr "Ingen fasiliteter funnet."
+
+#: includes\Admin\Settings.php
+msgid "API settings saved successfully."
+msgstr "API-innstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Payment settings saved successfully."
+msgstr "Betalingsinnstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Pricing settings saved successfully."
+msgstr "Prisinnstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Amenity added successfully."
+msgstr "Fasilitet lagt til."
+
+#: includes\Admin\Settings.php
+msgid "Amenity removed successfully."
+msgstr "Fasilitet fjernet."
+
+#: includes\Admin\Settings.php
+msgid "Configure VAT/Sales Tax settings for your hotel bookings. Tax is disabled by default for backward compatibility."
+msgstr "Konfigurer MVA/Salgsskatt-innstillinger."
+
+#: includes\Admin\Settings.php
+msgid "Tax Mode"
+msgstr "Skattemodus"
+
+#: includes\Admin\Settings.php
+msgid "Disabled"
+msgstr "Deaktivert"
+
+#: includes\Admin\Settings.php
+msgid "No tax calculation or display. Prices shown as-is."
+msgstr "Ingen skatteberegning eller visning."
+
+#: includes\Admin\Settings.php
+msgid "VAT Inclusive"
+msgstr "MVA inkludert"
+
+#: includes\Admin\Settings.php
+msgid "Prices include tax (EU, UK, Australia). Shows breakdown: Net + Tax = Gross."
+msgstr "Priser inkluderer skatt."
+
+#: includes\Admin\Settings.php
+msgid "Sales Tax Exclusive"
+msgstr "Salgsskatt ekskludert"
+
+#: includes\Admin\Settings.php
+msgid "Tax added on top of prices (US, Canada). Shows: Subtotal + Tax = Total."
+msgstr "Skatt lagt til på toppen av priser."
+
+#: includes\Admin\Settings.php
+msgid "Tax Label"
+msgstr "Skatteetikett"
+
+#: includes\Admin\Settings.php
+msgid "Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA"
+msgstr "Eksempler: MVA, VAT, GST"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Number"
+msgstr "Skattenummer"
+
+#: includes\Admin\Settings.php
+msgid "Your VAT ID, GSTIN, or tax registration number. Displayed on invoices and receipts."
+msgstr "Ditt MVA-nummer eller skattenummer."
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Tax Rate"
+msgstr "Overnatting skattesats"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for rooms and children charges. Example: 10 for 10%"
+msgstr "Skattesats for rom og barn."
+
+#: includes\Admin\Settings.php
+msgid "Extras Tax Rate"
+msgstr "Ekstra skattesats"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for extras (add-ons like breakfast, transfers). Set same as accommodation if unsure."
+msgstr "Skattesats for ekstrautstyr."
+
+#: includes\Admin\Settings.php
+msgid "Display Options"
+msgstr "Visningsalternativer"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown on frontend booking form"
+msgstr "Vis skattefordeling på bookingskjema"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown in confirmation emails"
+msgstr "Vis skattefordeling i bekreftelses-e-poster"
+
+#: includes\Admin\Settings.php
+msgid "Rounding Mode"
+msgstr "Avrundingsmodus"
+
+#: includes\Admin\Settings.php
+msgid "Per Total (Recommended)"
+msgstr "Per total (Anbefalt)"
+
+#: includes\Admin\Settings.php
+msgid "Per Line Item"
+msgstr "Per linjeelement"
+
+#: includes\Admin\Settings.php
+msgid "Per Total: Round tax on final total. Per Line: Round each item's tax separately."
+msgstr "Per total: Rund av skatt på sluttsummen."
+
+#: includes\Admin\Settings.php
+msgid "Decimal Places"
+msgstr "Desimaler"
+
+#: includes\Admin\Settings.php
+msgid "Number of decimal places for tax amounts (usually 2)."
+msgstr "Antall desimaler for skattebeløp."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT Rates Reference"
+msgstr "Landsspesifikk MVA-satsreferanse"
+
+#: includes\Admin\Settings.php
+msgid "Country"
+msgstr "Land"
+
+#: includes\Admin\Settings.php
+msgid "Standard Rate"
+msgstr "Standardsats"
+
+#: includes\Admin\Settings.php
+msgid "Hotel Rate"
+msgstr "Hotellsats"
+
+#: includes\Admin\Settings.php
+msgid "Tax Name"
+msgstr "Skattenavn"
+
+#: includes\Admin\Settings.php
+msgid "Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities."
+msgstr "Merk: Hotell-/overnattingssatser kan være redusert i noen land."
+
+#: includes\Admin\Settings.php
+msgid "Tax settings saved successfully."
+msgstr "Skatteinnstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Performance settings saved successfully."
+msgstr "Ytelsesinnstillinger lagret."
+
+#: includes\Admin\Settings.php
+msgid "Cache cleared successfully."
+msgstr "Hurtigbuffer tømt."
+
+#: includes\Admin\Settings.php
+msgid "Failed to clear cache."
+msgstr "Feilet å tømme hurtigbuffer."
+
+#: includes\Admin\Settings.php
+msgid "Cache class not available."
+msgstr "Hurtigbufferklasse ikke tilgjengelig."
+
+#: includes\Api\RestApi.php
+msgid "You do not have permission to access this booking."
+msgstr "Du har ikke tilgang til denne bookingen."
+
+#: includes\Api\RestApi.php
+msgid "Error generating calendar data."
+msgstr "Feil ved generering av kalenderdata."
+
+#: includes\Api\RestApi.php
+msgid "Error calculating price. Please check input data."
+msgstr "Feil ved prisberegning."
+
+#: includes\Api\RestApi.php
+msgid "Invalid webhook request."
+msgstr "Ugyldig webhook-forespørsel."
+
+#: includes\Core\Email.php
+msgid "Price includes %1$s - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "Pris inkluderer %1$s - Overnatting: %2$s%%, Ekstra: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "%1$s added at checkout - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "%1$s lagt til ved utsjekk - Overnatting: %2$s%%, Ekstra: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "Dear %s,"
+msgstr "Kjære %s,"
+
+#: includes\Core\Email.php
+msgid "Thank you for your payment. Your booking has been confirmed."
+msgstr "Takk for betalingen. Din booking er bekreftet."
+
+#: includes\Core\Email.php
+msgid "Booking Details"
+msgstr "Bookingdetaljer"
+
+#: includes\Core\Email.php
+msgid "Booking ID:"
+msgstr "Booking-ID:"
+
+#: includes\Core\Email.php
+msgid "Check-in:"
+msgstr "Sjekk inn:"
+
+#: includes\Core\Email.php
+msgid "Check-out:"
+msgstr "Sjekk ut:"
+
+#: includes\Core\Email.php
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Hvis du har spørsmål, ikke nøl med å kontakte oss."
+
+#: includes\Core\Email.php
+msgid "Best regards,"
+msgstr "Med vennlig hilsen,"
+
+#: includes\Core\Email.php
+msgid "Payment Details"
+msgstr "Betalingsdetaljer"
+
+#: includes\Core\Email.php
+msgid "Amount Paid:"
+msgstr "Beløp betalt:"
+
+#: includes\Core\Email.php
+msgid "Transaction ID:"
+msgstr "Transaksjons-ID:"
+
+#: includes\Core\Email.php
+msgid "Payment Method:"
+msgstr "Betalingsmetode:"
+
+#: includes\Core\Email.php
+msgid "Payment Date:"
+msgstr "Betalingsdato:"
+
+#: includes\Core\I18n.php
+msgid "Search Rooms"
+msgstr "Søk etter rom"
+
+#: includes\Core\I18n.php
+msgid "Available Rooms from %1$s to %2$s"
+msgstr "Tilgjengelige rom fra %1$s til %2$s"
+
+#: includes\Core\I18n.php
+msgid "No rooms available for these dates."
+msgstr "Ingen rom tilgjengelig for disse datoene."
+
+#: includes\Core\I18n.php
+msgid "Dates are not available."
+msgstr "Datoer er ikke tilgjengelige."
+
+#: includes\Core\I18n.php
+msgid "Room not found."
+msgstr "Rom ikke funnet."
+
+#: includes\Core\I18n.php
+msgid "Secure Online Payment"
+msgstr "Sikker nettbetaling"
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page."
+msgstr "Sikkerhetsverifisering feilet. Oppdater siden."
+
+#: includes\Core\I18n.php
+msgid "Too many attempts. Please wait a minute."
+msgstr "For mange forsøk. Vent et minutt."
+
+#: includes\Core\I18n.php
+msgid "Leave this field empty"
+msgstr "La dette feltet stå tomt"
+
+#: includes\Core\I18n.php
+msgid "Room Image"
+msgstr "Rombilde"
+
+#: includes\Core\I18n.php
+msgid "No room ID specified for calendar."
+msgstr "Ingen rom-ID spesifisert for kalender."
+
+#: includes\Core\I18n.php
+msgid "Booking Page URL not configured."
+msgstr "Bookingside-URL ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "Loading..."
+msgstr "Laster..."
+
+#: includes\Core\I18n.php
+msgid "Processing..."
+msgstr "Behandler..."
+
+#: includes\Core\I18n.php
+msgid "Please accept the privacy policy to continue."
+msgstr "Godta personvernerklæringen for å fortsette."
+
+#: includes\Core\I18n.php
+msgid "Please use the PayPal button to complete your payment."
+msgstr "Bruk PayPal-knappen for å fullføre betalingen."
+
+#: includes\Core\I18n.php
+msgid "Enhance Your Stay"
+msgstr "Forbedre oppholdet ditt"
+
+#: includes\Core\I18n.php
+msgid "per person"
+msgstr "per person"
+
+#: includes\Core\I18n.php
+msgid "per person / night"
+msgstr "per person / natt"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s"
+msgstr "Pris inkluderer %s"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s"
+msgstr "Pris pluss %s"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s (%s%%)"
+msgstr "Pris inkluderer %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s (%s%%)"
+msgstr "Pris pluss %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Please select check-in and check-out dates."
+msgstr "Vennligst velg innsjekkings- og utsjekkingsdatoer."
+
+#: includes\Core\I18n.php
+msgid "Please select a Room ID in block settings."
+msgstr "Velg en Rom-ID i blokkinnstillinger."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be in the past."
+msgstr "Innsjekkingsdato kan ikke være i fortiden."
+
+#: includes\Core\I18n.php
+msgid "Check-out date must be after check-in date."
+msgstr "Utsjekkingsdato må være etter innsjekkingsdato."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be more than 2 years in the future."
+msgstr "Innsjekkingsdato kan ikke være mer enn 2 år frem i tid."
+
+#: includes\Core\I18n.php
+msgid "Check-out date cannot be more than 2 years in the future."
+msgstr "Utsjekkingsdato kan ikke være mer enn 2 år frem i tid."
+
+#: includes\Core\I18n.php
+msgid "Name is too long (maximum 100 characters)."
+msgstr "Navnet er for langt (maks 100 tegn)."
+
+#: includes\Core\I18n.php
+msgid "Phone number is too long (maximum 30 characters)."
+msgstr "Telefonnummeret er for langt (maks 30 tegn)."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum children for this room is %d."
+msgstr "Feil: Maksimum barn for dette rommet er %d."
+
+#: includes\Core\I18n.php
+msgid "Error calculating price. Please check dates."
+msgstr "Feil ved prisberegning. Sjekk datoer."
+
+#: includes\Core\I18n.php
+msgid "Please fill in all required fields."
+msgstr "Vennligst fyll ut alle obligatoriske felt."
+
+#: includes\Core\I18n.php
+msgid "Please provide a valid email address."
+msgstr "Vennligst oppgi en gyldig e-postadresse."
+
+#: includes\Core\I18n.php
+msgid "The field \"%s\" is required."
+msgstr "Feltet \"%s\" er påkrevd."
+
+#: includes\Core\I18n.php
+msgid "Spam detected."
+msgstr "Spam oppdaget."
+
+#: includes\Core\I18n.php
+msgid "Sorry, this room was just booked by someone else or is unavailable for these dates."
+msgstr "Beklager, dette rommet ble nettopp booket av noen andre eller er utilgjengelig."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum adults for this room is %d."
+msgstr "Feil: Maksimum voksne for dette rommet er %d."
+
+#: includes\Core\I18n.php
+msgid "REST API access is a Pro feature."
+msgstr "REST API-tilgang er en Pro-funksjon."
+
+#: includes\Core\I18n.php
+msgid "Invalid nonce."
+msgstr "Ugyldig nonce."
+
+#: includes\Core\I18n.php
+msgid "Too many requests. Please try again later."
+msgstr "For mange forespørsler. Prøv igjen senere."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking details. Cannot calculate amount."
+msgstr "Ugyldige bookingdetaljer. Kan ikke beregne beløp."
+
+#: includes\Core\I18n.php
+msgid "Stripe is not configured."
+msgstr "Stripe er ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "PayPal is not configured. Please contact the site administrator."
+msgstr "PayPal er ikke konfigurert. Kontakt administrator."
+
+#: includes\Core\I18n.php
+msgid "Unable to connect to PayPal. Please try again later."
+msgstr "Kan ikke koble til PayPal."
+
+#: includes\Core\I18n.php
+msgid "Failed to authenticate with PayPal. Please check your PayPal credentials."
+msgstr "Kunne ikke autentisere med PayPal."
+
+#: includes\Core\I18n.php
+msgid "Unable to create PayPal order. Please try again later."
+msgstr "Kan ikke opprette PayPal-ordre."
+
+#: includes\Core\I18n.php
+msgid "Currency %s is not supported by your PayPal account."
+msgstr "Valuta %s støttes ikke av din PayPal-konto."
+
+#: includes\Core\I18n.php
+msgid "PayPal error: %s"
+msgstr "PayPal-feil: %s"
+
+#: includes\Core\I18n.php
+msgid "Missing order ID."
+msgstr "Mangler ordre-ID."
+
+#: includes\Core\I18n.php
+msgid "Unable to capture payment. Please try again later."
+msgstr "Kan ikke belaste betaling."
+
+#: includes\Core\I18n.php
+msgid "This payment has already been processed."
+msgstr "Denne betalingen er allerede behandlet."
+
+#: includes\Core\I18n.php
+msgid "The payment was declined by PayPal. Please try a different payment method."
+msgstr "Betalingen ble avvist av PayPal."
+
+#: includes\Core\I18n.php
+msgid "privacy policy"
+msgstr "personvernerklæring"
+
+#: includes\Core\I18n.php
+msgid "Terms & Conditions"
+msgstr "Vilkår og Betingelser"
+
+#: includes\Core\I18n.php
+msgid "Payment Information"
+msgstr "Betalingsinformasjon"
+
+#: includes\Core\I18n.php
+msgid "Payment will be collected upon arrival at the property."
+msgstr "Betaling vil bli innkrevd ved ankomst."
+
+#: includes\Core\I18n.php
+msgid "Amount Due"
+msgstr "Beløp å betale"
+
+#: includes\Core\I18n.php
+msgid "Failed to create PayPal order."
+msgstr "Kunne ikke opprette PayPal-ordre."
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page and try again."
+msgstr "Sikkerhetsverifisering feilet. Oppdater siden."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Client ID is not configured."
+msgstr "PayPal %s Client ID er ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Secret is not configured."
+msgstr "PayPal %s Secret er ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "Stripe payment failed: Payment intent missing."
+msgstr "Stripe-betaling feilet: Payment intent mangler."
+
+#: includes\Core\I18n.php
+msgid "Stripe API error: %s"
+msgstr "Stripe API-feil: %s"
+
+#: includes\Core\I18n.php
+msgid "PayPal payment failed: Order ID missing."
+msgstr "PayPal-betaling feilet: Ordre-ID mangler."
+
+#: includes\Core\I18n.php
+msgid "Payment is required."
+msgstr "Betaling er påkrevd."
+
+#: includes\Core\I18n.php
+msgid "API key has not been configured. Set it in Hotel Booking → Settings."
+msgstr "API-nøkkel er ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "Invalid or missing API key."
+msgstr "Ugyldig eller manglende API-nøkkel."
+
+#: includes\Core\I18n.php
+msgid "Webhook signature required. Unauthorized requests are rejected."
+msgstr "Webhook-signatur påkrevd."
+
+#: includes\Core\I18n.php
+msgid "Stripe webhook secret not configured. Please set it in Settings."
+msgstr "Stripe webhook secret ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe signature format."
+msgstr "Ugyldig Stripe-signaturformat."
+
+#: includes\Core\I18n.php
+msgid "Webhook timestamp outside acceptable range."
+msgstr "Webhook-tidsstempel utenfor rekkevidde."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe webhook signature."
+msgstr "Ugyldig Stripe webhook-signatur."
+
+#: includes\Core\I18n.php
+msgid "Missing required PayPal webhook headers."
+msgstr "Mangler påkrevde PayPal webhook-headers."
+
+#: includes\Core\I18n.php
+msgid "Valid customer name and email are required."
+msgstr "Gyldig kundenavn og e-post er påkrevd."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking dates."
+msgstr "Ugyldige bookingdatoer."
+
+#: includes\Core\I18n.php
+msgid "Failed to create the booking."
+msgstr "Kunne ikke opprette bookingen."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Publishable Key is not configured."
+msgstr "Stripe %s Publishable Key ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Secret Key is not configured."
+msgstr "Stripe %s Secret Key ikke konfigurert."
+
+#: includes\Core\I18n.php
+msgid "Invalid publishable key format. Expected key starting with \"%1$s\" for %2$s mode."
+msgstr "Ugyldig nøkkelformat."
+
+#: includes\Core\I18n.php
+msgid "Credentials contain extra spaces"
+msgstr "Legitimasjon inneholder ekstra mellomrom"
+
+#: includes\Core\I18n.php
+msgid "Using Sandbox credentials in Live mode (or vice versa)"
+msgstr "Bruker Sandbox-legitimasjon i Live-modus"
+
+#: includes\Core\I18n.php
+msgid "Credentials have expired or been rotated"
+msgstr "Legitimasjon har utløpt"
+
+#: includes\Core\I18n.php
+msgid "PayPal %s credentials are valid!"
+msgstr "PayPal %s legitimasjon er gyldig!"
+
+#: includes\Core\I18n.php
+msgid "Stripe %s credentials are valid!"
+msgstr "Stripe %s legitimasjon er gyldig!"
+
+#: includes\Core\I18n.php
+msgid "Connection failed: %s"
+msgstr "Tilkobling feilet: %s"
+
+#: includes\Core\I18n.php
+msgid "Authentication failed: %s"
+msgstr "Autentisering feilet: %s"
+
+#: includes\Core\I18n.php
+msgid "Common causes:"
+msgstr "Vanlige årsaker:"
+
+#: includes\Core\ICal.php
+msgid "Pro license required."
+msgstr "Pro-lisens påkrevd."
+
+#: includes\Core\ICal.php
+msgid "Invalid or missing iCal token."
+msgstr "Ugyldig eller manglende iCal-token."
+
+#: includes\Core\ICal.php
+msgid "Security Error"
+msgstr "Sikkerhetsfeil"
+
+#: includes\Core\ICal.php
+msgid "Booking #%1$d - %2$s"
+msgstr "Booking #%1$d - %2$s"
+
+#: includes\Core\ICal.php
+msgid "Check-in: %s"
+msgstr "Sjekk inn: %s"
+
+#: includes\Core\ICal.php
+msgid "Check-out: %s"
+msgstr "Sjekk ut: %s"
+
+#: includes\Core\ICal.php
+msgid "Guests: %d"
+msgstr "Gjester: %d"
+
+#: includes\Core\ICal.php
+msgid "Email: %s"
+msgstr "E-post: %s"
+
+#: includes\Core\ICal.php
+msgid "Phone: %s"
+msgstr "Tlf: %s"
+
+#: includes\Core\ICal.php
+msgid "Source: %s"
+msgstr "Kilde: %s"
+
+#: includes\Core\ICal.php
+msgid "External Booking"
+msgstr "Ekstern booking"
+
+#: includes\Core\ICalParser.php
+msgid "Airbnb Reservation"
+msgstr "Airbnb-reservasjon"
+
+#: includes\Core\ICalParser.php
+msgid "Booking.com Reservation"
+msgstr "Booking.com-reservasjon"
+
+#: includes\Core\ICalParser.php
+msgid "Google Calendar Event"
+msgstr "Google Kalender-hendelse"
+
+#: includes\Core\License.php
+msgid "The %s feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Funksjonen %s er en del av Modern Hotel Booking Pro."
+
+#: includes\Core\License.php
+msgid "This feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Denne funksjonen er en del av Modern Hotel Booking Pro-opplevelsen."
+
+#: includes\Core\License.php
+msgid "Activate Pro Now"
+msgstr "Aktiver Pro nå"
+
+#: includes\Core\LicenseManager.php
+msgid "Too many attempts. Please wait a minute before trying again."
+msgstr "For mange forsøk. Vent et minutt."
+
+#: includes\Core\LicenseManager.php
+msgid "License key cannot be empty."
+msgstr "Lisensnøkkel kan ikke være tom."
+
+#: includes\Core\LicenseManager.php
+msgid "License system not configured. Please contact support."
+msgstr "Lisenssystem ikke konfigurert."
+
+#: includes\Core\LicenseManager.php
+msgid "Invalid license key or server error."
+msgstr "Ugyldig lisensnøkkel eller serverfeil."
+
+#: includes\Core\LicenseManager.php
+msgid "License limit reached. No activations remaining."
+msgstr "Lisensgrense nådd."
+
+#: includes\Core\LicenseManager.php
+msgid "License activated successfully."
+msgstr "Lisens aktivert."
+
+#: includes\Core\LicenseManager.php
+msgid "License deactivated."
+msgstr "Lisens deaktivert."
+
+#: includes\Core\LicenseManager.php
+msgid "No license key stored."
+msgstr "Ingen lisensnøkkel lagret."
+
+#: includes\Core\LicenseManager.php
+msgid "API credentials not configured."
+msgstr "API-legitimasjon ikke konfigurert."
+
+#: includes\Core\LicenseManager.php
+msgid "License is valid."
+msgstr "Lisensen er gyldig."
+
+#: includes\Core\LicenseManager.php
+msgid "License is not valid."
+msgstr "Lisensen er ugyldig."
+
+#: includes\Core\LicenseValidator.php
+msgid "%d day"
+msgstr "%d dag"
+
+#: includes\Core\LicenseValidator.php
+msgid "%d hour"
+msgstr "%d time"
+
+#: includes\Core\LicenseValidator.php
+msgid "License Warning:"
+msgstr "Lisensadvarsel:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Could not verify license. Grace period active: %s remaining."
+msgstr "Kunne ikke verifisere lisens. Grace-periode: %s gjenstår."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Error:"
+msgstr "Lisensfeil:"
+
+#: includes\Core\LicenseValidator.php
+msgid "License verification failed. Pro features have been disabled. Please check your license or contact support."
+msgstr "Lisensverifisering feilet. Pro-funksjoner deaktivert."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Expired:"
+msgstr "Lisens utløpt:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Your Pro license has expired. Please renew to continue using Pro features."
+msgstr "Din Pro-lisens har utløpt."
+
+#: includes\Core\Plugin.php
+msgid "Pro license required for iCal export."
+msgstr "Pro-lisens påkrevd for iCal-eksport."
+
+#: includes\Core\Privacy.php
+msgid "Modern Hotel Booking"
+msgstr "Modern Hotel Booking"
+
+#: includes\Core\Privacy.php
+msgid "This plugin collects the following personal data from guests during the booking process:"
+msgstr "Denne pluginen samler følgende personopplysninger:"
+
+#: includes\Core\Privacy.php
+msgid "Email Address"
+msgstr "E-postadresse"
+
+#: includes\Core\Privacy.php
+msgid "Phone Number"
+msgstr "Telefonnummer"
+
+#: includes\Core\Privacy.php
+msgid "Booking Dates and Details"
+msgstr "Bookingdatoer og detaljer"
+
+#: includes\Core\Privacy.php
+msgid "This data is stored in the database for the purpose of managing reservations and contacting guests regarding their stay."
+msgstr "Disse dataene lagres for å administrere reservasjoner."
+
+#: includes\Core\Privacy.php
+msgid "Booking ID"
+msgstr "Booking-ID"
+
+#: includes\Core\Privacy.php
+msgid "Check-in Date"
+msgstr "Innsjekkingsdato"
+
+#: includes\Core\Privacy.php
+msgid "Check-out Date"
+msgstr "Utsjekkingsdato"
+
+#: includes\Core\Privacy.php
+msgid "Customer Phone"
+msgstr "Kundetelefon"
+
+#: includes\Core\Privacy.php
+msgid "Hotel Bookings"
+msgstr "Hotellbookinger"
+
+#: includes\Core\Tax.php
+msgid "Booking Summary"
+msgstr "Bookingsammendrag"
+
+#: includes\Core\Tax.php
+msgid "Item"
+msgstr "Vare"
+
+#: includes\Core\Tax.php
+msgid "Amount"
+msgstr "Beløp"
+
+#: includes\Core\Tax.php
+msgid "Subtotal"
+msgstr "Delsum"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Accommodation (%2$s%%)"
+msgstr "%1$s - Overnatting (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Extras (%2$s%%)"
+msgstr "%1$s - Ekstra (%2$s%%)"
+
+#: includes\Frontend\BookingWidget.php
+msgid "MHB: Booking Search"
+msgstr "MHB: Bookingsøk"
+
+#: includes\Frontend\BookingWidget.php
+msgid "A compact booking search form."
+msgstr "Et kompakt søkeskjema."
+
+#: includes\Frontend\BookingWidget.php
+msgid "Book Your Stay"
+msgstr "Bestill oppholdet ditt"
+
+#: includes\Frontend\BookingWidget.php
+msgid "Title:"
+msgstr "Tittel:"
+
+#: includes\Pro\Analytics.php
+msgid "Gross Revenue"
+msgstr "Bruttoinntekt"
+
+#: includes\Pro\Analytics.php
+msgid "Collected"
+msgstr "Innsamlet"
+
+#: includes\Pro\Analytics.php
+msgid "Tax"
+msgstr "Skatt"
+
+#: includes\Pro\Analytics.php
+msgid "Booked"
+msgstr "Booket"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue"
+msgstr "Inntekt"
+
+#: includes\Pro\Analytics.php
+msgid "Hotel Booking — Revenue Overview"
+msgstr "Hotellbooking — Inntekts oversikt"
+
+#: includes\Pro\Analytics.php
+msgid "Collected (MTD)"
+msgstr "Innsamlet (Hittil i måneden)"
+
+#: includes\Pro\Analytics.php
+msgid "Outstanding Balance"
+msgstr "Utestående saldo"
+
+#: includes\Pro\Analytics.php
+msgid "Guests Now"
+msgstr "Gjester nå"
+
+#: includes\Pro\Analytics.php
+msgid "pending bookings"
+msgstr "ventende bookinger"
+
+#: includes\Pro\Analytics.php
+msgid "partially paid"
+msgstr "delvis betalt"
+
+#: includes\Pro\Analytics.php
+msgid "View Full Analytics →"
+msgstr "Se full analyse →"
+
+#: includes\Pro\Analytics.php
+msgid "Analytics Intelligence"
+msgstr "Analyseintelligens"
+
+#: includes\Pro\Analytics.php
+msgid "7D"
+msgstr "7D"
+
+#: includes\Pro\Analytics.php
+msgid "30D"
+msgstr "30D"
+
+#: includes\Pro\Analytics.php
+msgid "90D"
+msgstr "90D"
+
+#: includes\Pro\Analytics.php
+msgid "Year"
+msgstr "År"
+
+#: includes\Pro\Analytics.php
+msgid "Starts"
+msgstr "Starter"
+
+#: includes\Pro\Analytics.php
+msgid "Ends"
+msgstr "Slutter"
+
+#: includes\Pro\Analytics.php
+msgid "Update"
+msgstr "Oppdater"
+
+#: includes\Pro\Analytics.php
+msgid "Key Performance Indicators"
+msgstr "Nøkkeltall (KPI)"
+
+#: includes\Pro\Analytics.php
+msgid "Total Revenue"
+msgstr "Total inntekt"
+
+#: includes\Pro\Analytics.php
+msgid "vs previous period"
+msgstr "mot forrige periode"
+
+#: includes\Pro\Analytics.php
+msgid "Includes"
+msgstr "Inkluderer"
+
+#: includes\Pro\Analytics.php
+msgid "tax"
+msgstr "skatt"
+
+#: includes\Pro\Analytics.php
+msgid "Collected Revenue"
+msgstr "Innsamlet inntekt"
+
+#: includes\Pro\Analytics.php
+msgid "of total"
+msgstr "av total"
+
+#: includes\Pro\Analytics.php
+msgid "Pending payments"
+msgstr "Ventende betalinger"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy Rate"
+msgstr "Beleggsprosent"
+
+#: includes\Pro\Analytics.php
+msgid "ADR"
+msgstr "ADR (Gjennomsnittlig dagspris)"
+
+#: includes\Pro\Analytics.php
+msgid "Average Daily Rate"
+msgstr "Gjennomsnittlig dagspris"
+
+#: includes\Pro\Analytics.php
+msgid "RevPAR"
+msgstr "RevPAR"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Per Available Room"
+msgstr "Inntekt per tilgjengelig rom"
+
+#: includes\Pro\Analytics.php
+msgid "Total Bookings"
+msgstr "Totale bookinger"
+
+#: includes\Pro\Analytics.php
+msgid "Confirmation Rate"
+msgstr "Bekreftelsesrate"
+
+#: includes\Pro\Analytics.php
+msgid "Avg. Booking Value"
+msgstr "Gj.snittlig bookingverdi"
+
+#: includes\Pro\Analytics.php
+msgid "Per booking"
+msgstr "Per booking"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Collected"
+msgstr "Innsamlet skatt"
+
+#: includes\Pro\Analytics.php
+msgid "VAT / Sales Tax"
+msgstr "MVA / Salgsskatt"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Trends"
+msgstr "Inntektstrender"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy by Day of Week"
+msgstr "Belegg per ukedag"
+
+#: includes\Pro\Analytics.php
+msgid "30-Day Occupancy Forecast"
+msgstr "30-dagers beleggsprognose"
+
+#: includes\Pro\Analytics.php
+msgid "Booking Sources"
+msgstr "Bookingkilder"
+
+#: includes\Pro\Analytics.php
+msgid "No booking data available"
+msgstr "Ingen bookingdata tilgjengelig"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue by Source"
+msgstr "Inntekt per kilde"
+
+#: includes\Pro\Analytics.php
+msgid "Source"
+msgstr "Kilde"
+
+#: includes\Pro\Analytics.php
+msgid "Room Type Performance"
+msgstr "Romtypeytelse"
+
+#: includes\Pro\Analytics.php
+msgid "No room performance data available"
+msgstr "Ingen romytelsesdata tilgjengelig"
+
+#: includes\Pro\Analytics.php
+#: includes\Pro\ICalManager.php
+msgid "Room Type"
+msgstr "Romtype"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy"
+msgstr "Belegg"
+
+#: includes\Pro\Analytics.php
+msgid "Tax / VAT Analytics"
+msgstr "Skatt / MVA Analyse"
+
+#: includes\Pro\Analytics.php
+msgid "Total Tax Collected"
+msgstr "Total skatt innsamlet"
+
+#: includes\Pro\Analytics.php
+msgid "taxed bookings"
+msgstr "skattlagte bookinger"
+
+#: includes\Pro\Analytics.php
+msgid "Net Revenue"
+msgstr "Nettoinntekt"
+
+#: includes\Pro\Analytics.php
+msgid "Before tax"
+msgstr "Før skatt"
+
+#: includes\Pro\Analytics.php
+msgid "Including tax"
+msgstr "Inkludert skatt"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Breakdown by Rate"
+msgstr "Skattefordeling etter sats"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Rate"
+msgstr "Skatteprosent"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Methods"
+msgstr "Betalingsmetoder"
+
+#: includes\Pro\Analytics.php
+msgid "No payment data available"
+msgstr "Ingen betalingsdata tilgjengelig"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Status Breakdown"
+msgstr "Betalingsstatusfordeling"
+
+#: includes\Pro\Analytics.php
+msgid "Count"
+msgstr "Antall"
+
+#: includes\Pro\Analytics.php
+msgid "Real-time Activity"
+msgstr "Sanntidsaktivitet"
+
+#: includes\Pro\Analytics.php
+msgid "No recent bookings"
+msgstr "Ingen nylige bookinger"
+
+#: includes\Pro\Analytics.php
+msgid "Today's Operations"
+msgstr "Dagens operasjoner"
+
+#: includes\Pro\Analytics.php
+msgid "Check-ins"
+msgstr "Innsjekkinger"
+
+#: includes\Pro\Analytics.php
+msgid "Check-outs"
+msgstr "Utsjekkinger"
+
+#: includes\Pro\Analytics.php
+msgid "No check-ins or check-outs today"
+msgstr "Ingen innsjekkinger eller utsjekkinger i dag"
+
+#: includes\Pro\Analytics.php
+msgid "Alerts"
+msgstr "Varsler"
+
+#: includes\Pro\Analytics.php
+msgid "Failed Payments"
+msgstr "Feilede betalinger"
+
+#: includes\Pro\Analytics.php
+msgid "Recent Cancellations"
+msgstr "Siste avbestillinger"
+
+#: includes\Pro\Analytics.php
+msgid "Monthly Demand"
+msgstr "Månedlig etterspørsel"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time Analysis"
+msgstr "Ledetidsanalyse"
+
+#: includes\Pro\Analytics.php
+msgid "No lead time data available"
+msgstr "Ingen ledetidsdata tilgjengelig"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time"
+msgstr "Ledetid"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Tracking"
+msgstr "Avbestillingssporing"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Rate"
+msgstr "Avbestillingsrate"
+
+#: includes\Pro\Analytics.php
+msgid "Lost Revenue"
+msgstr "Tapt inntekt"
+
+#: includes\Pro\Analytics.php
+msgid "From cancelled bookings"
+msgstr "Fra avbestilte bookinger"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations"
+msgstr "Avbestillinger"
+
+#: includes\Pro\Analytics.php
+msgid "Total cancelled"
+msgstr "Totalt avbestilt"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations by Lead Time"
+msgstr "Avbestillinger etter ledetid"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Impact"
+msgstr "Inntektspåvirkning"
+
+#: includes\Pro\Analytics.php
+msgid "Export Financial Report (CSV)"
+msgstr "Eksporter finansrapport (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Occupancy Report (CSV)"
+msgstr "Eksporter beleggsrapport (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Tax Report (CSV)"
+msgstr "Eksporter skatterapport (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Payments (CSV)"
+msgstr "Eksporter betalinger (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Security check failed. Please try again."
+msgstr "Sikkerhetskontroll feilet. Prøv igjen."
+
+#: includes\Pro\Analytics.php
+msgid "You do not have sufficient permissions to export data."
+msgstr "Du har ikke tilstrekkelige tillatelser til å eksportere data."
+
+#: includes\Pro\ICalManager.php
+msgid "Every 6 Hours"
+msgstr "Hver 6. time"
+
+#: includes\Pro\ICalManager.php
+msgid "Pro license required to sync calendars."
+msgstr "Pro-lisens kreves for å synkronisere kalendere."
+
+#: includes\Pro\ICalManager.php
+msgid "%s Booking"
+msgstr "%s Booking"
+
+#: includes\Pro\ICalManager.php
+msgid "Import Only"
+msgstr "Kun import"
+
+#: includes\Pro\ICalManager.php
+msgid "Export Only"
+msgstr "Kun eksport"
+
+#: includes\Pro\ICalManager.php
+msgid "Bidirectional"
+msgstr "Toveis"
+
+#: includes\Pro\ICalManager.php
+msgid "📅 iCal Calendar Sync"
+msgstr "📅 iCal Kalendersynkronisering"
+
+#: includes\Pro\ICalManager.php
+msgid "Share this URL with Airbnb, Booking.com, or other platforms to export your availability."
+msgstr "Del denne URL-en med Airbnb, Booking.com eller andre plattformer for å eksportere tilgjengeligheten din."
+
+#: includes\Pro\ICalManager.php
+msgid "Calendar Connections"
+msgstr "Kalendertilkoblinger"
+
+#: includes\Pro\ICalManager.php
+msgid "Connection Name"
+msgstr "Tilkoblingsnavn"
+
+#: includes\Pro\ICalManager.php
+msgid "Synced %s ago"
+msgstr "Synkronisert for %s siden"
+
+#: includes\Pro\ICalManager.php
+msgid "Never synced"
+msgstr "Aldri synkronisert"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync"
+msgstr "Synkroniser"
+
+#: includes\Pro\ICalManager.php
+msgid "+ Add Connection"
+msgstr "+ Legg til tilkobling"
+
+#: includes\Pro\ICalManager.php
+msgid "All rooms have been synced."
+msgstr "Alle rom er synkronisert."
+
+#: includes\Pro\ICalManager.php
+msgid "Room #%s has been synced."
+msgstr "Rom #%s er synkronisert."
+
+#: includes\Pro\ICalManager.php
+msgid "Manage iCal feed imports and exports for each room. Sync with Airbnb, Booking.com, Google Calendar, and other platforms."
+msgstr "Administrer iCal-feed import og eksport for hvert rom. Synkroniser med Airbnb, Booking.com, Google Kalender og andre plattformer."
+
+#: includes\Pro\ICalManager.php
+msgid "⚙️ Sync Settings"
+msgstr "⚙️ Synkroniseringsinnstillinger"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Auto Sync"
+msgstr "Aktiver automatisk synkronisering"
+
+#: includes\Pro\ICalManager.php
+msgid "Automatically sync calendars"
+msgstr "Synkroniser kalendere automatisk"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync Interval"
+msgstr "Synkroniseringsintervall"
+
+#: includes\Pro\ICalManager.php
+msgid "Every Hour"
+msgstr "Hver time"
+
+#: includes\Pro\ICalManager.php
+msgid "Daily"
+msgstr "Daglig"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Retry Logic"
+msgstr "Aktiver gjentakslogikk"
+
+#: includes\Pro\ICalManager.php
+msgid "Retry failed syncs with exponential backoff (1h, 2h, 4h)"
+msgstr "Prøv mislykkede synkroniseringer på nytt med eksponentiell forsinkelse (1t, 2t, 4t)"
+
+#: includes\Pro\ICalManager.php
+msgid "Email Notifications"
+msgstr "E-postvarsler"
+
+#: includes\Pro\ICalManager.php
+msgid "Send email on sync failure"
+msgstr "Send e-post ved synkroniseringsfeil"
+
+#: includes\Pro\ICalManager.php
+msgid "Save Settings"
+msgstr "Lagre innstillinger"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync all rooms? This may take a moment."
+msgstr "Synkronisere alle rom? Dette kan ta et øyeblikk."
+
+#: includes\Pro\ICalManager.php
+msgid "Sync All Rooms"
+msgstr "Synkroniser alle rom"
+
+#: includes\Pro\ICalManager.php
+msgid "Platforms"
+msgstr "Plattformer"
+
+#: includes\Pro\ICalManager.php
+msgid "Connections"
+msgstr "Tilkoblinger"
+
+#: includes\Pro\ICalManager.php
+msgid "No rooms found. Create rooms first."
+msgstr "Ingen rom funnet. Opprett rom først."
+
+#: includes\Pro\ICalManager.php
+msgid "%s ago"
+msgstr "%s siden"
+
+#: includes\Pro\ICalManager.php
+msgid "How to set up calendar sync"
+msgstr "Hvordan sette opp kalendersynkronisering"
+
+#: includes\Pro\ICalManager.php
+msgid "Airbnb"
+msgstr "Airbnb"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to your Airbnb listing → Calendar → Availability"
+msgstr "Gå til din Airbnb-oppføring → Kalender → Tilgjengelighet"
+
+#: includes\Pro\ICalManager.php
+msgid "Under \"Connect calendars,\" click \"Export Calendar\""
+msgstr "Under \"Koble til kalendere,\" klikk \"Eksporter kalender\""
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the iCal URL and add it as a new connection above"
+msgstr "Kopier iCal-URL-en og legg den til som en ny tilkobling ovenfor"
+
+#: includes\Pro\ICalManager.php
+msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb's import field"
+msgstr "For å importere DIN kalender til Airbnb, bruk eksport-URL-en ovenfor i Airbnbs importfelt"
+
+#: includes\Pro\ICalManager.php
+msgid "Booking.com"
+msgstr "Booking.com"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to Booking.com Extranet → Rates & Availability → Sync calendars"
+msgstr "Gå til Booking.com Extranet → Priser og tilgjengelighet → Synkroniser kalendere"
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the export URL from Booking.com and add it as a new connection above"
+msgstr "Kopier eksport-URL-en fra Booking.com og legg den til som en ny tilkobling ovenfor"
+
+#: includes\Pro\ICalManager.php
+msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com's import field"
+msgstr "For å eksportere DIN kalender til Booking.com, bruk eksport-URL-en ovenfor i Booking.coms importfelt"
+
+#: includes\Pro\ICalManager.php
+msgid "iCal"
+msgstr "iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "connection"
+msgstr "tilkobling"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Payment Gateways"
+msgstr "Betalingsgatewayer"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Enable and configure payment methods for your guests."
+msgstr "Aktiver og konfigurer betalingsmetoder for gjestene dine."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Stripe (Credit/Debit Cards)"
+msgstr "Stripe (Kreditt-/Debetkort)"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept credit/debit card payments via Stripe"
+msgstr "Godta kreditt-/debetkortbetalinger via Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Mode"
+msgstr "Modus"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test"
+msgstr "Test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live"
+msgstr "Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Publishable Key"
+msgstr "Test Publishable Key"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Secret Key"
+msgstr "Test Secret Key"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret key is stored securely. Enter a new value to update."
+msgstr "Hemmelig nøkkel lagres sikkert. Angi en ny verdi for å oppdatere."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Publishable Key"
+msgstr "Live Publishable Key"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret Key"
+msgstr "Live Secret Key"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Stripe Credentials"
+msgstr "Test Stripe-legitimasjon"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept payments via PayPal"
+msgstr "Godta betalinger via PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Client ID"
+msgstr "Sandbox Client ID"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Secret"
+msgstr "Sandbox Secret"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret is stored securely. Enter a new value to update."
+msgstr "Hemmelig nøkkel lagres sikkert. Angi en ny verdi for å oppdatere."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Client ID"
+msgstr "Live Client ID"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret"
+msgstr "Live Secret"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Connection"
+msgstr "Test tilkobling"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test PayPal Credentials"
+msgstr "Test PayPal-legitimasjon"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Pay On-site"
+msgstr "Betal på stedet"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Allow guests to pay at the property"
+msgstr "Tillat gjester å betale på eiendommen"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions"
+msgstr "Instruksjoner"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions shown to guests who select pay on-site. Supports multilingual format [:en]..[:ro].."
+msgstr "Instruksjoner vist til gjester som velger betaling på stedet. Støtter flerspråklig format [:en]..[:no].."
+
+#: modern-hotel-booking.php
+msgid "Modern Hotel Booking Error"
+msgstr "Modern Hotel Booking Feil"
+
+#: modern-hotel-booking.php
+msgid "This plugin requires PHP 7.4 or higher. You are running PHP %s. Please upgrade your PHP version."
+msgstr "Denne pluginen krever PHP 7.4 eller høyere. Du kjører PHP %s. Vennligst oppgrader PHP-versjonen din."
+
+#: modern-hotel-booking.php
+msgid "An error occurred while loading the plugin. Please check the debug log for details."
+msgstr "En feil oppsto under lasting av pluginen. Vennligst sjekk feilloggen for detaljer."
+
+#: scripts\i18n-tool.php
+msgid "String"
+msgstr "Streng"

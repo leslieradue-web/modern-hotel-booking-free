@@ -1,0 +1,3943 @@
+# Copyright (C) 2026 Modern Hotel Booking
+# This file is distributed under the same license as the Modern Hotel Booking plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Hotel Booking 2.2.4.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
+"Last-Translator: \n"
+"Language-Team: Romanian <ro_RO@wordpress.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-21T10:32:00+00:00\n"
+"PO-Revision-Date: 2026-02-27 15:30+0200\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: modern-hotel-booking\n"
+"Language: ro_RO\n"
+"Plural-Forms: nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?2:1));\n"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form"
+msgstr "Formular Rezervare Hotel"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form Preview"
+msgstr "Previzualizare Formular Rezervare"
+
+#: assets\block\booking-form\block.js
+msgid "Booking Settings"
+msgstr "Setări rezervare"
+
+#: assets\block\booking-form\block.js
+msgid "Room ID (optional)"
+msgstr "ID Cameră (opțional)"
+
+#: assets\block\booking-form\block.js
+msgid "Leave as 0 to show the general search form."
+msgstr "Lăsați 0 pentru a afișa formularul general de căutare."
+
+#: assets\block\room-calendar\block.js
+msgid "Room Availability Calendar"
+msgstr "Calendar Disponibilitate Cameră"
+
+#: assets\block\room-calendar\block.js
+msgid "Calendar Settings"
+msgstr "Setări calendar"
+
+#: assets\block\room-calendar\block.js
+#: includes\Core\Privacy.php
+msgid "Room ID"
+msgstr "ID Cameră"
+
+#: assets\block\room-calendar\block.js
+msgid "Enter the ID of the room to display the calendar for."
+msgstr "Introduceți ID-ul camerei pentru a afișa calendarul."
+
+#: assets\block\room-calendar\block.js
+msgid "Room ID: "
+msgstr "ID Cameră: "
+
+#: assets\block\room-calendar\block.js
+msgid "Please select a Room ID in the sidebar."
+msgstr "Vă rugăm să selectați un ID de cameră în bara laterală."
+
+#: assets\block\room-calendar\block.js
+msgid "(Preview only - real calendar shows on frontend)"
+msgstr "(Doar previzualizare - calendarul real apare pe site)"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking Overview"
+msgstr "Prezentare Generală Rezervări"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Total"
+msgstr "Total"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Pending"
+msgstr "În așteptare"
+
+#: includes\Admin\Menu.php
+msgid "Today"
+msgstr "Astăzi"
+
+#: includes\Admin\Menu.php
+msgid "Manage Bookings"
+msgstr "Gestionare Rezervări"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking"
+msgstr "Rezervări Hotel"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Bookings"
+msgstr "Rezervări"
+
+#: includes\Admin\Menu.php
+msgid "Room Types"
+msgstr "Tipuri de Camere"
+
+#: includes\Admin\Menu.php
+msgid "Rooms"
+msgstr "Camere"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Rules"
+msgstr "Reguli de Preț"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Plugin.php
+msgid "Settings"
+msgstr "Setări"
+
+#: includes\Admin\Menu.php
+msgid "PRO Features"
+msgstr "Funcții PRO"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Extras"
+msgstr "Extra"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "iCal Sync"
+msgstr "Sincronizare iCal"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Payments"
+msgstr "Plăți"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Webhooks"
+msgstr "Webhook-uri"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Analytics"
+msgstr "Analize"
+
+#: includes\Admin\Menu.php
+msgid "Appearance"
+msgstr "Aspect"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Advanced Pricing"
+msgstr "Prețuri Avansate"
+
+#: includes\Admin\Menu.php
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Nu aveți permisiuni suficiente pentru a accesa această pagină."
+
+#: includes\Admin\Menu.php
+msgid "Hotel Control Center"
+msgstr "Centru de Control Hotel"
+
+#: includes\Admin\Menu.php
+msgid "Unlock Premium Hospitality Features"
+msgstr "Deblochează Funcții Premium de Ospitalitate"
+
+#: includes\Admin\Menu.php
+msgid "Power up with iCal Sync, Stripe/PayPal integration, Advanced Pricing rules, and Deep Analytics."
+msgstr "Îmbunătățește cu sincronizare iCal, integrare Stripe/PayPal, reguli avansate de preț și analize detaliate."
+
+#: includes\Admin\Menu.php
+msgid "Upgrade to Pro"
+msgstr "Treci la Pro"
+
+#: includes\Admin\Menu.php
+msgid "Stay Revenue"
+msgstr "Venituri din Sejururi"
+
+#: includes\Admin\Menu.php
+msgid "Target Pipeline"
+msgstr "Target"
+
+#: includes\Admin\Menu.php
+msgid "Total Volume"
+msgstr "Volum Total"
+
+#: includes\Admin\Menu.php
+msgid "Attention Needed"
+msgstr "Necesită Atenție"
+
+#: includes\Admin\Menu.php
+msgid "Today's Arrivals"
+msgstr "Sosiri Astăzi"
+
+#: includes\Admin\Menu.php
+msgid "No arrivals scheduled for today."
+msgstr "Nu sunt sosiri programate pentru astăzi."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+#: includes\Core\ICal.php
+msgid "Guest"
+msgstr "Oaspete"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+#: includes\Pro\ICalManager.php
+msgid "Room"
+msgstr "Cameră"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Recent Bookings"
+msgstr "Rezervări recente"
+
+#: includes\Admin\Menu.php
+msgid "View All"
+msgstr "Vezi Toate"
+
+#: includes\Admin\Menu.php
+msgid "Date"
+msgstr "Dată"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\Privacy.php
+#: includes\Pro\Analytics.php
+msgid "Status"
+msgstr "Stare"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Quick Actions"
+msgstr "Acțiuni rapide"
+
+#: includes\Admin\Menu.php
+msgid "Create New Booking"
+msgstr "Creează Rezervare Nouă"
+
+#: includes\Admin\Menu.php
+msgid "Manage Inventory"
+msgstr "Gestionare Inventar"
+
+#: includes\Admin\Menu.php
+msgid "Global Settings"
+msgstr "Setări globale"
+
+#: includes\Admin\Menu.php
+msgid "System Status"
+msgstr "Stare sistem"
+
+#: includes\Admin\Menu.php
+msgid "License Status:"
+msgstr "Stare Licență:"
+
+#: includes\Admin\Menu.php
+msgid "PRO Active"
+msgstr "PRO Activ"
+
+#: includes\Admin\Menu.php
+msgid "Free Version"
+msgstr "Versiune Gratuită"
+
+#: includes\Admin\Menu.php
+msgid "Plugin Version:"
+msgstr "Versiune Plugin:"
+
+#: includes\Admin\Menu.php
+msgid "Database Status:"
+msgstr "Stare Bază de Date:"
+
+#: includes\Admin\Menu.php
+msgid "Healthy"
+msgstr "Sănătos"
+
+#: includes\Admin\Menu.php
+msgid "Need Assistance?"
+msgstr "Aveți nevoie de asistență?"
+
+#: includes\Admin\Menu.php
+msgid "Explore our documentation or contact the support team for property management advice."
+msgstr "Explorați documentația noastră sau contactați echipa de suport pentru sfaturi."
+
+#: includes\Admin\Menu.php
+msgid "Open Self-Service Portal →"
+msgstr "Deschide Portalul Self-Service →"
+
+#: includes\Admin\Menu.php
+msgid "Security check failed."
+msgstr "Verificarea de securitate a eșuat."
+
+#: includes\Admin\Menu.php
+msgid "Booking Confirmed & Email Sent!"
+msgstr "Rezervare Confirmată & Email Trimis!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Cancelled."
+msgstr "Rezervare Anulată."
+
+#: includes\Admin\Menu.php
+msgid "Booking Deleted."
+msgstr "Rezervare Ștearsă."
+
+#: includes\Admin\Menu.php
+msgid "Manual booking added by admin."
+msgstr "Rezervare manuală adăugată de administrator."
+
+#: includes\Admin\Menu.php
+msgid "Manual Booking Added!"
+msgstr "Rezervare Manuală Adăugată!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Updated!"
+msgstr "Rezervare Actualizată!"
+
+#: includes\Admin\Menu.php
+msgid "Add New Booking"
+msgstr "Adaugă Rezervare Nouă"
+
+#: includes\Admin\Menu.php
+msgid "Filtering by status: %s"
+msgstr "Filtrare după stare: %s"
+
+#: includes\Admin\Menu.php
+msgid "Clear Filter"
+msgstr "Șterge Filtrul"
+
+#: includes\Admin\Menu.php
+msgid "Add Manual Booking"
+msgstr "Adaugă Rezervare Manuală"
+
+#: includes\Admin\Menu.php
+msgid "Customer Details"
+msgstr "Detalii Client"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Customer Name"
+msgstr "Nume Client"
+
+#: includes\Admin\Menu.php
+msgid "Email"
+msgstr "Email"
+
+#: includes\Admin\Menu.php
+msgid "Phone"
+msgstr "Telefon"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Guests"
+msgstr "Oaspeți"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Children"
+msgstr "Copii"
+
+#: includes\Admin\Menu.php
+msgid "Child Ages"
+msgstr "Vârste Copii"
+
+#: includes\Admin\Menu.php
+msgid "Extra Guest Information"
+msgstr "Informații Suplimentare Oaspeți"
+
+#: includes\Admin\Menu.php
+msgid "Room & Dates"
+msgstr "Cameră & Date"
+
+#: includes\Admin\Menu.php
+msgid "-- Select Room --"
+msgstr "-- Selectează Cameră --"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-in"
+msgstr "Check-in"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-out"
+msgstr "Check-out"
+
+#: includes\Admin\Menu.php
+msgid "Extras & Discounts"
+msgstr "Extra & Reduceri"
+
+#: includes\Admin\Menu.php
+msgid "No extras configured."
+msgstr "Niciun extra configurat."
+
+#: includes\Admin\Menu.php
+msgid "Discount Amount"
+msgstr "Sumă Reducere"
+
+#: includes\Admin\Menu.php
+msgid "Payment Info"
+msgstr "Informații Plată"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+#: includes\Core\Tax.php
+msgid "Total Price"
+msgstr "Preț Total"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Amount"
+msgstr "Sumă Depozit"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Received"
+msgstr "Depozit Primit"
+
+#: includes\Admin\Menu.php
+msgid "Mark as received"
+msgstr "Marchează ca primit"
+
+#: includes\Admin\Menu.php
+msgid "Payment Method"
+msgstr "Metodă de plată"
+
+#: includes\Admin\Menu.php
+msgid "Onsite / Manual"
+msgstr "La locație / Manual"
+
+#: includes\Admin\Menu.php
+msgid "Stripe"
+msgstr "Stripe"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\PaymentGateways.php
+msgid "PayPal"
+msgstr "PayPal"
+
+#: includes\Admin\Menu.php
+msgid "Payment Received"
+msgstr "Plată primită"
+
+#: includes\Admin\Menu.php
+msgid "Mark full payment as received"
+msgstr "Marchează plata completă ca primită"
+
+#: includes\Admin\Menu.php
+msgid "Amount Outstanding"
+msgstr "Sumă Restantă"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Booking Management"
+msgstr "Gestionare Rezervări"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Confirmed"
+msgstr "Confirmat"
+
+#: includes\Admin\Menu.php
+msgid "Language"
+msgstr "Limbă"
+
+#: includes\Admin\Menu.php
+msgid "Admin Notes"
+msgstr "Note Administrator"
+
+#: includes\Admin\Menu.php
+msgid "Add Booking"
+msgstr "Adaugă rezervare"
+
+#: includes\Admin\Menu.php
+msgid "Cancel"
+msgstr "Anulează"
+
+#: includes\Admin\Menu.php
+msgid "Edit Booking #%d"
+msgstr "Editează Rezervarea #%d"
+
+#: includes\Admin\Menu.php
+msgid "Child %d:"
+msgstr "Copil %d:"
+
+#: includes\Admin\Menu.php
+msgid "Payment Status"
+msgstr "Stare plată"
+
+#: includes\Admin\Menu.php
+msgid "Processing"
+msgstr "În procesare"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Completed"
+msgstr "Completat"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Failed"
+msgstr "Eșuat"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Refunded"
+msgstr "Rambursat"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID"
+msgstr "ID Tranzacție"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID from payment gateway (read-only)."
+msgstr "ID Tranzacție din procesator (doar citire)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Amount"
+msgstr "Sumă Plată"
+
+#: includes\Admin\Menu.php
+msgid "Actual amount paid (may differ from total)."
+msgstr "Suma efectiv plătită (poate diferi de total)."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Payment Date"
+msgstr "Data Plății"
+
+#: includes\Admin\Menu.php
+msgid "Date/time payment was completed (read-only)."
+msgstr "Data/ora când plata a fost finalizată (doar citire)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Error"
+msgstr "Eroare Plată"
+
+#: includes\Admin\Menu.php
+msgid "Error message from failed payment."
+msgstr "Mesaj de eroare de la plata eșuată."
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "%s Breakdown"
+msgstr "Defalcare %s"
+
+#: includes\Admin\Menu.php
+msgid "Cancelled"
+msgstr "Anulat"
+
+#: includes\Admin\Menu.php
+msgid "Update Booking"
+msgstr "Actualizează Rezervarea"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this booking? This action cannot be undone."
+msgstr "Sigur doriți să ștergeți această rezervare? Această acțiune nu poate fi anulată."
+
+#: includes\Admin\Menu.php
+msgid "Delete Booking"
+msgstr "Șterge rezervarea"
+
+#: includes\Admin\Menu.php
+msgid "ID"
+msgstr "ID"
+
+#: includes\Admin\Menu.php
+msgid "Dates"
+msgstr "Date"
+
+#: includes\Admin\Menu.php
+msgid "Payment"
+msgstr "Plată"
+
+#: includes\Admin\Menu.php
+msgid "Lang"
+msgstr "Limbă"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Actions"
+msgstr "Acțiuni"
+
+#: includes\Admin\Menu.php
+msgid "Paid in full"
+msgstr "Plătit integral"
+
+#: includes\Admin\Menu.php
+msgid "Outstanding: %s"
+msgstr "Restant: %s"
+
+#: includes\Admin\Menu.php
+msgid "Edit"
+msgstr "Editează"
+
+#: includes\Admin\Menu.php
+msgid "Confirm"
+msgstr "Confirmă"
+
+#: includes\Admin\Menu.php
+msgid "Delete this booking?"
+msgstr "Ștergeți această rezervare?"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Delete"
+msgstr "Șterge"
+
+#: includes\Admin\Menu.php
+msgid "No bookings found."
+msgstr "Nu s-au găsit rezervări."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Deleted."
+msgstr "Tip Cameră Șters."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Updated!"
+msgstr "Tip Cameră Actualizat!"
+
+#: includes\Admin\Menu.php
+msgid "Room Type Added!"
+msgstr "Tip Cameră Adăugat!"
+
+#: includes\Admin\Menu.php
+msgid "Manage Room Types"
+msgstr "Gestionare Tipuri Camere"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room Type"
+msgstr "Editează Tip Cameră"
+
+#: includes\Admin\Menu.php
+msgid "Add New Type"
+msgstr "Adaugă Tip Nou"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Name"
+msgstr "Nume"
+
+#: includes\Admin\Menu.php
+msgid "Description"
+msgstr "Descriere"
+
+#: includes\Admin\Menu.php
+msgid "Base Price"
+msgstr "Preț de bază"
+
+#: includes\Admin\Menu.php
+msgid "Max Adults"
+msgstr "Max Adulți"
+
+#: includes\Admin\Menu.php
+msgid "Max Children"
+msgstr "Max Copii"
+
+#: includes\Admin\Menu.php
+msgid "Child Free Age Limit"
+msgstr "Limită Vârstă Gratuitate Copii"
+
+#: includes\Admin\Menu.php
+msgid "Children at or under this age stay free."
+msgstr "Copiii sub sau la această vârstă stau gratuit."
+
+#: includes\Admin\Menu.php
+msgid "Child Rate (per night)"
+msgstr "Tarif Copil (pe noapte)"
+
+#: includes\Admin\Menu.php
+msgid "Image URL"
+msgstr "URL Imagine"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Amenities"
+msgstr "Facilități"
+
+#: includes\Admin\Menu.php
+msgid "Update Room Type"
+msgstr "Actualizează Tip Cameră"
+
+#: includes\Admin\Menu.php
+msgid "Add Room Type"
+msgstr "Adaugă Tip Cameră"
+
+#: includes\Admin\Menu.php
+msgid "Image"
+msgstr "Imagine"
+
+#: includes\Admin\Menu.php
+msgid "Price"
+msgstr "Preț"
+
+#: includes\Admin\Menu.php
+msgid "No Image"
+msgstr "Fără Imagine"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "None"
+msgstr "Niciunul"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this room type? This may affect existing rooms."
+msgstr "Sigur doriți să ștergeți acest tip de cameră? Poate afecta camerele existente."
+
+#: includes\Admin\Menu.php
+msgid "Room Deleted."
+msgstr "Cameră Ștearsă."
+
+#: includes\Admin\Menu.php
+msgid "Manage Rooms"
+msgstr "Gestionare Camere"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "iCal Synchronization"
+msgstr "Sincronizare iCal"
+
+#: includes\Admin\Menu.php
+msgid "Back to Rooms"
+msgstr "Înapoi la Camere"
+
+#: includes\Admin\Menu.php
+msgid "Feed Added!"
+msgstr "Feed Adăugat!"
+
+#: includes\Admin\Menu.php
+msgid "Sync Completed."
+msgstr "Sincronizare Completă."
+
+#: includes\Admin\Menu.php
+msgid "Room Updated!"
+msgstr "Cameră Actualizată!"
+
+#: includes\Admin\Menu.php
+msgid "Room Added!"
+msgstr "Cameră Adăugată!"
+
+#: includes\Admin\Menu.php
+msgid "iCal Sync — Room %s"
+msgstr "Sincronizare iCal — Cameră %s"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Export URL"
+msgstr "URL Export"
+
+#: includes\Admin\Menu.php
+msgid "Import Feeds"
+msgstr "Importă Feed-uri"
+
+#: includes\Admin\Menu.php
+msgid "URL"
+msgstr "URL"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Last Synced"
+msgstr "Ultima sincronizare"
+
+#: includes\Admin\Menu.php
+msgid "Never"
+msgstr "Niciodată"
+
+#: includes\Admin\Menu.php
+msgid "Delete?"
+msgstr "Șterge?"
+
+#: includes\Admin\Menu.php
+msgid "Add New Feed"
+msgstr "Adaugă Feed Nou"
+
+#: includes\Admin\Menu.php
+msgid "Name (e.g. Airbnb)"
+msgstr "Nume (ex. Airbnb)"
+
+#: includes\Admin\Menu.php
+msgid "iCal URL"
+msgstr "URL iCal"
+
+#: includes\Admin\Menu.php
+msgid "Add Feed"
+msgstr "Adaugă Feed"
+
+#: includes\Admin\Menu.php
+msgid "Sync All Now"
+msgstr "Sincronizează Tot Acum"
+
+#: includes\Admin\Menu.php
+msgid "Back"
+msgstr "Înapoi"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room"
+msgstr "Editează Cameră"
+
+#: includes\Admin\Menu.php
+msgid "Add Room"
+msgstr "Adaugă Cameră"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Type"
+msgstr "Tip"
+
+#: includes\Admin\Menu.php
+msgid "Number/Name"
+msgstr "Număr/Nume"
+
+#: includes\Admin\Menu.php
+msgid "Custom Price"
+msgstr "Preț Personalizat"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Available"
+msgstr "Disponibil"
+
+#: includes\Admin\Menu.php
+msgid "Maintenance"
+msgstr "Mentenanță"
+
+#: includes\Admin\Menu.php
+msgid "Update Room"
+msgstr "Actualizează Cameră"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Number"
+msgstr "Număr"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\License.php
+msgid "Pro Feature"
+msgstr "Funcție Pro"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "to"
+msgstr "către"
+
+#: includes\Admin\Menu.php
+msgid "Modifier"
+msgstr "Modificator"
+
+#: includes\Admin\Menu.php
+msgid "Fixed"
+msgstr "Fix"
+
+#: includes\Admin\Menu.php
+msgid "All"
+msgstr "Toate"
+
+#: includes\Admin\Menu.php
+msgid "Add Rule"
+msgstr "Adaugă Regulă"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Action"
+msgstr "Acțiune"
+
+#: includes\Admin\Menu.php
+msgid "Delete this pricing rule?"
+msgstr "Ștergeți această regulă de preț?"
+
+#: includes\Admin\Menu.php
+msgid "Extras Saved!"
+msgstr "Extra-uri Salvate!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Extras & Add-ons"
+msgstr "Extra-uri & Opțiuni Rezervare"
+
+#: includes\Admin\Menu.php
+msgid "+ Add New Extra"
+msgstr "+ Adaugă Extra Nou"
+
+#: includes\Admin\Menu.php
+msgid "Save Changes"
+msgstr "Salvează Modificările"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Model"
+msgstr "Model de Preț"
+
+#: includes\Admin\Menu.php
+msgid "Fixed Price (Once)"
+msgstr "Preț Fix (O singură dată)"
+
+#: includes\Admin\Menu.php
+msgid "Per Person"
+msgstr "Per persoană"
+
+#: includes\Admin\Menu.php
+msgid "Per Night"
+msgstr "Per noapte"
+
+#: includes\Admin\Menu.php
+msgid "Per Person / Per Night"
+msgstr "Per Persoană / Per Noapte"
+
+#: includes\Admin\Menu.php
+msgid "Control Type"
+msgstr "Tip Control"
+
+#: includes\Admin\Menu.php
+msgid "Checkbox (Yes/No)"
+msgstr "Caseta de validare (Da/Nu)"
+
+#: includes\Admin\Menu.php
+msgid "Quantity Input"
+msgstr "Intrare Cantitate"
+
+#: includes\Admin\Settings.php
+msgid "Please enter a license key."
+msgstr "Vă rugăm introduceți cheia de licență."
+
+#: includes\Admin\Settings.php
+msgid "Connection error."
+msgstr "Eroare de conexiune."
+
+#: includes\Admin\Settings.php
+msgid "Are you sure?"
+msgstr "Sunteți sigur?"
+
+#: includes\Admin\Settings.php
+msgid "Are you sure you want to remove this field?"
+msgstr "Sigur doriți să eliminați acest câmp?"
+
+#: includes\Admin\Settings.php
+msgid "No holidays added yet."
+msgstr "Nu au fost adăugate sărbători."
+
+#: includes\Admin\Settings.php
+msgid "General Settings"
+msgstr "Setări Generale"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-in Time"
+msgstr "Oră Check-in Implicită"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-out Time"
+msgstr "Oră Check-out Implicită"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Notification Email"
+msgstr "Email Notificare"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page"
+msgstr "Pagină Rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page URL (Override)"
+msgstr "URL Pagină Rezervare (Suprascriere)"
+
+#: includes\Admin\Settings.php
+msgid "Same-day Turnover"
+msgstr "Rotație în aceeași zi"
+
+#: includes\Admin\Settings.php
+msgid "If enabled, rooms cannot be checked-in on the same day someone else checks out."
+msgstr "Dacă este activat, camerele nu pot fi ocupate în aceeași zi în care altcineva pleacă."
+
+#: includes\Admin\Settings.php
+msgid "Enable Children Management"
+msgstr "Activează Gestionare Copii"
+
+#: includes\Admin\Settings.php
+msgid "Show children selector in search and booking forms."
+msgstr "Afișează selectorul pentru copii în formularele de căutare și rezervare."
+
+#: includes\Admin\Settings.php
+msgid "Custom Guest Fields"
+msgstr "Câmpuri Oaspeți Personalizate"
+
+#: includes\Admin\Settings.php
+msgid "Currency Settings"
+msgstr "Setări Valută"
+
+#: includes\Admin\Settings.php
+msgid "Currency Code (e.g. USD)"
+msgstr "Cod Valută (ex. RON)"
+
+#: includes\Admin\Settings.php
+msgid "Currency Symbol (e.g. $)"
+msgstr "Simbol Valută (ex. lei)"
+
+#: includes\Admin\Settings.php
+msgid "Symbol Position"
+msgstr "Poziție Simbol"
+
+#: includes\Admin\Settings.php
+msgid "Before Amount ($100)"
+msgstr "Înainte de sumă ($100)"
+
+#: includes\Admin\Settings.php
+msgid "After Amount (100$)"
+msgstr "După sumă (100$)"
+
+#: includes\Admin\Settings.php
+msgid "— Select a Page —"
+msgstr "— Selectează o Pagină —"
+
+#: includes\Admin\Settings.php
+msgid "Select the page where you have placed the [modern_hotel_booking] shortcode."
+msgstr "Selectați pagina unde ați plasat codul scurt [modern_hotel_booking]."
+
+#: includes\Admin\Settings.php
+msgid "Field ID (slug)"
+msgstr "ID Câmp (slug)"
+
+#: includes\Admin\Settings.php
+msgid "Text"
+msgstr "Text"
+
+#: includes\Admin\Settings.php
+msgid "Textarea"
+msgstr "Zonă de text"
+
+#: includes\Admin\Settings.php
+msgid "Label (Multilingual)"
+msgstr "Etichetă (Multilingv)"
+
+#: includes\Admin\Settings.php
+msgid "Required Field"
+msgstr "Câmp Obligatoriu"
+
+#: includes\Admin\Settings.php
+msgid "+ Add New Guest Field"
+msgstr "+ Adaugă Câmp Nou Oaspete"
+
+#: includes\Admin\Settings.php
+msgid "Define extra fields for your booking form. Labels support multilingual tags."
+msgstr "Definiți câmpuri suplimentare pentru formular. Etichetele suportă tag-uri multilingve."
+
+#: includes\Admin\Settings.php
+msgid "Hotel Configuration"
+msgstr "Configurare Hotel"
+
+#: includes\Admin\Settings.php
+msgid "License"
+msgstr "Licență"
+
+#: includes\Admin\Settings.php
+msgid "General"
+msgstr "General"
+
+#: includes\Admin\Settings.php
+msgid "Email Templates"
+msgstr "Șabloane Email"
+
+#: includes\Admin\Settings.php
+msgid "Frontend Labels"
+msgstr "Etichete Frontend"
+
+#: includes\Admin\Settings.php
+msgid "GDPR & Privacy"
+msgstr "GDPR & Confidențialitate"
+
+#: includes\Admin\Settings.php
+msgid "Tax Settings"
+msgstr "Setări Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Performance"
+msgstr "Performanță"
+
+#: includes\Admin\Settings.php
+msgid "License Management"
+msgstr "Gestionare Licență"
+
+#: includes\Admin\Settings.php
+msgid "Enter your license key to unlock Pro features and receive updates."
+msgstr "Introduceți cheia de licență pentru a debloca funcțiile Pro și actualizările."
+
+#: includes\Admin\Settings.php
+msgid "License Key"
+msgstr "Cheie Licență"
+
+#: includes\Admin\Settings.php
+msgid "Active"
+msgstr "Activ"
+
+#: includes\Admin\Settings.php
+msgid "Expires: %s"
+msgstr "Expiră: %s"
+
+#: includes\Admin\Settings.php
+msgid "Deactivate License"
+msgstr "Dezactivează Licența"
+
+#: includes\Admin\Settings.php
+msgid "Activate License"
+msgstr "Activează Licența"
+
+#: includes\Admin\Settings.php
+msgid "Performance Settings"
+msgstr "Setări Performanță"
+
+#: includes\Admin\Settings.php
+msgid "Configure caching and performance options for faster page loads."
+msgstr "Configurați opțiunile de caching pentru încărcare mai rapidă."
+
+#: includes\Admin\Settings.php
+msgid "Enable Caching"
+msgstr "Activează Caching"
+
+#: includes\Admin\Settings.php
+msgid "Enable caching for room data and pricing"
+msgstr "Activează caching pentru date camere și prețuri"
+
+#: includes\Admin\Settings.php
+msgid "Cache room type data and pricing rules for faster calculations. Recommended for most sites."
+msgstr "Cachează datele camerelor și regulile de preț pentru calcule mai rapide."
+
+#: includes\Admin\Settings.php
+msgid "Object Cache Status"
+msgstr "Stare Object Cache"
+
+#: includes\Admin\Settings.php
+msgid "A persistent object cache (Redis, Memcached, etc.) is detected. Cache data will persist across requests."
+msgstr "Un object cache persistent este detectat. Datele cache vor persista."
+
+#: includes\Admin\Settings.php
+msgid "Using Database Transients"
+msgstr "Folosind Database Transients"
+
+#: includes\Admin\Settings.php
+msgid "No persistent object cache detected. Consider installing Redis or Memcached for better performance."
+msgstr "Niciun object cache persistent detectat. Luați în considerare Redis sau Memcached."
+
+#: includes\Admin\Settings.php
+msgid "Clear Cache"
+msgstr "Golește Cache"
+
+#: includes\Admin\Settings.php
+msgid "Clear All Cache"
+msgstr "Golește Tot Cache-ul"
+
+#: includes\Admin\Settings.php
+msgid "Clear all cached data. Use this if you see outdated pricing or room information."
+msgstr "Golește toate datele cache. Folosiți dacă vedeți prețuri neactualizate."
+
+#: includes\Admin\Settings.php
+msgid "Pending Booking"
+msgstr "Rezervare în Așteptare"
+
+#: includes\Admin\Settings.php
+msgid "Confirmed Booking"
+msgstr "Rezervare Confirmată"
+
+#: includes\Admin\Settings.php
+msgid "Cancelled Booking"
+msgstr "Rezervare Anulată"
+
+#: includes\Admin\Settings.php
+#: includes\Core\Email.php
+#: includes\Core\I18n.php
+msgid "Payment Confirmation"
+msgstr "Confirmare Plată"
+
+#: includes\Admin\Settings.php
+msgid "Subject"
+msgstr "Subiect"
+
+#: includes\Admin\Settings.php
+msgid "Message"
+msgstr "Mesaj"
+
+#: includes\Admin\Settings.php
+msgid "Available placeholders: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+msgstr "Substituenți disponibili: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance & Data Privacy (PRO)"
+msgstr "Conformitate GDPR & Date (PRO)"
+
+#: includes\Admin\Settings.php
+msgid "Enable Pro Privacy Suite"
+msgstr "Activează Suita de Confidențialitate Pro"
+
+#: includes\Admin\Settings.php
+msgid "Enables automated data retention, custom cookie prefixing, and advanced privacy controls."
+msgstr "Activează retenția automată a datelor, prefixare cookie și controale avansate."
+
+#: includes\Admin\Settings.php
+msgid "Require Privacy Consent"
+msgstr "Solicită Acord Confidențialitate"
+
+#: includes\Admin\Settings.php
+msgid "Adds a mandatory checkbox to the booking form for guest consent."
+msgstr "Adaugă o casetă obligatorie în formular pentru acordul oaspetelui."
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Page"
+msgstr "Pagină Termeni & Condiții"
+
+#: includes\Admin\Settings.php
+msgid "Select the page for your Terms & Conditions. Use the [terms_and_conditions] link in your consent text."
+msgstr "Selectați pagina pentru Termeni & Condiții."
+
+#: includes\Admin\Settings.php
+msgid "Consent Text"
+msgstr "Text Acord"
+
+#: includes\Admin\Settings.php
+msgid "Text displayed next to the consent checkbox. Use the [privacy_policy] link in your text to link to your policy page."
+msgstr "Text afișat lângă caseta de acord. Folosiți link-ul [privacy_policy]."
+
+#: includes\Admin\Settings.php
+msgid "Automated Data Retention"
+msgstr "Retenție Automată Date"
+
+#: includes\Admin\Settings.php
+msgid "days"
+msgstr "zile"
+
+#: includes\Admin\Settings.php
+msgid "Bookings older than this will be automatically anonymized. Set to 0 to disable."
+msgstr "Rezervările mai vechi de atât vor fi anonimizate automat. 0 pentru dezactivare."
+
+#: includes\Admin\Settings.php
+msgid "Cookie Name Prefix"
+msgstr "Prefix Nume Cookie"
+
+#: includes\Admin\Settings.php
+msgid "Customize the prefix for all frontend cookies (e.g. for selection persistence). Helps with compatibility and auditing."
+msgstr "Personalizați prefixul pentru cookie-urile din frontend."
+
+#: includes\Admin\Settings.php
+msgid "Search Rooms Button"
+msgstr "Buton Caută Camere"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Label"
+msgstr "Etichetă Check-in"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Label"
+msgstr "Etichetă Check-out"
+
+#: includes\Admin\Settings.php
+msgid "Guests Label"
+msgstr "Etichetă Oaspeți"
+
+#: includes\Admin\Settings.php
+msgid "Children Label"
+msgstr "Etichetă Copii"
+
+#: includes\Admin\Settings.php
+msgid "Child Ages Label"
+msgstr "Etichetă Vârste Copii"
+
+#: includes\Admin\Settings.php
+msgid "Child %d Age Label"
+msgstr "Etichetă Vârstă Copil %d"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Label"
+msgstr "Etichetă Selectare Date"
+
+#: includes\Admin\Settings.php
+msgid "Dates Selected Message"
+msgstr "Mesaj Date Selectate"
+
+#: includes\Admin\Settings.php
+msgid "Your Selection Label"
+msgstr "Etichetă Selecția Ta"
+
+#: includes\Admin\Settings.php
+msgid "Continue to Booking Button"
+msgstr "Buton Continuă spre Rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Dates Not Available Error"
+msgstr "Eroare Date Indisponibile"
+
+#: includes\Admin\Settings.php
+msgid "Stay Dates Label"
+msgstr "Etichetă Perioadă Sejur"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-in Guide"
+msgstr "Ghid Selectare Check-in"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-out Guide"
+msgstr "Ghid Selectare Check-out"
+
+#: includes\Admin\Settings.php
+msgid "Calendar No ID Error"
+msgstr "Eroare Calendar Fără ID"
+
+#: includes\Admin\Settings.php
+msgid "Calendar Config Error"
+msgstr "Eroare Configurare Calendar"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Error"
+msgstr "Eroare Selectare Date"
+
+#: includes\Admin\Settings.php
+msgid "Block No Room Error"
+msgstr "Eroare Bloc Fără Cameră"
+
+#: includes\Admin\Settings.php
+msgid "Check-in in Past Error"
+msgstr "Eroare Check-in în Trecut"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Before Check-in Error"
+msgstr "Eroare Check-out Înainte de Check-in"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Too Far Error"
+msgstr "Eroare Check-in Prea Îndepărtat"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Too Far Error"
+msgstr "Eroare Check-out Prea Îndepărtat"
+
+#: includes\Admin\Settings.php
+msgid "Available Rooms Message"
+msgstr "Mesaj Camere Disponibile"
+
+#: includes\Admin\Settings.php
+msgid "No Rooms Found Message"
+msgstr "Mesaj Nu S-au Găsit Camere"
+
+#: includes\Admin\Settings.php
+msgid "Per Night Text"
+msgstr "Text Per Noapte"
+
+#: includes\Admin\Settings.php
+msgid "Total Nights Price Summary"
+msgstr "Sumar Preț Total Nopți"
+
+#: includes\Admin\Settings.php
+msgid "Max Guests Text"
+msgstr "Text Max Oaspeți"
+
+#: includes\Admin\Settings.php
+msgid "Loading Message"
+msgstr "Mesaj Încărcare"
+
+#: includes\Admin\Settings.php
+msgid "To Separator"
+msgstr "Separator Către"
+
+#: includes\Admin\Settings.php
+msgid "Book Now Button"
+msgstr "Buton Rezervă Acum"
+
+#: includes\Admin\Settings.php
+msgid "Processing Button Text"
+msgstr "Text Buton Procesare"
+
+#: includes\Admin\Settings.php
+msgid "Complete Booking Title"
+msgstr "Titlu Finalizare Rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Total Price Label"
+msgstr "Etichetă Preț Total"
+
+#: includes\Admin\Settings.php
+msgid "Full Name Label"
+msgstr "Etichetă Nume Complet"
+
+#: includes\Admin\Settings.php
+msgid "Email Address Label"
+msgstr "Etichetă Adresă Email"
+
+#: includes\Admin\Settings.php
+msgid "Phone Number Label"
+msgstr "Etichetă Număr Telefon"
+
+#: includes\Admin\Settings.php
+msgid "Special Requests Label"
+msgstr "Etichetă Cereri Speciale"
+
+#: includes\Admin\Settings.php
+msgid "Secure Payment Message"
+msgstr "Mesaj Plată Securizată"
+
+#: includes\Admin\Settings.php
+msgid "Security Error Message"
+msgstr "Mesaj Eroare Securitate"
+
+#: includes\Admin\Settings.php
+msgid "Rate Limit Error Message"
+msgstr "Mesaj Eroare Limită Rată"
+
+#: includes\Admin\Settings.php
+msgid "Spam Honeypot Label"
+msgstr "Etichetă Spam Honeypot"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Booking Button"
+msgstr "Buton Confirmare Rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Pay & Confirm Button"
+msgstr "Buton Plătește & Confirmă"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Request Message"
+msgstr "Mesaj Confirmare Cerere"
+
+#: includes\Admin\Settings.php
+msgid "Room Not Found Error"
+msgstr "Eroare Cameră Negăsită"
+
+#: includes\Admin\Settings.php
+msgid "Name Too Long Error"
+msgstr "Eroare Nume Prea Lung"
+
+#: includes\Admin\Settings.php
+msgid "Phone Too Long Error"
+msgstr "Eroare Telefon Prea Lung"
+
+#: includes\Admin\Settings.php
+msgid "Max Children Error"
+msgstr "Eroare Max Copii"
+
+#: includes\Admin\Settings.php
+msgid "Max Adults Error"
+msgstr "Eroare Max Adulți"
+
+#: includes\Admin\Settings.php
+msgid "Price Calculation Error"
+msgstr "Eroare Calcul Preț"
+
+#: includes\Admin\Settings.php
+msgid "Missing Fields Error"
+msgstr "Eroare Câmpuri Lipsă"
+
+#: includes\Admin\Settings.php
+msgid "Required Field Error"
+msgstr "Eroare Câmp Obligatoriu"
+
+#: includes\Admin\Settings.php
+msgid "Spam Detected Error"
+msgstr "Eroare Spam Detectat"
+
+#: includes\Admin\Settings.php
+msgid "Room Already Booked Error"
+msgstr "Eroare Cameră Deja Rezervată"
+
+#: includes\Admin\Settings.php
+msgid "Booking Success Message"
+msgstr "Mesaj Rezervare Reușită"
+
+#: includes\Admin\Settings.php
+msgid "Email Sent Message"
+msgstr "Mesaj Email Trimis"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Title"
+msgstr "Titlu Cerere Primită"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Detail"
+msgstr "Detalii Cerere Primită"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Message"
+msgstr "Mesaj Plată la Sosire"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Required Warning"
+msgstr "Avertisment GDPR Obligatoriu"
+
+#: includes\Admin\Settings.php
+msgid "Privacy Policy Link Text"
+msgstr "Text Link Politică Confidențialitate"
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Link Text"
+msgstr "Text Link Termeni & Condiții"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Required Warning"
+msgstr "Avertisment PayPal Obligatoriu"
+
+#: includes\Admin\Settings.php
+msgid "Payment Success Confirmation"
+msgstr "Confirmare Plată Reușită"
+
+#: includes\Admin\Settings.php
+msgid "Booking arrival confirmation"
+msgstr "Confirmare sosire rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Detail"
+msgstr "Detalii Plată Eșuată"
+
+#: includes\Admin\Settings.php
+msgid "Booking Received Pending Detail"
+msgstr "Detalii Rezervare Primită În Așteptare"
+
+#: includes\Admin\Settings.php
+msgid "Payment Method Label"
+msgstr "Etichetă Metodă Plată"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Option"
+msgstr "Opțiune Plată la Sosire"
+
+#: includes\Admin\Settings.php
+msgid "Credit Card Option"
+msgstr "Opțiune Card Credit"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Option"
+msgstr "Opțiune PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Label"
+msgstr "Etichetă Status Plată"
+
+#: includes\Admin\Settings.php
+msgid "Paid Badge Text"
+msgstr "Text Insignă Plătit"
+
+#: includes\Admin\Settings.php
+msgid "Amount Paid Label"
+msgstr "Etichetă Sumă Plătită"
+
+#: includes\Admin\Settings.php
+msgid "Transaction ID Label"
+msgstr "Etichetă ID Tranzacție"
+
+#: includes\Admin\Settings.php
+msgid "Failed Badge Text"
+msgstr "Text Insignă Eșuat"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Title"
+msgstr "Titlu Plată Eșuată"
+
+#: includes\Admin\Settings.php
+msgid "Dates Taken Error"
+msgstr "Eroare Date Ocupate"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Calc Error"
+msgstr "Eroare Calcul Rezervare Invalid"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Not Configured Error"
+msgstr "Eroare Stripe Neconfigurat"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Not Configured Error"
+msgstr "Eroare PayPal Neconfigurat"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Connection Error"
+msgstr "Eroare Conexiune PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Auth Error"
+msgstr "Eroare Autentificare PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Error"
+msgstr "Eroare Comandă PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Currency Error"
+msgstr "Eroare Valută PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Generic Error"
+msgstr "Eroare Generică PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Missing Order ID Error"
+msgstr "Eroare Lipsă ID Comandă"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Capture Error"
+msgstr "Eroare Capturare PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Already Processed Error"
+msgstr "Eroare Plată Deja Procesată"
+
+#: includes\Admin\Settings.php
+msgid "Payment Declined Error"
+msgstr "Eroare Plată Refuzată"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Intent Missing Error"
+msgstr "Eroare Intenție Stripe Lipsă"
+
+#: includes\Admin\Settings.php
+msgid "PayPal ID Missing Error"
+msgstr "Eroare Lipsă ID PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Required Error"
+msgstr "Eroare Plată Obligatorie"
+
+#: includes\Admin\Settings.php
+msgid "REST Pro Access Error"
+msgstr "Eroare Acces Pro REST"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Nonce Error"
+msgstr "Eroare Nonce Invalid"
+
+#: includes\Admin\Settings.php
+msgid "API Rate Limit Error"
+msgstr "Eroare Limită Rată API"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Confirmation Title"
+msgstr "Email: Titlu Confirmare Plată"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Info Title"
+msgstr "Email: Titlu Info Plată"
+
+#: includes\Admin\Settings.php
+msgid "Email: Pay on Arrival Detail"
+msgstr "Email: Detaliu Plată la Sosire"
+
+#: includes\Admin\Settings.php
+msgid "Email: Amount Due Label"
+msgstr "Email: Etichetă Sumă Datorată"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Date Label"
+msgstr "Email: Etichetă Dată Plată"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Creation Failed"
+msgstr "Crearea Comenzii PayPal a Eșuat"
+
+#: includes\Admin\Settings.php
+msgid "Security Verification Failed"
+msgstr "Verificarea de Securitate a Eșuat"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Client ID Missing"
+msgstr "Lipsește Client ID PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Secret Missing"
+msgstr "Lipsește Secretul PayPal"
+
+#: includes\Admin\Settings.php
+msgid "API Key Not Configured"
+msgstr "Cheia API neconfigurată"
+
+#: includes\Admin\Settings.php
+msgid "Invalid API Key"
+msgstr "Cheie API Invalidă"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Signature Required"
+msgstr "Semnătură Webhook Obligatorie"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Webhook Secret Missing"
+msgstr "Lipsește Secretul Webhook Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature Format"
+msgstr "Format Semnătură Stripe Invalid"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Expired"
+msgstr "Webhook Expirat"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature"
+msgstr "Semnătură Stripe Invalidă"
+
+#: includes\Admin\Settings.php
+msgid "Missing PayPal Headers"
+msgstr "Lipsesc Headerele PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Customer Data"
+msgstr "Date Client Invalide"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Dates"
+msgstr "Date Rezervare Invalide"
+
+#: includes\Admin\Settings.php
+msgid "Booking Creation Failed"
+msgstr "Crearea Rezervării a Eșuat"
+
+#: includes\Admin\Settings.php
+msgid "Permission Denied"
+msgstr "Permisiune Refuzată"
+
+#: includes\Admin\Settings.php
+msgid "Stripe PK Missing"
+msgstr "Lipsește Cheia Publică Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Stripe SK Missing"
+msgstr "Lipsește Cheia Secretă Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe PK Format"
+msgstr "Format Cheie Publică Stripe Invalid"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Space Warning"
+msgstr "Avertisment Spații în Credențiale"
+
+#: includes\Admin\Settings.php
+msgid "Sandbox/Live Mismatch Warning"
+msgstr "Avertisment Nepotrivire Sandbox/Live"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Expired Warning"
+msgstr "Avertisment Credențiale Expirate"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Success Message"
+msgstr "Mesaj Succes PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Success Message"
+msgstr "Mesaj Succes Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Connection Failed Error"
+msgstr "Eroare Conexiune Eșuată"
+
+#: includes\Admin\Settings.php
+msgid "Authentication Failed Error"
+msgstr "Eroare Autentificare Eșuată"
+
+#: includes\Admin\Settings.php
+msgid "Common Causes Title"
+msgstr "Cauze Comune"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Generic Error"
+msgstr "Eroare Generică Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Enhance Your Stay Title"
+msgstr "Îmbunătățește-ți Sejurul"
+
+#: includes\Admin\Settings.php
+msgid "Per Person Text"
+msgstr "Text Per Persoană"
+
+#: includes\Admin\Settings.php
+msgid "Per Person / Night Text"
+msgstr "Text Per Persoană / Noapte"
+
+#: includes\Admin\Settings.php
+msgid "Booking Summary Title"
+msgstr "Titlu Sumar Rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Row Label"
+msgstr "Etichetă Rând Cazare"
+
+#: includes\Admin\Settings.php
+msgid "Extras Row Label"
+msgstr "Etichetă Rând Extra"
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Label"
+msgstr "Etichetă Defalcare Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Tax Total Label"
+msgstr "Etichetă Total Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Label"
+msgstr "Etichetă Înregistrare Fiscală"
+
+#: includes\Admin\Settings.php
+msgid "Includes Tax Suffix"
+msgstr "Sufix Include Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Price Includes Tax Note"
+msgstr "Notă Preț Include Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Tax Added at Checkout Note"
+msgstr "Notă Taxe Adăugate la Finalizare"
+
+#: includes\Admin\Settings.php
+msgid "Subtotal Label"
+msgstr "Etichetă Subtotal"
+
+#: includes\Admin\Settings.php
+msgid "Room Column Label"
+msgstr "Etichetă Coloană Cameră"
+
+#: includes\Admin\Settings.php
+msgid "Extras Column Label"
+msgstr "Etichetă Coloană Extra"
+
+#: includes\Admin\Settings.php
+msgid "Item Column Label"
+msgstr "Etichetă Coloană Articol"
+
+#: includes\Admin\Settings.php
+msgid "Amount Column Label"
+msgstr "Etichetă Coloană Sumă"
+
+#: includes\Admin\Settings.php
+msgid "Tax Accommodation Rate Label"
+msgstr "Etichetă Rată Taxă Cazare"
+
+#: includes\Admin\Settings.php
+msgid "Tax Extras Rate Label"
+msgstr "Etichetă Rată Taxă Extra"
+
+#: includes\Admin\Settings.php
+msgid "Generic Tax Rate Label"
+msgstr "Etichetă Rată Taxă Generică"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (includes %s)"
+msgstr "Notă Taxă (include %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (plus %s)"
+msgstr "Notă Taxă (plus %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (includes %1$s: %2$s%% / %3$s%%)"
+msgstr "Notă Taxă Multi (include %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (plus %1$s: %2$s%% / %3$s%%)"
+msgstr "Notă Taxă Multi (plus %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Leave a field empty to use the default English text for that language. Use <code>%1$s</code> or <code>%2$d</code> as placeholders where they appear in the default text."
+msgstr "Lăsați câmpul gol pentru a folosi textul implicit în Engleză. Folosiți <code>%1$s</code> sau <code>%2$d</code> ca înlocuitori."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual settings saved successfully."
+msgstr "Setările multilingve salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "GDPR settings saved successfully."
+msgstr "Setările GDPR salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "General settings saved successfully."
+msgstr "Setările generale salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Theme settings saved successfully."
+msgstr "Setările temei salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Theme reset to default successfully."
+msgstr "Tema resetată la implicit cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Pro Experience"
+msgstr "Experiență Pro"
+
+#: includes\Admin\Settings.php
+msgid "Overview"
+msgstr "Prezentare Generală"
+
+#: includes\Admin\Settings.php
+msgid "Booking Extras"
+msgstr "Extra Rezervare"
+
+#: includes\Admin\Settings.php
+msgid "Pro Themes"
+msgstr "Teme Pro"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Active"
+msgstr "Licență Pro Activă"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Required"
+msgstr "Licență Pro Necesară"
+
+#: includes\Admin\Settings.php
+msgid "All Pro features are unlocked and ready to use."
+msgstr "Toate funcțiile Pro sunt deblocate și gata de utilizare."
+
+#: includes\Admin\Settings.php
+msgid "Unlock all premium features to maximize your booking potential."
+msgstr "Deblocați toate funcțiile premium pentru a maximiza potențialul."
+
+#: includes\Admin\Settings.php
+msgid "Manage License"
+msgstr "Gestionare Licență"
+
+#: includes\Admin\Settings.php
+msgid "Priority Support"
+msgstr "Suport Prioritar"
+
+#: includes\Admin\Settings.php
+msgid "Lifetime Updates"
+msgstr "Actualizări pe Viață"
+
+#: includes\Admin\Settings.php
+msgid "All Premium Features"
+msgstr "Toate Funcțiile Premium"
+
+#: includes\Admin\Settings.php
+msgid "Version 2.2.2 - Security & Feature Enhancements"
+msgstr "Versiunea 2.2.2 - Îmbunătățiri Securitate & Funcții"
+
+#: includes\Admin\Settings.php
+msgid "Enhanced Booking Extras:"
+msgstr "Extra-uri Rezervare Îmbunătățite:"
+
+#: includes\Admin\Settings.php
+msgid "\"Per person\" extras now include children in the guest count for accurate pricing calculations."
+msgstr "Extra-urile \"Per persoană\" includ acum copiii în numărătoare."
+
+#: includes\Admin\Settings.php
+msgid "Unified Tax Breakdown:"
+msgstr "Defalcare Taxe Unificată:"
+
+#: includes\Admin\Settings.php
+msgid "Consistent, detailed tax rendering across emails, success pages, and admin dashboard."
+msgstr "Afișare consistentă și detaliată a taxelor."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhook Security:"
+msgstr "Securitate HMAC Webhook:"
+
+#: includes\Admin\Settings.php
+msgid "Added SHA-256 cryptographic signatures to all outgoing webhooks for verified external integrations."
+msgstr "Semnături criptografice SHA-256 adăugate la webhook-uri."
+
+#: includes\Admin\Settings.php
+msgid "Server-Side Pricing Logic:"
+msgstr "Logică Preț Server-Side:"
+
+#: includes\Admin\Settings.php
+msgid "Hardened payment gateway initialization with mandatory server-side price recalculation."
+msgstr "Inițializare securizată a plăților cu recalculare obligatorie pe server."
+
+#: includes\Admin\Settings.php
+msgid "Payment Processing"
+msgstr "Procesare Plăți"
+
+#: includes\Admin\Settings.php
+msgid "Configure"
+msgstr "Configurează"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Integration"
+msgstr "Integrare Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Accept payments with Stripe including Apple Pay and Google Pay support."
+msgstr "Acceptați plăți cu Stripe, inclusiv Apple Pay și Google Pay."
+
+#: includes\Admin\Settings.php
+msgid "Popular"
+msgstr "Popular"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Integration"
+msgstr "Integrare PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Accept PayPal payments with automatic IPN verification and status updates."
+msgstr "Acceptați plăți PayPal cu verificare IPN automată."
+
+#: includes\Admin\Settings.php
+msgid "Pay On-site Option"
+msgstr "Opțiune Plată la Locație"
+
+#: includes\Admin\Settings.php
+msgid "Allow guests to pay upon arrival with flexible payment tracking."
+msgstr "Permite oaspeților să plătească la sosire."
+
+#: includes\Admin\Settings.php
+msgid "Payment Webhooks"
+msgstr "Webhook-uri Plată"
+
+#: includes\Admin\Settings.php
+msgid "Automatic payment status updates from Stripe and PayPal webhooks."
+msgstr "Actualizări automate ale statusului plății."
+
+#: includes\Admin\Settings.php
+msgid "New"
+msgstr "Nou"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Tracking"
+msgstr "Urmărire Status Plată"
+
+#: includes\Admin\Settings.php
+msgid "Full payment lifecycle management: pending, deposit paid, fully paid, refunded."
+msgstr "Gestionare completă a ciclului de plată."
+
+#: includes\Admin\Settings.php
+msgid "Tax Management"
+msgstr "Gestionare Taxe"
+
+#: includes\Admin\Settings.php
+msgid "VAT/TAX System"
+msgstr "Sistem TVA/Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Three modes: VAT inclusive, Sales Tax exclusive, or Disabled. Flexible configuration."
+msgstr "Trei moduri: TVA inclus, Taxă vânzare exclusivă sau Dezactivat."
+
+#: includes\Admin\Settings.php
+msgid "Separate Tax Rates"
+msgstr "Rate Taxe Separate"
+
+#: includes\Admin\Settings.php
+msgid "Different tax rates for accommodation vs extras services."
+msgstr "Rate diferite de taxă pentru cazare vs servicii extra."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT"
+msgstr "TVA Specific Țării"
+
+#: includes\Admin\Settings.php
+msgid "Set different VAT rates per country for international guests."
+msgstr "Setați rate TVA diferite pe țară."
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Display"
+msgstr "Afișare Defalcare Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Detailed tax display by room, children, and extras in booking confirmations."
+msgstr "Afișare detaliată a taxelor pe cameră, copii și extra."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Tax Labels"
+msgstr "Etichete Taxe Multilingve"
+
+#: includes\Admin\Settings.php
+msgid "Per-language tax terminology (VAT, IVA, TVA, MwSt, etc.)."
+msgstr "Terminologie taxe per limbă."
+
+#: includes\Admin\Settings.php
+msgid "Updated"
+msgstr "Actualizat"
+
+#: includes\Admin\Settings.php
+msgid "Seasonal Pricing"
+msgstr "Prețuri Sezoniere"
+
+#: includes\Admin\Settings.php
+msgid "Set automated weekend and holiday multipliers for dynamic pricing."
+msgstr "Multiplicatori automați pentru weekend și sărbători."
+
+#: includes\Admin\Settings.php
+msgid "Offer guided tours, airport transfers, breakfast packages, and local experiences."
+msgstr "Oferiți tururi ghidate, transferuri și pachete."
+
+#: includes\Admin\Settings.php
+msgid "Bi-directional sync with Airbnb, Booking.com, and Google Calendar."
+msgstr "Sincronizare bidirecțională cu Airbnb, Booking.com și Google Calendar."
+
+#: includes\Admin\Settings.php
+msgid "Analytics Dashboard"
+msgstr "Panou de Analiză"
+
+#: includes\Admin\Settings.php
+msgid "Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization."
+msgstr "Vizualizări grafice, rate de ocupare și urmărire ADR."
+
+#: includes\Admin\Settings.php
+msgid "View"
+msgstr "Vezi"
+
+#: includes\Admin\Settings.php
+msgid "Compliance & UX"
+msgstr "Conformitate & UX"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance Tools"
+msgstr "Instrumente Conformitate GDPR"
+
+#: includes\Admin\Settings.php
+msgid "Automated data retention, consent checkboxes, and cookie management."
+msgstr "Retenție automată date, casete de acord și gestionare cookie."
+
+#: includes\Admin\Settings.php
+msgid "Theme Customization"
+msgstr "Personalizare Temă"
+
+#: includes\Admin\Settings.php
+msgid "6 designer presets, custom branding colors, and advanced CSS injection."
+msgstr "6 presetări de design, culori de brand și CSS avansat."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Support"
+msgstr "Suport Multilingv"
+
+#: includes\Admin\Settings.php
+msgid "Compatible with qTranslate, WPML, and Polylang for full translation support."
+msgstr "Compatibil cu qTranslate, WPML și Polylang."
+
+#: includes\Admin\Settings.php
+msgid "Developer Platform"
+msgstr "Platformă Dezvoltatori"
+
+#: includes\Admin\Settings.php
+msgid "REST API"
+msgstr "API REST"
+
+#: includes\Admin\Settings.php
+msgid "Full REST API access for external integrations and custom applications."
+msgstr "Acces complet API REST pentru integrări externe."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhooks"
+msgstr "Webhook-uri HMAC"
+
+#: includes\Admin\Settings.php
+msgid "Secure webhooks with HMAC-signed payloads for booking events."
+msgstr "Webhook-uri securizate pentru evenimente rezervare."
+
+#: includes\Admin\Settings.php
+msgid "Configure Payment Gateways"
+msgstr "Configurează Procesatori de Plăți"
+
+#: includes\Admin\Settings.php
+msgid "Set Up Tax Settings"
+msgstr "Configurează Setări Taxe"
+
+#: includes\Admin\Settings.php
+msgid "View Analytics"
+msgstr "Vezi Analize"
+
+#: includes\Admin\Settings.php
+msgid "Manage iCal Feeds"
+msgstr "Gestionează Feed-uri iCal"
+
+#: includes\Admin\Settings.php
+msgid "Save Payment Settings"
+msgstr "Salvează Setări Plată"
+
+#: includes\Admin\Settings.php
+msgid "Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more."
+msgstr "Deblocați această funcție cu o licență Pro."
+
+#: includes\Admin\Settings.php
+msgid "View All Pro Features"
+msgstr "Vezi Toate Funcțiile Pro"
+
+#: includes\Admin\Settings.php
+msgid "Pro features are not available."
+msgstr "Funcțiile Pro nu sunt disponibile."
+
+#: includes\Admin\Settings.php
+msgid "The REST API allows external systems to query room availability and manage bookings. API base:"
+msgstr "API-ul REST permite sistemelor externe să interogheze disponibilitatea."
+
+#: includes\Admin\Settings.php
+msgid "API Key"
+msgstr "Cheie API"
+
+#: includes\Admin\Settings.php
+msgid "Generate"
+msgstr "Generează"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Copy"
+msgstr "Copiază"
+
+#: includes\Admin\Settings.php
+msgid "Include as X-MHB-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id})."
+msgstr "Includeți ca header X-MHB-API-Key pentru endpoint-uri autentificate."
+
+#: includes\Admin\Settings.php
+msgid "Webhook URL"
+msgstr "URL Webhook"
+
+#: includes\Admin\Settings.php
+msgid "Receive a JSON POST for booking events: booking_created, booking_confirmed, booking_cancelled. Payloads are HMAC-signed with your API key."
+msgstr "Primiți un JSON POST pentru evenimente de rezervare."
+
+#: includes\Admin\Settings.php
+msgid "Available Endpoints"
+msgstr "Endpoint-uri Disponibile"
+
+#: includes\Admin\Settings.php
+msgid "Method"
+msgstr "Metodă"
+
+#: includes\Admin\Settings.php
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: includes\Admin\Settings.php
+msgid "Auth / Access"
+msgstr "Autentificare / Acces"
+
+#: includes\Admin\Settings.php
+msgid "Pro (Rate Limited)"
+msgstr "Pro (Limită Rată)"
+
+#: includes\Admin\Settings.php
+msgid "Public (Rate Limited)"
+msgstr "Public (Limită Rată)"
+
+#: includes\Admin\Settings.php
+msgid "API Key Required"
+msgstr "Cheie API Necesară"
+
+#: includes\Admin\Settings.php
+msgid "Monday"
+msgstr "Luni"
+
+#: includes\Admin\Settings.php
+msgid "Tuesday"
+msgstr "Marți"
+
+#: includes\Admin\Settings.php
+msgid "Wednesday"
+msgstr "Miercuri"
+
+#: includes\Admin\Settings.php
+msgid "Thursday"
+msgstr "Joi"
+
+#: includes\Admin\Settings.php
+msgid "Friday"
+msgstr "Vineri"
+
+#: includes\Admin\Settings.php
+msgid "Saturday"
+msgstr "Sâmbătă"
+
+#: includes\Admin\Settings.php
+msgid "Sunday"
+msgstr "Duminică"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Pricing"
+msgstr "Prețuri Weekend"
+
+#: includes\Admin\Settings.php
+msgid "Define which days are considered weekends and set the adjustment."
+msgstr "Definiți zilele de weekend și ajustarea."
+
+#: includes\Admin\Settings.php
+msgid "Weekend Days"
+msgstr "Zile Weekend"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Adjustment"
+msgstr "Ajustare Weekend"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\PaymentGateways.php
+msgid "Enable"
+msgstr "Activează"
+
+#: includes\Admin\Settings.php
+msgid "Multiplier (1.2 = +20%)"
+msgstr "Multiplicator (1.2 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Percentage (20 = +20%)"
+msgstr "Procentaj (20 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Fixed Amount (20 = +$20)"
+msgstr "Sumă Fixă (20 = +$20)"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Pricing"
+msgstr "Prețuri Sărbători"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Date Picker"
+msgstr "Selector Dată Sărbătoare"
+
+#: includes\Admin\Settings.php
+msgid "Add"
+msgstr "Adaugă"
+
+#: includes\Admin\Settings.php
+msgid "Add specific dates that should trigger holiday pricing."
+msgstr "Adăugați date specifice pentru prețuri de sărbătoare."
+
+#: includes\Admin\Settings.php
+msgid "Holiday Adjustment"
+msgstr "Ajustare Sărbătoare"
+
+#: includes\Admin\Settings.php
+msgid "Conflict Resolution"
+msgstr "Rezolvare Conflicte"
+
+#: includes\Admin\Settings.php
+msgid "Use larger of weekend vs holiday adjustment if they overlap"
+msgstr "Folosește ajustarea mai mare dacă se suprapun"
+
+#: includes\Admin\Settings.php
+msgid "Midnight Coast"
+msgstr "Midnight Coast"
+
+#: includes\Admin\Settings.php
+msgid "Our signature classic luxury look."
+msgstr "Aspectul nostru clasic de lux."
+
+#: includes\Admin\Settings.php
+msgid "Emerald Forest"
+msgstr "Emerald Forest"
+
+#: includes\Admin\Settings.php
+msgid "Rich greens for nature-inspired properties."
+msgstr "Verde bogat pentru proprietăți inspirate din natură."
+
+#: includes\Admin\Settings.php
+msgid "Oceanic Drift"
+msgstr "Oceanic Drift"
+
+#: includes\Admin\Settings.php
+msgid "Deep blues and bright highlights."
+msgstr "Albastru adânc și accente luminoase."
+
+#: includes\Admin\Settings.php
+msgid "Ruby Sunset"
+msgstr "Ruby Sunset"
+
+#: includes\Admin\Settings.php
+msgid "Warm tones for cozy boutiques."
+msgstr "Tonuri calde pentru buticuri primitoare."
+
+#: includes\Admin\Settings.php
+msgid "Urban Modern"
+msgstr "Urban Modern"
+
+#: includes\Admin\Settings.php
+msgid "Minimalist grays for city lofts."
+msgstr "Griuri minimaliste pentru lofturi urbane."
+
+#: includes\Admin\Settings.php
+msgid "Lavender Breeze"
+msgstr "Lavender Breeze"
+
+#: includes\Admin\Settings.php
+msgid "Elegant purples for spa and wellness."
+msgstr "Mov elegant pentru spa și wellness."
+
+#: includes\Admin\Settings.php
+msgid "Theme Presets"
+msgstr "Presetări Temă"
+
+#: includes\Admin\Settings.php
+msgid "Choose a professional color palette for your booking frontend."
+msgstr "Alegeți o paletă de culori profesională."
+
+#: includes\Admin\Settings.php
+msgid "Custom Theme"
+msgstr "Temă Personalizată"
+
+#: includes\Admin\Settings.php
+msgid "Define your own brand colors below."
+msgstr "Definiți culorile brandului mai jos."
+
+#: includes\Admin\Settings.php
+msgid "Custom Branding"
+msgstr "Branding Personalizat"
+
+#: includes\Admin\Settings.php
+msgid "Primary Color"
+msgstr "Culoare Primară"
+
+#: includes\Admin\Settings.php
+msgid "Secondary Color"
+msgstr "Culoare Secundară"
+
+#: includes\Admin\Settings.php
+msgid "Accent Color"
+msgstr "Culoare Accent"
+
+#: includes\Admin\Settings.php
+msgid "Advanced Custom CSS"
+msgstr "CSS Personalizat Avansat"
+
+#: includes\Admin\Settings.php
+msgid "Inject additional CSS directly into the booking frontend."
+msgstr "Injectați CSS suplimentar direct în frontend."
+
+#: includes\Admin\Settings.php
+msgid "Reset all theme settings to default?"
+msgstr "Resetați toate setările temei la implicit?"
+
+#: includes\Admin\Settings.php
+msgid "Return to Default"
+msgstr "Reveniți la Implicit"
+
+#: includes\Admin\Settings.php
+#: includes\Core\I18n.php
+msgid "Permission denied."
+msgstr "Permisiune refuzată."
+
+#: includes\Admin\Settings.php
+msgid "Room Amenities"
+msgstr "Facilități Cameră"
+
+#: includes\Admin\Settings.php
+msgid "Manage the list of amenities available for rooms. After adding here, you can translate them in the \"Frontend Labels\" tab."
+msgstr "Gestionați lista facilităților disponibile."
+
+#: includes\Admin\Settings.php
+msgid "Add New Amenity"
+msgstr "Adaugă Facilitate Nouă"
+
+#: includes\Admin\Settings.php
+msgid "Label"
+msgstr "Etichetă"
+
+#: includes\Admin\Settings.php
+msgid "Key (Internal)"
+msgstr "Cheie (Internă)"
+
+#: includes\Admin\Settings.php
+msgid "No amenities found."
+msgstr "Nu s-au găsit facilități."
+
+#: includes\Admin\Settings.php
+msgid "API settings saved successfully."
+msgstr "Setările API salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Payment settings saved successfully."
+msgstr "Setările de plată salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Pricing settings saved successfully."
+msgstr "Setările de preț salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Amenity added successfully."
+msgstr "Facilitate adăugată cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Amenity removed successfully."
+msgstr "Facilitate ștearsă cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Configure VAT/Sales Tax settings for your hotel bookings. Tax is disabled by default for backward compatibility."
+msgstr "Configurați setările de taxe pentru rezervări."
+
+#: includes\Admin\Settings.php
+msgid "Tax Mode"
+msgstr "Mod Taxe"
+
+#: includes\Admin\Settings.php
+msgid "Disabled"
+msgstr "Dezactivat"
+
+#: includes\Admin\Settings.php
+msgid "No tax calculation or display. Prices shown as-is."
+msgstr "Fără calcul taxe."
+
+#: includes\Admin\Settings.php
+msgid "VAT Inclusive"
+msgstr "TVA Inclus"
+
+#: includes\Admin\Settings.php
+msgid "Prices include tax (EU, UK, Australia). Shows breakdown: Net + Tax = Gross."
+msgstr "Prețurile includ taxe."
+
+#: includes\Admin\Settings.php
+msgid "Sales Tax Exclusive"
+msgstr "Taxă Vânzare Exclusivă"
+
+#: includes\Admin\Settings.php
+msgid "Tax added on top of prices (US, Canada). Shows: Subtotal + Tax = Total."
+msgstr "Taxa adăugată peste preț."
+
+#: includes\Admin\Settings.php
+msgid "Tax Label"
+msgstr "Etichetă Taxă"
+
+#: includes\Admin\Settings.php
+msgid "Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA"
+msgstr "Exemple: TVA, GST, Taxă vânzări"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Number"
+msgstr "Număr Înregistrare Fiscală"
+
+#: includes\Admin\Settings.php
+msgid "Your VAT ID, GSTIN, or tax registration number. Displayed on invoices and receipts."
+msgstr "Codul DVS. de TVA sau numărul de înregistrare fiscală."
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Tax Rate"
+msgstr "Rată Taxă Cazare"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for rooms and children charges. Example: 10 for 10%"
+msgstr "Rata taxei pentru camere și copii."
+
+#: includes\Admin\Settings.php
+msgid "Extras Tax Rate"
+msgstr "Rată Taxă Extra"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for extras (add-ons like breakfast, transfers). Set same as accommodation if unsure."
+msgstr "Rata taxei pentru extra-uri."
+
+#: includes\Admin\Settings.php
+msgid "Display Options"
+msgstr "Opțiuni Afișare"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown on frontend booking form"
+msgstr "Afișează defalcare taxe în frontend"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown in confirmation emails"
+msgstr "Afișează defalcare taxe în emailuri"
+
+#: includes\Admin\Settings.php
+msgid "Rounding Mode"
+msgstr "Mod Rotunjire"
+
+#: includes\Admin\Settings.php
+msgid "Per Total (Recommended)"
+msgstr "Per Total (Recomandat)"
+
+#: includes\Admin\Settings.php
+msgid "Per Line Item"
+msgstr "Per Articol"
+
+#: includes\Admin\Settings.php
+msgid "Per Total: Round tax on final total. Per Line: Round each item's tax separately."
+msgstr "Per Total: Rotunjește taxa la totalul final."
+
+#: includes\Admin\Settings.php
+msgid "Decimal Places"
+msgstr "Zecimale"
+
+#: includes\Admin\Settings.php
+msgid "Number of decimal places for tax amounts (usually 2)."
+msgstr "Număr de zecimale pentru taxe (de obicei 2)."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT Rates Reference"
+msgstr "Referință Rate TVA Specifice Țării"
+
+#: includes\Admin\Settings.php
+msgid "Country"
+msgstr "Țară"
+
+#: includes\Admin\Settings.php
+msgid "Standard Rate"
+msgstr "Rată Standard"
+
+#: includes\Admin\Settings.php
+msgid "Hotel Rate"
+msgstr "Rată Hotel"
+
+#: includes\Admin\Settings.php
+msgid "Tax Name"
+msgstr "Nume Taxă"
+
+#: includes\Admin\Settings.php
+msgid "Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities."
+msgstr "Notă: Ratele hoteliere pot fi reduse în unele țări."
+
+#: includes\Admin\Settings.php
+msgid "Tax settings saved successfully."
+msgstr "Setările de taxe salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Performance settings saved successfully."
+msgstr "Setările de performanță salvate cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Cache cleared successfully."
+msgstr "Cache golit cu succes."
+
+#: includes\Admin\Settings.php
+msgid "Failed to clear cache."
+msgstr "Eșec la golirea cache-ului."
+
+#: includes\Admin\Settings.php
+msgid "Cache class not available."
+msgstr "Clasa Cache indisponibilă."
+
+#: includes\Api\RestApi.php
+msgid "You do not have permission to access this booking."
+msgstr "Nu aveți permisiunea de a accesa această rezervare."
+
+#: includes\Api\RestApi.php
+msgid "Error generating calendar data."
+msgstr "Eroare la generarea datelor calendarului."
+
+#: includes\Api\RestApi.php
+msgid "Error calculating price. Please check input data."
+msgstr "Eroare la calcularea prețului."
+
+#: includes\Api\RestApi.php
+msgid "Invalid webhook request."
+msgstr "Cerere webhook invalidă."
+
+#: includes\Core\Email.php
+msgid "Price includes %1$s - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "Prețul include %1$s - Cazare: %2$s%%, Extra: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "%1$s added at checkout - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "%1$s adăugat la finalizare - Cazare: %2$s%%, Extra: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "Dear %s,"
+msgstr "Dragă %s,"
+
+#: includes\Core\Email.php
+msgid "Thank you for your payment. Your booking has been confirmed."
+msgstr "Vă mulțumim pentru plată. Rezervarea a fost confirmată."
+
+#: includes\Core\Email.php
+msgid "Booking Details"
+msgstr "Detalii Rezervare"
+
+#: includes\Core\Email.php
+msgid "Booking ID:"
+msgstr "ID Rezervare:"
+
+#: includes\Core\Email.php
+msgid "Check-in:"
+msgstr "Check-in:"
+
+#: includes\Core\Email.php
+msgid "Check-out:"
+msgstr "Check-out:"
+
+#: includes\Core\Email.php
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Dacă aveți întrebări, nu ezitați să ne contactați."
+
+#: includes\Core\Email.php
+msgid "Best regards,"
+msgstr "Cu stimă,"
+
+#: includes\Core\Email.php
+msgid "Payment Details"
+msgstr "Detalii Plată"
+
+#: includes\Core\Email.php
+msgid "Amount Paid:"
+msgstr "Sumă Plătită:"
+
+#: includes\Core\Email.php
+msgid "Transaction ID:"
+msgstr "ID Tranzacție:"
+
+#: includes\Core\Email.php
+msgid "Payment Method:"
+msgstr "Metodă Plată:"
+
+#: includes\Core\Email.php
+msgid "Payment Date:"
+msgstr "Data Plății:"
+
+#: includes\Core\I18n.php
+msgid "Search Rooms"
+msgstr "Caută Camere"
+
+#: includes\Core\I18n.php
+msgid "Available Rooms from %1$s to %2$s"
+msgstr "Camere Disponibile de la %1$s până la %2$s"
+
+#: includes\Core\I18n.php
+msgid "No rooms available for these dates."
+msgstr "Nu sunt camere disponibile pentru aceste date."
+
+#: includes\Core\I18n.php
+msgid "Dates are not available."
+msgstr "Datele nu sunt disponibile."
+
+#: includes\Core\I18n.php
+msgid "Room not found."
+msgstr "Cameră negăsită."
+
+#: includes\Core\I18n.php
+msgid "Secure Online Payment"
+msgstr "Plată Online Securizată"
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page."
+msgstr "Verificarea de securitate a eșuat. Vă rugăm reîmprospătați pagina."
+
+#: includes\Core\I18n.php
+msgid "Too many attempts. Please wait a minute."
+msgstr "Prea multe încercări. Vă rugăm așteptați un minut."
+
+#: includes\Core\I18n.php
+msgid "Leave this field empty"
+msgstr "Lăsați acest câmp gol"
+
+#: includes\Core\I18n.php
+msgid "Room Image"
+msgstr "Imagine Cameră"
+
+#: includes\Core\I18n.php
+msgid "No room ID specified for calendar."
+msgstr "Niciun ID de cameră specificat pentru calendar."
+
+#: includes\Core\I18n.php
+msgid "Booking Page URL not configured."
+msgstr "URL Pagină Rezervare neconfigurat."
+
+#: includes\Core\I18n.php
+msgid "Loading..."
+msgstr "Se încarcă..."
+
+#: includes\Core\I18n.php
+msgid "Processing..."
+msgstr "Se procesează..."
+
+#: includes\Core\I18n.php
+msgid "Please accept the privacy policy to continue."
+msgstr "Vă rugăm acceptați politica de confidențialitate pentru a continua."
+
+#: includes\Core\I18n.php
+msgid "Please use the PayPal button to complete your payment."
+msgstr "Vă rugăm folosiți butonul PayPal pentru a finaliza plata."
+
+#: includes\Core\I18n.php
+msgid "Enhance Your Stay"
+msgstr "Îmbunătățește-ți Sejurul"
+
+#: includes\Core\I18n.php
+msgid "per person"
+msgstr "per persoană"
+
+#: includes\Core\I18n.php
+msgid "per person / night"
+msgstr "per persoană / noapte"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s"
+msgstr "Prețul include %s"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s"
+msgstr "Preț plus %s"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s (%s%%)"
+msgstr "Prețul include %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s (%s%%)"
+msgstr "Preț plus %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Please select check-in and check-out dates."
+msgstr "Vă rugăm selectați datele de check-in și check-out."
+
+#: includes\Core\I18n.php
+msgid "Please select a Room ID in block settings."
+msgstr "Vă rugăm selectați un ID de cameră în setările blocului."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be in the past."
+msgstr "Data de check-in nu poate fi în trecut."
+
+#: includes\Core\I18n.php
+msgid "Check-out date must be after check-in date."
+msgstr "Data de check-out trebuie să fie după data de check-in."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be more than 2 years in the future."
+msgstr "Data de check-in nu poate fi la mai mult de 2 ani în viitor."
+
+#: includes\Core\I18n.php
+msgid "Check-out date cannot be more than 2 years in the future."
+msgstr "Data de check-out nu poate fi la mai mult de 2 ani în viitor."
+
+#: includes\Core\I18n.php
+msgid "Name is too long (maximum 100 characters)."
+msgstr "Numele este prea lung (maxim 100 caractere)."
+
+#: includes\Core\I18n.php
+msgid "Phone number is too long (maximum 30 characters)."
+msgstr "Numărul de telefon este prea lung (maxim 30 caractere)."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum children for this room is %d."
+msgstr "Eroare: Maxim copii pentru această cameră este %d."
+
+#: includes\Core\I18n.php
+msgid "Error calculating price. Please check dates."
+msgstr "Eroare la calcularea prețului. Verificați datele."
+
+#: includes\Core\I18n.php
+msgid "Please fill in all required fields."
+msgstr "Vă rugăm completați toate câmpurile obligatorii."
+
+#: includes\Core\I18n.php
+msgid "Please provide a valid email address."
+msgstr "Vă rugăm furnizați o adresă de email validă."
+
+#: includes\Core\I18n.php
+msgid "The field \"%s\" is required."
+msgstr "Câmpul \"%s\" este obligatoriu."
+
+#: includes\Core\I18n.php
+msgid "Spam detected."
+msgstr "Spam detectat."
+
+#: includes\Core\I18n.php
+msgid "Sorry, this room was just booked by someone else or is unavailable for these dates."
+msgstr "Ne pare rău, această cameră tocmai a fost rezervată sau nu este disponibilă."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum adults for this room is %d."
+msgstr "Eroare: Maxim adulți pentru această cameră este %d."
+
+#: includes\Core\I18n.php
+msgid "REST API access is a Pro feature."
+msgstr "Accesul REST API este o funcție Pro."
+
+#: includes\Core\I18n.php
+msgid "Invalid nonce."
+msgstr "Nonce invalid."
+
+#: includes\Core\I18n.php
+msgid "Too many requests. Please try again later."
+msgstr "Prea multe cereri. Vă rugăm încercați mai târziu."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking details. Cannot calculate amount."
+msgstr "Detalii de rezervare invalide. Nu se poate calcula suma."
+
+#: includes\Core\I18n.php
+msgid "Stripe is not configured."
+msgstr "Stripe nu este configurat."
+
+#: includes\Core\I18n.php
+msgid "PayPal is not configured. Please contact the site administrator."
+msgstr "PayPal nu este configurat. Vă rugăm să contactați administratorul site-ului."
+
+#: includes\Core\I18n.php
+msgid "Unable to connect to PayPal. Please try again later."
+msgstr "Nu s-a putut conecta la PayPal. Vă rugăm să încercați mai târziu."
+
+#: includes\Core\I18n.php
+msgid "Failed to authenticate with PayPal. Please check your PayPal credentials."
+msgstr "Autentificarea cu PayPal a eșuat. Vă rugăm să verificați acreditările PayPal."
+
+#: includes\Core\I18n.php
+msgid "Unable to create PayPal order. Please try again later."
+msgstr "Nu s-a putut crea comanda PayPal. Vă rugăm să încercați mai târziu."
+
+#: includes\Core\I18n.php
+msgid "Currency %s is not supported by your PayPal account."
+msgstr "Valuta %s nu este suportată de contul dumneavoastră PayPal."
+
+#: includes\Core\I18n.php
+msgid "PayPal error: %s"
+msgstr "Eroare PayPal: %s"
+
+#: includes\Core\I18n.php
+msgid "Missing order ID."
+msgstr "Lipsește ID-ul comenzii."
+
+#: includes\Core\I18n.php
+msgid "Unable to capture payment. Please try again later."
+msgstr "Nu s-a putut încasa plata. Vă rugăm să încercați mai târziu."
+
+#: includes\Core\I18n.php
+msgid "This payment has already been processed."
+msgstr "Această plată a fost deja procesată."
+
+#: includes\Core\I18n.php
+msgid "The payment was declined by PayPal. Please try a different payment method."
+msgstr "Plata a fost refuzată de PayPal. Vă rugăm să încercați o altă metodă de plată."
+
+#: includes\Core\I18n.php
+msgid "privacy policy"
+msgstr "politica de confidențialitate"
+
+#: includes\Core\I18n.php
+msgid "Terms & Conditions"
+msgstr "Termeni & Condiții"
+
+#: includes\Core\I18n.php
+msgid "Payment Information"
+msgstr "Informații Plată"
+
+#: includes\Core\I18n.php
+msgid "Payment will be collected upon arrival at the property."
+msgstr "Plata va fi încasată la sosirea la proprietate."
+
+#: includes\Core\I18n.php
+msgid "Amount Due"
+msgstr "Sumă Datorată"
+
+#: includes\Core\I18n.php
+msgid "Failed to create PayPal order."
+msgstr "Eșec la crearea comenzii PayPal."
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page and try again."
+msgstr "Verificare securitate eșuată. Reîmprospătați pagina."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Client ID is not configured."
+msgstr "PayPal %s Client ID nu este configurat."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Secret is not configured."
+msgstr "PayPal %s Secret nu este configurat."
+
+#: includes\Core\I18n.php
+msgid "Stripe payment failed: Payment intent missing."
+msgstr "Plata Stripe a eșuat: lipsește intenția de plată."
+
+#: includes\Core\I18n.php
+msgid "Stripe API error: %s"
+msgstr "Eroare API Stripe: %s"
+
+#: includes\Core\I18n.php
+msgid "PayPal payment failed: Order ID missing."
+msgstr "Plata PayPal a eșuat: lipsește ID-ul comenzii."
+
+#: includes\Core\I18n.php
+msgid "Payment is required."
+msgstr "Plata este obligatorie."
+
+#: includes\Core\I18n.php
+msgid "API key has not been configured. Set it in Hotel Booking → Settings."
+msgstr "Cheia API nu a fost configurată."
+
+#: includes\Core\I18n.php
+msgid "Invalid or missing API key."
+msgstr "Cheie API invalidă sau lipsă."
+
+#: includes\Core\I18n.php
+msgid "Webhook signature required. Unauthorized requests are rejected."
+msgstr "Semnătură webhook necesară."
+
+#: includes\Core\I18n.php
+msgid "Stripe webhook secret not configured. Please set it in Settings."
+msgstr "Secretul webhook Stripe neconfigurat."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe signature format."
+msgstr "Format semnătură Stripe invalid."
+
+#: includes\Core\I18n.php
+msgid "Webhook timestamp outside acceptable range."
+msgstr "Timestamp webhook în afara intervalului acceptabil."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe webhook signature."
+msgstr "Semnătură webhook Stripe invalidă."
+
+#: includes\Core\I18n.php
+msgid "Missing required PayPal webhook headers."
+msgstr "Lipsesc headerele webhook PayPal necesare."
+
+#: includes\Core\I18n.php
+msgid "Valid customer name and email are required."
+msgstr "Numele și emailul clientului sunt obligatorii."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking dates."
+msgstr "Date de rezervare invalide."
+
+#: includes\Core\I18n.php
+msgid "Failed to create the booking."
+msgstr "Eșec la crearea rezervării."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Publishable Key is not configured."
+msgstr "Stripe %s Publishable Key nu e configurat."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Secret Key is not configured."
+msgstr "Stripe %s Secret Key nu e configurat."
+
+#: includes\Core\I18n.php
+msgid "Invalid publishable key format. Expected key starting with \"%1$s\" for %2$s mode."
+msgstr "Format cheie publicabilă invalid."
+
+#: includes\Core\I18n.php
+msgid "Credentials contain extra spaces"
+msgstr "Credențialele conțin spații extra"
+
+#: includes\Core\I18n.php
+msgid "Using Sandbox credentials in Live mode (or vice versa)"
+msgstr "Utilizare credențiale Sandbox în mod Live (sau invers)"
+
+#: includes\Core\I18n.php
+msgid "Credentials have expired or been rotated"
+msgstr "Credențialele au expirat"
+
+#: includes\Core\I18n.php
+msgid "PayPal %s credentials are valid!"
+msgstr "Credențialele PayPal %s sunt valide!"
+
+#: includes\Core\I18n.php
+msgid "Stripe %s credentials are valid!"
+msgstr "Credențialele Stripe %s sunt valide!"
+
+#: includes\Core\I18n.php
+msgid "Connection failed: %s"
+msgstr "Conexiune eșuată: %s"
+
+#: includes\Core\I18n.php
+msgid "Authentication failed: %s"
+msgstr "Autentificare eșuată: %s"
+
+#: includes\Core\I18n.php
+msgid "Common causes:"
+msgstr "Cauze comune:"
+
+#: includes\Core\ICal.php
+msgid "Pro license required."
+msgstr "Licență Pro necesară."
+
+#: includes\Core\ICal.php
+msgid "Invalid or missing iCal token."
+msgstr "Token iCal invalid sau lipsă."
+
+#: includes\Core\ICal.php
+msgid "Security Error"
+msgstr "Eroare Securitate"
+
+#: includes\Core\ICal.php
+msgid "Booking #%1$d - %2$s"
+msgstr "Rezervare #%1$d - %2$s"
+
+#: includes\Core\ICal.php
+msgid "Check-in: %s"
+msgstr "Check-in: %s"
+
+#: includes\Core\ICal.php
+msgid "Check-out: %s"
+msgstr "Check-out: %s"
+
+#: includes\Core\ICal.php
+msgid "Guests: %d"
+msgstr "Oaspeți: %d"
+
+#: includes\Core\ICal.php
+msgid "Email: %s"
+msgstr "Email: %s"
+
+#: includes\Core\ICal.php
+msgid "Phone: %s"
+msgstr "Telefon: %s"
+
+#: includes\Core\ICal.php
+msgid "Source: %s"
+msgstr "Sursă: %s"
+
+#: includes\Core\ICal.php
+msgid "External Booking"
+msgstr "Rezervare Externă"
+
+#: includes\Core\ICalParser.php
+msgid "Airbnb Reservation"
+msgstr "Rezervare Airbnb"
+
+#: includes\Core\ICalParser.php
+msgid "Booking.com Reservation"
+msgstr "Rezervare Booking.com"
+
+#: includes\Core\ICalParser.php
+msgid "Google Calendar Event"
+msgstr "Eveniment Google Calendar"
+
+#: includes\Core\License.php
+msgid "The %s feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Funcția %s este parte din experiența Pro."
+
+#: includes\Core\License.php
+msgid "This feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Această funcție face parte din experiența Modern Hotel Booking Pro."
+
+#: includes\Core\License.php
+msgid "Activate Pro Now"
+msgstr "Activează Pro acum"
+
+#: includes\Core\LicenseManager.php
+msgid "Too many attempts. Please wait a minute before trying again."
+msgstr "Prea multe încercări. Așteptați un minut."
+
+#: includes\Core\LicenseManager.php
+msgid "License key cannot be empty."
+msgstr "Cheia de licență nu poate fi goală."
+
+#: includes\Core\LicenseManager.php
+msgid "License system not configured. Please contact support."
+msgstr "Sistem licență neconfigurat."
+
+#: includes\Core\LicenseManager.php
+msgid "Invalid license key or server error."
+msgstr "Cheie licență invalidă sau eroare server."
+
+#: includes\Core\LicenseManager.php
+msgid "License limit reached. No activations remaining."
+msgstr "Limită licență atinsă."
+
+#: includes\Core\LicenseManager.php
+msgid "License activated successfully."
+msgstr "Licență activată cu succes."
+
+#: includes\Core\LicenseManager.php
+msgid "License deactivated."
+msgstr "Licență dezactivată."
+
+#: includes\Core\LicenseManager.php
+msgid "No license key stored."
+msgstr "Nicio cheie de licență stocată."
+
+#: includes\Core\LicenseManager.php
+msgid "API credentials not configured."
+msgstr "Credențiale API neconfigurate."
+
+#: includes\Core\LicenseManager.php
+msgid "License is valid."
+msgstr "Licența este validă."
+
+#: includes\Core\LicenseManager.php
+msgid "License is not valid."
+msgstr "Licența nu este validă."
+
+#: includes\Core\LicenseValidator.php
+msgid "%d day"
+msgstr "%d zi"
+
+#: includes\Core\LicenseValidator.php
+msgid "%d hour"
+msgstr "%d oră"
+
+#: includes\Core\LicenseValidator.php
+msgid "License Warning:"
+msgstr "Avertisment Licență:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Could not verify license. Grace period active: %s remaining."
+msgstr "Nu s-a putut verifica licența. Perioadă grație: %s rămas."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Error:"
+msgstr "Eroare Licență:"
+
+#: includes\Core\LicenseValidator.php
+msgid "License verification failed. Pro features have been disabled. Please check your license or contact support."
+msgstr "Verificare licență eșuată. Funcțiile Pro dezactivate."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Expired:"
+msgstr "Licență Expirată:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Your Pro license has expired. Please renew to continue using Pro features."
+msgstr "Licența Pro a expirat."
+
+#: includes\Core\Plugin.php
+msgid "Pro license required for iCal export."
+msgstr "Licență Pro necesară pentru export iCal."
+
+#: includes\Core\Privacy.php
+msgid "Modern Hotel Booking"
+msgstr "Modern Hotel Booking"
+
+#: includes\Core\Privacy.php
+msgid "This plugin collects the following personal data from guests during the booking process:"
+msgstr "Acest plugin colectează următoarele date personale:"
+
+#: includes\Core\Privacy.php
+msgid "Email Address"
+msgstr "Adresă Email"
+
+#: includes\Core\Privacy.php
+msgid "Phone Number"
+msgstr "Număr Telefon"
+
+#: includes\Core\Privacy.php
+msgid "Booking Dates and Details"
+msgstr "Date și Detalii Rezervare"
+
+#: includes\Core\Privacy.php
+msgid "This data is stored in the database for the purpose of managing reservations and contacting guests regarding their stay."
+msgstr "Aceste date sunt stocate pentru gestionarea rezervărilor."
+
+#: includes\Core\Privacy.php
+msgid "Booking ID"
+msgstr "ID Rezervare"
+
+#: includes\Core\Privacy.php
+msgid "Check-in Date"
+msgstr "Dată Check-in"
+
+#: includes\Core\Privacy.php
+msgid "Check-out Date"
+msgstr "Dată Check-out"
+
+#: includes\Core\Privacy.php
+msgid "Customer Phone"
+msgstr "Telefon Client"
+
+#: includes\Core\Privacy.php
+msgid "Hotel Bookings"
+msgstr "Rezervări Hotel"
+
+#: includes\Core\Tax.php
+msgid "Booking Summary"
+msgstr "Sumar Rezervare"
+
+#: includes\Core\Tax.php
+msgid "Item"
+msgstr "Articol"
+
+#: includes\Core\Tax.php
+msgid "Amount"
+msgstr "Sumă"
+
+#: includes\Core\Tax.php
+msgid "Subtotal"
+msgstr "Subtotal"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Accommodation (%2$s%%)"
+msgstr "%1$s - Cazare (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Extras (%2$s%%)"
+msgstr "%1$s - Extra (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s (%2$s%%)"
+msgstr "%1$s (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "Tax Registration: %s"
+msgstr "Înregistrare Fiscală: %s"
+
+#: includes\Core\Tax.php
+msgid "  %1$s - Accommodation (%2$s%%): %3$s"
+msgstr "  %1$s - Cazare (%2$s%%): %3$s"
+
+#: includes\Core\Tax.php
+msgid "  %1$s - Extras (%2$s%%): %3$s"
+msgstr "  %1$s - Extra (%2$s%%): %3$s"
+
+#: includes\Frontend\BookingWidget.php
+msgid "MHB: Booking Search"
+msgstr "MHB: Căutare Rezervări"
+
+#: includes\Frontend\BookingWidget.php
+msgid "A compact booking search form."
+msgstr "Un formular compact de căutare."
+
+#: includes\Frontend\BookingWidget.php
+msgid "Book Your Stay"
+msgstr "Rezervă-ți Sejurul"
+
+#: includes\Frontend\BookingWidget.php
+msgid "Title:"
+msgstr "Titlu:"
+
+#: includes\Pro\Analytics.php
+msgid "Gross Revenue"
+msgstr "Venit Brut"
+
+#: includes\Pro\Analytics.php
+msgid "Collected"
+msgstr "Încasat"
+
+#: includes\Pro\Analytics.php
+msgid "Tax"
+msgstr "Taxă"
+
+#: includes\Pro\Analytics.php
+msgid "Booked"
+msgstr "Rezervat"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue"
+msgstr "Venit"
+
+#: includes\Pro\Analytics.php
+msgid "Hotel Booking — Revenue Overview"
+msgstr "Rezervări Hotel — Prezentare Venituri"
+
+#: includes\Pro\Analytics.php
+msgid "Collected (MTD)"
+msgstr "Încasat (Luna curentă)"
+
+#: includes\Pro\Analytics.php
+msgid "Outstanding Balance"
+msgstr "Sold restant"
+
+#: includes\Pro\Analytics.php
+msgid "Guests Now"
+msgstr "Oaspeți acum"
+
+#: includes\Pro\Analytics.php
+msgid "pending bookings"
+msgstr "rezervări în așteptare"
+
+#: includes\Pro\Analytics.php
+msgid "partially paid"
+msgstr "parțial plătit"
+
+#: includes\Pro\Analytics.php
+msgid "View Full Analytics →"
+msgstr "Vezi analize complete →"
+
+#: includes\Pro\Analytics.php
+msgid "Analytics Intelligence"
+msgstr "Inteligență analitică"
+
+#: includes\Pro\Analytics.php
+msgid "7D"
+msgstr "7Z"
+
+#: includes\Pro\Analytics.php
+msgid "30D"
+msgstr "30Z"
+
+#: includes\Pro\Analytics.php
+msgid "90D"
+msgstr "90Z"
+
+#: includes\Pro\Analytics.php
+msgid "Year"
+msgstr "An"
+
+#: includes\Pro\Analytics.php
+msgid "Starts"
+msgstr "Începe"
+
+#: includes\Pro\Analytics.php
+msgid "Ends"
+msgstr "Se termină"
+
+#: includes\Pro\Analytics.php
+msgid "Update"
+msgstr "Actualizează"
+
+#: includes\Pro\Analytics.php
+msgid "Key Performance Indicators"
+msgstr "Indicatori Cheie de Performanță"
+
+#: includes\Pro\Analytics.php
+msgid "Total Revenue"
+msgstr "Venit total"
+
+#: includes\Pro\Analytics.php
+msgid "vs previous period"
+msgstr "vs perioada anterioară"
+
+#: includes\Pro\Analytics.php
+msgid "Includes"
+msgstr "Include"
+
+#: includes\Pro\Analytics.php
+msgid "tax"
+msgstr "taxe"
+
+#: includes\Pro\Analytics.php
+msgid "Collected Revenue"
+msgstr "Venituri încasate"
+
+#: includes\Pro\Analytics.php
+msgid "of total"
+msgstr "din total"
+
+#: includes\Pro\Analytics.php
+msgid "Pending payments"
+msgstr "Plăți în așteptare"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy Rate"
+msgstr "Rată ocupare"
+
+#: includes\Pro\Analytics.php
+msgid "ADR"
+msgstr "ADR"
+
+#: includes\Pro\Analytics.php
+msgid "Average Daily Rate"
+msgstr "Rată medie zilnică"
+
+#: includes\Pro\Analytics.php
+msgid "RevPAR"
+msgstr "RevPAR"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Per Available Room"
+msgstr "Venit pe cameră disponibilă"
+
+#: includes\Pro\Analytics.php
+msgid "Total Bookings"
+msgstr "Total rezervări"
+
+#: includes\Pro\Analytics.php
+msgid "Confirmation Rate"
+msgstr "Rată confirmare"
+
+#: includes\Pro\Analytics.php
+msgid "Avg. Booking Value"
+msgstr "Valoare medie rezervare"
+
+#: includes\Pro\Analytics.php
+msgid "Per booking"
+msgstr "Pe rezervare"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Collected"
+msgstr "Taxe colectate"
+
+#: includes\Pro\Analytics.php
+msgid "VAT / Sales Tax"
+msgstr "TVA / Taxă vânzări"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Trends"
+msgstr "Tendințe Venituri"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy by Day of Week"
+msgstr "Ocupare după Ziua Săptămânii"
+
+#: includes\Pro\Analytics.php
+msgid "30-Day Occupancy Forecast"
+msgstr "Prognoză Ocupare 30 Zile"
+
+#: includes\Pro\Analytics.php
+msgid "Booking Sources"
+msgstr "Surse Rezervare"
+
+#: includes\Pro\Analytics.php
+msgid "No booking data available"
+msgstr "Nu există date disponibile"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue by Source"
+msgstr "Venit după Sursă"
+
+#: includes\Pro\Analytics.php
+msgid "Source"
+msgstr "Sursă"
+
+#: includes\Pro\Analytics.php
+msgid "Room Type Performance"
+msgstr "Performanță Tip Cameră"
+
+#: includes\Pro\Analytics.php
+msgid "No room performance data available"
+msgstr "Nu există date de performanță"
+
+#: includes\Pro\Analytics.php
+#: includes\Pro\ICalManager.php
+msgid "Room Type"
+msgstr "Tip cameră"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy"
+msgstr "Ocupare"
+
+#: includes\Pro\Analytics.php
+msgid "Tax / VAT Analytics"
+msgstr "Analiză Taxe / TVA"
+
+#: includes\Pro\Analytics.php
+msgid "Total Tax Collected"
+msgstr "Total taxe colectate"
+
+#: includes\Pro\Analytics.php
+msgid "taxed bookings"
+msgstr "rezervări taxate"
+
+#: includes\Pro\Analytics.php
+msgid "Net Revenue"
+msgstr "Venit net"
+
+#: includes\Pro\Analytics.php
+msgid "Before tax"
+msgstr "Înainte de taxe"
+
+#: includes\Pro\Analytics.php
+msgid "Including tax"
+msgstr "Inclusiv taxe"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Breakdown by Rate"
+msgstr "Detaliere taxe după rată"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Rate"
+msgstr "Rată taxă"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Methods"
+msgstr "Metode de Plată"
+
+#: includes\Pro\Analytics.php
+msgid "No payment data available"
+msgstr "Nu există date de plată"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Status Breakdown"
+msgstr "Defalcare Status Plată"
+
+#: includes\Pro\Analytics.php
+msgid "Count"
+msgstr "Număr"
+
+#: includes\Pro\Analytics.php
+msgid "Real-time Activity"
+msgstr "Activitate în Timp Real"
+
+#: includes\Pro\Analytics.php
+msgid "No recent bookings"
+msgstr "Nicio rezervare recentă"
+
+#: includes\Pro\Analytics.php
+msgid "Today's Operations"
+msgstr "Operațiunile de azi"
+
+#: includes\Pro\Analytics.php
+msgid "Check-ins"
+msgstr "Sosiri"
+
+#: includes\Pro\Analytics.php
+msgid "Check-outs"
+msgstr "Plecări"
+
+#: includes\Pro\Analytics.php
+msgid "No check-ins or check-outs today"
+msgstr "Nicio sosire sau plecare azi"
+
+#: includes\Pro\Analytics.php
+msgid "Alerts"
+msgstr "Alerte"
+
+#: includes\Pro\Analytics.php
+msgid "Failed Payments"
+msgstr "Plăți eșuate"
+
+#: includes\Pro\Analytics.php
+msgid "Recent Cancellations"
+msgstr "Anulări recente"
+
+#: includes\Pro\Analytics.php
+msgid "Monthly Demand"
+msgstr "Cerere Lunară"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time Analysis"
+msgstr "Analiză Timp Avans"
+
+#: includes\Pro\Analytics.php
+msgid "No lead time data available"
+msgstr "Nu există date despre timpul de rezervare"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time"
+msgstr "Timp de avans"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Tracking"
+msgstr "Urmărire Anulări"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Rate"
+msgstr "Rată de anulare"
+
+#: includes\Pro\Analytics.php
+msgid "Lost Revenue"
+msgstr "Venituri pierdute"
+
+#: includes\Pro\Analytics.php
+msgid "From cancelled bookings"
+msgstr "Din rezervări anulate"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations"
+msgstr "Anulări"
+
+#: includes\Pro\Analytics.php
+msgid "Total cancelled"
+msgstr "Total anulate"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations by Lead Time"
+msgstr "Anulări după timpul de avans"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Impact"
+msgstr "Impact venituri"
+
+#: includes\Pro\Analytics.php
+msgid "Export Financial Report (CSV)"
+msgstr "Exportă raport financiar (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Occupancy Report (CSV)"
+msgstr "Exportă raport ocupare (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Tax Report (CSV)"
+msgstr "Exportă raport taxe (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Payments (CSV)"
+msgstr "Exportă plăți (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Security check failed. Please try again."
+msgstr "Verificarea de securitate a eșuat. Încercați din nou."
+
+#: includes\Pro\Analytics.php
+msgid "You do not have sufficient permissions to export data."
+msgstr "Nu aveți permisiuni pentru a exporta date."
+
+#: includes\Pro\ICalManager.php
+msgid "Every 6 Hours"
+msgstr "La fiecare 6 ore"
+
+#: includes\Pro\ICalManager.php
+msgid "Pro license required to sync calendars."
+msgstr "Licență Pro necesară pentru sincronizare."
+
+#: includes\Pro\ICalManager.php
+msgid "%s Booking"
+msgstr "%s Rezervare"
+
+#: includes\Pro\ICalManager.php
+msgid "Import Only"
+msgstr "Doar Import"
+
+#: includes\Pro\ICalManager.php
+msgid "Export Only"
+msgstr "Doar Export"
+
+#: includes\Pro\ICalManager.php
+msgid "Bidirectional"
+msgstr "Bidirecțional"
+
+#: includes\Pro\ICalManager.php
+msgid "📅 iCal Calendar Sync"
+msgstr "📅 Sincronizare calendar iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "Share this URL with Airbnb, Booking.com, or other platforms to export your availability."
+msgstr "Partajați acest URL cu Airbnb, Booking.com sau alte platforme."
+
+#: includes\Pro\ICalManager.php
+msgid "Calendar Connections"
+msgstr "Conexiuni calendar"
+
+#: includes\Pro\ICalManager.php
+msgid "Connection Name"
+msgstr "Nume conexiune"
+
+#: includes\Pro\ICalManager.php
+msgid "Synced %s ago"
+msgstr "Sincronizat acum %s"
+
+#: includes\Pro\ICalManager.php
+msgid "Never synced"
+msgstr "Niciodată sincronizat"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync"
+msgstr "Sincronizare"
+
+#: includes\Pro\ICalManager.php
+msgid "+ Add Connection"
+msgstr "+ Adaugă conexiune"
+
+#: includes\Pro\ICalManager.php
+msgid "All rooms have been synced."
+msgstr "Toate camerele au fost sincronizate."
+
+#: includes\Pro\ICalManager.php
+msgid "Room #%s has been synced."
+msgstr "Camera #%s a fost sincronizată."
+
+#: includes\Pro\ICalManager.php
+msgid "Manage iCal feed imports and exports for each room. Sync with Airbnb, Booking.com, Google Calendar, and other platforms."
+msgstr "Gestionați importurile/exporturile iCal pentru fiecare cameră. Sincronizați cu Airbnb, Booking.com, Google Calendar."
+
+#: includes\Pro\ICalManager.php
+msgid "⚙️ Sync Settings"
+msgstr "⚙️ Setări sincronizare"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Auto Sync"
+msgstr "Activează auto-sincronizare"
+
+#: includes\Pro\ICalManager.php
+msgid "Automatically sync calendars"
+msgstr "Sincronizează automat calendarele"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync Interval"
+msgstr "Interval sincronizare"
+
+#: includes\Pro\ICalManager.php
+msgid "Every Hour"
+msgstr "În fiecare oră"
+
+#: includes\Pro\ICalManager.php
+msgid "Daily"
+msgstr "Zilnic"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Retry Logic"
+msgstr "Activează logica de reîncercare"
+
+#: includes\Pro\ICalManager.php
+msgid "Retry failed syncs with exponential backoff (1h, 2h, 4h)"
+msgstr "Reîncearcă sincronizările eșuate exponențial (1h, 2h, 4h)"
+
+#: includes\Pro\ICalManager.php
+msgid "Email Notifications"
+msgstr "Notificări email"
+
+#: includes\Pro\ICalManager.php
+msgid "Send email on sync failure"
+msgstr "Trimite email la eșec sincronizare"
+
+#: includes\Pro\ICalManager.php
+msgid "Save Settings"
+msgstr "Salvează setările"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync all rooms? This may take a moment."
+msgstr "Sincronizezi toate camerele? Poate dura un moment."
+
+#: includes\Pro\ICalManager.php
+msgid "Sync All Rooms"
+msgstr "Sincronizează Toate Camerele"
+
+#: includes\Pro\ICalManager.php
+msgid "Platforms"
+msgstr "Platforme"
+
+#: includes\Pro\ICalManager.php
+msgid "Connections"
+msgstr "Conexiuni"
+
+#: includes\Pro\ICalManager.php
+msgid "No rooms found. Create rooms first."
+msgstr "Nu au fost găsite camere. Creați camere mai întâi."
+
+#: includes\Pro\ICalManager.php
+msgid "%s ago"
+msgstr "acum %s"
+
+#: includes\Pro\ICalManager.php
+msgid "How to set up calendar sync"
+msgstr "Cum să setați sincronizarea"
+
+#: includes\Pro\ICalManager.php
+msgid "Airbnb"
+msgstr "Airbnb"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to your Airbnb listing → Calendar → Availability"
+msgstr "Mergeți la listarea Airbnb → Calendar → Disponibilitate"
+
+#: includes\Pro\ICalManager.php
+msgid "Under \"Connect calendars,\" click \"Export Calendar\""
+msgstr "Sub \"Conectare calendare\", faceți clic pe \"Exportare calendar\""
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the iCal URL and add it as a new connection above"
+msgstr "Copiați URL-ul iCal și adăugați-l ca o nouă conexiune mai sus"
+
+#: includes\Pro\ICalManager.php
+msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb's import field"
+msgstr "Pentru a importa calendarul DVS. în Airbnb, folosiți URL-ul de export de mai sus"
+
+#: includes\Pro\ICalManager.php
+msgid "Booking.com"
+msgstr "Booking.com"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to Booking.com Extranet → Rates & Availability → Sync calendars"
+msgstr "Mergeți la Extranet Booking.com → Tarife & Disponibilitate → Sincronizare"
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the export URL from Booking.com and add it as a new connection above"
+msgstr "Copiați URL-ul de export din Booking.com și adăugați-l mai sus"
+
+#: includes\Pro\ICalManager.php
+msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com's import field"
+msgstr "Pentru a exporta calendarul DVS. către Booking.com, folosiți URL-ul de export de mai sus"
+
+#: includes\Pro\ICalManager.php
+msgid "iCal"
+msgstr "iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "connection"
+msgstr "conexiune"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Payment Gateways"
+msgstr "Procesatori de plăți"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Enable and configure payment methods for your guests."
+msgstr "Activați și configurați metodele de plată pentru oaspeți."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Stripe (Credit/Debit Cards)"
+msgstr "Stripe (Carduri de Credit/Debit)"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept credit/debit card payments via Stripe"
+msgstr "Acceptă plăți cu cardul prin Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Mode"
+msgstr "Mod"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test"
+msgstr "Test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live"
+msgstr "Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Publishable Key"
+msgstr "Cheie publicabilă Test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Secret Key"
+msgstr "Cheie secretă Test"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret key is stored securely. Enter a new value to update."
+msgstr "Cheia secretă este stocată sigur. Introduceți o valoare nouă pentru actualizare."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Publishable Key"
+msgstr "Cheie publicabilă Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret Key"
+msgstr "Cheie secretă Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Stripe Credentials"
+msgstr "Testează credențialele Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept payments via PayPal"
+msgstr "Acceptă plăți prin PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Client ID"
+msgstr "ID client Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Secret"
+msgstr "Secret Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret is stored securely. Enter a new value to update."
+msgstr "Secretul este stocat sigur. Introduceți o valoare nouă."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Client ID"
+msgstr "ID client Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret"
+msgstr "Secret Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Connection"
+msgstr "Testează Conexiunea"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test PayPal Credentials"
+msgstr "Testează credențialele PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Pay On-site"
+msgstr "Plată la locație"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Allow guests to pay at the property"
+msgstr "Permite oaspeților să plătească la proprietate"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions"
+msgstr "Instrucțiuni"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions shown to guests who select pay on-site. Supports multilingual format [:en]..[:ro].."
+msgstr "Instrucțiuni afișate oaspeților care aleg plata la locație. Suportă format multilingv [:en]..[:ro].."
+
+#: modern-hotel-booking.php
+msgid "Modern Hotel Booking Error"
+msgstr "Eroare Modern Hotel Booking"
+
+#: modern-hotel-booking.php
+msgid "This plugin requires PHP 7.4 or higher. You are running PHP %s. Please upgrade your PHP version."
+msgstr "Acest plugin necesită PHP 7.4 sau mai nou. Rulați PHP %s."
+
+#: modern-hotel-booking.php
+msgid "An error occurred while loading the plugin. Please check the debug log for details."
+msgstr "A apărut o eroare la încărcarea pluginului. Verificați jurnalul de depanare."
+
+#: scripts\i18n-tool.php
+msgid "String"
+msgstr "Șir"

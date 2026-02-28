@@ -1,0 +1,51 @@
+<wpml-config>
+    <admin-texts>
+        <key name="mhb_currency_symbol" />
+        <key name="mhb_currency_code" />
+        <key name="mhb_checkin_time" />
+        <key name="mhb_checkout_time" />
+        <key name="mhb_onsite_instructions" />
+        <key name="mhb_gdpr_checkbox_text" />
+        
+        <!-- Frontend Labels -->
+        <key name="mhb_label_btn_search_rooms" />
+        <key name="mhb_label_label_check_in" />
+        <key name="mhb_label_label_check_out" />
+        <key name="mhb_label_label_guests" />
+        <key name="mhb_label_label_children" />
+        <key name="mhb_label_label_child_ages" />
+        <key name="mhb_label_label_child_n_age" />
+        <key name="mhb_label_label_your_selection" />
+        <key name="mhb_label_label_available_rooms" />
+        <key name="mhb_label_label_no_rooms" />
+        <key name="mhb_label_label_per_night" />
+        <key name="mhb_label_label_total_nights" />
+        <key name="mhb_label_label_max_guests" />
+        <key name="mhb_label_btn_book_now" />
+        <key name="mhb_label_label_complete_booking" />
+        <key name="mhb_label_label_total" />
+        <key name="mhb_label_label_name" />
+        <key name="mhb_label_label_email" />
+        <key name="mhb_label_label_phone" />
+        <key name="mhb_label_label_special_requests" />
+        <key name="mhb_label_btn_confirm_booking" />
+        <key name="mhb_label_btn_pay_confirm" />
+        <key name="mhb_label_msg_booking_confirmed" />
+        <key name="mhb_label_msg_confirmation_sent" />
+        <key name="mhb_label_msg_booking_received" />
+        <key name="mhb_label_msg_booking_received_detail" />
+        <key name="mhb_label_label_arrival_msg" />
+        <key name="mhb_label_label_payment_method" />
+        <key name="mhb_label_label_pay_arrival" />
+        <key name="mhb_label_label_credit_card" />
+        <key name="mhb_label_label_paypal" />
+        
+        <!-- Email Templates -->
+        <key name="mhb_email_pending_subject" />
+        <key name="mhb_email_pending_message" />
+        <key name="mhb_email_confirmed_subject" />
+        <key name="mhb_email_confirmed_message" />
+        <key name="mhb_email_cancelled_subject" />
+        <key name="mhb_email_cancelled_message" />
+    </admin-texts>
+</wpml-config>

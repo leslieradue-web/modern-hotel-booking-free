@@ -1,0 +1,22 @@
+.wp-block-modern-hotel-booking-room-calendar {
+    border: 2px dashed #064e3b;
+    padding: 20px;
+    background: #f0fdf4;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.wp-block-modern-hotel-booking-room-calendar .mhb-block-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    color: #064e3b;
+}
+
+.wp-block-modern-hotel-booking-room-calendar p {
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.wp-block-modern-hotel-booking-room-calendar small {
+    color: #646970;
+}

@@ -1,0 +1,3927 @@
+# Copyright (C) 2026 Modern Hotel Booking
+# This file is distributed under the same license as the Modern Hotel Booking plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Hotel Booking 2.2.4.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
+"Last-Translator: \n"
+"Language-Team: Hungarian <hu_HU@wordpress.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-21T10:32:00+00:00\n"
+"PO-Revision-Date: 2026-02-27 18:30+0100\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: modern-hotel-booking\n"
+"Language: hu_HU\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form"
+msgstr "Szállodai foglalási űrlap"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form Preview"
+msgstr "Foglalási űrlap előnézet"
+
+#: assets\block\booking-form\block.js
+msgid "Booking Settings"
+msgstr "Foglalási beállítások"
+
+#: assets\block\booking-form\block.js
+msgid "Room ID (optional)"
+msgstr "Szoba azonosító (opcionális)"
+
+#: assets\block\booking-form\block.js
+msgid "Leave as 0 to show the general search form."
+msgstr "Hagyja 0-n az általános keresőűrlap megjelenítéséhez."
+
+#: assets\block\room-calendar\block.js
+msgid "Room Availability Calendar"
+msgstr "Szoba elérhetőségi naptár"
+
+#: assets\block\room-calendar\block.js
+msgid "Calendar Settings"
+msgstr "Naptár beállítások"
+
+#: assets\block\room-calendar\block.js
+#: includes\Core\Privacy.php
+msgid "Room ID"
+msgstr "Szoba azonosító"
+
+#: assets\block\room-calendar\block.js
+msgid "Enter the ID of the room to display the calendar for."
+msgstr "Adja meg a szoba azonosítóját a naptár megjelenítéséhez."
+
+#: assets\block\room-calendar\block.js
+msgid "Room ID: "
+msgstr "Szoba ID: "
+
+#: assets\block\room-calendar\block.js
+msgid "Please select a Room ID in the sidebar."
+msgstr "Kérjük, válasszon egy szoba azonosítót az oldalsávon."
+
+#: assets\block\room-calendar\block.js
+msgid "(Preview only - real calendar shows on frontend)"
+msgstr "(Csak előnézet - a valódi naptár az oldalon jelenik meg)"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking Overview"
+msgstr "Foglalások áttekintése"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Total"
+msgstr "Összesen"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Pending"
+msgstr "Függőben"
+
+#: includes\Admin\Menu.php
+msgid "Today"
+msgstr "Ma"
+
+#: includes\Admin\Menu.php
+msgid "Manage Bookings"
+msgstr "Foglalások kezelése"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking"
+msgstr "Szállásfoglalás"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Bookings"
+msgstr "Foglalások"
+
+#: includes\Admin\Menu.php
+msgid "Room Types"
+msgstr "Szobatípusok"
+
+#: includes\Admin\Menu.php
+msgid "Rooms"
+msgstr "Szobák"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Rules"
+msgstr "Árazási szabályok"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Plugin.php
+msgid "Settings"
+msgstr "Beállítások"
+
+#: includes\Admin\Menu.php
+msgid "PRO Features"
+msgstr "PRO Funkciók"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Extras"
+msgstr "Extrák"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "iCal Sync"
+msgstr "iCal Szinkronizálás"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Payments"
+msgstr "Fizetések"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Webhooks"
+msgstr "Webhookok"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Analytics"
+msgstr "Analitika"
+
+#: includes\Admin\Menu.php
+msgid "Appearance"
+msgstr "Megjelenés"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Advanced Pricing"
+msgstr "Haladó árazás"
+
+#: includes\Admin\Menu.php
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Nincs megfelelő jogosultsága az oldal megtekintéséhez."
+
+#: includes\Admin\Menu.php
+msgid "Hotel Control Center"
+msgstr "Szálloda vezérlőpult"
+
+#: includes\Admin\Menu.php
+msgid "Unlock Premium Hospitality Features"
+msgstr "Prémium funkciók feloldása"
+
+#: includes\Admin\Menu.php
+msgid "Power up with iCal Sync, Stripe/PayPal integration, Advanced Pricing rules, and Deep Analytics."
+msgstr "Bővítse iCal szinkronizálással, Stripe/PayPal integrációval, haladó árazási szabályokkal és részletes analitikával."
+
+#: includes\Admin\Menu.php
+msgid "Upgrade to Pro"
+msgstr "Váltás Pro verzióra"
+
+#: includes\Admin\Menu.php
+msgid "Stay Revenue"
+msgstr "Bevétel a tartózkodásokból"
+
+#: includes\Admin\Menu.php
+msgid "Target Pipeline"
+msgstr "Célkitűzés"
+
+#: includes\Admin\Menu.php
+msgid "Total Volume"
+msgstr "Teljes volumen"
+
+#: includes\Admin\Menu.php
+msgid "Attention Needed"
+msgstr "Figyelmet igényel"
+
+#: includes\Admin\Menu.php
+msgid "Today's Arrivals"
+msgstr "Mai érkezések"
+
+#: includes\Admin\Menu.php
+msgid "No arrivals scheduled for today."
+msgstr "Mára nincs tervezett érkezés."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+#: includes\Core\ICal.php
+msgid "Guest"
+msgstr "Vendég"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+#: includes\Pro\ICalManager.php
+msgid "Room"
+msgstr "Szoba"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Recent Bookings"
+msgstr "Legutóbbi foglalások"
+
+#: includes\Admin\Menu.php
+msgid "View All"
+msgstr "Összes megtekintése"
+
+#: includes\Admin\Menu.php
+msgid "Date"
+msgstr "Dátum"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\Privacy.php
+#: includes\Pro\Analytics.php
+msgid "Status"
+msgstr "Állapot"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Quick Actions"
+msgstr "Gyors műveletek"
+
+#: includes\Admin\Menu.php
+msgid "Create New Booking"
+msgstr "Új foglalás létrehozása"
+
+#: includes\Admin\Menu.php
+msgid "Manage Inventory"
+msgstr "Készlet kezelése"
+
+#: includes\Admin\Menu.php
+msgid "Global Settings"
+msgstr "Globális beállítások"
+
+#: includes\Admin\Menu.php
+msgid "System Status"
+msgstr "Rendszer állapota"
+
+#: includes\Admin\Menu.php
+msgid "License Status:"
+msgstr "Licenc állapota:"
+
+#: includes\Admin\Menu.php
+msgid "PRO Active"
+msgstr "PRO Aktív"
+
+#: includes\Admin\Menu.php
+msgid "Free Version"
+msgstr "Ingyenes verzió"
+
+#: includes\Admin\Menu.php
+msgid "Plugin Version:"
+msgstr "Bővítmény verzió:"
+
+#: includes\Admin\Menu.php
+msgid "Database Status:"
+msgstr "Adatbázis állapota:"
+
+#: includes\Admin\Menu.php
+msgid "Healthy"
+msgstr "Megfelelő"
+
+#: includes\Admin\Menu.php
+msgid "Need Assistance?"
+msgstr "Segítségre van szüksége?"
+
+#: includes\Admin\Menu.php
+msgid "Explore our documentation or contact the support team for property management advice."
+msgstr "Fedezze fel dokumentációnkat, vagy lépjen kapcsolatba a támogatási csapattal."
+
+#: includes\Admin\Menu.php
+msgid "Open Self-Service Portal →"
+msgstr "Önkiszolgáló portál megnyitása →"
+
+#: includes\Admin\Menu.php
+msgid "Security check failed."
+msgstr "Biztonsági ellenőrzés sikertelen."
+
+#: includes\Admin\Menu.php
+msgid "Booking Confirmed & Email Sent!"
+msgstr "Foglalás megerősítve és email elküldve!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Cancelled."
+msgstr "Foglalás lemondva."
+
+#: includes\Admin\Menu.php
+msgid "Booking Deleted."
+msgstr "Foglalás törölve."
+
+#: includes\Admin\Menu.php
+msgid "Manual booking added by admin."
+msgstr "Kézi foglalást adott hozzá az adminisztrátor."
+
+#: includes\Admin\Menu.php
+msgid "Manual Booking Added!"
+msgstr "Kézi foglalás hozzáadva!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Updated!"
+msgstr "Foglalás frissítve!"
+
+#: includes\Admin\Menu.php
+msgid "Add New Booking"
+msgstr "Új foglalás hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Filtering by status: %s"
+msgstr "Szűrés állapot szerint: %s"
+
+#: includes\Admin\Menu.php
+msgid "Clear Filter"
+msgstr "Szűrő törlése"
+
+#: includes\Admin\Menu.php
+msgid "Add Manual Booking"
+msgstr "Kézi foglalás hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Customer Details"
+msgstr "Ügyfél adatai"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Customer Name"
+msgstr "Ügyfél neve"
+
+#: includes\Admin\Menu.php
+msgid "Email"
+msgstr "Email"
+
+#: includes\Admin\Menu.php
+msgid "Phone"
+msgstr "Telefon"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Guests"
+msgstr "Vendégek"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Children"
+msgstr "Gyermekek"
+
+#: includes\Admin\Menu.php
+msgid "Child Ages"
+msgstr "Gyermekek életkora"
+
+#: includes\Admin\Menu.php
+msgid "Extra Guest Information"
+msgstr "További vendég információk"
+
+#: includes\Admin\Menu.php
+msgid "Room & Dates"
+msgstr "Szoba és Dátumok"
+
+#: includes\Admin\Menu.php
+msgid "-- Select Room --"
+msgstr "-- Válasszon szobát --"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-in"
+msgstr "Érkezés"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-out"
+msgstr "Távozás"
+
+#: includes\Admin\Menu.php
+msgid "Extras & Discounts"
+msgstr "Extrák és Kedvezmények"
+
+#: includes\Admin\Menu.php
+msgid "No extras configured."
+msgstr "Nincsenek extrák beállítva."
+
+#: includes\Admin\Menu.php
+msgid "Discount Amount"
+msgstr "Kedvezmény összege"
+
+#: includes\Admin\Menu.php
+msgid "Payment Info"
+msgstr "Fizetési információk"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+#: includes\Core\Tax.php
+msgid "Total Price"
+msgstr "Teljes ár"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Amount"
+msgstr "Előleg összege"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Received"
+msgstr "Előleg beérkezett"
+
+#: includes\Admin\Menu.php
+msgid "Mark as received"
+msgstr "Megjelölés beérkezettként"
+
+#: includes\Admin\Menu.php
+msgid "Payment Method"
+msgstr "Fizetési mód"
+
+#: includes\Admin\Menu.php
+msgid "Onsite / Manual"
+msgstr "Helyszíni / Kézi"
+
+#: includes\Admin\Menu.php
+msgid "Stripe"
+msgstr "Stripe"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\PaymentGateways.php
+msgid "PayPal"
+msgstr "PayPal"
+
+#: includes\Admin\Menu.php
+msgid "Payment Received"
+msgstr "Fizetés megérkezett"
+
+#: includes\Admin\Menu.php
+msgid "Mark full payment as received"
+msgstr "Teljes összeg megjelölése beérkezettként"
+
+#: includes\Admin\Menu.php
+msgid "Amount Outstanding"
+msgstr "Fennmaradó összeg"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Booking Management"
+msgstr "Foglalás kezelés"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Confirmed"
+msgstr "Megerősítve"
+
+#: includes\Admin\Menu.php
+msgid "Language"
+msgstr "Nyelv"
+
+#: includes\Admin\Menu.php
+msgid "Admin Notes"
+msgstr "Admin jegyzetek"
+
+#: includes\Admin\Menu.php
+msgid "Add Booking"
+msgstr "Foglalás hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Cancel"
+msgstr "Mégse"
+
+#: includes\Admin\Menu.php
+msgid "Edit Booking #%d"
+msgstr "Foglalás szerkesztése #%d"
+
+#: includes\Admin\Menu.php
+msgid "Child %d:"
+msgstr "%d. Gyermek:"
+
+#: includes\Admin\Menu.php
+msgid "Payment Status"
+msgstr "Fizetési állapot"
+
+#: includes\Admin\Menu.php
+msgid "Processing"
+msgstr "Feldolgozás alatt"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Completed"
+msgstr "Befejezve"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Failed"
+msgstr "Sikertelen"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Refunded"
+msgstr "Visszatérítve"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID"
+msgstr "Tranzakció azonosító"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID from payment gateway (read-only)."
+msgstr "Tranzakció ID a fizetési szolgáltatótól (csak olvasható)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Amount"
+msgstr "Fizetett összeg"
+
+#: includes\Admin\Menu.php
+msgid "Actual amount paid (may differ from total)."
+msgstr "Ténylegesen fizetett összeg (eltérhet a végösszegtől)."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Payment Date"
+msgstr "Fizetés dátuma"
+
+#: includes\Admin\Menu.php
+msgid "Date/time payment was completed (read-only)."
+msgstr "A fizetés befejezésének dátuma/ideje (csak olvasható)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Error"
+msgstr "Fizetési hiba"
+
+#: includes\Admin\Menu.php
+msgid "Error message from failed payment."
+msgstr "Hibaüzenet a sikertelen fizetésről."
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "%s Breakdown"
+msgstr "%s Részletezés"
+
+#: includes\Admin\Menu.php
+msgid "Cancelled"
+msgstr "Lemondva"
+
+#: includes\Admin\Menu.php
+msgid "Update Booking"
+msgstr "Foglalás frissítése"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this booking? This action cannot be undone."
+msgstr "Biztosan törölni szeretné ezt a foglalást? Ez a művelet nem vonható vissza."
+
+#: includes\Admin\Menu.php
+msgid "Delete Booking"
+msgstr "Foglalás törlése"
+
+#: includes\Admin\Menu.php
+msgid "ID"
+msgstr "Azonosító"
+
+#: includes\Admin\Menu.php
+msgid "Dates"
+msgstr "Dátumok"
+
+#: includes\Admin\Menu.php
+msgid "Payment"
+msgstr "Fizetés"
+
+#: includes\Admin\Menu.php
+msgid "Lang"
+msgstr "Nyelv"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Actions"
+msgstr "Műveletek"
+
+#: includes\Admin\Menu.php
+msgid "Paid in full"
+msgstr "Teljesen kifizetve"
+
+#: includes\Admin\Menu.php
+msgid "Outstanding: %s"
+msgstr "Fennmaradó: %s"
+
+#: includes\Admin\Menu.php
+msgid "Edit"
+msgstr "Szerkesztés"
+
+#: includes\Admin\Menu.php
+msgid "Confirm"
+msgstr "Megerősítés"
+
+#: includes\Admin\Menu.php
+msgid "Delete this booking?"
+msgstr "Törli ezt a foglalást?"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Delete"
+msgstr "Törlés"
+
+#: includes\Admin\Menu.php
+msgid "No bookings found."
+msgstr "Nincsenek foglalások."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Deleted."
+msgstr "Szobatípus törölve."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Updated!"
+msgstr "Szobatípus frissítve!"
+
+#: includes\Admin\Menu.php
+msgid "Room Type Added!"
+msgstr "Szobatípus hozzáadva!"
+
+#: includes\Admin\Menu.php
+msgid "Manage Room Types"
+msgstr "Szobatípusok kezelése"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room Type"
+msgstr "Szobatípus szerkesztése"
+
+#: includes\Admin\Menu.php
+msgid "Add New Type"
+msgstr "Új típus hozzáadása"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Name"
+msgstr "Név"
+
+#: includes\Admin\Menu.php
+msgid "Description"
+msgstr "Leírás"
+
+#: includes\Admin\Menu.php
+msgid "Base Price"
+msgstr "Alapár"
+
+#: includes\Admin\Menu.php
+msgid "Max Adults"
+msgstr "Max felnőttek"
+
+#: includes\Admin\Menu.php
+msgid "Max Children"
+msgstr "Max gyermekek"
+
+#: includes\Admin\Menu.php
+msgid "Child Free Age Limit"
+msgstr "Ingyenes gyermek korhatár"
+
+#: includes\Admin\Menu.php
+msgid "Children at or under this age stay free."
+msgstr "A megadott kor alatti gyermekek ingyen szállhatnak meg."
+
+#: includes\Admin\Menu.php
+msgid "Child Rate (per night)"
+msgstr "Gyermek ár (éjszakánként)"
+
+#: includes\Admin\Menu.php
+msgid "Image URL"
+msgstr "Kép URL"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Amenities"
+msgstr "Felszereltség"
+
+#: includes\Admin\Menu.php
+msgid "Update Room Type"
+msgstr "Szobatípus frissítése"
+
+#: includes\Admin\Menu.php
+msgid "Add Room Type"
+msgstr "Szobatípus hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Image"
+msgstr "Kép"
+
+#: includes\Admin\Menu.php
+msgid "Price"
+msgstr "Ár"
+
+#: includes\Admin\Menu.php
+msgid "No Image"
+msgstr "Nincs kép"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "None"
+msgstr "Nincs"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this room type? This may affect existing rooms."
+msgstr "Biztosan törli ezt a szobatípust? Ez hatással lehet a meglévő szobákra."
+
+#: includes\Admin\Menu.php
+msgid "Room Deleted."
+msgstr "Szoba törölve."
+
+#: includes\Admin\Menu.php
+msgid "Manage Rooms"
+msgstr "Szobák kezelése"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "iCal Synchronization"
+msgstr "iCal Szinkronizálás"
+
+#: includes\Admin\Menu.php
+msgid "Back to Rooms"
+msgstr "Vissza a szobákhoz"
+
+#: includes\Admin\Menu.php
+msgid "Feed Added!"
+msgstr "Feed hozzáadva!"
+
+#: includes\Admin\Menu.php
+msgid "Sync Completed."
+msgstr "Szinkronizálás kész."
+
+#: includes\Admin\Menu.php
+msgid "Room Updated!"
+msgstr "Szoba frissítve!"
+
+#: includes\Admin\Menu.php
+msgid "Room Added!"
+msgstr "Szoba hozzáadva!"
+
+#: includes\Admin\Menu.php
+msgid "iCal Sync — Room %s"
+msgstr "iCal Szinkron — %s Szoba"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Export URL"
+msgstr "Export URL"
+
+#: includes\Admin\Menu.php
+msgid "Import Feeds"
+msgstr "Feedek importálása"
+
+#: includes\Admin\Menu.php
+msgid "URL"
+msgstr "URL"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Last Synced"
+msgstr "Utolsó szinkronizálás"
+
+#: includes\Admin\Menu.php
+msgid "Never"
+msgstr "Soha"
+
+#: includes\Admin\Menu.php
+msgid "Delete?"
+msgstr "Törlés?"
+
+#: includes\Admin\Menu.php
+msgid "Add New Feed"
+msgstr "Új feed hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Name (e.g. Airbnb)"
+msgstr "Név (pl. Airbnb)"
+
+#: includes\Admin\Menu.php
+msgid "iCal URL"
+msgstr "iCal URL"
+
+#: includes\Admin\Menu.php
+msgid "Add Feed"
+msgstr "Feed hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Sync All Now"
+msgstr "Összes szinkronizálása most"
+
+#: includes\Admin\Menu.php
+msgid "Back"
+msgstr "Vissza"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room"
+msgstr "Szoba szerkesztése"
+
+#: includes\Admin\Menu.php
+msgid "Add Room"
+msgstr "Szoba hozzáadása"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Type"
+msgstr "Típus"
+
+#: includes\Admin\Menu.php
+msgid "Number/Name"
+msgstr "Szám/Név"
+
+#: includes\Admin\Menu.php
+msgid "Custom Price"
+msgstr "Egyedi ár"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Available"
+msgstr "Elérhető"
+
+#: includes\Admin\Menu.php
+msgid "Maintenance"
+msgstr "Karbantartás"
+
+#: includes\Admin\Menu.php
+msgid "Update Room"
+msgstr "Szoba frissítése"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Number"
+msgstr "Szám"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\License.php
+msgid "Pro Feature"
+msgstr "Pro funkció"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "to"
+msgstr "eddig"
+
+#: includes\Admin\Menu.php
+msgid "Modifier"
+msgstr "Módosító"
+
+#: includes\Admin\Menu.php
+msgid "Fixed"
+msgstr "Fix"
+
+#: includes\Admin\Menu.php
+msgid "All"
+msgstr "Összes"
+
+#: includes\Admin\Menu.php
+msgid "Add Rule"
+msgstr "Szabály hozzáadása"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Action"
+msgstr "Művelet"
+
+#: includes\Admin\Menu.php
+msgid "Delete this pricing rule?"
+msgstr "Törli ezt az árazási szabályt?"
+
+#: includes\Admin\Menu.php
+msgid "Extras Saved!"
+msgstr "Extrák mentve!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Extras & Add-ons"
+msgstr "Foglalási extrák és kiegészítők"
+
+#: includes\Admin\Menu.php
+msgid "+ Add New Extra"
+msgstr "+ Új extra hozzáadása"
+
+#: includes\Admin\Menu.php
+msgid "Save Changes"
+msgstr "Változtatások mentése"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Model"
+msgstr "Árazási modell"
+
+#: includes\Admin\Menu.php
+msgid "Fixed Price (Once)"
+msgstr "Fix ár (Egyszeri)"
+
+#: includes\Admin\Menu.php
+msgid "Per Person"
+msgstr "Fő/nap"
+
+#: includes\Admin\Menu.php
+msgid "Per Night"
+msgstr "Éjszakánként"
+
+#: includes\Admin\Menu.php
+msgid "Per Person / Per Night"
+msgstr "Fő / Éjszaka"
+
+#: includes\Admin\Menu.php
+msgid "Control Type"
+msgstr "Vezérlő típusa"
+
+#: includes\Admin\Menu.php
+msgid "Checkbox (Yes/No)"
+msgstr "Jelölőnégyzet (Igen/Nem)"
+
+#: includes\Admin\Menu.php
+msgid "Quantity Input"
+msgstr "Mennyiség megadása"
+
+#: includes\Admin\Settings.php
+msgid "Please enter a license key."
+msgstr "Kérjük, adja meg a licenckulcsot."
+
+#: includes\Admin\Settings.php
+msgid "Connection error."
+msgstr "Kapcsolódási hiba."
+
+#: includes\Admin\Settings.php
+msgid "Are you sure?"
+msgstr "Biztos benne?"
+
+#: includes\Admin\Settings.php
+msgid "Are you sure you want to remove this field?"
+msgstr "Biztosan eltávolítja ezt a mezőt?"
+
+#: includes\Admin\Settings.php
+msgid "No holidays added yet."
+msgstr "Még nincsenek ünnepnapok hozzáadva."
+
+#: includes\Admin\Settings.php
+msgid "General Settings"
+msgstr "Általános beállítások"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-in Time"
+msgstr "Alapértelmezett érkezési idő"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-out Time"
+msgstr "Alapértelmezett távozási idő"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Notification Email"
+msgstr "Értesítési email"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page"
+msgstr "Foglalási oldal"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page URL (Override)"
+msgstr "Foglalási oldal URL (Felülírás)"
+
+#: includes\Admin\Settings.php
+msgid "Same-day Turnover"
+msgstr "Azonos napi váltás"
+
+#: includes\Admin\Settings.php
+msgid "If enabled, rooms cannot be checked-in on the same day someone else checks out."
+msgstr "Ha engedélyezve van, a szobákat nem lehet elfoglalni azon a napon, amikor valaki más távozik."
+
+#: includes\Admin\Settings.php
+msgid "Enable Children Management"
+msgstr "Gyermekek kezelésének engedélyezése"
+
+#: includes\Admin\Settings.php
+msgid "Show children selector in search and booking forms."
+msgstr "Gyermekválasztó megjelenítése a keresési és foglalási űrlapokon."
+
+#: includes\Admin\Settings.php
+msgid "Custom Guest Fields"
+msgstr "Egyedi vendég mezők"
+
+#: includes\Admin\Settings.php
+msgid "Currency Settings"
+msgstr "Pénznem beállítások"
+
+#: includes\Admin\Settings.php
+msgid "Currency Code (e.g. USD)"
+msgstr "Pénznem kódja (pl. HUF)"
+
+#: includes\Admin\Settings.php
+msgid "Currency Symbol (e.g. $)"
+msgstr "Pénznem szimbóluma (pl. Ft)"
+
+#: includes\Admin\Settings.php
+msgid "Symbol Position"
+msgstr "Szimbólum helyzete"
+
+#: includes\Admin\Settings.php
+msgid "Before Amount ($100)"
+msgstr "Összeg előtt ($100)"
+
+#: includes\Admin\Settings.php
+msgid "After Amount (100$)"
+msgstr "Összeg után (100Ft)"
+
+#: includes\Admin\Settings.php
+msgid "— Select a Page —"
+msgstr "— Válasszon oldalt —"
+
+#: includes\Admin\Settings.php
+msgid "Select the page where you have placed the [modern_hotel_booking] shortcode."
+msgstr "Válassza ki az oldalt, ahová elhelyezte a [modern_hotel_booking] rövid kódot."
+
+#: includes\Admin\Settings.php
+msgid "Field ID (slug)"
+msgstr "Mező ID (slug)"
+
+#: includes\Admin\Settings.php
+msgid "Text"
+msgstr "Szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Textarea"
+msgstr "Szövegdoboz"
+
+#: includes\Admin\Settings.php
+msgid "Label (Multilingual)"
+msgstr "Címke (Többnyelvű)"
+
+#: includes\Admin\Settings.php
+msgid "Required Field"
+msgstr "Kötelező mező"
+
+#: includes\Admin\Settings.php
+msgid "+ Add New Guest Field"
+msgstr "+ Új vendég mező hozzáadása"
+
+#: includes\Admin\Settings.php
+msgid "Define extra fields for your booking form. Labels support multilingual tags."
+msgstr "Határozzon meg extra mezőket a foglalási űrlaphoz. A címkék támogatják a többnyelvű címkéket."
+
+#: includes\Admin\Settings.php
+msgid "Hotel Configuration"
+msgstr "Szálloda konfiguráció"
+
+#: includes\Admin\Settings.php
+msgid "License"
+msgstr "Licenc"
+
+#: includes\Admin\Settings.php
+msgid "General"
+msgstr "Általános"
+
+#: includes\Admin\Settings.php
+msgid "Email Templates"
+msgstr "Email sablonok"
+
+#: includes\Admin\Settings.php
+msgid "Frontend Labels"
+msgstr "Felhasználói felület címkék"
+
+#: includes\Admin\Settings.php
+msgid "GDPR & Privacy"
+msgstr "GDPR és Adatvédelem"
+
+#: includes\Admin\Settings.php
+msgid "Tax Settings"
+msgstr "Adó beállítások"
+
+#: includes\Admin\Settings.php
+msgid "Performance"
+msgstr "Teljesítmény"
+
+#: includes\Admin\Settings.php
+msgid "License Management"
+msgstr "Licenc kezelés"
+
+#: includes\Admin\Settings.php
+msgid "Enter your license key to unlock Pro features and receive updates."
+msgstr "Adja meg a licenckulcsot a Pro funkciók feloldásához és a frissítések fogadásához."
+
+#: includes\Admin\Settings.php
+msgid "License Key"
+msgstr "Licenckulcs"
+
+#: includes\Admin\Settings.php
+msgid "Active"
+msgstr "Aktív"
+
+#: includes\Admin\Settings.php
+msgid "Expires: %s"
+msgstr "Lejár: %s"
+
+#: includes\Admin\Settings.php
+msgid "Deactivate License"
+msgstr "Licenc deaktiválása"
+
+#: includes\Admin\Settings.php
+msgid "Activate License"
+msgstr "Licenc aktiválása"
+
+#: includes\Admin\Settings.php
+msgid "Performance Settings"
+msgstr "Teljesítmény beállítások"
+
+#: includes\Admin\Settings.php
+msgid "Configure caching and performance options for faster page loads."
+msgstr "Állítsa be a gyorsítótárazási és teljesítmény opciókat a gyorsabb betöltés érdekében."
+
+#: includes\Admin\Settings.php
+msgid "Enable Caching"
+msgstr "Gyorsítótárazás engedélyezése"
+
+#: includes\Admin\Settings.php
+msgid "Enable caching for room data and pricing"
+msgstr "Szobaadatok és árak gyorsítótárazásának engedélyezése"
+
+#: includes\Admin\Settings.php
+msgid "Cache room type data and pricing rules for faster calculations. Recommended for most sites."
+msgstr "Szobatípusok adatainak és árazási szabályainak gyorsítótárazása. A legtöbb oldalhoz ajánlott."
+
+#: includes\Admin\Settings.php
+msgid "Object Cache Status"
+msgstr "Objektum gyorsítótár állapota"
+
+#: includes\Admin\Settings.php
+msgid "A persistent object cache (Redis, Memcached, etc.) is detected. Cache data will persist across requests."
+msgstr "Tartós objektum gyorsítótár (Redis, Memcached) észlelve. Az adatok megmaradnak a kérések között."
+
+#: includes\Admin\Settings.php
+msgid "Using Database Transients"
+msgstr "Adatbázis tranziensek használata"
+
+#: includes\Admin\Settings.php
+msgid "No persistent object cache detected. Consider installing Redis or Memcached for better performance."
+msgstr "Nem található tartós objektum gyorsítótár. A jobb teljesítmény érdekében telepítsen Redis vagy Memcached rendszert."
+
+#: includes\Admin\Settings.php
+msgid "Clear Cache"
+msgstr "Gyorsítótár törlése"
+
+#: includes\Admin\Settings.php
+msgid "Clear All Cache"
+msgstr "Összes gyorsítótár törlése"
+
+#: includes\Admin\Settings.php
+msgid "Clear all cached data. Use this if you see outdated pricing or room information."
+msgstr "Töröl minden gyorsítótárazott adatot. Használja, ha elavult árakat vagy információkat lát."
+
+#: includes\Admin\Settings.php
+msgid "Pending Booking"
+msgstr "Függő foglalás"
+
+#: includes\Admin\Settings.php
+msgid "Confirmed Booking"
+msgstr "Megerősített foglalás"
+
+#: includes\Admin\Settings.php
+msgid "Cancelled Booking"
+msgstr "Lemondott foglalás"
+
+#: includes\Admin\Settings.php
+#: includes\Core\Email.php
+#: includes\Core\I18n.php
+msgid "Payment Confirmation"
+msgstr "Fizetés visszaigazolása"
+
+#: includes\Admin\Settings.php
+msgid "Subject"
+msgstr "Tárgy"
+
+#: includes\Admin\Settings.php
+msgid "Message"
+msgstr "Üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Available placeholders: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+msgstr "Elérhető helyőrzők: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance & Data Privacy (PRO)"
+msgstr "GDPR Megfelelőség és Adatvédelem (PRO)"
+
+#: includes\Admin\Settings.php
+msgid "Enable Pro Privacy Suite"
+msgstr "Pro Adatvédelmi Csomag Engedélyezése"
+
+#: includes\Admin\Settings.php
+msgid "Enables automated data retention, custom cookie prefixing, and advanced privacy controls."
+msgstr "Engedélyezi az automatikus adatmegőrzést, az egyedi süti előtagokat és a fejlett adatvédelmi beállításokat."
+
+#: includes\Admin\Settings.php
+msgid "Require Privacy Consent"
+msgstr "Adatvédelmi hozzájárulás kérése"
+
+#: includes\Admin\Settings.php
+msgid "Adds a mandatory checkbox to the booking form for guest consent."
+msgstr "Hozzáad egy kötelező jelölőnégyzetet a foglalási űrlaphoz a vendég hozzájárulásához."
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Page"
+msgstr "Általános Szerződési Feltételek oldal"
+
+#: includes\Admin\Settings.php
+msgid "Select the page for your Terms & Conditions. Use the [terms_and_conditions] link in your consent text."
+msgstr "Válassza ki az ÁSZF oldalt. Használja a [terms_and_conditions] linket a hozzájárulási szövegben."
+
+#: includes\Admin\Settings.php
+msgid "Consent Text"
+msgstr "Hozzájárulási szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Text displayed next to the consent checkbox. Use the [privacy_policy] link in your text to link to your policy page."
+msgstr "A jelölőnégyzet mellett megjelenő szöveg. Használja a [privacy_policy] linket az adatvédelmi oldalra hivatkozáshoz."
+
+#: includes\Admin\Settings.php
+msgid "Automated Data Retention"
+msgstr "Automatikus adatmegőrzés"
+
+#: includes\Admin\Settings.php
+msgid "days"
+msgstr "nap"
+
+#: includes\Admin\Settings.php
+msgid "Bookings older than this will be automatically anonymized. Set to 0 to disable."
+msgstr "Az ennél régebbi foglalások automatikusan anonimizálásra kerülnek. 0 a letiltáshoz."
+
+#: includes\Admin\Settings.php
+msgid "Cookie Name Prefix"
+msgstr "Süti név előtag"
+
+#: includes\Admin\Settings.php
+msgid "Customize the prefix for all frontend cookies (e.g. for selection persistence). Helps with compatibility and auditing."
+msgstr "Testreszabhatja az összes frontend süti előtagját. Segít a kompatibilitásban."
+
+#: includes\Admin\Settings.php
+msgid "Search Rooms Button"
+msgstr "Szobák keresése gomb"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Label"
+msgstr "Érkezés címke"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Label"
+msgstr "Távozás címke"
+
+#: includes\Admin\Settings.php
+msgid "Guests Label"
+msgstr "Vendégek címke"
+
+#: includes\Admin\Settings.php
+msgid "Children Label"
+msgstr "Gyermekek címke"
+
+#: includes\Admin\Settings.php
+msgid "Child Ages Label"
+msgstr "Gyermekek életkora címke"
+
+#: includes\Admin\Settings.php
+msgid "Child %d Age Label"
+msgstr "%d. Gyermek kora címke"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Label"
+msgstr "Dátumválasztás címke"
+
+#: includes\Admin\Settings.php
+msgid "Dates Selected Message"
+msgstr "Kiválasztott dátumok üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Your Selection Label"
+msgstr "Az Ön választása címke"
+
+#: includes\Admin\Settings.php
+msgid "Continue to Booking Button"
+msgstr "Tovább a foglaláshoz gomb"
+
+#: includes\Admin\Settings.php
+msgid "Dates Not Available Error"
+msgstr "Dátumok nem elérhetők hiba"
+
+#: includes\Admin\Settings.php
+msgid "Stay Dates Label"
+msgstr "Tartózkodási idők címke"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-in Guide"
+msgstr "Érkezés választása útmutató"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-out Guide"
+msgstr "Távozás választása útmutató"
+
+#: includes\Admin\Settings.php
+msgid "Calendar No ID Error"
+msgstr "Naptár ID hiányzik hiba"
+
+#: includes\Admin\Settings.php
+msgid "Calendar Config Error"
+msgstr "Naptár konfigurációs hiba"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Error"
+msgstr "Dátumválasztási hiba"
+
+#: includes\Admin\Settings.php
+msgid "Block No Room Error"
+msgstr "Blokk szoba nélkül hiba"
+
+#: includes\Admin\Settings.php
+msgid "Check-in in Past Error"
+msgstr "Érkezés a múltban hiba"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Before Check-in Error"
+msgstr "Távozás érkezés előtt hiba"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Too Far Error"
+msgstr "Érkezés túl távol hiba"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Too Far Error"
+msgstr "Távozás túl távol hiba"
+
+#: includes\Admin\Settings.php
+msgid "Available Rooms Message"
+msgstr "Elérhető szobák üzenet"
+
+#: includes\Admin\Settings.php
+msgid "No Rooms Found Message"
+msgstr "Nincs találat üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Per Night Text"
+msgstr "Éjszakánként szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Total Nights Price Summary"
+msgstr "Összes éjszaka árösszesítő"
+
+#: includes\Admin\Settings.php
+msgid "Max Guests Text"
+msgstr "Max vendégek szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Loading Message"
+msgstr "Betöltés üzenet"
+
+#: includes\Admin\Settings.php
+msgid "To Separator"
+msgstr "-ig elválasztó"
+
+#: includes\Admin\Settings.php
+msgid "Book Now Button"
+msgstr "Foglalás most gomb"
+
+#: includes\Admin\Settings.php
+msgid "Processing Button Text"
+msgstr "Feldolgozás gomb szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Complete Booking Title"
+msgstr "Foglalás befejezése cím"
+
+#: includes\Admin\Settings.php
+msgid "Total Price Label"
+msgstr "Teljes ár címke"
+
+#: includes\Admin\Settings.php
+msgid "Full Name Label"
+msgstr "Teljes név címke"
+
+#: includes\Admin\Settings.php
+msgid "Email Address Label"
+msgstr "Email cím címke"
+
+#: includes\Admin\Settings.php
+msgid "Phone Number Label"
+msgstr "Telefonszám címke"
+
+#: includes\Admin\Settings.php
+msgid "Special Requests Label"
+msgstr "Különleges kérések címke"
+
+#: includes\Admin\Settings.php
+msgid "Secure Payment Message"
+msgstr "Biztonságos fizetés üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Security Error Message"
+msgstr "Biztonsági hiba üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Rate Limit Error Message"
+msgstr "Kérelmi korlát hiba üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Spam Honeypot Label"
+msgstr "Spam csapda címke"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Booking Button"
+msgstr "Foglalás megerősítése gomb"
+
+#: includes\Admin\Settings.php
+msgid "Pay & Confirm Button"
+msgstr "Fizetés és megerősítés gomb"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Request Message"
+msgstr "Kérés megerősítése üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Room Not Found Error"
+msgstr "Szoba nem található hiba"
+
+#: includes\Admin\Settings.php
+msgid "Name Too Long Error"
+msgstr "Név túl hosszú hiba"
+
+#: includes\Admin\Settings.php
+msgid "Phone Too Long Error"
+msgstr "Telefon túl hosszú hiba"
+
+#: includes\Admin\Settings.php
+msgid "Max Children Error"
+msgstr "Max gyermek hiba"
+
+#: includes\Admin\Settings.php
+msgid "Max Adults Error"
+msgstr "Max felnőtt hiba"
+
+#: includes\Admin\Settings.php
+msgid "Price Calculation Error"
+msgstr "Árkalkulációs hiba"
+
+#: includes\Admin\Settings.php
+msgid "Missing Fields Error"
+msgstr "Hiányzó mezők hiba"
+
+#: includes\Admin\Settings.php
+msgid "Required Field Error"
+msgstr "Kötelező mező hiba"
+
+#: includes\Admin\Settings.php
+msgid "Spam Detected Error"
+msgstr "Spam észlelve hiba"
+
+#: includes\Admin\Settings.php
+msgid "Room Already Booked Error"
+msgstr "Szoba már foglalt hiba"
+
+#: includes\Admin\Settings.php
+msgid "Booking Success Message"
+msgstr "Sikeres foglalás üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Email Sent Message"
+msgstr "Email elküldve üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Title"
+msgstr "Kérés beérkezett cím"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Detail"
+msgstr "Kérés beérkezett részletek"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Message"
+msgstr "Fizetés érkezéskor üzenet"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Required Warning"
+msgstr "GDPR kötelező figyelmeztetés"
+
+#: includes\Admin\Settings.php
+msgid "Privacy Policy Link Text"
+msgstr "Adatvédelmi irányelvek link szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Link Text"
+msgstr "ÁSZF link szöveg"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Required Warning"
+msgstr "PayPal kötelező figyelmeztetés"
+
+#: includes\Admin\Settings.php
+msgid "Payment Success Confirmation"
+msgstr "Sikeres fizetés visszaigazolás"
+
+#: includes\Admin\Settings.php
+msgid "Booking arrival confirmation"
+msgstr "Foglalás beérkezés visszaigazolás"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Detail"
+msgstr "Sikertelen fizetés részletek"
+
+#: includes\Admin\Settings.php
+msgid "Booking Received Pending Detail"
+msgstr "Foglalás beérkezett függő részletek"
+
+#: includes\Admin\Settings.php
+msgid "Payment Method Label"
+msgstr "Fizetési mód címke"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Option"
+msgstr "Fizetés érkezéskor opció"
+
+#: includes\Admin\Settings.php
+msgid "Credit Card Option"
+msgstr "Hitelkártya opció"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Option"
+msgstr "PayPal opció"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Label"
+msgstr "Fizetési állapot címke"
+
+#: includes\Admin\Settings.php
+msgid "Paid Badge Text"
+msgstr "Fizetve jelvény szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Amount Paid Label"
+msgstr "Fizetett összeg címke"
+
+#: includes\Admin\Settings.php
+msgid "Transaction ID Label"
+msgstr "Tranzakció ID címke"
+
+#: includes\Admin\Settings.php
+msgid "Failed Badge Text"
+msgstr "Sikertelen jelvény szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Title"
+msgstr "Sikertelen fizetés cím"
+
+#: includes\Admin\Settings.php
+msgid "Dates Taken Error"
+msgstr "Dátumok foglaltak hiba"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Calc Error"
+msgstr "Érvénytelen foglalási kalkuláció hiba"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Not Configured Error"
+msgstr "Stripe nincs beállítva hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Not Configured Error"
+msgstr "PayPal nincs beállítva hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Connection Error"
+msgstr "PayPal kapcsolódási hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Auth Error"
+msgstr "PayPal hitelesítési hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Error"
+msgstr "PayPal rendelési hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Currency Error"
+msgstr "PayPal pénznem hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Generic Error"
+msgstr "PayPal általános hiba"
+
+#: includes\Admin\Settings.php
+msgid "Missing Order ID Error"
+msgstr "Hiányzó rendelés ID hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Capture Error"
+msgstr "PayPal rögzítési hiba"
+
+#: includes\Admin\Settings.php
+msgid "Payment Already Processed Error"
+msgstr "Fizetés már feldolgozva hiba"
+
+#: includes\Admin\Settings.php
+msgid "Payment Declined Error"
+msgstr "Fizetés elutasítva hiba"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Intent Missing Error"
+msgstr "Stripe szándék hiányzik hiba"
+
+#: includes\Admin\Settings.php
+msgid "PayPal ID Missing Error"
+msgstr "PayPal ID hiányzik hiba"
+
+#: includes\Admin\Settings.php
+msgid "Payment Required Error"
+msgstr "Fizetés kötelező hiba"
+
+#: includes\Admin\Settings.php
+msgid "REST Pro Access Error"
+msgstr "REST Pro hozzáférés hiba"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Nonce Error"
+msgstr "Érvénytelen Nonce hiba"
+
+#: includes\Admin\Settings.php
+msgid "API Rate Limit Error"
+msgstr "API korlát hiba"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Confirmation Title"
+msgstr "Email: Fizetés visszaigazolás cím"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Info Title"
+msgstr "Email: Fizetési infó cím"
+
+#: includes\Admin\Settings.php
+msgid "Email: Pay on Arrival Detail"
+msgstr "Email: Fizetés érkezéskor részletek"
+
+#: includes\Admin\Settings.php
+msgid "Email: Amount Due Label"
+msgstr "Email: Esedékes összeg címke"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Date Label"
+msgstr "Email: Fizetés dátuma címke"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Creation Failed"
+msgstr "PayPal rendelés létrehozása sikertelen"
+
+#: includes\Admin\Settings.php
+msgid "Security Verification Failed"
+msgstr "Biztonsági ellenőrzés sikertelen"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Client ID Missing"
+msgstr "Hiányzó PayPal Ügyfélazonosító"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Secret Missing"
+msgstr "Hiányzó PayPal Titkos kulcs"
+
+#: includes\Admin\Settings.php
+msgid "API Key Not Configured"
+msgstr "API kulcs nincs beállítva"
+
+#: includes\Admin\Settings.php
+msgid "Invalid API Key"
+msgstr "Érvénytelen API kulcs"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Signature Required"
+msgstr "Webhook aláírás szükséges"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Webhook Secret Missing"
+msgstr "Hiányzó Stripe Webhook Titok"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature Format"
+msgstr "Érvénytelen Stripe aláírás formátum"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Expired"
+msgstr "Webhook lejárt"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature"
+msgstr "Érvénytelen Stripe aláírás"
+
+#: includes\Admin\Settings.php
+msgid "Missing PayPal Headers"
+msgstr "Hiányzó PayPal fejlécek"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Customer Data"
+msgstr "Érvénytelen ügyféladatok"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Dates"
+msgstr "Érvénytelen foglalási dátumok"
+
+#: includes\Admin\Settings.php
+msgid "Booking Creation Failed"
+msgstr "Foglalás létrehozása sikertelen"
+
+#: includes\Admin\Settings.php
+msgid "Permission Denied"
+msgstr "Hozzáférés megtagadva"
+
+#: includes\Admin\Settings.php
+msgid "Stripe PK Missing"
+msgstr "Hiányzó Stripe PK"
+
+#: includes\Admin\Settings.php
+msgid "Stripe SK Missing"
+msgstr "Hiányzó Stripe SK"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe PK Format"
+msgstr "Érvénytelen Stripe PK formátum"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Space Warning"
+msgstr "Szóköz a hitelesítő adatokban figyelmeztetés"
+
+#: includes\Admin\Settings.php
+msgid "Sandbox/Live Mismatch Warning"
+msgstr "Sandbox/Éles eltérés figyelmeztetés"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Expired Warning"
+msgstr "Lejárt hitelesítő adatok figyelmeztetés"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Success Message"
+msgstr "PayPal sikeres üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Success Message"
+msgstr "Stripe sikeres üzenet"
+
+#: includes\Admin\Settings.php
+msgid "Connection Failed Error"
+msgstr "Kapcsolódási hiba"
+
+#: includes\Admin\Settings.php
+msgid "Authentication Failed Error"
+msgstr "Hitelesítési hiba"
+
+#: includes\Admin\Settings.php
+msgid "Common Causes Title"
+msgstr "Gyakori okok cím"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Generic Error"
+msgstr "Stripe általános hiba"
+
+#: includes\Admin\Settings.php
+msgid "Enhance Your Stay Title"
+msgstr "Tegye teljessé tartózkodását cím"
+
+#: includes\Admin\Settings.php
+msgid "Per Person Text"
+msgstr "Fő / szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Per Person / Night Text"
+msgstr "Fő / éj szöveg"
+
+#: includes\Admin\Settings.php
+msgid "Booking Summary Title"
+msgstr "Foglalás összegzése cím"
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Row Label"
+msgstr "Szállás sor címke"
+
+#: includes\Admin\Settings.php
+msgid "Extras Row Label"
+msgstr "Extrák sor címke"
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Label"
+msgstr "Adó részletezés címke"
+
+#: includes\Admin\Settings.php
+msgid "Tax Total Label"
+msgstr "Adó összesen címke"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Label"
+msgstr "Adószám címke"
+
+#: includes\Admin\Settings.php
+msgid "Includes Tax Suffix"
+msgstr "Adót tartalmazza utótag"
+
+#: includes\Admin\Settings.php
+msgid "Price Includes Tax Note"
+msgstr "Ár tartalmazza az adót megjegyzés"
+
+#: includes\Admin\Settings.php
+msgid "Tax Added at Checkout Note"
+msgstr "Adó hozzáadva fizetéskor megjegyzés"
+
+#: includes\Admin\Settings.php
+msgid "Subtotal Label"
+msgstr "Részösszeg címke"
+
+#: includes\Admin\Settings.php
+msgid "Room Column Label"
+msgstr "Szoba oszlop címke"
+
+#: includes\Admin\Settings.php
+msgid "Extras Column Label"
+msgstr "Extrák oszlop címke"
+
+#: includes\Admin\Settings.php
+msgid "Item Column Label"
+msgstr "Tétel oszlop címke"
+
+#: includes\Admin\Settings.php
+msgid "Amount Column Label"
+msgstr "Összeg oszlop címke"
+
+#: includes\Admin\Settings.php
+msgid "Tax Accommodation Rate Label"
+msgstr "Szállás adókulcs címke"
+
+#: includes\Admin\Settings.php
+msgid "Tax Extras Rate Label"
+msgstr "Extrák adókulcs címke"
+
+#: includes\Admin\Settings.php
+msgid "Generic Tax Rate Label"
+msgstr "Általános adókulcs címke"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (includes %s)"
+msgstr "Adó megjegyzés (tartalmazza %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (plus %s)"
+msgstr "Adó megjegyzés (plusz %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (includes %1$s: %2$s%% / %3$s%%)"
+msgstr "Adó megjegyzés multi (tartalmazza %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (plus %1$s: %2$s%% / %3$s%%)"
+msgstr "Adó megjegyzés multi (plusz %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Leave a field empty to use the default English text for that language. Use <code>%1$s</code> or <code>%2$d</code> as placeholders where they appear in the default text."
+msgstr "Hagyja üresen a mezőt az alapértelmezett angol szöveg használatához. Használja a <code>%1$s</code> vagy <code>%2$d</code> helyőrzőket, ahol azok az alapértelmezett szövegben megjelennek."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual settings saved successfully."
+msgstr "Többnyelvű beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "GDPR settings saved successfully."
+msgstr "GDPR beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "General settings saved successfully."
+msgstr "Általános beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Theme settings saved successfully."
+msgstr "Téma beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Theme reset to default successfully."
+msgstr "Téma alaphelyzetbe állítása sikeres."
+
+#: includes\Admin\Settings.php
+msgid "Pro Experience"
+msgstr "Pro Élmény"
+
+#: includes\Admin\Settings.php
+msgid "Overview"
+msgstr "Áttekintés"
+
+#: includes\Admin\Settings.php
+msgid "Booking Extras"
+msgstr "Foglalási Extrák"
+
+#: includes\Admin\Settings.php
+msgid "Pro Themes"
+msgstr "Pro Témák"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Active"
+msgstr "Pro Licenc Aktív"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Required"
+msgstr "Pro Licenc Szükséges"
+
+#: includes\Admin\Settings.php
+msgid "All Pro features are unlocked and ready to use."
+msgstr "Minden Pro funkció feloldva és használatra kész."
+
+#: includes\Admin\Settings.php
+msgid "Unlock all premium features to maximize your booking potential."
+msgstr "Oldja fel az összes prémium funkciót a foglalási potenciál maximalizálásához."
+
+#: includes\Admin\Settings.php
+msgid "Manage License"
+msgstr "Licenc kezelése"
+
+#: includes\Admin\Settings.php
+msgid "Priority Support"
+msgstr "Elsőbbségi támogatás"
+
+#: includes\Admin\Settings.php
+msgid "Lifetime Updates"
+msgstr "Élettartam frissítések"
+
+#: includes\Admin\Settings.php
+msgid "All Premium Features"
+msgstr "Minden Prémium Funkció"
+
+#: includes\Admin\Settings.php
+msgid "Version 2.2.2 - Security & Feature Enhancements"
+msgstr "2.2.2 verzió - Biztonsági és funkciófejlesztések"
+
+#: includes\Admin\Settings.php
+msgid "Enhanced Booking Extras:"
+msgstr "Fejlesztett Foglalási Extrák:"
+
+#: includes\Admin\Settings.php
+msgid "\"Per person\" extras now include children in the guest count for accurate pricing calculations."
+msgstr "A \"Főnkénti\" extrák mostantól tartalmazzák a gyermekeket is a pontos árképzés érdekében."
+
+#: includes\Admin\Settings.php
+msgid "Unified Tax Breakdown:"
+msgstr "Egységes Adó Részletezés:"
+
+#: includes\Admin\Settings.php
+msgid "Consistent, detailed tax rendering across emails, success pages, and admin dashboard."
+msgstr "Következetes, részletes adómegjelenítés az emailekben, sikeroldalakon és az admin felületen."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhook Security:"
+msgstr "HMAC Webhook Biztonság:"
+
+#: includes\Admin\Settings.php
+msgid "Added SHA-256 cryptographic signatures to all outgoing webhooks for verified external integrations."
+msgstr "SHA-256 kriptográfiai aláírások hozzáadása minden kimenő webhookhoz."
+
+#: includes\Admin\Settings.php
+msgid "Server-Side Pricing Logic:"
+msgstr "Szerveroldali Árazási Logika:"
+
+#: includes\Admin\Settings.php
+msgid "Hardened payment gateway initialization with mandatory server-side price recalculation."
+msgstr "Megerősített fizetési átjáró inicializálás kötelező szerveroldali árújraszámítással."
+
+#: includes\Admin\Settings.php
+msgid "Payment Processing"
+msgstr "Fizetés Feldolgozás"
+
+#: includes\Admin\Settings.php
+msgid "Configure"
+msgstr "Konfigurálás"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Integration"
+msgstr "Stripe Integráció"
+
+#: includes\Admin\Settings.php
+msgid "Accept payments with Stripe including Apple Pay and Google Pay support."
+msgstr "Fizetések elfogadása Stripe-pal, beleértve az Apple Pay és Google Pay támogatást."
+
+#: includes\Admin\Settings.php
+msgid "Popular"
+msgstr "Népszerű"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Integration"
+msgstr "PayPal Integráció"
+
+#: includes\Admin\Settings.php
+msgid "Accept PayPal payments with automatic IPN verification and status updates."
+msgstr "PayPal fizetések elfogadása automatikus IPN ellenőrzéssel."
+
+#: includes\Admin\Settings.php
+msgid "Pay On-site Option"
+msgstr "Helyszíni Fizetés Opció"
+
+#: includes\Admin\Settings.php
+msgid "Allow guests to pay upon arrival with flexible payment tracking."
+msgstr "Lehetővé teszi a vendégeknek a helyszíni fizetést rugalmas nyomon követéssel."
+
+#: includes\Admin\Settings.php
+msgid "Payment Webhooks"
+msgstr "Fizetési Webhookok"
+
+#: includes\Admin\Settings.php
+msgid "Automatic payment status updates from Stripe and PayPal webhooks."
+msgstr "Automatikus fizetési állapot frissítések Stripe és PayPal webhookokból."
+
+#: includes\Admin\Settings.php
+msgid "New"
+msgstr "Új"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Tracking"
+msgstr "Fizetési Állapot Követés"
+
+#: includes\Admin\Settings.php
+msgid "Full payment lifecycle management: pending, deposit paid, fully paid, refunded."
+msgstr "Teljes fizetési életciklus kezelés: függőben, előleg fizetve, teljesen kifizetve, visszatérítve."
+
+#: includes\Admin\Settings.php
+msgid "Tax Management"
+msgstr "Adókezelés"
+
+#: includes\Admin\Settings.php
+msgid "VAT/TAX System"
+msgstr "ÁFA/Adó Rendszer"
+
+#: includes\Admin\Settings.php
+msgid "Three modes: VAT inclusive, Sales Tax exclusive, or Disabled. Flexible configuration."
+msgstr "Három mód: ÁFA-t tartalmaz, ÁFA nélkül, vagy Kikapcsolva."
+
+#: includes\Admin\Settings.php
+msgid "Separate Tax Rates"
+msgstr "Külön Adókulcsok"
+
+#: includes\Admin\Settings.php
+msgid "Different tax rates for accommodation vs extras services."
+msgstr "Különböző adókulcsok a szállás és az extra szolgáltatások számára."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT"
+msgstr "Országspecifikus ÁFA"
+
+#: includes\Admin\Settings.php
+msgid "Set different VAT rates per country for international guests."
+msgstr "Különböző ÁFA kulcsok beállítása országonként nemzetközi vendégek számára."
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Display"
+msgstr "Adó Részletezés Megjelenítése"
+
+#: includes\Admin\Settings.php
+msgid "Detailed tax display by room, children, and extras in booking confirmations."
+msgstr "Részletes adómegjelenítés szobánként, gyermekenként és extránként."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Tax Labels"
+msgstr "Többnyelvű Adó Címkék"
+
+#: includes\Admin\Settings.php
+msgid "Per-language tax terminology (VAT, IVA, TVA, MwSt, etc.)."
+msgstr "Nyelvenkénti adó terminológia (ÁFA, VAT, MwSt, stb.)."
+
+#: includes\Admin\Settings.php
+msgid "Updated"
+msgstr "Frissítve"
+
+#: includes\Admin\Settings.php
+msgid "Seasonal Pricing"
+msgstr "Szezonális Árazás"
+
+#: includes\Admin\Settings.php
+msgid "Set automated weekend and holiday multipliers for dynamic pricing."
+msgstr "Automatikus hétvégi és ünnepnapi szorzók beállítása."
+
+#: includes\Admin\Settings.php
+msgid "Offer guided tours, airport transfers, breakfast packages, and local experiences."
+msgstr "Kínáljon vezetett túrákat, reptéri transzfert, reggeli csomagokat és helyi élményeket."
+
+#: includes\Admin\Settings.php
+msgid "Bi-directional sync with Airbnb, Booking.com, and Google Calendar."
+msgstr "Kétirányú szinkronizálás Airbnb-vel, Booking.com-mal és Google Naptárral."
+
+#: includes\Admin\Settings.php
+msgid "Analytics Dashboard"
+msgstr "Analitika Vezérlőpult"
+
+#: includes\Admin\Settings.php
+msgid "Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization."
+msgstr "Chart.js vizualizációk, kihasználtsági ráták és ADR követés."
+
+#: includes\Admin\Settings.php
+msgid "View"
+msgstr "Megtekintés"
+
+#: includes\Admin\Settings.php
+msgid "Compliance & UX"
+msgstr "Megfelelőség és UX"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance Tools"
+msgstr "GDPR Megfelelőségi Eszközök"
+
+#: includes\Admin\Settings.php
+msgid "Automated data retention, consent checkboxes, and cookie management."
+msgstr "Automatikus adatmegőrzés, hozzájárulási jelölőnégyzetek és süti kezelés."
+
+#: includes\Admin\Settings.php
+msgid "Theme Customization"
+msgstr "Téma Testreszabás"
+
+#: includes\Admin\Settings.php
+msgid "6 designer presets, custom branding colors, and advanced CSS injection."
+msgstr "6 tervezői előbeállítás, egyedi márkaszínek és haladó CSS beszúrás."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Support"
+msgstr "Többnyelvű Támogatás"
+
+#: includes\Admin\Settings.php
+msgid "Compatible with qTranslate, WPML, and Polylang for full translation support."
+msgstr "Kompatibilis a qTranslate, WPML és Polylang bővítményekkel."
+
+#: includes\Admin\Settings.php
+msgid "Developer Platform"
+msgstr "Fejlesztői Platform"
+
+#: includes\Admin\Settings.php
+msgid "REST API"
+msgstr "REST API"
+
+#: includes\Admin\Settings.php
+msgid "Full REST API access for external integrations and custom applications."
+msgstr "Teljes REST API hozzáférés külső integrációkhoz és egyedi alkalmazásokhoz."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhooks"
+msgstr "HMAC Webhookok"
+
+#: includes\Admin\Settings.php
+msgid "Secure webhooks with HMAC-signed payloads for booking events."
+msgstr "Biztonságos webhookok HMAC-aláírt tartalommal foglalási eseményekhez."
+
+#: includes\Admin\Settings.php
+msgid "Configure Payment Gateways"
+msgstr "Fizetési átjárók konfigurálása"
+
+#: includes\Admin\Settings.php
+msgid "Set Up Tax Settings"
+msgstr "Adó beállítások megadása"
+
+#: includes\Admin\Settings.php
+msgid "View Analytics"
+msgstr "Analitika megtekintése"
+
+#: includes\Admin\Settings.php
+msgid "Manage iCal Feeds"
+msgstr "iCal feedek kezelése"
+
+#: includes\Admin\Settings.php
+msgid "Save Payment Settings"
+msgstr "Fizetési beállítások mentése"
+
+#: includes\Admin\Settings.php
+msgid "Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more."
+msgstr "Oldja fel ezt a funkciót és még sok mást Pro licenccel."
+
+#: includes\Admin\Settings.php
+msgid "View All Pro Features"
+msgstr "Összes Pro funkció megtekintése"
+
+#: includes\Admin\Settings.php
+msgid "Pro features are not available."
+msgstr "A Pro funkciók nem elérhetők."
+
+#: includes\Admin\Settings.php
+msgid "The REST API allows external systems to query room availability and manage bookings. API base:"
+msgstr "A REST API lehetővé teszi külső rendszerek számára az elérhetőség lekérdezését."
+
+#: includes\Admin\Settings.php
+msgid "API Key"
+msgstr "API Kulcs"
+
+#: includes\Admin\Settings.php
+msgid "Generate"
+msgstr "Generálás"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Copy"
+msgstr "Másolás"
+
+#: includes\Admin\Settings.php
+msgid "Include as X-MHB-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id})."
+msgstr "Használja X-MHB-API-Key fejléc ként a hitelesített végpontokhoz."
+
+#: includes\Admin\Settings.php
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
+#: includes\Admin\Settings.php
+msgid "Receive a JSON POST for booking events: booking_created, booking_confirmed, booking_cancelled. Payloads are HMAC-signed with your API key."
+msgstr "JSON POST fogadása foglalási eseményekről."
+
+#: includes\Admin\Settings.php
+msgid "Available Endpoints"
+msgstr "Elérhető Végpontok"
+
+#: includes\Admin\Settings.php
+msgid "Method"
+msgstr "Metódus"
+
+#: includes\Admin\Settings.php
+msgid "Endpoint"
+msgstr "Végpont"
+
+#: includes\Admin\Settings.php
+msgid "Auth / Access"
+msgstr "Hitelesítés / Hozzáférés"
+
+#: includes\Admin\Settings.php
+msgid "Pro (Rate Limited)"
+msgstr "Pro (Korlátozott)"
+
+#: includes\Admin\Settings.php
+msgid "Public (Rate Limited)"
+msgstr "Nyilvános (Korlátozott)"
+
+#: includes\Admin\Settings.php
+msgid "API Key Required"
+msgstr "API Kulcs Szükséges"
+
+#: includes\Admin\Settings.php
+msgid "Monday"
+msgstr "Hétfő"
+
+#: includes\Admin\Settings.php
+msgid "Tuesday"
+msgstr "Kedd"
+
+#: includes\Admin\Settings.php
+msgid "Wednesday"
+msgstr "Szerda"
+
+#: includes\Admin\Settings.php
+msgid "Thursday"
+msgstr "Csütörtök"
+
+#: includes\Admin\Settings.php
+msgid "Friday"
+msgstr "Péntek"
+
+#: includes\Admin\Settings.php
+msgid "Saturday"
+msgstr "Szombat"
+
+#: includes\Admin\Settings.php
+msgid "Sunday"
+msgstr "Vasárnap"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Pricing"
+msgstr "Hétvégi Árazás"
+
+#: includes\Admin\Settings.php
+msgid "Define which days are considered weekends and set the adjustment."
+msgstr "Határozza meg a hétvégi napokat és állítsa be az árkorrekciót."
+
+#: includes\Admin\Settings.php
+msgid "Weekend Days"
+msgstr "Hétvégi Napok"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Adjustment"
+msgstr "Hétvégi Korrekció"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\PaymentGateways.php
+msgid "Enable"
+msgstr "Engedélyezés"
+
+#: includes\Admin\Settings.php
+msgid "Multiplier (1.2 = +20%)"
+msgstr "Szorzó (1.2 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Percentage (20 = +20%)"
+msgstr "Százalék (20 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Fixed Amount (20 = +$20)"
+msgstr "Fix összeg (20 = +20Ft)"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Pricing"
+msgstr "Ünnepi Árazás"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Date Picker"
+msgstr "Ünnepnap Választó"
+
+#: includes\Admin\Settings.php
+msgid "Add"
+msgstr "Hozzáadás"
+
+#: includes\Admin\Settings.php
+msgid "Add specific dates that should trigger holiday pricing."
+msgstr "Adjon meg konkrét dátumokat az ünnepi árazáshoz."
+
+#: includes\Admin\Settings.php
+msgid "Holiday Adjustment"
+msgstr "Ünnepi Korrekció"
+
+#: includes\Admin\Settings.php
+msgid "Conflict Resolution"
+msgstr "Konfliktuskezelés"
+
+#: includes\Admin\Settings.php
+msgid "Use larger of weekend vs holiday adjustment if they overlap"
+msgstr "Nagyobb korrekció használata átfedés esetén"
+
+#: includes\Admin\Settings.php
+msgid "Midnight Coast"
+msgstr "Éjféli Part"
+
+#: includes\Admin\Settings.php
+msgid "Our signature classic luxury look."
+msgstr "Klasszikus luxus megjelenésünk."
+
+#: includes\Admin\Settings.php
+msgid "Emerald Forest"
+msgstr "Smaragd Erdő"
+
+#: includes\Admin\Settings.php
+msgid "Rich greens for nature-inspired properties."
+msgstr "Gazdag zöldek természet ihlette szálláshelyekhez."
+
+#: includes\Admin\Settings.php
+msgid "Oceanic Drift"
+msgstr "Óceáni Sodrás"
+
+#: includes\Admin\Settings.php
+msgid "Deep blues and bright highlights."
+msgstr "Mély kékek és fényes kiemelések."
+
+#: includes\Admin\Settings.php
+msgid "Ruby Sunset"
+msgstr "Rubin Naplemente"
+
+#: includes\Admin\Settings.php
+msgid "Warm tones for cozy boutiques."
+msgstr "Meleg tónusok hangulatos butikszállásokhoz."
+
+#: includes\Admin\Settings.php
+msgid "Urban Modern"
+msgstr "Városi Modern"
+
+#: includes\Admin\Settings.php
+msgid "Minimalist grays for city lofts."
+msgstr "Minimalista szürkék városi loftokhoz."
+
+#: includes\Admin\Settings.php
+msgid "Lavender Breeze"
+msgstr "Levendula Szellő"
+
+#: includes\Admin\Settings.php
+msgid "Elegant purples for spa and wellness."
+msgstr "Elegáns lilák spa és wellness célokra."
+
+#: includes\Admin\Settings.php
+msgid "Theme Presets"
+msgstr "Téma Előbeállítások"
+
+#: includes\Admin\Settings.php
+msgid "Choose a professional color palette for your booking frontend."
+msgstr "Válasszon professzionális színpalettát."
+
+#: includes\Admin\Settings.php
+msgid "Custom Theme"
+msgstr "Egyedi Téma"
+
+#: includes\Admin\Settings.php
+msgid "Define your own brand colors below."
+msgstr "Határozza meg saját márkaszíneit alább."
+
+#: includes\Admin\Settings.php
+msgid "Custom Branding"
+msgstr "Egyedi Márkázás"
+
+#: includes\Admin\Settings.php
+msgid "Primary Color"
+msgstr "Elsődleges Szín"
+
+#: includes\Admin\Settings.php
+msgid "Secondary Color"
+msgstr "Másodlagos Szín"
+
+#: includes\Admin\Settings.php
+msgid "Accent Color"
+msgstr "Kiemelő Szín"
+
+#: includes\Admin\Settings.php
+msgid "Advanced Custom CSS"
+msgstr "Haladó Egyedi CSS"
+
+#: includes\Admin\Settings.php
+msgid "Inject additional CSS directly into the booking frontend."
+msgstr "További CSS beszúrása közvetlenül a foglalási felületre."
+
+#: includes\Admin\Settings.php
+msgid "Reset all theme settings to default?"
+msgstr "Minden téma beállítás visszaállítása alaphelyzetbe?"
+
+#: includes\Admin\Settings.php
+msgid "Return to Default"
+msgstr "Visszaállítás Alaphelyzetbe"
+
+#: includes\Admin\Settings.php
+#: includes\Core\I18n.php
+msgid "Permission denied."
+msgstr "Hozzáférés megtagadva."
+
+#: includes\Admin\Settings.php
+msgid "Room Amenities"
+msgstr "Szoba Felszereltség"
+
+#: includes\Admin\Settings.php
+msgid "Manage the list of amenities available for rooms. After adding here, you can translate them in the \"Frontend Labels\" tab."
+msgstr "Kezelje a szobákhoz elérhető felszereltségi listát."
+
+#: includes\Admin\Settings.php
+msgid "Add New Amenity"
+msgstr "Új Felszereltség Hozzáadása"
+
+#: includes\Admin\Settings.php
+msgid "Label"
+msgstr "Címke"
+
+#: includes\Admin\Settings.php
+msgid "Key (Internal)"
+msgstr "Kulcs (Belső)"
+
+#: includes\Admin\Settings.php
+msgid "No amenities found."
+msgstr "Nincs felszereltség."
+
+#: includes\Admin\Settings.php
+msgid "API settings saved successfully."
+msgstr "API beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Payment settings saved successfully."
+msgstr "Fizetési beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Pricing settings saved successfully."
+msgstr "Árazási beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Amenity added successfully."
+msgstr "Felszereltség sikeresen hozzáadva."
+
+#: includes\Admin\Settings.php
+msgid "Amenity removed successfully."
+msgstr "Felszereltség sikeresen eltávolítva."
+
+#: includes\Admin\Settings.php
+msgid "Configure VAT/Sales Tax settings for your hotel bookings. Tax is disabled by default for backward compatibility."
+msgstr "Konfigurálja az ÁFA/Forgalmi adó beállításokat."
+
+#: includes\Admin\Settings.php
+msgid "Tax Mode"
+msgstr "Adó Mód"
+
+#: includes\Admin\Settings.php
+msgid "Disabled"
+msgstr "Kikapcsolva"
+
+#: includes\Admin\Settings.php
+msgid "No tax calculation or display. Prices shown as-is."
+msgstr "Nincs adószámítás vagy megjelenítés. Árak változatlanul."
+
+#: includes\Admin\Settings.php
+msgid "VAT Inclusive"
+msgstr "ÁFA Tartalmazza"
+
+#: includes\Admin\Settings.php
+msgid "Prices include tax (EU, UK, Australia). Shows breakdown: Net + Tax = Gross."
+msgstr "Az árak tartalmazzák az adót."
+
+#: includes\Admin\Settings.php
+msgid "Sales Tax Exclusive"
+msgstr "Forgalmi Adó Nélkül"
+
+#: includes\Admin\Settings.php
+msgid "Tax added on top of prices (US, Canada). Shows: Subtotal + Tax = Total."
+msgstr "Adó hozzáadása az árakhoz."
+
+#: includes\Admin\Settings.php
+msgid "Tax Label"
+msgstr "Adó Címke"
+
+#: includes\Admin\Settings.php
+msgid "Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA"
+msgstr "Példák: ÁFA, VAT, GST"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Number"
+msgstr "Adószám"
+
+#: includes\Admin\Settings.php
+msgid "Your VAT ID, GSTIN, or tax registration number. Displayed on invoices and receipts."
+msgstr "Az Ön adószáma vagy közösségi adószáma."
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Tax Rate"
+msgstr "Szállás Adókulcs"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for rooms and children charges. Example: 10 for 10%"
+msgstr "Adókulcs szobákhoz és gyermekdíjakhoz."
+
+#: includes\Admin\Settings.php
+msgid "Extras Tax Rate"
+msgstr "Extrák Adókulcs"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for extras (add-ons like breakfast, transfers). Set same as accommodation if unsure."
+msgstr "Adókulcs az extrákhoz."
+
+#: includes\Admin\Settings.php
+msgid "Display Options"
+msgstr "Megjelenítési Beállítások"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown on frontend booking form"
+msgstr "Adó részletezés megjelenítése az űrlapon"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown in confirmation emails"
+msgstr "Adó részletezés megjelenítése az emailekben"
+
+#: includes\Admin\Settings.php
+msgid "Rounding Mode"
+msgstr "Kerekítési Mód"
+
+#: includes\Admin\Settings.php
+msgid "Per Total (Recommended)"
+msgstr "Végösszeg Alapján (Ajánlott)"
+
+#: includes\Admin\Settings.php
+msgid "Per Line Item"
+msgstr "Tételenként"
+
+#: includes\Admin\Settings.php
+msgid "Per Total: Round tax on final total. Per Line: Round each item's tax separately."
+msgstr "Végösszeg Alapján: Adó kerekítése a végösszegnél."
+
+#: includes\Admin\Settings.php
+msgid "Decimal Places"
+msgstr "Tizedesjegyek"
+
+#: includes\Admin\Settings.php
+msgid "Number of decimal places for tax amounts (usually 2)."
+msgstr "Tizedesjegyek száma az adóösszegeknél (általában 2)."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT Rates Reference"
+msgstr "Országspecifikus ÁFA Kulcs Referencia"
+
+#: includes\Admin\Settings.php
+msgid "Country"
+msgstr "Ország"
+
+#: includes\Admin\Settings.php
+msgid "Standard Rate"
+msgstr "Normál Kulcs"
+
+#: includes\Admin\Settings.php
+msgid "Hotel Rate"
+msgstr "Szálloda Kulcs"
+
+#: includes\Admin\Settings.php
+msgid "Tax Name"
+msgstr "Adó Neve"
+
+#: includes\Admin\Settings.php
+msgid "Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities."
+msgstr "Megjegyzés: A szálláshelyi adókulcsok csökkentettek lehetnek."
+
+#: includes\Admin\Settings.php
+msgid "Tax settings saved successfully."
+msgstr "Adó beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Performance settings saved successfully."
+msgstr "Teljesítmény beállítások sikeresen mentve."
+
+#: includes\Admin\Settings.php
+msgid "Cache cleared successfully."
+msgstr "Gyorsítótár sikeresen törölve."
+
+#: includes\Admin\Settings.php
+msgid "Failed to clear cache."
+msgstr "Gyorsítótár törlése sikertelen."
+
+#: includes\Admin\Settings.php
+msgid "Cache class not available."
+msgstr "Cache osztály nem elérhető."
+
+#: includes\Api\RestApi.php
+msgid "You do not have permission to access this booking."
+msgstr "Nincs jogosultsága a foglalás megtekintéséhez."
+
+#: includes\Api\RestApi.php
+msgid "Error generating calendar data."
+msgstr "Hiba a naptár adatok generálásakor."
+
+#: includes\Api\RestApi.php
+msgid "Error calculating price. Please check input data."
+msgstr "Hiba az árkalkuláció során."
+
+#: includes\Api\RestApi.php
+msgid "Invalid webhook request."
+msgstr "Érvénytelen webhook kérés."
+
+#: includes\Core\Email.php
+msgid "Price includes %1$s - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "Az ár tartalmazza %1$s - Szállás: %2$s%%, Extrák: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "%1$s added at checkout - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "%1$s hozzáadva fizetéskor - Szállás: %2$s%%, Extrák: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "Dear %s,"
+msgstr "Kedves %s,"
+
+#: includes\Core\Email.php
+msgid "Thank you for your payment. Your booking has been confirmed."
+msgstr "Köszönjük a befizetést. A foglalását megerősítettük."
+
+#: includes\Core\Email.php
+msgid "Booking Details"
+msgstr "Foglalás részletei"
+
+#: includes\Core\Email.php
+msgid "Booking ID:"
+msgstr "Foglalás ID:"
+
+#: includes\Core\Email.php
+msgid "Check-in:"
+msgstr "Érkezés:"
+
+#: includes\Core\Email.php
+msgid "Check-out:"
+msgstr "Távozás:"
+
+#: includes\Core\Email.php
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Ha bármilyen kérdése van, forduljon hozzánk bizalommal."
+
+#: includes\Core\Email.php
+msgid "Best regards,"
+msgstr "Üdvözlettel,"
+
+#: includes\Core\Email.php
+msgid "Payment Details"
+msgstr "Fizetési részletek"
+
+#: includes\Core\Email.php
+msgid "Amount Paid:"
+msgstr "Fizetett összeg:"
+
+#: includes\Core\Email.php
+msgid "Transaction ID:"
+msgstr "Tranzakció ID:"
+
+#: includes\Core\Email.php
+msgid "Payment Method:"
+msgstr "Fizetési mód:"
+
+#: includes\Core\Email.php
+msgid "Payment Date:"
+msgstr "Fizetés dátuma:"
+
+#: includes\Core\I18n.php
+msgid "Search Rooms"
+msgstr "Szobák keresése"
+
+#: includes\Core\I18n.php
+msgid "Available Rooms from %1$s to %2$s"
+msgstr "Elérhető szobák %1$s-tól %2$s-ig"
+
+#: includes\Core\I18n.php
+msgid "No rooms available for these dates."
+msgstr "Nincs elérhető szoba ezekre a dátumokra."
+
+#: includes\Core\I18n.php
+msgid "Dates are not available."
+msgstr "A dátumok nem elérhetők."
+
+#: includes\Core\I18n.php
+msgid "Room not found."
+msgstr "A szoba nem található."
+
+#: includes\Core\I18n.php
+msgid "Secure Online Payment"
+msgstr "Biztonságos online fizetés"
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page."
+msgstr "Biztonsági ellenőrzés sikertelen. Kérjük, frissítse az oldalt."
+
+#: includes\Core\I18n.php
+msgid "Too many attempts. Please wait a minute."
+msgstr "Túl sok próbálkozás. Kérjük, várjon egy percet."
+
+#: includes\Core\I18n.php
+msgid "Leave this field empty"
+msgstr "Hagyja üresen ezt a mezőt"
+
+#: includes\Core\I18n.php
+msgid "Room Image"
+msgstr "Szoba kép"
+
+#: includes\Core\I18n.php
+msgid "No room ID specified for calendar."
+msgstr "Nincs szoba ID megadva a naptárhoz."
+
+#: includes\Core\I18n.php
+msgid "Booking Page URL not configured."
+msgstr "A foglalási oldal URL nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "Loading..."
+msgstr "Betöltés..."
+
+#: includes\Core\I18n.php
+msgid "Processing..."
+msgstr "Feldolgozás..."
+
+#: includes\Core\I18n.php
+msgid "Please accept the privacy policy to continue."
+msgstr "A folytatáshoz fogadja el az adatvédelmi irányelveket."
+
+#: includes\Core\I18n.php
+msgid "Please use the PayPal button to complete your payment."
+msgstr "Kérjük, használja a PayPal gombot a fizetés befejezéséhez."
+
+#: includes\Core\I18n.php
+msgid "Enhance Your Stay"
+msgstr "Tegye teljessé tartózkodását"
+
+#: includes\Core\I18n.php
+msgid "per person"
+msgstr "fő"
+
+#: includes\Core\I18n.php
+msgid "per person / night"
+msgstr "fő / éj"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s"
+msgstr "Az ár tartalmazza: %s"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s"
+msgstr "Ár plusz %s"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s (%s%%)"
+msgstr "Az ár tartalmazza: %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s (%s%%)"
+msgstr "Ár plusz %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Please select check-in and check-out dates."
+msgstr "Kérjük, válassza ki az érkezés és távozás dátumát."
+
+#: includes\Core\I18n.php
+msgid "Please select a Room ID in block settings."
+msgstr "Kérjük, válasszon egy szoba ID-t a blokk beállításaiban."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be in the past."
+msgstr "Az érkezés dátuma nem lehet a múltban."
+
+#: includes\Core\I18n.php
+msgid "Check-out date must be after check-in date."
+msgstr "A távozás dátumának az érkezés után kell lennie."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be more than 2 years in the future."
+msgstr "Az érkezés dátuma nem lehet 2 évnél távolabb."
+
+#: includes\Core\I18n.php
+msgid "Check-out date cannot be more than 2 years in the future."
+msgstr "A távozás dátuma nem lehet 2 évnél távolabb."
+
+#: includes\Core\I18n.php
+msgid "Name is too long (maximum 100 characters)."
+msgstr "A név túl hosszú (maximum 100 karakter)."
+
+#: includes\Core\I18n.php
+msgid "Phone number is too long (maximum 30 characters)."
+msgstr "A telefonszám túl hosszú (maximum 30 karakter)."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum children for this room is %d."
+msgstr "Hiba: A maximális gyermekszám ebben a szobában %d."
+
+#: includes\Core\I18n.php
+msgid "Error calculating price. Please check dates."
+msgstr "Hiba az árkalkuláció során. Kérjük, ellenőrizze a dátumokat."
+
+#: includes\Core\I18n.php
+msgid "Please fill in all required fields."
+msgstr "Kérjük, töltsön ki minden kötelező mezőt."
+
+#: includes\Core\I18n.php
+msgid "Please provide a valid email address."
+msgstr "Kérjük, adjon meg egy érvényes email címet."
+
+#: includes\Core\I18n.php
+msgid "The field \"%s\" is required."
+msgstr "A(z) \"%s\" mező kötelező."
+
+#: includes\Core\I18n.php
+msgid "Spam detected."
+msgstr "Spam észlelve."
+
+#: includes\Core\I18n.php
+msgid "Sorry, this room was just booked by someone else or is unavailable for these dates."
+msgstr "Sajnáljuk, ezt a szobát épp most foglalták le, vagy nem elérhető."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum adults for this room is %d."
+msgstr "Hiba: A maximális felnőttszám ebben a szobában %d."
+
+#: includes\Core\I18n.php
+msgid "REST API access is a Pro feature."
+msgstr "A REST API hozzáférés Pro funkció."
+
+#: includes\Core\I18n.php
+msgid "Invalid nonce."
+msgstr "Érvénytelen nonce."
+
+#: includes\Core\I18n.php
+msgid "Too many requests. Please try again later."
+msgstr "Túl sok kérés. Kérjük, próbálja újra később."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking details. Cannot calculate amount."
+msgstr "Érvénytelen foglalási részletek. Nem lehet kiszámítani az összeget."
+
+#: includes\Core\I18n.php
+msgid "Stripe is not configured."
+msgstr "A Stripe nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "PayPal is not configured. Please contact the site administrator."
+msgstr "A PayPal nincs beállítva. Kérjük, lépjen kapcsolatba az adminisztrátorral."
+
+#: includes\Core\I18n.php
+msgid "Unable to connect to PayPal. Please try again later."
+msgstr "Nem sikerült csatlakozni a PayPal-hoz."
+
+#: includes\Core\I18n.php
+msgid "Failed to authenticate with PayPal. Please check your PayPal credentials."
+msgstr "PayPal hitelesítési hiba. Ellenőrizze az adatait."
+
+#: includes\Core\I18n.php
+msgid "Unable to create PayPal order. Please try again later."
+msgstr "Nem sikerült létrehozni a PayPal rendelést."
+
+#: includes\Core\I18n.php
+msgid "Currency %s is not supported by your PayPal account."
+msgstr "A(z) %s pénznem nem támogatott a PayPal fiókjában."
+
+#: includes\Core\I18n.php
+msgid "PayPal error: %s"
+msgstr "PayPal hiba: %s"
+
+#: includes\Core\I18n.php
+msgid "Missing order ID."
+msgstr "Hiányzó rendelés ID."
+
+#: includes\Core\I18n.php
+msgid "Unable to capture payment. Please try again later."
+msgstr "Nem sikerült rögzíteni a fizetést."
+
+#: includes\Core\I18n.php
+msgid "This payment has already been processed."
+msgstr "Ez a fizetés már fel lett dolgozva."
+
+#: includes\Core\I18n.php
+msgid "The payment was declined by PayPal. Please try a different payment method."
+msgstr "A fizetést a PayPal elutasította. Próbáljon másik módot."
+
+#: includes\Core\I18n.php
+msgid "privacy policy"
+msgstr "adatvédelmi irányelvek"
+
+#: includes\Core\I18n.php
+msgid "Terms & Conditions"
+msgstr "Felhasználási feltételek"
+
+#: includes\Core\I18n.php
+msgid "Payment Information"
+msgstr "Fizetési Információ"
+
+#: includes\Core\I18n.php
+msgid "Payment will be collected upon arrival at the property."
+msgstr "A fizetés a szálláshelyre érkezéskor történik."
+
+#: includes\Core\I18n.php
+msgid "Amount Due"
+msgstr "Esedékes összeg"
+
+#: includes\Core\I18n.php
+msgid "Failed to create PayPal order."
+msgstr "Sikertelen PayPal rendelés létrehozás."
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page and try again."
+msgstr "Biztonsági ellenőrzés sikertelen. Frissítse az oldalt."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Client ID is not configured."
+msgstr "A PayPal %s Ügyfélazonosító nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Secret is not configured."
+msgstr "A PayPal %s Titkos kulcs nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "Stripe payment failed: Payment intent missing."
+msgstr "Stripe fizetés sikertelen: Hiányzó fizetési szándék."
+
+#: includes\Core\I18n.php
+msgid "Stripe API error: %s"
+msgstr "Stripe API hiba: %s"
+
+#: includes\Core\I18n.php
+msgid "PayPal payment failed: Order ID missing."
+msgstr "PayPal fizetés sikertelen: Hiányzó rendelés ID."
+
+#: includes\Core\I18n.php
+msgid "Payment is required."
+msgstr "Fizetés kötelező."
+
+#: includes\Core\I18n.php
+msgid "API key has not been configured. Set it in Hotel Booking → Settings."
+msgstr "API kulcs nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "Invalid or missing API key."
+msgstr "Érvénytelen vagy hiányzó API kulcs."
+
+#: includes\Core\I18n.php
+msgid "Webhook signature required. Unauthorized requests are rejected."
+msgstr "Webhook aláírás szükséges."
+
+#: includes\Core\I18n.php
+msgid "Stripe webhook secret not configured. Please set it in Settings."
+msgstr "Stripe webhook titok nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe signature format."
+msgstr "Érvénytelen Stripe aláírás formátum."
+
+#: includes\Core\I18n.php
+msgid "Webhook timestamp outside acceptable range."
+msgstr "Webhook időbélyeg tartományon kívül."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe webhook signature."
+msgstr "Érvénytelen Stripe webhook aláírás."
+
+#: includes\Core\I18n.php
+msgid "Missing required PayPal webhook headers."
+msgstr "Hiányzó kötelező PayPal webhook fejlécek."
+
+#: includes\Core\I18n.php
+msgid "Valid customer name and email are required."
+msgstr "Érvényes név és email cím kötelező."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking dates."
+msgstr "Érvénytelen foglalási dátumok."
+
+#: includes\Core\I18n.php
+msgid "Failed to create the booking."
+msgstr "Nem sikerült létrehozni a foglalást."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Publishable Key is not configured."
+msgstr "Stripe %s Nyilvános kulcs nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Secret Key is not configured."
+msgstr "Stripe %s Titkos kulcs nincs beállítva."
+
+#: includes\Core\I18n.php
+msgid "Invalid publishable key format. Expected key starting with \"%1$s\" for %2$s mode."
+msgstr "Érvénytelen nyilvános kulcs formátum."
+
+#: includes\Core\I18n.php
+msgid "Credentials contain extra spaces"
+msgstr "A hitelesítő adatok felesleges szóközöket tartalmaznak"
+
+#: includes\Core\I18n.php
+msgid "Using Sandbox credentials in Live mode (or vice versa)"
+msgstr "Sandbox adatok használata Éles módban (vagy fordítva)"
+
+#: includes\Core\I18n.php
+msgid "Credentials have expired or been rotated"
+msgstr "A hitelesítő adatok lejártak"
+
+#: includes\Core\I18n.php
+msgid "PayPal %s credentials are valid!"
+msgstr "PayPal %s hitelesítő adatok érvényesek!"
+
+#: includes\Core\I18n.php
+msgid "Stripe %s credentials are valid!"
+msgstr "Stripe %s hitelesítő adatok érvényesek!"
+
+#: includes\Core\I18n.php
+msgid "Connection failed: %s"
+msgstr "Kapcsolódás sikertelen: %s"
+
+#: includes\Core\I18n.php
+msgid "Authentication failed: %s"
+msgstr "Hitelesítés sikertelen: %s"
+
+#: includes\Core\I18n.php
+msgid "Common causes:"
+msgstr "Gyakori okok:"
+
+#: includes\Core\ICal.php
+msgid "Pro license required."
+msgstr "Pro licenc szükséges."
+
+#: includes\Core\ICal.php
+msgid "Invalid or missing iCal token."
+msgstr "Érvénytelen vagy hiányzó iCal token."
+
+#: includes\Core\ICal.php
+msgid "Security Error"
+msgstr "Biztonsági Hiba"
+
+#: includes\Core\ICal.php
+msgid "Booking #%1$d - %2$s"
+msgstr "Foglalás #%1$d - %2$s"
+
+#: includes\Core\ICal.php
+msgid "Check-in: %s"
+msgstr "Érkezés: %s"
+
+#: includes\Core\ICal.php
+msgid "Check-out: %s"
+msgstr "Távozás: %s"
+
+#: includes\Core\ICal.php
+msgid "Guests: %d"
+msgstr "Vendégek: %d"
+
+#: includes\Core\ICal.php
+msgid "Email: %s"
+msgstr "Email: %s"
+
+#: includes\Core\ICal.php
+msgid "Phone: %s"
+msgstr "Telefon: %s"
+
+#: includes\Core\ICal.php
+msgid "Source: %s"
+msgstr "Forrás: %s"
+
+#: includes\Core\ICal.php
+msgid "External Booking"
+msgstr "Külső foglalás"
+
+#: includes\Core\ICalParser.php
+msgid "Airbnb Reservation"
+msgstr "Airbnb foglalás"
+
+#: includes\Core\ICalParser.php
+msgid "Booking.com Reservation"
+msgstr "Booking.com foglalás"
+
+#: includes\Core\ICalParser.php
+msgid "Google Calendar Event"
+msgstr "Google Naptár esemény"
+
+#: includes\Core\License.php
+msgid "The %s feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "A(z) %s funkció a Modern Hotel Booking Pro része."
+
+#: includes\Core\License.php
+msgid "This feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Ez a funkció a Modern Hotel Booking Pro része."
+
+#: includes\Core\License.php
+msgid "Activate Pro Now"
+msgstr "Pro aktiválása most"
+
+#: includes\Core\LicenseManager.php
+msgid "Too many attempts. Please wait a minute before trying again."
+msgstr "Túl sok próbálkozás. Kérjük, várjon egy percet."
+
+#: includes\Core\LicenseManager.php
+msgid "License key cannot be empty."
+msgstr "A licenckulcs nem lehet üres."
+
+#: includes\Core\LicenseManager.php
+msgid "License system not configured. Please contact support."
+msgstr "A licenc rendszer nincs beállítva."
+
+#: includes\Core\LicenseManager.php
+msgid "Invalid license key or server error."
+msgstr "Érvénytelen licenckulcs vagy szerverhiba."
+
+#: includes\Core\LicenseManager.php
+msgid "License limit reached. No activations remaining."
+msgstr "Licenc limit elérve."
+
+#: includes\Core\LicenseManager.php
+msgid "License activated successfully."
+msgstr "Licenc sikeresen aktiválva."
+
+#: includes\Core\LicenseManager.php
+msgid "License deactivated."
+msgstr "Licenc deaktiválva."
+
+#: includes\Core\LicenseManager.php
+msgid "No license key stored."
+msgstr "Nincs tárolt licenckulcs."
+
+#: includes\Core\LicenseManager.php
+msgid "API credentials not configured."
+msgstr "API hitelesítő adatok nincsenek beállítva."
+
+#: includes\Core\LicenseManager.php
+msgid "License is valid."
+msgstr "A licenc érvényes."
+
+#: includes\Core\LicenseManager.php
+msgid "License is not valid."
+msgstr "A licenc érvénytelen."
+
+#: includes\Core\LicenseValidator.php
+msgid "%d day"
+msgstr "%d nap"
+
+#: includes\Core\LicenseValidator.php
+msgid "%d hour"
+msgstr "%d óra"
+
+#: includes\Core\LicenseValidator.php
+msgid "License Warning:"
+msgstr "Licenc Figyelmeztetés:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Could not verify license. Grace period active: %s remaining."
+msgstr "Licenc ellenőrzése sikertelen. Türelmi időszak: %s maradt."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Error:"
+msgstr "Licenc Hiba:"
+
+#: includes\Core\LicenseValidator.php
+msgid "License verification failed. Pro features have been disabled. Please check your license or contact support."
+msgstr "Licenc ellenőrzés sikertelen. Pro funkciók letiltva."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Expired:"
+msgstr "Licenc Lejárt:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Your Pro license has expired. Please renew to continue using Pro features."
+msgstr "A Pro licenc lejárt."
+
+#: includes\Core\Plugin.php
+msgid "Pro license required for iCal export."
+msgstr "Pro licenc szükséges az iCal exporthoz."
+
+#: includes\Core\Privacy.php
+msgid "Modern Hotel Booking"
+msgstr "Modern Hotel Booking"
+
+#: includes\Core\Privacy.php
+msgid "This plugin collects the following personal data from guests during the booking process:"
+msgstr "Ez a bővítmény a következő személyes adatokat gyűjti:"
+
+#: includes\Core\Privacy.php
+msgid "Email Address"
+msgstr "Email cím"
+
+#: includes\Core\Privacy.php
+msgid "Phone Number"
+msgstr "Telefonszám"
+
+#: includes\Core\Privacy.php
+msgid "Booking Dates and Details"
+msgstr "Foglalási dátumok és részletek"
+
+#: includes\Core\Privacy.php
+msgid "This data is stored in the database for the purpose of managing reservations and contacting guests regarding their stay."
+msgstr "Ezek az adatok a foglalások kezelése céljából kerülnek tárolásra."
+
+#: includes\Core\Privacy.php
+msgid "Booking ID"
+msgstr "Foglalás ID"
+
+#: includes\Core\Privacy.php
+msgid "Check-in Date"
+msgstr "Érkezés dátuma"
+
+#: includes\Core\Privacy.php
+msgid "Check-out Date"
+msgstr "Távozás dátuma"
+
+#: includes\Core\Privacy.php
+msgid "Customer Phone"
+msgstr "Ügyfél telefon"
+
+#: includes\Core\Privacy.php
+msgid "Hotel Bookings"
+msgstr "Szállásfoglalások"
+
+#: includes\Core\Tax.php
+msgid "Booking Summary"
+msgstr "Foglalás összegzése"
+
+#: includes\Core\Tax.php
+msgid "Item"
+msgstr "Tétel"
+
+#: includes\Core\Tax.php
+msgid "Amount"
+msgstr "Összeg"
+
+#: includes\Core\Tax.php
+msgid "Subtotal"
+msgstr "Részösszeg"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Accommodation (%2$s%%)"
+msgstr "%1$s - Szállás (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Extras (%2$s%%)"
+msgstr "%1$s - Extrák (%2$s%%)"
+
+#: includes\Frontend\BookingWidget.php
+msgid "MHB: Booking Search"
+msgstr "MHB: Foglalás Keresés"
+
+#: includes\Frontend\BookingWidget.php
+msgid "A compact booking search form."
+msgstr "Kompakt foglalási kereső űrlap."
+
+#: includes\Frontend\BookingWidget.php
+msgid "Book Your Stay"
+msgstr "Foglalja le szállását"
+
+#: includes\Frontend\BookingWidget.php
+msgid "Title:"
+msgstr "Cím:"
+
+#: includes\Pro\Analytics.php
+msgid "Gross Revenue"
+msgstr "Bruttó bevétel"
+
+#: includes\Pro\Analytics.php
+msgid "Collected"
+msgstr "Beszedve"
+
+#: includes\Pro\Analytics.php
+msgid "Tax"
+msgstr "Adó"
+
+#: includes\Pro\Analytics.php
+msgid "Booked"
+msgstr "Foglalt"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue"
+msgstr "Bevétel"
+
+#: includes\Pro\Analytics.php
+msgid "Hotel Booking — Revenue Overview"
+msgstr "Szállásfoglalás — Bevétel Áttekintés"
+
+#: includes\Pro\Analytics.php
+msgid "Collected (MTD)"
+msgstr "Beszedve (Hónap)"
+
+#: includes\Pro\Analytics.php
+msgid "Outstanding Balance"
+msgstr "Fennmaradó egyenleg"
+
+#: includes\Pro\Analytics.php
+msgid "Guests Now"
+msgstr "Vendégek most"
+
+#: includes\Pro\Analytics.php
+msgid "pending bookings"
+msgstr "függő foglalások"
+
+#: includes\Pro\Analytics.php
+msgid "partially paid"
+msgstr "részben fizetve"
+
+#: includes\Pro\Analytics.php
+msgid "View Full Analytics →"
+msgstr "Teljes analitika megtekintése →"
+
+#: includes\Pro\Analytics.php
+msgid "Analytics Intelligence"
+msgstr "Analitikai Intelligencia"
+
+#: includes\Pro\Analytics.php
+msgid "7D"
+msgstr "7N"
+
+#: includes\Pro\Analytics.php
+msgid "30D"
+msgstr "30N"
+
+#: includes\Pro\Analytics.php
+msgid "90D"
+msgstr "90N"
+
+#: includes\Pro\Analytics.php
+msgid "Year"
+msgstr "Év"
+
+#: includes\Pro\Analytics.php
+msgid "Starts"
+msgstr "Kezdés"
+
+#: includes\Pro\Analytics.php
+msgid "Ends"
+msgstr "Vége"
+
+#: includes\Pro\Analytics.php
+msgid "Update"
+msgstr "Frissítés"
+
+#: includes\Pro\Analytics.php
+msgid "Key Performance Indicators"
+msgstr "Kulcsfontosságú teljesítménymutatók"
+
+#: includes\Pro\Analytics.php
+msgid "Total Revenue"
+msgstr "Teljes bevétel"
+
+#: includes\Pro\Analytics.php
+msgid "vs previous period"
+msgstr "vs előző időszak"
+
+#: includes\Pro\Analytics.php
+msgid "Includes"
+msgstr "Tartalmazza"
+
+#: includes\Pro\Analytics.php
+msgid "tax"
+msgstr "adó"
+
+#: includes\Pro\Analytics.php
+msgid "Collected Revenue"
+msgstr "Beszedett bevétel"
+
+#: includes\Pro\Analytics.php
+msgid "of total"
+msgstr "az összesből"
+
+#: includes\Pro\Analytics.php
+msgid "Pending payments"
+msgstr "Függő fizetések"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy Rate"
+msgstr "Kihasználtsági ráta"
+
+#: includes\Pro\Analytics.php
+msgid "ADR"
+msgstr "ADR"
+
+#: includes\Pro\Analytics.php
+msgid "Average Daily Rate"
+msgstr "Átlagos napi ár"
+
+#: includes\Pro\Analytics.php
+msgid "RevPAR"
+msgstr "RevPAR"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Per Available Room"
+msgstr "Egy kiadható szobára jutó árbevétel"
+
+#: includes\Pro\Analytics.php
+msgid "Total Bookings"
+msgstr "Összes foglalás"
+
+#: includes\Pro\Analytics.php
+msgid "Confirmation Rate"
+msgstr "Megerősítési ráta"
+
+#: includes\Pro\Analytics.php
+msgid "Avg. Booking Value"
+msgstr "Átl. foglalási érték"
+
+#: includes\Pro\Analytics.php
+msgid "Per booking"
+msgstr "Foglalásonként"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Collected"
+msgstr "Beszedett adó"
+
+#: includes\Pro\Analytics.php
+msgid "VAT / Sales Tax"
+msgstr "ÁFA / Forgalmi adó"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Trends"
+msgstr "Bevételi trendek"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy by Day of Week"
+msgstr "Kihasználtság a hét napjai szerint"
+
+#: includes\Pro\Analytics.php
+msgid "30-Day Occupancy Forecast"
+msgstr "30 napos kihasználtsági előrejelzés"
+
+#: includes\Pro\Analytics.php
+msgid "Booking Sources"
+msgstr "Foglalási források"
+
+#: includes\Pro\Analytics.php
+msgid "No booking data available"
+msgstr "Nincs elérhető foglalási adat"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue by Source"
+msgstr "Bevétel forrásonként"
+
+#: includes\Pro\Analytics.php
+msgid "Source"
+msgstr "Forrás"
+
+#: includes\Pro\Analytics.php
+msgid "Room Type Performance"
+msgstr "Szobatípus teljesítmény"
+
+#: includes\Pro\Analytics.php
+msgid "No room performance data available"
+msgstr "Nincs elérhető szobatípus teljesítmény adat"
+
+#: includes\Pro\Analytics.php
+#: includes\Pro\ICalManager.php
+msgid "Room Type"
+msgstr "Szobatípus"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy"
+msgstr "Kihasználtság"
+
+#: includes\Pro\Analytics.php
+msgid "Tax / VAT Analytics"
+msgstr "Adó / ÁFA Analitika"
+
+#: includes\Pro\Analytics.php
+msgid "Total Tax Collected"
+msgstr "Összes beszedett adó"
+
+#: includes\Pro\Analytics.php
+msgid "taxed bookings"
+msgstr "adózott foglalások"
+
+#: includes\Pro\Analytics.php
+msgid "Net Revenue"
+msgstr "Nettó bevétel"
+
+#: includes\Pro\Analytics.php
+msgid "Before tax"
+msgstr "Adó előtt"
+
+#: includes\Pro\Analytics.php
+msgid "Including tax"
+msgstr "Adóval együtt"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Breakdown by Rate"
+msgstr "Adó megoszlása kulcsonként"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Rate"
+msgstr "Adókulcs"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Methods"
+msgstr "Fizetési módok"
+
+#: includes\Pro\Analytics.php
+msgid "No payment data available"
+msgstr "Nincs elérhető fizetési adat"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Status Breakdown"
+msgstr "Fizetési állapot megoszlás"
+
+#: includes\Pro\Analytics.php
+msgid "Count"
+msgstr "Darabszám"
+
+#: includes\Pro\Analytics.php
+msgid "Real-time Activity"
+msgstr "Valós idejű tevékenység"
+
+#: includes\Pro\Analytics.php
+msgid "No recent bookings"
+msgstr "Nincs legutóbbi foglalás"
+
+#: includes\Pro\Analytics.php
+msgid "Today's Operations"
+msgstr "Mai műveletek"
+
+#: includes\Pro\Analytics.php
+msgid "Check-ins"
+msgstr "Érkezések"
+
+#: includes\Pro\Analytics.php
+msgid "Check-outs"
+msgstr "Távozások"
+
+#: includes\Pro\Analytics.php
+msgid "No check-ins or check-outs today"
+msgstr "Ma nincs érkezés vagy távozás"
+
+#: includes\Pro\Analytics.php
+msgid "Alerts"
+msgstr "Riasztások"
+
+#: includes\Pro\Analytics.php
+msgid "Failed Payments"
+msgstr "Sikertelen fizetések"
+
+#: includes\Pro\Analytics.php
+msgid "Recent Cancellations"
+msgstr "Legutóbbi lemondások"
+
+#: includes\Pro\Analytics.php
+msgid "Monthly Demand"
+msgstr "Havi kereslet"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time Analysis"
+msgstr "Előidő elemzés"
+
+#: includes\Pro\Analytics.php
+msgid "No lead time data available"
+msgstr "Nincs elérhető előidő adat"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time"
+msgstr "Előidő"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Tracking"
+msgstr "Lemondás követés"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Rate"
+msgstr "Lemondási arány"
+
+#: includes\Pro\Analytics.php
+msgid "Lost Revenue"
+msgstr "Elvesztett bevétel"
+
+#: includes\Pro\Analytics.php
+msgid "From cancelled bookings"
+msgstr "Lemondott foglalásokból"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations"
+msgstr "Lemondások"
+
+#: includes\Pro\Analytics.php
+msgid "Total cancelled"
+msgstr "Összes lemondott"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations by Lead Time"
+msgstr "Lemondások előidő szerint"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Impact"
+msgstr "Bevételi hatás"
+
+#: includes\Pro\Analytics.php
+msgid "Export Financial Report (CSV)"
+msgstr "Pénzügyi jelentés exportálása (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Occupancy Report (CSV)"
+msgstr "Kihasználtsági jelentés exportálása (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Tax Report (CSV)"
+msgstr "Adó jelentés exportálása (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Payments (CSV)"
+msgstr "Fizetések exportálása (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Security check failed. Please try again."
+msgstr "Biztonsági ellenőrzés sikertelen. Próbálja újra."
+
+#: includes\Pro\Analytics.php
+msgid "You do not have sufficient permissions to export data."
+msgstr "Nincs jogosultsága az adatok exportálásához."
+
+#: includes\Pro\ICalManager.php
+msgid "Every 6 Hours"
+msgstr "6 óránként"
+
+#: includes\Pro\ICalManager.php
+msgid "Pro license required to sync calendars."
+msgstr "Pro licenc szükséges a naptárak szinkronizálásához."
+
+#: includes\Pro\ICalManager.php
+msgid "%s Booking"
+msgstr "%s Foglalás"
+
+#: includes\Pro\ICalManager.php
+msgid "Import Only"
+msgstr "Csak import"
+
+#: includes\Pro\ICalManager.php
+msgid "Export Only"
+msgstr "Csak export"
+
+#: includes\Pro\ICalManager.php
+msgid "Bidirectional"
+msgstr "Kétirányú"
+
+#: includes\Pro\ICalManager.php
+msgid "📅 iCal Calendar Sync"
+msgstr "📅 iCal Naptár Szinkronizálás"
+
+#: includes\Pro\ICalManager.php
+msgid "Share this URL with Airbnb, Booking.com, or other platforms to export your availability."
+msgstr "Ossza meg ezt az URL-t az Airbnb-vel, Booking.com-mal vagy más platformokkal az elérhetőség exportálásához."
+
+#: includes\Pro\ICalManager.php
+msgid "Calendar Connections"
+msgstr "Naptár kapcsolatok"
+
+#: includes\Pro\ICalManager.php
+msgid "Connection Name"
+msgstr "Kapcsolat neve"
+
+#: includes\Pro\ICalManager.php
+msgid "Synced %s ago"
+msgstr "Szinkronizálva: %s perce"
+
+#: includes\Pro\ICalManager.php
+msgid "Never synced"
+msgstr "Soha nem szinkronizált"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync"
+msgstr "Szinkronizálás"
+
+#: includes\Pro\ICalManager.php
+msgid "+ Add Connection"
+msgstr "+ Kapcsolat hozzáadása"
+
+#: includes\Pro\ICalManager.php
+msgid "All rooms have been synced."
+msgstr "Minden szoba szinkronizálva lett."
+
+#: includes\Pro\ICalManager.php
+msgid "Room #%s has been synced."
+msgstr "A #%s szoba szinkronizálva lett."
+
+#: includes\Pro\ICalManager.php
+msgid "Manage iCal feed imports and exports for each room. Sync with Airbnb, Booking.com, Google Calendar, and other platforms."
+msgstr "Kezelje az iCal feed importálásokat és exportálásokat minden szobához. Szinkronizáljon Airbnb-vel, Booking.com-mal, Google Naptárral és egyéb platformokkal."
+
+#: includes\Pro\ICalManager.php
+msgid "⚙️ Sync Settings"
+msgstr "⚙️ Szinkronizálási beállítások"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Auto Sync"
+msgstr "Automatikus szinkronizálás engedélyezése"
+
+#: includes\Pro\ICalManager.php
+msgid "Automatically sync calendars"
+msgstr "Naptárak automatikus szinkronizálása"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync Interval"
+msgstr "Szinkronizálási időköz"
+
+#: includes\Pro\ICalManager.php
+msgid "Every Hour"
+msgstr "Óránként"
+
+#: includes\Pro\ICalManager.php
+msgid "Daily"
+msgstr "Naponta"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Retry Logic"
+msgstr "Újrapróbálkozási logika engedélyezése"
+
+#: includes\Pro\ICalManager.php
+msgid "Retry failed syncs with exponential backoff (1h, 2h, 4h)"
+msgstr "Sikertelen szinkronizálások újrapróbálása exponenciális késleltetéssel (1ó, 2ó, 4ó)"
+
+#: includes\Pro\ICalManager.php
+msgid "Email Notifications"
+msgstr "Email értesítések"
+
+#: includes\Pro\ICalManager.php
+msgid "Send email on sync failure"
+msgstr "Email küldése szinkronizálási hiba esetén"
+
+#: includes\Pro\ICalManager.php
+msgid "Save Settings"
+msgstr "Beállítások mentése"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync all rooms? This may take a moment."
+msgstr "Szinkronizálja az összes szobát? Ez eltarthat egy ideig."
+
+#: includes\Pro\ICalManager.php
+msgid "Sync All Rooms"
+msgstr "Összes Szoba Szinkronizálása"
+
+#: includes\Pro\ICalManager.php
+msgid "Platforms"
+msgstr "Platformok"
+
+#: includes\Pro\ICalManager.php
+msgid "Connections"
+msgstr "Kapcsolatok"
+
+#: includes\Pro\ICalManager.php
+msgid "No rooms found. Create rooms first."
+msgstr "Nem található szoba. Először hozzon létre szobákat."
+
+#: includes\Pro\ICalManager.php
+msgid "%s ago"
+msgstr "%s ezelőtt"
+
+#: includes\Pro\ICalManager.php
+msgid "How to set up calendar sync"
+msgstr "Hogyan állítsa be a naptár szinkronizálást"
+
+#: includes\Pro\ICalManager.php
+msgid "Airbnb"
+msgstr "Airbnb"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to your Airbnb listing → Calendar → Availability"
+msgstr "Menjen az Airbnb hirdetéséhez → Naptár → Elérhetőség"
+
+#: includes\Pro\ICalManager.php
+msgid "Under \"Connect calendars,\" click \"Export Calendar\""
+msgstr "A \"Naptárak csatlakoztatása\" alatt kattintson a \"Naptár exportálása\" gombra"
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the iCal URL and add it as a new connection above"
+msgstr "Másolja ki az iCal URL-t és adja hozzá új kapcsolatként fent"
+
+#: includes\Pro\ICalManager.php
+msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb's import field"
+msgstr "A SAJÁT naptárjának Airbnb-be történő importálásához használja a fenti Export URL-t az Airbnb importálási mezőjében"
+
+#: includes\Pro\ICalManager.php
+msgid "Booking.com"
+msgstr "Booking.com"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to Booking.com Extranet → Rates & Availability → Sync calendars"
+msgstr "Menjen a Booking.com Extranetre → Árak és elérhetőség → Naptárak szinkronizálása"
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the export URL from Booking.com and add it as a new connection above"
+msgstr "Másolja ki az exportálási URL-t a Booking.com-ról és adja hozzá új kapcsolatként fent"
+
+#: includes\Pro\ICalManager.php
+msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com's import field"
+msgstr "A SAJÁT naptárjának Booking.com-ra történő exportálásához használja a fenti Export URL-t a Booking.com importálási mezőjében"
+
+#: includes\Pro\ICalManager.php
+msgid "iCal"
+msgstr "iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "connection"
+msgstr "kapcsolat"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Payment Gateways"
+msgstr "Fizetési átjárók"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Enable and configure payment methods for your guests."
+msgstr "Engedélyezze és konfigurálja a fizetési módokat vendégei számára."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Stripe (Credit/Debit Cards)"
+msgstr "Stripe (Hitel/Bankkártyák)"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept credit/debit card payments via Stripe"
+msgstr "Hitel/bankkártyás fizetések elfogadása Stripe-on keresztül"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Mode"
+msgstr "Mód"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test"
+msgstr "Teszt"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live"
+msgstr "Éles"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Publishable Key"
+msgstr "Teszt Nyilvános Kulcs"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Secret Key"
+msgstr "Teszt Titkos Kulcs"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret key is stored securely. Enter a new value to update."
+msgstr "A titkos kulcs biztonságosan tárolva. Adjon meg új értéket a frissítéshez."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Publishable Key"
+msgstr "Éles Nyilvános Kulcs"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret Key"
+msgstr "Éles Titkos Kulcs"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Stripe Credentials"
+msgstr "Stripe hitelesítő adatok tesztelése"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept payments via PayPal"
+msgstr "Fizetések elfogadása PayPal-on keresztül"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Client ID"
+msgstr "Sandbox Ügyfélazonosító"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Secret"
+msgstr "Sandbox Titkos kulcs"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret is stored securely. Enter a new value to update."
+msgstr "A titkos kulcs biztonságosan tárolva. Adjon meg új értéket a frissítéshez."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Client ID"
+msgstr "Éles Ügyfélazonosító"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret"
+msgstr "Éles Titkos kulcs"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Connection"
+msgstr "Kapcsolat tesztelése"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test PayPal Credentials"
+msgstr "PayPal hitelesítő adatok tesztelése"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Pay On-site"
+msgstr "Fizetés a helyszínen"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Allow guests to pay at the property"
+msgstr "Vendégek fizethetnek a szálláshelyen"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions"
+msgstr "Utasítások"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions shown to guests who select pay on-site. Supports multilingual format [:en]..[:ro].."
+msgstr "Utasítások a helyszíni fizetést választó vendégek számára. Többnyelvű formátum támogatott [:en]..[:hu].."
+
+#: modern-hotel-booking.php
+msgid "Modern Hotel Booking Error"
+msgstr "Modern Hotel Booking Hiba"
+
+#: modern-hotel-booking.php
+msgid "This plugin requires PHP 7.4 or higher. You are running PHP %s. Please upgrade your PHP version."
+msgstr "A bővítmény használatához PHP 7.4 vagy újabb verzió szükséges. Jelenlegi verzió: PHP %s."
+
+#: modern-hotel-booking.php
+msgid "An error occurred while loading the plugin. Please check the debug log for details."
+msgstr "Hiba történt a bővítmény betöltésekor. Kérjük, ellenőrizze a hibakeresési naplót."
+
+#: scripts\i18n-tool.php
+msgid "String"
+msgstr "Szöveg"

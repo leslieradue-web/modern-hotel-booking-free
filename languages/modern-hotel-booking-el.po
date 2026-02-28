@@ -1,0 +1,3943 @@
+# Copyright (C) 2026 Modern Hotel Booking
+# This file is distributed under the same license as the Modern Hotel Booking plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Hotel Booking 2.2.4.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
+"Last-Translator: \n"
+"Language-Team: Greek <el@wordpress.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-21T10:32:00+00:00\n"
+"PO-Revision-Date: 2026-02-27 18:00+0200\n"
+"X-Generator: Poedit 3.0\n"
+"X-Domain: modern-hotel-booking\n"
+"Language: el\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form"
+msgstr "Φόρμα Κράτησης Ξενοδοχείου"
+
+#: assets\block\booking-form\block.js
+msgid "Hotel Booking Form Preview"
+msgstr "Προεπισκόπηση Φόρμας Κράτησης"
+
+#: assets\block\booking-form\block.js
+msgid "Booking Settings"
+msgstr "Ρυθμίσεις Κρατήσεων"
+
+#: assets\block\booking-form\block.js
+msgid "Room ID (optional)"
+msgstr "ID Δωματίου (προαιρετικό)"
+
+#: assets\block\booking-form\block.js
+msgid "Leave as 0 to show the general search form."
+msgstr "Αφήστε 0 για να εμφανιστεί η γενική φόρμα αναζήτησης."
+
+#: assets\block\room-calendar\block.js
+msgid "Room Availability Calendar"
+msgstr "Ημερολόγιο Διαθεσιμότητας Δωματίου"
+
+#: assets\block\room-calendar\block.js
+msgid "Calendar Settings"
+msgstr "Ρυθμίσεις Ημερολογίου"
+
+#: assets\block\room-calendar\block.js
+#: includes\Core\Privacy.php
+msgid "Room ID"
+msgstr "ID Δωματίου"
+
+#: assets\block\room-calendar\block.js
+msgid "Enter the ID of the room to display the calendar for."
+msgstr "Εισάγετε το ID του δωματίου για να εμφανιστεί το ημερολόγιο."
+
+#: assets\block\room-calendar\block.js
+msgid "Room ID: "
+msgstr "ID Δωματίου: "
+
+#: assets\block\room-calendar\block.js
+msgid "Please select a Room ID in the sidebar."
+msgstr "Παρακαλώ επιλέξτε ID δωματίου από την πλευρική στήλη."
+
+#: assets\block\room-calendar\block.js
+msgid "(Preview only - real calendar shows on frontend)"
+msgstr "(Μόνο προεπισκόπηση - το πραγματικό ημερολόγιο εμφανίζεται στην ιστοσελίδα)"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking Overview"
+msgstr "Επισκόπηση Κρατήσεων Ξενοδοχείου"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Total"
+msgstr "Σύνολο"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Pending"
+msgstr "Σε Εκκρεμότητα"
+
+#: includes\Admin\Menu.php
+msgid "Today"
+msgstr "Σήμερα"
+
+#: includes\Admin\Menu.php
+msgid "Manage Bookings"
+msgstr "Διαχείριση Κρατήσεων"
+
+#: includes\Admin\Menu.php
+msgid "Hotel Booking"
+msgstr "Κρατήσεις Ξενοδοχείου"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Bookings"
+msgstr "Κρατήσεις"
+
+#: includes\Admin\Menu.php
+msgid "Room Types"
+msgstr "Τύποι Δωματίων"
+
+#: includes\Admin\Menu.php
+msgid "Rooms"
+msgstr "Δωμάτια"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Rules"
+msgstr "Κανόνες Τιμολόγησης"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Plugin.php
+msgid "Settings"
+msgstr "Ρυθμίσεις"
+
+#: includes\Admin\Menu.php
+msgid "PRO Features"
+msgstr "Λειτουργίες PRO"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Extras"
+msgstr "Επιπλέον Παροχές"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "iCal Sync"
+msgstr "Συγχρονισμός iCal"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Payments"
+msgstr "Πληρωμές"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Webhooks"
+msgstr "Webhooks"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Analytics"
+msgstr "Αναλυτικά"
+
+#: includes\Admin\Menu.php
+msgid "Appearance"
+msgstr "Εμφάνιση"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Advanced Pricing"
+msgstr "Σύνθετη Τιμολόγηση"
+
+#: includes\Admin\Menu.php
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Δεν έχετε επαρκή δικαιώματα για πρόσβαση σε αυτή τη σελίδα."
+
+#: includes\Admin\Menu.php
+msgid "Hotel Control Center"
+msgstr "Κέντρο Ελέγχου Ξενοδοχείου"
+
+#: includes\Admin\Menu.php
+msgid "Unlock Premium Hospitality Features"
+msgstr "Ξεκλειδώστε Premium Λειτουργίες Φιλοξενίας"
+
+#: includes\Admin\Menu.php
+msgid "Power up with iCal Sync, Stripe/PayPal integration, Advanced Pricing rules, and Deep Analytics."
+msgstr "Αναβαθμίστε με συγχρονισμό iCal, ενσωμάτωση Stripe/PayPal, σύνθετους κανόνες τιμολόγησης και αναλυτικά δεδομένα."
+
+#: includes\Admin\Menu.php
+msgid "Upgrade to Pro"
+msgstr "Αναβάθμιση σε Pro"
+
+#: includes\Admin\Menu.php
+msgid "Stay Revenue"
+msgstr "Έσοδα Διαμονής"
+
+#: includes\Admin\Menu.php
+msgid "Target Pipeline"
+msgstr "Στόχος Pipeline"
+
+#: includes\Admin\Menu.php
+msgid "Total Volume"
+msgstr "Συνολικός Όγκος"
+
+#: includes\Admin\Menu.php
+msgid "Attention Needed"
+msgstr "Απαιτείται Προσοχή"
+
+#: includes\Admin\Menu.php
+msgid "Today's Arrivals"
+msgstr "Σημερινές Αφίξεις"
+
+#: includes\Admin\Menu.php
+msgid "No arrivals scheduled for today."
+msgstr "Δεν υπάρχουν προγραμματισμένες αφίξεις για σήμερα."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+#: includes\Core\ICal.php
+msgid "Guest"
+msgstr "Επισκέπτης"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+#: includes\Pro\ICalManager.php
+msgid "Room"
+msgstr "Δωμάτιο"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Recent Bookings"
+msgstr "Πρόσφατες Κρατήσεις"
+
+#: includes\Admin\Menu.php
+msgid "View All"
+msgstr "Προβολή Όλων"
+
+#: includes\Admin\Menu.php
+msgid "Date"
+msgstr "Ημερομηνία"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\Privacy.php
+#: includes\Pro\Analytics.php
+msgid "Status"
+msgstr "Κατάσταση"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Quick Actions"
+msgstr "Γρήγορες Ενέργειες"
+
+#: includes\Admin\Menu.php
+msgid "Create New Booking"
+msgstr "Δημιουργία Νέας Κράτησης"
+
+#: includes\Admin\Menu.php
+msgid "Manage Inventory"
+msgstr "Διαχείριση Αποθέματος"
+
+#: includes\Admin\Menu.php
+msgid "Global Settings"
+msgstr "Γενικές Ρυθμίσεις"
+
+#: includes\Admin\Menu.php
+msgid "System Status"
+msgstr "Κατάσταση Συστήματος"
+
+#: includes\Admin\Menu.php
+msgid "License Status:"
+msgstr "Κατάσταση Άδειας:"
+
+#: includes\Admin\Menu.php
+msgid "PRO Active"
+msgstr "PRO Ενεργό"
+
+#: includes\Admin\Menu.php
+msgid "Free Version"
+msgstr "Δωρεάν Έκδοση"
+
+#: includes\Admin\Menu.php
+msgid "Plugin Version:"
+msgstr "Έκδοση Πρόσθετου:"
+
+#: includes\Admin\Menu.php
+msgid "Database Status:"
+msgstr "Κατάσταση Βάσης Δεδομένων:"
+
+#: includes\Admin\Menu.php
+msgid "Healthy"
+msgstr "Υγιής"
+
+#: includes\Admin\Menu.php
+msgid "Need Assistance?"
+msgstr "Χρειάζεστε Βοήθεια;"
+
+#: includes\Admin\Menu.php
+msgid "Explore our documentation or contact the support team for property management advice."
+msgstr "Εξερευνήστε την τεκμηρίωσή μας ή επικοινωνήστε με την ομάδα υποστήριξης για συμβουλές."
+
+#: includes\Admin\Menu.php
+msgid "Open Self-Service Portal →"
+msgstr "Άνοιγμα Πύλης Αυτοεξυπηρέτησης →"
+
+#: includes\Admin\Menu.php
+msgid "Security check failed."
+msgstr "Ο έλεγχος ασφαλείας απέτυχε."
+
+#: includes\Admin\Menu.php
+msgid "Booking Confirmed & Email Sent!"
+msgstr "Η κράτηση επιβεβαιώθηκε & το Email στάλθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Cancelled."
+msgstr "Η κράτηση ακυρώθηκε."
+
+#: includes\Admin\Menu.php
+msgid "Booking Deleted."
+msgstr "Η κράτηση διαγράφηκε."
+
+#: includes\Admin\Menu.php
+msgid "Manual booking added by admin."
+msgstr "Χειροκίνητη κράτηση προστέθηκε από τον διαχειριστή."
+
+#: includes\Admin\Menu.php
+msgid "Manual Booking Added!"
+msgstr "Η Χειροκίνητη Κράτηση Προστέθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Updated!"
+msgstr "Η Κράτηση Ενημερώθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Add New Booking"
+msgstr "Προσθήκη Νέας Κράτησης"
+
+#: includes\Admin\Menu.php
+msgid "Filtering by status: %s"
+msgstr "Φιλτράρισμα βάσει κατάστασης: %s"
+
+#: includes\Admin\Menu.php
+msgid "Clear Filter"
+msgstr "Καθαρισμός Φίλτρου"
+
+#: includes\Admin\Menu.php
+msgid "Add Manual Booking"
+msgstr "Προσθήκη Χειροκίνητης Κράτησης"
+
+#: includes\Admin\Menu.php
+msgid "Customer Details"
+msgstr "Στοιχεία Πελάτη"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Customer Name"
+msgstr "Όνομα Πελάτη"
+
+#: includes\Admin\Menu.php
+msgid "Email"
+msgstr "Email"
+
+#: includes\Admin\Menu.php
+msgid "Phone"
+msgstr "Τηλέφωνο"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Guests"
+msgstr "Επισκέπτες"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "Children"
+msgstr "Παιδιά"
+
+#: includes\Admin\Menu.php
+msgid "Child Ages"
+msgstr "Ηλικίες Παιδιών"
+
+#: includes\Admin\Menu.php
+msgid "Extra Guest Information"
+msgstr "Επιπλέον Πληροφορίες Επισκέπτη"
+
+#: includes\Admin\Menu.php
+msgid "Room & Dates"
+msgstr "Δωμάτιο & Ημερομηνίες"
+
+#: includes\Admin\Menu.php
+msgid "-- Select Room --"
+msgstr "-- Επιλογή Δωματίου --"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-in"
+msgstr "Άφιξη"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Check-out"
+msgstr "Αναχώρηση"
+
+#: includes\Admin\Menu.php
+msgid "Extras & Discounts"
+msgstr "Παροχές & Εκπτώσεις"
+
+#: includes\Admin\Menu.php
+msgid "No extras configured."
+msgstr "Δεν έχουν ρυθμιστεί επιπλέον παροχές."
+
+#: includes\Admin\Menu.php
+msgid "Discount Amount"
+msgstr "Ποσό Έκπτωσης"
+
+#: includes\Admin\Menu.php
+msgid "Payment Info"
+msgstr "Πληροφορίες Πληρωμής"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+#: includes\Core\Tax.php
+msgid "Total Price"
+msgstr "Συνολική Τιμή"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Amount"
+msgstr "Ποσό Προκαταβολής"
+
+#: includes\Admin\Menu.php
+msgid "Deposit Received"
+msgstr "Λήψη Προκαταβολής"
+
+#: includes\Admin\Menu.php
+msgid "Mark as received"
+msgstr "Σήμανση ως ελήφθη"
+
+#: includes\Admin\Menu.php
+msgid "Payment Method"
+msgstr "Τρόπος Πληρωμής"
+
+#: includes\Admin\Menu.php
+msgid "Onsite / Manual"
+msgstr "Στο Κατάλυμα / Χειροκίνητα"
+
+#: includes\Admin\Menu.php
+msgid "Stripe"
+msgstr "Stripe"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\PaymentGateways.php
+msgid "PayPal"
+msgstr "PayPal"
+
+#: includes\Admin\Menu.php
+msgid "Payment Received"
+msgstr "Η Πληρωμή Ελήφθη"
+
+#: includes\Admin\Menu.php
+msgid "Mark full payment as received"
+msgstr "Σήμανση πλήρους πληρωμής ως ελήφθη"
+
+#: includes\Admin\Menu.php
+msgid "Amount Outstanding"
+msgstr "Υπόλοιπο Οφειλής"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Booking Management"
+msgstr "Διαχείριση Κρατήσεων"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Confirmed"
+msgstr "Επιβεβαιωμένη"
+
+#: includes\Admin\Menu.php
+msgid "Language"
+msgstr "Γλώσσα"
+
+#: includes\Admin\Menu.php
+msgid "Admin Notes"
+msgstr "Σημειώσεις Διαχειριστή"
+
+#: includes\Admin\Menu.php
+msgid "Add Booking"
+msgstr "Προσθήκη Κράτησης"
+
+#: includes\Admin\Menu.php
+msgid "Cancel"
+msgstr "Ακύρωση"
+
+#: includes\Admin\Menu.php
+msgid "Edit Booking #%d"
+msgstr "Επεξεργασία Κράτησης #%d"
+
+#: includes\Admin\Menu.php
+msgid "Child %d:"
+msgstr "Παιδί %d:"
+
+#: includes\Admin\Menu.php
+msgid "Payment Status"
+msgstr "Κατάσταση Πληρωμής"
+
+#: includes\Admin\Menu.php
+msgid "Processing"
+msgstr "Σε επεξεργασία"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Completed"
+msgstr "Ολοκληρώθηκε"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Failed"
+msgstr "Απέτυχε"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Refunded"
+msgstr "Επεστράφη"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID"
+msgstr "ID Συναλλαγής"
+
+#: includes\Admin\Menu.php
+msgid "Transaction ID from payment gateway (read-only)."
+msgstr "ID συναλλαγής από την πύλη πληρωμής (μόνο για ανάγνωση)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Amount"
+msgstr "Ποσό Πληρωμής"
+
+#: includes\Admin\Menu.php
+msgid "Actual amount paid (may differ from total)."
+msgstr "Πραγματικό ποσό που πληρώθηκε (μπορεί να διαφέρει από το σύνολο)."
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "Payment Date"
+msgstr "Ημερομηνία Πληρωμής"
+
+#: includes\Admin\Menu.php
+msgid "Date/time payment was completed (read-only)."
+msgstr "Ημερομηνία/ώρα ολοκλήρωσης πληρωμής (μόνο για ανάγνωση)."
+
+#: includes\Admin\Menu.php
+msgid "Payment Error"
+msgstr "Σφάλμα Πληρωμής"
+
+#: includes\Admin\Menu.php
+msgid "Error message from failed payment."
+msgstr "Μήνυμα σφάλματος από αποτυχημένη πληρωμή."
+
+#: includes\Admin\Menu.php
+#: includes\Core\Tax.php
+msgid "%s Breakdown"
+msgstr "Ανάλυση %s"
+
+#: includes\Admin\Menu.php
+msgid "Cancelled"
+msgstr "Ακυρώθηκε"
+
+#: includes\Admin\Menu.php
+msgid "Update Booking"
+msgstr "Ενημέρωση Κράτησης"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this booking? This action cannot be undone."
+msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την κράτηση; Αυτή η ενέργεια δεν αναιρείται."
+
+#: includes\Admin\Menu.php
+msgid "Delete Booking"
+msgstr "Διαγραφή Κράτησης"
+
+#: includes\Admin\Menu.php
+msgid "ID"
+msgstr "ID"
+
+#: includes\Admin\Menu.php
+msgid "Dates"
+msgstr "Ημερομηνίες"
+
+#: includes\Admin\Menu.php
+msgid "Payment"
+msgstr "Πληρωμή"
+
+#: includes\Admin\Menu.php
+msgid "Lang"
+msgstr "Γλώσσα"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Actions"
+msgstr "Ενέργειες"
+
+#: includes\Admin\Menu.php
+msgid "Paid in full"
+msgstr "Εξοφλήθηκε"
+
+#: includes\Admin\Menu.php
+msgid "Outstanding: %s"
+msgstr "Υπόλοιπο: %s"
+
+#: includes\Admin\Menu.php
+msgid "Edit"
+msgstr "Επεξεργασία"
+
+#: includes\Admin\Menu.php
+msgid "Confirm"
+msgstr "Επιβεβαίωση"
+
+#: includes\Admin\Menu.php
+msgid "Delete this booking?"
+msgstr "Διαγραφή αυτής της κράτησης;"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Delete"
+msgstr "Διαγραφή"
+
+#: includes\Admin\Menu.php
+msgid "No bookings found."
+msgstr "Δεν βρέθηκαν κρατήσεις."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Deleted."
+msgstr "Ο Τύπος Δωματίου Διαγράφηκε."
+
+#: includes\Admin\Menu.php
+msgid "Room Type Updated!"
+msgstr "Ο Τύπος Δωματίου Ενημερώθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Room Type Added!"
+msgstr "Ο Τύπος Δωματίου Προστέθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Manage Room Types"
+msgstr "Διαχείριση Τύπων Δωματίων"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room Type"
+msgstr "Επεξεργασία Τύπου Δωματίου"
+
+#: includes\Admin\Menu.php
+msgid "Add New Type"
+msgstr "Προσθήκη Νέου Τύπου"
+
+#: includes\Admin\Menu.php
+#: includes\Core\Privacy.php
+msgid "Name"
+msgstr "Όνομα"
+
+#: includes\Admin\Menu.php
+msgid "Description"
+msgstr "Περιγραφή"
+
+#: includes\Admin\Menu.php
+msgid "Base Price"
+msgstr "Βασική Τιμή"
+
+#: includes\Admin\Menu.php
+msgid "Max Adults"
+msgstr "Μέγ. Ενήλικες"
+
+#: includes\Admin\Menu.php
+msgid "Max Children"
+msgstr "Μέγ. Παιδιά"
+
+#: includes\Admin\Menu.php
+msgid "Child Free Age Limit"
+msgstr "Όριο Ηλικίας Δωρεάν Παιδιών"
+
+#: includes\Admin\Menu.php
+msgid "Children at or under this age stay free."
+msgstr "Τα παιδιά σε αυτή την ηλικία ή μικρότερα διαμένουν δωρεάν."
+
+#: includes\Admin\Menu.php
+msgid "Child Rate (per night)"
+msgstr "Χρέωση Παιδιού (ανά διανυκτέρευση)"
+
+#: includes\Admin\Menu.php
+msgid "Image URL"
+msgstr "URL Εικόνας"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Amenities"
+msgstr "Παροχές"
+
+#: includes\Admin\Menu.php
+msgid "Update Room Type"
+msgstr "Ενημέρωση Τύπου Δωματίου"
+
+#: includes\Admin\Menu.php
+msgid "Add Room Type"
+msgstr "Προσθήκη Τύπου Δωματίου"
+
+#: includes\Admin\Menu.php
+msgid "Image"
+msgstr "Εικόνα"
+
+#: includes\Admin\Menu.php
+msgid "Price"
+msgstr "Τιμή"
+
+#: includes\Admin\Menu.php
+msgid "No Image"
+msgstr "Χωρίς Εικόνα"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "None"
+msgstr "Κανένα"
+
+#: includes\Admin\Menu.php
+msgid "Are you sure you want to delete this room type? This may affect existing rooms."
+msgstr "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον τύπο δωματίου; Αυτό μπορεί να επηρεάσει τα υπάρχοντα δωμάτια."
+
+#: includes\Admin\Menu.php
+msgid "Room Deleted."
+msgstr "Το Δωμάτιο Διαγράφηκε."
+
+#: includes\Admin\Menu.php
+msgid "Manage Rooms"
+msgstr "Διαχείριση Δωματίων"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "iCal Synchronization"
+msgstr "Συγχρονισμός iCal"
+
+#: includes\Admin\Menu.php
+msgid "Back to Rooms"
+msgstr "Πίσω στα Δωμάτια"
+
+#: includes\Admin\Menu.php
+msgid "Feed Added!"
+msgstr "Το Feed Προστέθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Sync Completed."
+msgstr "Ο Συγχρονισμός Ολοκληρώθηκε."
+
+#: includes\Admin\Menu.php
+msgid "Room Updated!"
+msgstr "Το Δωμάτιο Ενημερώθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "Room Added!"
+msgstr "Το Δωμάτιο Προστέθηκε!"
+
+#: includes\Admin\Menu.php
+msgid "iCal Sync — Room %s"
+msgstr "Συγχρονισμός iCal — Δωμάτιο %s"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Export URL"
+msgstr "URL Εξαγωγής"
+
+#: includes\Admin\Menu.php
+msgid "Import Feeds"
+msgstr "Εισαγωγή Feeds"
+
+#: includes\Admin\Menu.php
+msgid "URL"
+msgstr "URL"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\ICalManager.php
+msgid "Last Synced"
+msgstr "Τελευταίος Συγχρονισμός"
+
+#: includes\Admin\Menu.php
+msgid "Never"
+msgstr "Ποτέ"
+
+#: includes\Admin\Menu.php
+msgid "Delete?"
+msgstr "Διαγραφή;"
+
+#: includes\Admin\Menu.php
+msgid "Add New Feed"
+msgstr "Προσθήκη Νέου Feed"
+
+#: includes\Admin\Menu.php
+msgid "Name (e.g. Airbnb)"
+msgstr "Όνομα (π.χ. Airbnb)"
+
+#: includes\Admin\Menu.php
+msgid "iCal URL"
+msgstr "URL iCal"
+
+#: includes\Admin\Menu.php
+msgid "Add Feed"
+msgstr "Προσθήκη Feed"
+
+#: includes\Admin\Menu.php
+msgid "Sync All Now"
+msgstr "Συγχρονισμός Όλων Τώρα"
+
+#: includes\Admin\Menu.php
+msgid "Back"
+msgstr "Πίσω"
+
+#: includes\Admin\Menu.php
+msgid "Edit Room"
+msgstr "Επεξεργασία Δωματίου"
+
+#: includes\Admin\Menu.php
+msgid "Add Room"
+msgstr "Προσθήκη Δωματίου"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Type"
+msgstr "Τύπος"
+
+#: includes\Admin\Menu.php
+msgid "Number/Name"
+msgstr "Αριθμός/Όνομα"
+
+#: includes\Admin\Menu.php
+msgid "Custom Price"
+msgstr "Προσαρμοσμένη Τιμή"
+
+#: includes\Admin\Menu.php
+#: includes\Pro\Analytics.php
+msgid "Available"
+msgstr "Διαθέσιμο"
+
+#: includes\Admin\Menu.php
+msgid "Maintenance"
+msgstr "Συντήρηση"
+
+#: includes\Admin\Menu.php
+msgid "Update Room"
+msgstr "Ενημέρωση Δωματίου"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Number"
+msgstr "Αριθμός"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+#: includes\Core\License.php
+msgid "Pro Feature"
+msgstr "Λειτουργία Pro"
+
+#: includes\Admin\Menu.php
+#: includes\Core\I18n.php
+msgid "to"
+msgstr "εώς"
+
+#: includes\Admin\Menu.php
+msgid "Modifier"
+msgstr "Τροποποιητής"
+
+#: includes\Admin\Menu.php
+msgid "Fixed"
+msgstr "Σταθερό"
+
+#: includes\Admin\Menu.php
+msgid "All"
+msgstr "Όλα"
+
+#: includes\Admin\Menu.php
+msgid "Add Rule"
+msgstr "Προσθήκη Κανόνα"
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Action"
+msgstr "Ενέργεια"
+
+#: includes\Admin\Menu.php
+msgid "Delete this pricing rule?"
+msgstr "Διαγραφή αυτού του κανόνα τιμολόγησης;"
+
+#: includes\Admin\Menu.php
+msgid "Extras Saved!"
+msgstr "Οι Παροχές Αποθηκεύτηκαν!"
+
+#: includes\Admin\Menu.php
+msgid "Booking Extras & Add-ons"
+msgstr "Παροχές Κράτησης & Πρόσθετα"
+
+#: includes\Admin\Menu.php
+msgid "+ Add New Extra"
+msgstr "+ Προσθήκη Νέας Παροχής"
+
+#: includes\Admin\Menu.php
+msgid "Save Changes"
+msgstr "Αποθήκευση Αλλαγών"
+
+#: includes\Admin\Menu.php
+msgid "Pricing Model"
+msgstr "Μοντέλο Τιμολόγησης"
+
+#: includes\Admin\Menu.php
+msgid "Fixed Price (Once)"
+msgstr "Σταθερή Τιμή (Μία Φορά)"
+
+#: includes\Admin\Menu.php
+msgid "Per Person"
+msgstr "Ανά Άτομο"
+
+#: includes\Admin\Menu.php
+msgid "Per Night"
+msgstr "Ανά Διανυκτέρευση"
+
+#: includes\Admin\Menu.php
+msgid "Per Person / Per Night"
+msgstr "Ανά Άτομο / Ανά Διανυκτέρευση"
+
+#: includes\Admin\Menu.php
+msgid "Control Type"
+msgstr "Τύπος Ελέγχου"
+
+#: includes\Admin\Menu.php
+msgid "Checkbox (Yes/No)"
+msgstr "Πλαίσιο Ελέγχου (Ναι/Όχι)"
+
+#: includes\Admin\Menu.php
+msgid "Quantity Input"
+msgstr "Εισαγωγή Ποσότητας"
+
+#: includes\Admin\Settings.php
+msgid "Please enter a license key."
+msgstr "Παρακαλώ εισάγετε ένα κλειδί άδειας."
+
+#: includes\Admin\Settings.php
+msgid "Connection error."
+msgstr "Σφάλμα σύνδεσης."
+
+#: includes\Admin\Settings.php
+msgid "Are you sure?"
+msgstr "Είστε σίγουροι;"
+
+#: includes\Admin\Settings.php
+msgid "Are you sure you want to remove this field?"
+msgstr "Είστε σίγουροι ότι θέλετε να αφαιρέσετε αυτό το πεδίο;"
+
+#: includes\Admin\Settings.php
+msgid "No holidays added yet."
+msgstr "Δεν έχουν προστεθεί αργίες ακόμα."
+
+#: includes\Admin\Settings.php
+msgid "General Settings"
+msgstr "Γενικές Ρυθμίσεις"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-in Time"
+msgstr "Προεπιλεγμένη Ώρα Άφιξης"
+
+#: includes\Admin\Settings.php
+msgid "Default Check-out Time"
+msgstr "Προεπιλεγμένη Ώρα Αναχώρησης"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Notification Email"
+msgstr "Email Ειδοποίησης"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page"
+msgstr "Σελίδα Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Booking Page URL (Override)"
+msgstr "URL Σελίδας Κράτησης (Παράκαμψη)"
+
+#: includes\Admin\Settings.php
+msgid "Same-day Turnover"
+msgstr "Εναλλαγή ίδιας ημέρας"
+
+#: includes\Admin\Settings.php
+msgid "If enabled, rooms cannot be checked-in on the same day someone else checks out."
+msgstr "Εάν ενεργοποιηθεί, δεν μπορεί να γίνει άφιξη την ίδια μέρα που κάποιος άλλος αναχωρεί."
+
+#: includes\Admin\Settings.php
+msgid "Enable Children Management"
+msgstr "Ενεργοποίηση Διαχείρισης Παιδιών"
+
+#: includes\Admin\Settings.php
+msgid "Show children selector in search and booking forms."
+msgstr "Εμφάνιση επιλογέα παιδιών στις φόρμες αναζήτησης και κράτησης."
+
+#: includes\Admin\Settings.php
+msgid "Custom Guest Fields"
+msgstr "Προσαρμοσμένα Πεδία Επισκεπτών"
+
+#: includes\Admin\Settings.php
+msgid "Currency Settings"
+msgstr "Ρυθμίσεις Νομίσματος"
+
+#: includes\Admin\Settings.php
+msgid "Currency Code (e.g. USD)"
+msgstr "Κωδικός Νομίσματος (π.χ. EUR)"
+
+#: includes\Admin\Settings.php
+msgid "Currency Symbol (e.g. $)"
+msgstr "Σύμβολο Νομίσματος (π.χ. €)"
+
+#: includes\Admin\Settings.php
+msgid "Symbol Position"
+msgstr "Θέση Συμβόλου"
+
+#: includes\Admin\Settings.php
+msgid "Before Amount ($100)"
+msgstr "Πριν το Ποσό (100€)"
+
+#: includes\Admin\Settings.php
+msgid "After Amount (100$)"
+msgstr "Μετά το Ποσό (100€)"
+
+#: includes\Admin\Settings.php
+msgid "— Select a Page —"
+msgstr "— Επιλέξτε μια Σελίδα —"
+
+#: includes\Admin\Settings.php
+msgid "Select the page where you have placed the [modern_hotel_booking] shortcode."
+msgstr "Επιλέξτε τη σελίδα όπου έχετε τοποθετήσει τον shortcode [modern_hotel_booking]."
+
+#: includes\Admin\Settings.php
+msgid "Field ID (slug)"
+msgstr "ID Πεδίου (slug)"
+
+#: includes\Admin\Settings.php
+msgid "Text"
+msgstr "Κείμενο"
+
+#: includes\Admin\Settings.php
+msgid "Textarea"
+msgstr "Περιοχή Κειμένου"
+
+#: includes\Admin\Settings.php
+msgid "Label (Multilingual)"
+msgstr "Ετικέτα (Πολύγλωσση)"
+
+#: includes\Admin\Settings.php
+msgid "Required Field"
+msgstr "Υποχρεωτικό Πεδίο"
+
+#: includes\Admin\Settings.php
+msgid "+ Add New Guest Field"
+msgstr "+ Προσθήκη Νέου Πεδίου Επισκέπτη"
+
+#: includes\Admin\Settings.php
+msgid "Define extra fields for your booking form. Labels support multilingual tags."
+msgstr "Ορίστε επιπλέον πεδία για τη φόρμα κράτησης. Οι ετικέτες υποστηρίζουν πολύγλωσσα tags."
+
+#: includes\Admin\Settings.php
+msgid "Hotel Configuration"
+msgstr "Διαμόρφωση Ξενοδοχείου"
+
+#: includes\Admin\Settings.php
+msgid "License"
+msgstr "Άδεια"
+
+#: includes\Admin\Settings.php
+msgid "General"
+msgstr "Γενικά"
+
+#: includes\Admin\Settings.php
+msgid "Email Templates"
+msgstr "Πρότυπα Email"
+
+#: includes\Admin\Settings.php
+msgid "Frontend Labels"
+msgstr "Ετικέτες Frontend"
+
+#: includes\Admin\Settings.php
+msgid "GDPR & Privacy"
+msgstr "GDPR & Απόρρητο"
+
+#: includes\Admin\Settings.php
+msgid "Tax Settings"
+msgstr "Ρυθμίσεις Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "Performance"
+msgstr "Απόδοση"
+
+#: includes\Admin\Settings.php
+msgid "License Management"
+msgstr "Διαχείριση Άδειας"
+
+#: includes\Admin\Settings.php
+msgid "Enter your license key to unlock Pro features and receive updates."
+msgstr "Εισάγετε το κλειδί άδειας για να ξεκλειδώσετε τις λειτουργίες Pro και να λαμβάνετε ενημερώσεις."
+
+#: includes\Admin\Settings.php
+msgid "License Key"
+msgstr "Κλειδί Άδειας"
+
+#: includes\Admin\Settings.php
+msgid "Active"
+msgstr "Ενεργό"
+
+#: includes\Admin\Settings.php
+msgid "Expires: %s"
+msgstr "Λήγει: %s"
+
+#: includes\Admin\Settings.php
+msgid "Deactivate License"
+msgstr "Απενεργοποίηση Άδειας"
+
+#: includes\Admin\Settings.php
+msgid "Activate License"
+msgstr "Ενεργοποίηση Άδειας"
+
+#: includes\Admin\Settings.php
+msgid "Performance Settings"
+msgstr "Ρυθμίσεις Απόδοσης"
+
+#: includes\Admin\Settings.php
+msgid "Configure caching and performance options for faster page loads."
+msgstr "Ρυθμίστε τις επιλογές προσωρινής μνήμης και απόδοσης για ταχύτερη φόρτωση σελίδων."
+
+#: includes\Admin\Settings.php
+msgid "Enable Caching"
+msgstr "Ενεργοποίηση Προσωρινής Μνήμης"
+
+#: includes\Admin\Settings.php
+msgid "Enable caching for room data and pricing"
+msgstr "Ενεργοποίηση προσωρινής μνήμης για δεδομένα δωματίων και τιμές"
+
+#: includes\Admin\Settings.php
+msgid "Cache room type data and pricing rules for faster calculations. Recommended for most sites."
+msgstr "Αποθήκευση δεδομένων τύπων δωματίων και κανόνων τιμολόγησης στην προσωρινή μνήμη. Συνιστάται."
+
+#: includes\Admin\Settings.php
+msgid "Object Cache Status"
+msgstr "Κατάσταση Object Cache"
+
+#: includes\Admin\Settings.php
+msgid "A persistent object cache (Redis, Memcached, etc.) is detected. Cache data will persist across requests."
+msgstr "Εντοπίστηκε μόνιμη object cache (Redis, Memcached, κ.λπ.)."
+
+#: includes\Admin\Settings.php
+msgid "Using Database Transients"
+msgstr "Χρήση Database Transients"
+
+#: includes\Admin\Settings.php
+msgid "No persistent object cache detected. Consider installing Redis or Memcached for better performance."
+msgstr "Δεν εντοπίστηκε μόνιμη object cache. Εξετάστε το ενδεχόμενο εγκατάστασης Redis ή Memcached."
+
+#: includes\Admin\Settings.php
+msgid "Clear Cache"
+msgstr "Εκκαθάριση Cache"
+
+#: includes\Admin\Settings.php
+msgid "Clear All Cache"
+msgstr "Εκκαθάριση Όλης της Cache"
+
+#: includes\Admin\Settings.php
+msgid "Clear all cached data. Use this if you see outdated pricing or room information."
+msgstr "Εκκαθάριση όλων των δεδομένων cache. Χρησιμοποιήστε το αν βλέπετε παλιές τιμές ή πληροφορίες."
+
+#: includes\Admin\Settings.php
+msgid "Pending Booking"
+msgstr "Εκκρεμής Κράτηση"
+
+#: includes\Admin\Settings.php
+msgid "Confirmed Booking"
+msgstr "Επιβεβαιωμένη Κράτηση"
+
+#: includes\Admin\Settings.php
+msgid "Cancelled Booking"
+msgstr "Ακυρωμένη Κράτηση"
+
+#: includes\Admin\Settings.php
+#: includes\Core\Email.php
+#: includes\Core\I18n.php
+msgid "Payment Confirmation"
+msgstr "Επιβεβαίωση Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Subject"
+msgstr "Θέμα"
+
+#: includes\Admin\Settings.php
+msgid "Message"
+msgstr "Μήνυμα"
+
+#: includes\Admin\Settings.php
+msgid "Available placeholders: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+msgstr "Διαθέσιμα πεδία: {customer_name}, {booking_id}, {status}, {check_in}, {check_out}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {payment_details}, {tax_breakdown}, {tax_total}, {tax_registration_number}"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance & Data Privacy (PRO)"
+msgstr "Συμμόρφωση GDPR & Απόρρητο Δεδομένων (PRO)"
+
+#: includes\Admin\Settings.php
+msgid "Enable Pro Privacy Suite"
+msgstr "Ενεργοποίηση Pro Σουίτας Απορρήτου"
+
+#: includes\Admin\Settings.php
+msgid "Enables automated data retention, custom cookie prefixing, and advanced privacy controls."
+msgstr "Ενεργοποιεί την αυτοματοποιημένη διατήρηση δεδομένων, προσαρμοσμένα προθέματα cookie και προηγμένους ελέγχους απορρήτου."
+
+#: includes\Admin\Settings.php
+msgid "Require Privacy Consent"
+msgstr "Απαίτηση Συναίνεσης Απορρήτου"
+
+#: includes\Admin\Settings.php
+msgid "Adds a mandatory checkbox to the booking form for guest consent."
+msgstr "Προσθέτει ένα υποχρεωτικό πλαίσιο ελέγχου στη φόρμα κράτησης για τη συναίνεση του επισκέπτη."
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Page"
+msgstr "Σελίδα Όρων & Προϋποθέσεων"
+
+#: includes\Admin\Settings.php
+msgid "Select the page for your Terms & Conditions. Use the [terms_and_conditions] link in your consent text."
+msgstr "Επιλέξτε τη σελίδα για τους Όρους & Προϋποθέσεις σας."
+
+#: includes\Admin\Settings.php
+msgid "Consent Text"
+msgstr "Κείμενο Συναίνεσης"
+
+#: includes\Admin\Settings.php
+msgid "Text displayed next to the consent checkbox. Use the [privacy_policy] link in your text to link to your policy page."
+msgstr "Κείμενο που εμφανίζεται δίπλα στο πλαίσιο συναίνεσης. Χρησιμοποιήστε το σύνδεσμο [privacy_policy]."
+
+#: includes\Admin\Settings.php
+msgid "Automated Data Retention"
+msgstr "Αυτοματοποιημένη Διατήρηση Δεδομένων"
+
+#: includes\Admin\Settings.php
+msgid "days"
+msgstr "ημέρες"
+
+#: includes\Admin\Settings.php
+msgid "Bookings older than this will be automatically anonymized. Set to 0 to disable."
+msgstr "Κρατήσεις παλαιότερες από αυτό θα ανωνυμοποιούνται αυτόματα. Ορίστε σε 0 για απενεργοποίηση."
+
+#: includes\Admin\Settings.php
+msgid "Cookie Name Prefix"
+msgstr "Πρόθεμα Ονόματος Cookie"
+
+#: includes\Admin\Settings.php
+msgid "Customize the prefix for all frontend cookies (e.g. for selection persistence). Helps with compatibility and auditing."
+msgstr "Προσαρμόστε το πρόθεμα για όλα τα cookies του frontend."
+
+#: includes\Admin\Settings.php
+msgid "Search Rooms Button"
+msgstr "Κουμπί Αναζήτησης Δωματίων"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Label"
+msgstr "Ετικέτα Άφιξης"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Label"
+msgstr "Ετικέτα Αναχώρησης"
+
+#: includes\Admin\Settings.php
+msgid "Guests Label"
+msgstr "Ετικέτα Επισκεπτών"
+
+#: includes\Admin\Settings.php
+msgid "Children Label"
+msgstr "Ετικέτα Παιδιών"
+
+#: includes\Admin\Settings.php
+msgid "Child Ages Label"
+msgstr "Ετικέτα Ηλικιών Παιδιών"
+
+#: includes\Admin\Settings.php
+msgid "Child %d Age Label"
+msgstr "Ετικέτα Ηλικίας Παιδιού %d"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Label"
+msgstr "Ετικέτα Επιλογής Ημερομηνιών"
+
+#: includes\Admin\Settings.php
+msgid "Dates Selected Message"
+msgstr "Μήνυμα Επιλεγμένων Ημερομηνιών"
+
+#: includes\Admin\Settings.php
+msgid "Your Selection Label"
+msgstr "Ετικέτα Η Επιλογή Σας"
+
+#: includes\Admin\Settings.php
+msgid "Continue to Booking Button"
+msgstr "Κουμπί Συνέχεια στην Κράτηση"
+
+#: includes\Admin\Settings.php
+msgid "Dates Not Available Error"
+msgstr "Σφάλμα Μη Διαθέσιμων Ημερομηνιών"
+
+#: includes\Admin\Settings.php
+msgid "Stay Dates Label"
+msgstr "Ετικέτα Ημερομηνιών Διαμονής"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-in Guide"
+msgstr "Οδηγός Επιλογής Άφιξης"
+
+#: includes\Admin\Settings.php
+msgid "Select Check-out Guide"
+msgstr "Οδηγός Επιλογής Αναχώρησης"
+
+#: includes\Admin\Settings.php
+msgid "Calendar No ID Error"
+msgstr "Σφάλμα Ημερολογίου Χωρίς ID"
+
+#: includes\Admin\Settings.php
+msgid "Calendar Config Error"
+msgstr "Σφάλμα Ρύθμισης Ημερολογίου"
+
+#: includes\Admin\Settings.php
+msgid "Select Dates Error"
+msgstr "Σφάλμα Επιλογής Ημερομηνιών"
+
+#: includes\Admin\Settings.php
+msgid "Block No Room Error"
+msgstr "Σφάλμα Μπλοκ Χωρίς Δωμάτιο"
+
+#: includes\Admin\Settings.php
+msgid "Check-in in Past Error"
+msgstr "Σφάλμα Άφιξης στο Παρελθόν"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Before Check-in Error"
+msgstr "Σφάλμα Αναχώρησης Πριν την Άφιξη"
+
+#: includes\Admin\Settings.php
+msgid "Check-in Too Far Error"
+msgstr "Σφάλμα Άφιξης Πολύ Μακριά"
+
+#: includes\Admin\Settings.php
+msgid "Check-out Too Far Error"
+msgstr "Σφάλμα Αναχώρησης Πολύ Μακριά"
+
+#: includes\Admin\Settings.php
+msgid "Available Rooms Message"
+msgstr "Μήνυμα Διαθέσιμων Δωματίων"
+
+#: includes\Admin\Settings.php
+msgid "No Rooms Found Message"
+msgstr "Μήνυμα Μη Εύρεσης Δωματίων"
+
+#: includes\Admin\Settings.php
+msgid "Per Night Text"
+msgstr "Κείμενο Ανά Διανυκτέρευση"
+
+#: includes\Admin\Settings.php
+msgid "Total Nights Price Summary"
+msgstr "Σύνοψη Τιμής Συνολικών Διανυκτερεύσεων"
+
+#: includes\Admin\Settings.php
+msgid "Max Guests Text"
+msgstr "Κείμενο Μέγιστων Επισκεπτών"
+
+#: includes\Admin\Settings.php
+msgid "Loading Message"
+msgstr "Μήνυμα Φόρτωσης"
+
+#: includes\Admin\Settings.php
+msgid "To Separator"
+msgstr "Διαχωριστικό Έως"
+
+#: includes\Admin\Settings.php
+msgid "Book Now Button"
+msgstr "Κουμπί Κράτηση Τώρα"
+
+#: includes\Admin\Settings.php
+msgid "Processing Button Text"
+msgstr "Κείμενο Κουμπιού Επεξεργασίας"
+
+#: includes\Admin\Settings.php
+msgid "Complete Booking Title"
+msgstr "Τίτλος Ολοκλήρωσης Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Total Price Label"
+msgstr "Ετικέτα Συνολικής Τιμής"
+
+#: includes\Admin\Settings.php
+msgid "Full Name Label"
+msgstr "Ετικέτα Ονοματεπώνυμου"
+
+#: includes\Admin\Settings.php
+msgid "Email Address Label"
+msgstr "Ετικέτα Διεύθυνσης Email"
+
+#: includes\Admin\Settings.php
+msgid "Phone Number Label"
+msgstr "Ετικέτα Αριθμού Τηλεφώνου"
+
+#: includes\Admin\Settings.php
+msgid "Special Requests Label"
+msgstr "Ετικέτα Ειδικών Αιτημάτων"
+
+#: includes\Admin\Settings.php
+msgid "Secure Payment Message"
+msgstr "Μήνυμα Ασφαλούς Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Security Error Message"
+msgstr "Μήνυμα Σφάλματος Ασφαλείας"
+
+#: includes\Admin\Settings.php
+msgid "Rate Limit Error Message"
+msgstr "Μήνυμα Σφάλματος Ορίου Ρυθμού"
+
+#: includes\Admin\Settings.php
+msgid "Spam Honeypot Label"
+msgstr "Ετικέτα Spam Honeypot"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Booking Button"
+msgstr "Κουμπί Επιβεβαίωσης Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Pay & Confirm Button"
+msgstr "Κουμπί Πληρωμή & Επιβεβαίωση"
+
+#: includes\Admin\Settings.php
+msgid "Confirm Request Message"
+msgstr "Μήνυμα Επιβεβαίωσης Αιτήματος"
+
+#: includes\Admin\Settings.php
+msgid "Room Not Found Error"
+msgstr "Σφάλμα Μη Εύρεσης Δωματίου"
+
+#: includes\Admin\Settings.php
+msgid "Name Too Long Error"
+msgstr "Σφάλμα Πολύ Μεγάλου Ονόματος"
+
+#: includes\Admin\Settings.php
+msgid "Phone Too Long Error"
+msgstr "Σφάλμα Πολύ Μεγάλου Τηλεφώνου"
+
+#: includes\Admin\Settings.php
+msgid "Max Children Error"
+msgstr "Σφάλμα Μέγιστων Παιδιών"
+
+#: includes\Admin\Settings.php
+msgid "Max Adults Error"
+msgstr "Σφάλμα Μέγιστων Ενηλίκων"
+
+#: includes\Admin\Settings.php
+msgid "Price Calculation Error"
+msgstr "Σφάλμα Υπολογισμού Τιμής"
+
+#: includes\Admin\Settings.php
+msgid "Missing Fields Error"
+msgstr "Σφάλμα Ελλειπόντων Πεδίων"
+
+#: includes\Admin\Settings.php
+msgid "Required Field Error"
+msgstr "Σφάλμα Υποχρεωτικού Πεδίου"
+
+#: includes\Admin\Settings.php
+msgid "Spam Detected Error"
+msgstr "Σφάλμα Ανίχνευσης Spam"
+
+#: includes\Admin\Settings.php
+msgid "Room Already Booked Error"
+msgstr "Σφάλμα Δωμάτιο Ήδη Κρατημένο"
+
+#: includes\Admin\Settings.php
+msgid "Booking Success Message"
+msgstr "Μήνυμα Επιτυχίας Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Email Sent Message"
+msgstr "Μήνυμα Αποστολής Email"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Title"
+msgstr "Τίτλος Λήψης Αιτήματος"
+
+#: includes\Admin\Settings.php
+msgid "Request Received Detail"
+msgstr "Λεπτομέρεια Λήψης Αιτήματος"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Message"
+msgstr "Μήνυμα Πληρωμής κατά την Άφιξη"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Required Warning"
+msgstr "Προειδοποίηση Απαίτησης GDPR"
+
+#: includes\Admin\Settings.php
+msgid "Privacy Policy Link Text"
+msgstr "Κείμενο Συνδέσμου Πολιτικής Απορρήτου"
+
+#: includes\Admin\Settings.php
+msgid "Terms & Conditions Link Text"
+msgstr "Κείμενο Συνδέσμου Όρων & Προϋποθέσεων"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Required Warning"
+msgstr "Προειδοποίηση Απαίτησης PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Success Confirmation"
+msgstr "Επιβεβαίωση Επιτυχίας Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Booking arrival confirmation"
+msgstr "Επιβεβαίωση άφιξης κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Detail"
+msgstr "Λεπτομέρεια Αποτυχίας Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Booking Received Pending Detail"
+msgstr "Λεπτομέρεια Λήψης Κράτησης σε Εκκρεμότητα"
+
+#: includes\Admin\Settings.php
+msgid "Payment Method Label"
+msgstr "Ετικέτα Τρόπου Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Pay on Arrival Option"
+msgstr "Επιλογή Πληρωμής κατά την Άφιξη"
+
+#: includes\Admin\Settings.php
+msgid "Credit Card Option"
+msgstr "Επιλογή Πιστωτικής Κάρτας"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Option"
+msgstr "Επιλογή PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Label"
+msgstr "Ετικέτα Κατάστασης Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Paid Badge Text"
+msgstr "Κείμενο Σήματος Πληρωμένο"
+
+#: includes\Admin\Settings.php
+msgid "Amount Paid Label"
+msgstr "Ετικέτα Ποσού Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Transaction ID Label"
+msgstr "Ετικέτα ID Συναλλαγής"
+
+#: includes\Admin\Settings.php
+msgid "Failed Badge Text"
+msgstr "Κείμενο Σήματος Αποτυχία"
+
+#: includes\Admin\Settings.php
+msgid "Payment Failed Title"
+msgstr "Τίτλος Αποτυχίας Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Dates Taken Error"
+msgstr "Σφάλμα Κατειλημμένων Ημερομηνιών"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Calc Error"
+msgstr "Σφάλμα Μη Έγκυρου Υπολογισμού Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Not Configured Error"
+msgstr "Σφάλμα Μη Ρύθμισης Stripe"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Not Configured Error"
+msgstr "Σφάλμα Μη Ρύθμισης PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Connection Error"
+msgstr "Σφάλμα Σύνδεσης PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Auth Error"
+msgstr "Σφάλμα Ελέγχου Ταυτότητας PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Error"
+msgstr "Σφάλμα Παραγγελίας PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Currency Error"
+msgstr "Σφάλμα Νομίσματος PayPal"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Generic Error"
+msgstr "Γενικό Σφάλμα PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Missing Order ID Error"
+msgstr "Σφάλμα Έλλειψης ID Παραγγελίας"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Capture Error"
+msgstr "Σφάλμα Δέσμευσης PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Already Processed Error"
+msgstr "Σφάλμα Πληρωμή Ήδη Επεξεργασμένη"
+
+#: includes\Admin\Settings.php
+msgid "Payment Declined Error"
+msgstr "Σφάλμα Απόρριψης Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Intent Missing Error"
+msgstr "Σφάλμα Έλλειψης Πρόθεσης Stripe"
+
+#: includes\Admin\Settings.php
+msgid "PayPal ID Missing Error"
+msgstr "Σφάλμα Έλλειψης ID PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Payment Required Error"
+msgstr "Σφάλμα Απαίτησης Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "REST Pro Access Error"
+msgstr "Σφάλμα Πρόσβασης REST Pro"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Nonce Error"
+msgstr "Σφάλμα Μη Έγκυρου Nonce"
+
+#: includes\Admin\Settings.php
+msgid "API Rate Limit Error"
+msgstr "Σφάλμα Ορίου Ρυθμού API"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Confirmation Title"
+msgstr "Email: Τίτλος Επιβεβαίωσης Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Info Title"
+msgstr "Email: Τίτλος Πληροφοριών Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Email: Pay on Arrival Detail"
+msgstr "Email: Λεπτομέρεια Πληρωμής κατά την Άφιξη"
+
+#: includes\Admin\Settings.php
+msgid "Email: Amount Due Label"
+msgstr "Email: Ετικέτα Οφειλόμενου Ποσού"
+
+#: includes\Admin\Settings.php
+msgid "Email: Payment Date Label"
+msgstr "Email: Ετικέτα Ημερομηνίας Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Order Creation Failed"
+msgstr "Η Δημιουργία Παραγγελίας PayPal Απέτυχε"
+
+#: includes\Admin\Settings.php
+msgid "Security Verification Failed"
+msgstr "Η Επαλήθευση Ασφαλείας Απέτυχε"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Client ID Missing"
+msgstr "Λείπει το PayPal Client ID"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Secret Missing"
+msgstr "Λείπει το PayPal Secret"
+
+#: includes\Admin\Settings.php
+msgid "API Key Not Configured"
+msgstr "Το Κλειδί API Δεν Έχει Ρυθμιστεί"
+
+#: includes\Admin\Settings.php
+msgid "Invalid API Key"
+msgstr "Μη Έγκυρο Κλειδί API"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Signature Required"
+msgstr "Απαιτείται Υπογραφή Webhook"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Webhook Secret Missing"
+msgstr "Λείπει το Stripe Webhook Secret"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature Format"
+msgstr "Μη Έγκυρη Μορφή Υπογραφής Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Webhook Expired"
+msgstr "Το Webhook Έληξε"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe Signature"
+msgstr "Μη Έγκυρη Υπογραφή Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Missing PayPal Headers"
+msgstr "Λείπουν οι Επικεφαλίδες PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Customer Data"
+msgstr "Μη Έγκυρα Δεδομένα Πελάτη"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Booking Dates"
+msgstr "Μη Έγκυρες Ημερομηνίες Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Booking Creation Failed"
+msgstr "Η Δημιουργία Κράτησης Απέτυχε"
+
+#: includes\Admin\Settings.php
+msgid "Permission Denied"
+msgstr "Άρνηση Πρόσβασης"
+
+#: includes\Admin\Settings.php
+msgid "Stripe PK Missing"
+msgstr "Λείπει το Stripe PK"
+
+#: includes\Admin\Settings.php
+msgid "Stripe SK Missing"
+msgstr "Λείπει το Stripe SK"
+
+#: includes\Admin\Settings.php
+msgid "Invalid Stripe PK Format"
+msgstr "Μη Έγκυρη Μορφή Stripe PK"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Space Warning"
+msgstr "Προειδοποίηση Κενών στα Διαπιστευτήρια"
+
+#: includes\Admin\Settings.php
+msgid "Sandbox/Live Mismatch Warning"
+msgstr "Προειδοποίηση Ασυμφωνίας Sandbox/Live"
+
+#: includes\Admin\Settings.php
+msgid "Credentials Expired Warning"
+msgstr "Προειδοποίηση Λήξης Διαπιστευτηρίων"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Success Message"
+msgstr "Μήνυμα Επιτυχίας PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Success Message"
+msgstr "Μήνυμα Επιτυχίας Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Connection Failed Error"
+msgstr "Σφάλμα Αποτυχίας Σύνδεσης"
+
+#: includes\Admin\Settings.php
+msgid "Authentication Failed Error"
+msgstr "Σφάλμα Αποτυχίας Ελέγχου Ταυτότητας"
+
+#: includes\Admin\Settings.php
+msgid "Common Causes Title"
+msgstr "Τίτλος Κοινών Αιτιών"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Generic Error"
+msgstr "Γενικό Σφάλμα Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Enhance Your Stay Title"
+msgstr "Τίτλος Βελτίωσης Διαμονής"
+
+#: includes\Admin\Settings.php
+msgid "Per Person Text"
+msgstr "Κείμενο Ανά Άτομο"
+
+#: includes\Admin\Settings.php
+msgid "Per Person / Night Text"
+msgstr "Κείμενο Ανά Άτομο / Διανυκτέρευση"
+
+#: includes\Admin\Settings.php
+msgid "Booking Summary Title"
+msgstr "Τίτλος Σύνοψης Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Row Label"
+msgstr "Ετικέτα Γραμμής Διαμονής"
+
+#: includes\Admin\Settings.php
+msgid "Extras Row Label"
+msgstr "Ετικέτα Γραμμής Επιπλέον"
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Label"
+msgstr "Ετικέτα Ανάλυσης Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "Tax Total Label"
+msgstr "Ετικέτα Συνολικού Φόρου"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Label"
+msgstr "Ετικέτα Φορολογικής Εγγραφής"
+
+#: includes\Admin\Settings.php
+msgid "Includes Tax Suffix"
+msgstr "Επίθημα Περιλαμβάνει Φόρο"
+
+#: includes\Admin\Settings.php
+msgid "Price Includes Tax Note"
+msgstr "Σημείωση Η Τιμή Περιλαμβάνει Φόρο"
+
+#: includes\Admin\Settings.php
+msgid "Tax Added at Checkout Note"
+msgstr "Σημείωση Φόρος Προστέθηκε στο Ταμείο"
+
+#: includes\Admin\Settings.php
+msgid "Subtotal Label"
+msgstr "Ετικέτα Υποσυνόλου"
+
+#: includes\Admin\Settings.php
+msgid "Room Column Label"
+msgstr "Ετικέτα Στήλης Δωματίου"
+
+#: includes\Admin\Settings.php
+msgid "Extras Column Label"
+msgstr "Ετικέτα Στήλης Επιπλέον"
+
+#: includes\Admin\Settings.php
+msgid "Item Column Label"
+msgstr "Ετικέτα Στήλης Είδους"
+
+#: includes\Admin\Settings.php
+msgid "Amount Column Label"
+msgstr "Ετικέτα Στήλης Ποσού"
+
+#: includes\Admin\Settings.php
+msgid "Tax Accommodation Rate Label"
+msgstr "Ετικέτα Συντελεστή Φόρου Διαμονής"
+
+#: includes\Admin\Settings.php
+msgid "Tax Extras Rate Label"
+msgstr "Ετικέτα Συντελεστή Φόρου Επιπλέον"
+
+#: includes\Admin\Settings.php
+msgid "Generic Tax Rate Label"
+msgstr "Ετικέτα Γενικού Συντελεστή Φόρου"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (includes %s)"
+msgstr "Σημείωση Φόρου (περιλαμβάνει %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note (plus %s)"
+msgstr "Σημείωση Φόρου (συν %s)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (includes %1$s: %2$s%% / %3$s%%)"
+msgstr "Σημείωση Φόρου Multi (περιλαμβάνει %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Tax Note Multi (plus %1$s: %2$s%% / %3$s%%)"
+msgstr "Σημείωση Φόρου Multi (συν %1$s: %2$s%% / %3$s%%)"
+
+#: includes\Admin\Settings.php
+msgid "Leave a field empty to use the default English text for that language. Use <code>%1$s</code> or <code>%2$d</code> as placeholders where they appear in the default text."
+msgstr "Αφήστε ένα πεδίο κενό για να χρησιμοποιήσετε το προεπιλεγμένο Αγγλικό κείμενο. Χρησιμοποιήστε τα <code>%1$s</code> ή <code>%2$d</code> ως placeholders."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual settings saved successfully."
+msgstr "Οι πολυγλωσσικές ρυθμίσεις αποθηκεύτηκαν επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "GDPR settings saved successfully."
+msgstr "Οι ρυθμίσεις GDPR αποθηκεύτηκαν επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "General settings saved successfully."
+msgstr "Οι γενικές ρυθμίσεις αποθηκεύτηκαν επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "Theme settings saved successfully."
+msgstr "Οι ρυθμίσεις θέματος αποθηκεύτηκαν επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "Theme reset to default successfully."
+msgstr "Το θέμα επαναφέρθηκε στις προεπιλογές επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "Pro Experience"
+msgstr "Εμπειρία Pro"
+
+#: includes\Admin\Settings.php
+msgid "Overview"
+msgstr "Επισκόπηση"
+
+#: includes\Admin\Settings.php
+msgid "Booking Extras"
+msgstr "Παροχές Κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Pro Themes"
+msgstr "Θέματα Pro"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Active"
+msgstr "Άδεια Pro Ενεργή"
+
+#: includes\Admin\Settings.php
+msgid "Pro License Required"
+msgstr "Απαιτείται Άδεια Pro"
+
+#: includes\Admin\Settings.php
+msgid "All Pro features are unlocked and ready to use."
+msgstr "Όλες οι λειτουργίες Pro έχουν ξεκλειδωθεί και είναι έτοιμες για χρήση."
+
+#: includes\Admin\Settings.php
+msgid "Unlock all premium features to maximize your booking potential."
+msgstr "Ξεκλειδώστε όλες τις premium λειτουργίες για να μεγιστοποιήσετε τις κρατήσεις σας."
+
+#: includes\Admin\Settings.php
+msgid "Manage License"
+msgstr "Διαχείριση Άδειας"
+
+#: includes\Admin\Settings.php
+msgid "Priority Support"
+msgstr "Υποστήριξη Προτεραιότητας"
+
+#: includes\Admin\Settings.php
+msgid "Lifetime Updates"
+msgstr "Δια Βίου Ενημερώσεις"
+
+#: includes\Admin\Settings.php
+msgid "All Premium Features"
+msgstr "Όλες οι Premium Λειτουργίες"
+
+#: includes\Admin\Settings.php
+msgid "Version 2.2.2 - Security & Feature Enhancements"
+msgstr "Έκδοση 2.2.2 - Βελτιώσεις Ασφαλείας & Λειτουργιών"
+
+#: includes\Admin\Settings.php
+msgid "Enhanced Booking Extras:"
+msgstr "Βελτιωμένες Παροχές Κράτησης:"
+
+#: includes\Admin\Settings.php
+msgid "\"Per person\" extras now include children in the guest count for accurate pricing calculations."
+msgstr "Οι παροχές \"ανά άτομο\" περιλαμβάνουν τώρα τα παιδιά στην καταμέτρηση για ακριβή τιμολόγηση."
+
+#: includes\Admin\Settings.php
+msgid "Unified Tax Breakdown:"
+msgstr "Ενοποιημένη Ανάλυση Φόρων:"
+
+#: includes\Admin\Settings.php
+msgid "Consistent, detailed tax rendering across emails, success pages, and admin dashboard."
+msgstr "Συνεπής και λεπτομερής απόδοση φόρων σε email, σελίδες επιτυχίας και πίνακα διαχείρισης."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhook Security:"
+msgstr "Ασφάλεια HMAC Webhook:"
+
+#: includes\Admin\Settings.php
+msgid "Added SHA-256 cryptographic signatures to all outgoing webhooks for verified external integrations."
+msgstr "Προστέθηκαν κρυπτογραφικές υπογραφές SHA-256 σε όλα τα εξερχόμενα webhooks."
+
+#: includes\Admin\Settings.php
+msgid "Server-Side Pricing Logic:"
+msgstr "Λογική Τιμολόγησης Server-Side:"
+
+#: includes\Admin\Settings.php
+msgid "Hardened payment gateway initialization with mandatory server-side price recalculation."
+msgstr "Ενισχυμένη αρχικοποίηση πύλης πληρωμών με υποχρεωτικό επανυπολογισμό τιμής στον διακομιστή."
+
+#: includes\Admin\Settings.php
+msgid "Payment Processing"
+msgstr "Επεξεργασία Πληρωμών"
+
+#: includes\Admin\Settings.php
+msgid "Configure"
+msgstr "Διαμόρφωση"
+
+#: includes\Admin\Settings.php
+msgid "Stripe Integration"
+msgstr "Ενσωμάτωση Stripe"
+
+#: includes\Admin\Settings.php
+msgid "Accept payments with Stripe including Apple Pay and Google Pay support."
+msgstr "Αποδεχτείτε πληρωμές με Stripe, συμπεριλαμβανομένων των Apple Pay και Google Pay."
+
+#: includes\Admin\Settings.php
+msgid "Popular"
+msgstr "Δημοφιλές"
+
+#: includes\Admin\Settings.php
+msgid "PayPal Integration"
+msgstr "Ενσωμάτωση PayPal"
+
+#: includes\Admin\Settings.php
+msgid "Accept PayPal payments with automatic IPN verification and status updates."
+msgstr "Αποδεχτείτε πληρωμές PayPal με αυτόματη επαλήθευση IPN."
+
+#: includes\Admin\Settings.php
+msgid "Pay On-site Option"
+msgstr "Επιλογή Πληρωμής στο Κατάλυμα"
+
+#: includes\Admin\Settings.php
+msgid "Allow guests to pay upon arrival with flexible payment tracking."
+msgstr "Επιτρέψτε στους επισκέπτες να πληρώσουν κατά την άφιξη με ευέλικτη παρακολούθηση."
+
+#: includes\Admin\Settings.php
+msgid "Payment Webhooks"
+msgstr "Webhooks Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Automatic payment status updates from Stripe and PayPal webhooks."
+msgstr "Αυτόματες ενημερώσεις κατάστασης πληρωμής από Stripe και PayPal webhooks."
+
+#: includes\Admin\Settings.php
+msgid "New"
+msgstr "Νέο"
+
+#: includes\Admin\Settings.php
+msgid "Payment Status Tracking"
+msgstr "Παρακολούθηση Κατάστασης Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Full payment lifecycle management: pending, deposit paid, fully paid, refunded."
+msgstr "Πλήρης διαχείριση κύκλου ζωής πληρωμής: εκκρεμής, προκαταβολή, εξοφλημένη, επιστροφή."
+
+#: includes\Admin\Settings.php
+msgid "Tax Management"
+msgstr "Διαχείριση Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "VAT/TAX System"
+msgstr "Σύστημα ΦΠΑ/Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "Three modes: VAT inclusive, Sales Tax exclusive, or Disabled. Flexible configuration."
+msgstr "Τρεις λειτουργίες: ΦΠΑ συμπεριλαμβανόμενος, Φόρος αποκλειστικός ή Απενεργοποιημένο."
+
+#: includes\Admin\Settings.php
+msgid "Separate Tax Rates"
+msgstr "Ξεχωριστοί Φορολογικοί Συντελεστές"
+
+#: includes\Admin\Settings.php
+msgid "Different tax rates for accommodation vs extras services."
+msgstr "Διαφορετικοί συντελεστές για διαμονή έναντι επιπλέον υπηρεσιών."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT"
+msgstr "ΦΠΑ ανά Χώρα"
+
+#: includes\Admin\Settings.php
+msgid "Set different VAT rates per country for international guests."
+msgstr "Ορίστε διαφορετικούς συντελεστές ΦΠΑ ανά χώρα."
+
+#: includes\Admin\Settings.php
+msgid "Tax Breakdown Display"
+msgstr "Εμφάνιση Ανάλυσης Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "Detailed tax display by room, children, and extras in booking confirmations."
+msgstr "Λεπτομερής εμφάνιση φόρων ανά δωμάτιο, παιδιά και παροχές."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Tax Labels"
+msgstr "Πολύγλωσσες Ετικέτες Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "Per-language tax terminology (VAT, IVA, TVA, MwSt, etc.)."
+msgstr "Ορολογία φόρου ανά γλώσσα (ΦΠΑ, VAT, κ.λπ.)."
+
+#: includes\Admin\Settings.php
+msgid "Updated"
+msgstr "Ενημερωμένο"
+
+#: includes\Admin\Settings.php
+msgid "Seasonal Pricing"
+msgstr "Εποχιακή Τιμολόγηση"
+
+#: includes\Admin\Settings.php
+msgid "Set automated weekend and holiday multipliers for dynamic pricing."
+msgstr "Ορίστε αυτόματους πολλαπλασιαστές για Σαββατοκύριακα και αργίες."
+
+#: includes\Admin\Settings.php
+msgid "Offer guided tours, airport transfers, breakfast packages, and local experiences."
+msgstr "Προσφέρετε ξεναγήσεις, μεταφορές, πακέτα πρωινού και εμπειρίες."
+
+#: includes\Admin\Settings.php
+msgid "Bi-directional sync with Airbnb, Booking.com, and Google Calendar."
+msgstr "Αμφίδρομος συγχρονισμός με Airbnb, Booking.com και Ημερολόγιο Google."
+
+#: includes\Admin\Settings.php
+msgid "Analytics Dashboard"
+msgstr "Πίνακας Αναλύσεων"
+
+#: includes\Admin\Settings.php
+msgid "Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization."
+msgstr "Οπτικοποιήσεις, ποσοστά πληρότητας και παρακολούθηση ADR."
+
+#: includes\Admin\Settings.php
+msgid "View"
+msgstr "Προβολή"
+
+#: includes\Admin\Settings.php
+msgid "Compliance & UX"
+msgstr "Συμμόρφωση & UX"
+
+#: includes\Admin\Settings.php
+msgid "GDPR Compliance Tools"
+msgstr "Εργαλεία Συμμόρφωσης GDPR"
+
+#: includes\Admin\Settings.php
+msgid "Automated data retention, consent checkboxes, and cookie management."
+msgstr "Αυτοματοποιημένη διατήρηση δεδομένων, πλαίσια συναίνεσης και διαχείριση cookie."
+
+#: includes\Admin\Settings.php
+msgid "Theme Customization"
+msgstr "Προσαρμογή Θέματος"
+
+#: includes\Admin\Settings.php
+msgid "6 designer presets, custom branding colors, and advanced CSS injection."
+msgstr "6 προεπιλογές σχεδιαστή, χρώματα επωνυμίας και προηγμένο CSS."
+
+#: includes\Admin\Settings.php
+msgid "Multilingual Support"
+msgstr "Πολύγλωσση Υποστήριξη"
+
+#: includes\Admin\Settings.php
+msgid "Compatible with qTranslate, WPML, and Polylang for full translation support."
+msgstr "Συμβατό με qTranslate, WPML και Polylang."
+
+#: includes\Admin\Settings.php
+msgid "Developer Platform"
+msgstr "Πλατφόρμα Προγραμματιστών"
+
+#: includes\Admin\Settings.php
+msgid "REST API"
+msgstr "REST API"
+
+#: includes\Admin\Settings.php
+msgid "Full REST API access for external integrations and custom applications."
+msgstr "Πλήρης πρόσβαση REST API για εξωτερικές ενσωματώσεις."
+
+#: includes\Admin\Settings.php
+msgid "HMAC Webhooks"
+msgstr "HMAC Webhooks"
+
+#: includes\Admin\Settings.php
+msgid "Secure webhooks with HMAC-signed payloads for booking events."
+msgstr "Ασφαλή webhooks με υπογεγραμμένα payloads για συμβάντα κράτησης."
+
+#: includes\Admin\Settings.php
+msgid "Configure Payment Gateways"
+msgstr "Ρύθμιση Πυλών Πληρωμών"
+
+#: includes\Admin\Settings.php
+msgid "Set Up Tax Settings"
+msgstr "Ρύθμιση Φόρων"
+
+#: includes\Admin\Settings.php
+msgid "View Analytics"
+msgstr "Προβολή Αναλύσεων"
+
+#: includes\Admin\Settings.php
+msgid "Manage iCal Feeds"
+msgstr "Διαχείριση iCal Feeds"
+
+#: includes\Admin\Settings.php
+msgid "Save Payment Settings"
+msgstr "Αποθήκευση Ρυθμίσεων Πληρωμής"
+
+#: includes\Admin\Settings.php
+msgid "Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more."
+msgstr "Ξεκλειδώστε αυτή τη λειτουργία με μια άδεια Pro."
+
+#: includes\Admin\Settings.php
+msgid "View All Pro Features"
+msgstr "Προβολή Όλων των Λειτουργιών Pro"
+
+#: includes\Admin\Settings.php
+msgid "Pro features are not available."
+msgstr "Οι λειτουργίες Pro δεν είναι διαθέσιμες."
+
+#: includes\Admin\Settings.php
+msgid "The REST API allows external systems to query room availability and manage bookings. API base:"
+msgstr "Το REST API επιτρέπει σε εξωτερικά συστήματα να ρωτούν για διαθεσιμότητα."
+
+#: includes\Admin\Settings.php
+msgid "API Key"
+msgstr "Κλειδί API"
+
+#: includes\Admin\Settings.php
+msgid "Generate"
+msgstr "Δημιουργία"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\ICalManager.php
+msgid "Copy"
+msgstr "Αντιγραφή"
+
+#: includes\Admin\Settings.php
+msgid "Include as X-MHB-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id})."
+msgstr "Συμπεριλάβετε ως κεφαλίδα X-MHB-API-Key για πιστοποιημένα endpoints."
+
+#: includes\Admin\Settings.php
+msgid "Webhook URL"
+msgstr "URL Webhook"
+
+#: includes\Admin\Settings.php
+msgid "Receive a JSON POST for booking events: booking_created, booking_confirmed, booking_cancelled. Payloads are HMAC-signed with your API key."
+msgstr "Λάβετε JSON POST για συμβάντα κράτησης."
+
+#: includes\Admin\Settings.php
+msgid "Available Endpoints"
+msgstr "Διαθέσιμα Endpoints"
+
+#: includes\Admin\Settings.php
+msgid "Method"
+msgstr "Μέθοδος"
+
+#: includes\Admin\Settings.php
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: includes\Admin\Settings.php
+msgid "Auth / Access"
+msgstr "Πιστοποίηση / Πρόσβαση"
+
+#: includes\Admin\Settings.php
+msgid "Pro (Rate Limited)"
+msgstr "Pro (Περιορισμός Ρυθμού)"
+
+#: includes\Admin\Settings.php
+msgid "Public (Rate Limited)"
+msgstr "Δημόσιο (Περιορισμός Ρυθμού)"
+
+#: includes\Admin\Settings.php
+msgid "API Key Required"
+msgstr "Απαιτείται Κλειδί API"
+
+#: includes\Admin\Settings.php
+msgid "Monday"
+msgstr "Δευτέρα"
+
+#: includes\Admin\Settings.php
+msgid "Tuesday"
+msgstr "Τρίτη"
+
+#: includes\Admin\Settings.php
+msgid "Wednesday"
+msgstr "Τετάρτη"
+
+#: includes\Admin\Settings.php
+msgid "Thursday"
+msgstr "Πέμπτη"
+
+#: includes\Admin\Settings.php
+msgid "Friday"
+msgstr "Παρασκευή"
+
+#: includes\Admin\Settings.php
+msgid "Saturday"
+msgstr "Σάββατο"
+
+#: includes\Admin\Settings.php
+msgid "Sunday"
+msgstr "Κυριακή"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Pricing"
+msgstr "Τιμολόγηση Σαββατοκύριακου"
+
+#: includes\Admin\Settings.php
+msgid "Define which days are considered weekends and set the adjustment."
+msgstr "Ορίστε ποιες μέρες θεωρούνται Σαββατοκύριακο και ρυθμίστε την προσαρμογή."
+
+#: includes\Admin\Settings.php
+msgid "Weekend Days"
+msgstr "Ημέρες Σαββατοκύριακου"
+
+#: includes\Admin\Settings.php
+msgid "Weekend Adjustment"
+msgstr "Προσαρμογή Σαββατοκύριακου"
+
+#: includes\Admin\Settings.php
+#: includes\Pro\PaymentGateways.php
+msgid "Enable"
+msgstr "Ενεργοποίηση"
+
+#: includes\Admin\Settings.php
+msgid "Multiplier (1.2 = +20%)"
+msgstr "Πολλαπλασιαστής (1.2 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Percentage (20 = +20%)"
+msgstr "Ποσοστό (20 = +20%)"
+
+#: includes\Admin\Settings.php
+msgid "Fixed Amount (20 = +$20)"
+msgstr "Σταθερό Ποσό (20 = +$20)"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Pricing"
+msgstr "Τιμολόγηση Αργιών"
+
+#: includes\Admin\Settings.php
+msgid "Holiday Date Picker"
+msgstr "Επιλογέας Ημερομηνίας Αργίας"
+
+#: includes\Admin\Settings.php
+msgid "Add"
+msgstr "Προσθήκη"
+
+#: includes\Admin\Settings.php
+msgid "Add specific dates that should trigger holiday pricing."
+msgstr "Προσθέστε συγκεκριμένες ημερομηνίες για τιμολόγηση αργιών."
+
+#: includes\Admin\Settings.php
+msgid "Holiday Adjustment"
+msgstr "Προσαρμογή Αργίας"
+
+#: includes\Admin\Settings.php
+msgid "Conflict Resolution"
+msgstr "Επίλυση Συγκρούσεων"
+
+#: includes\Admin\Settings.php
+msgid "Use larger of weekend vs holiday adjustment if they overlap"
+msgstr "Χρήση της μεγαλύτερης προσαρμογής αν συμπίπτουν"
+
+#: includes\Admin\Settings.php
+msgid "Midnight Coast"
+msgstr "Midnight Coast"
+
+#: includes\Admin\Settings.php
+msgid "Our signature classic luxury look."
+msgstr "Η κλασική μας εμφάνιση πολυτέλειας."
+
+#: includes\Admin\Settings.php
+msgid "Emerald Forest"
+msgstr "Emerald Forest"
+
+#: includes\Admin\Settings.php
+msgid "Rich greens for nature-inspired properties."
+msgstr "Πλούσια πράσινα για καταλύματα στη φύση."
+
+#: includes\Admin\Settings.php
+msgid "Oceanic Drift"
+msgstr "Oceanic Drift"
+
+#: includes\Admin\Settings.php
+msgid "Deep blues and bright highlights."
+msgstr "Βαθιά μπλε και φωτεινά σημεία."
+
+#: includes\Admin\Settings.php
+msgid "Ruby Sunset"
+msgstr "Ruby Sunset"
+
+#: includes\Admin\Settings.php
+msgid "Warm tones for cozy boutiques."
+msgstr "Ζεστοί τόνοι για άνετα καταλύματα."
+
+#: includes\Admin\Settings.php
+msgid "Urban Modern"
+msgstr "Urban Modern"
+
+#: includes\Admin\Settings.php
+msgid "Minimalist grays for city lofts."
+msgstr "Μινιμαλιστικά γκρι για διαμερίσματα πόλης."
+
+#: includes\Admin\Settings.php
+msgid "Lavender Breeze"
+msgstr "Lavender Breeze"
+
+#: includes\Admin\Settings.php
+msgid "Elegant purples for spa and wellness."
+msgstr "Κομψά μωβ για σπα και ευεξία."
+
+#: includes\Admin\Settings.php
+msgid "Theme Presets"
+msgstr "Προεπιλογές Θέματος"
+
+#: includes\Admin\Settings.php
+msgid "Choose a professional color palette for your booking frontend."
+msgstr "Επιλέξτε μια επαγγελματική χρωματική παλέτα."
+
+#: includes\Admin\Settings.php
+msgid "Custom Theme"
+msgstr "Προσαρμοσμένο Θέμα"
+
+#: includes\Admin\Settings.php
+msgid "Define your own brand colors below."
+msgstr "Ορίστε τα δικά σας χρώματα επωνυμίας."
+
+#: includes\Admin\Settings.php
+msgid "Custom Branding"
+msgstr "Προσαρμοσμένη Επωνυμία"
+
+#: includes\Admin\Settings.php
+msgid "Primary Color"
+msgstr "Βασικό Χρώμα"
+
+#: includes\Admin\Settings.php
+msgid "Secondary Color"
+msgstr "Δευτερεύον Χρώμα"
+
+#: includes\Admin\Settings.php
+msgid "Accent Color"
+msgstr "Χρώμα Έμφασης"
+
+#: includes\Admin\Settings.php
+msgid "Advanced Custom CSS"
+msgstr "Προηγμένο Προσαρμοσμένο CSS"
+
+#: includes\Admin\Settings.php
+msgid "Inject additional CSS directly into the booking frontend."
+msgstr "Εισάγετε επιπλέον CSS απευθείας στο frontend."
+
+#: includes\Admin\Settings.php
+msgid "Reset all theme settings to default?"
+msgstr "Επαναφορά όλων των ρυθμίσεων θέματος;"
+
+#: includes\Admin\Settings.php
+msgid "Return to Default"
+msgstr "Επιστροφή στις Προεπιλογές"
+
+#: includes\Admin\Settings.php
+#: includes\Core\I18n.php
+msgid "Permission denied."
+msgstr "Δεν επιτρέπεται η πρόσβαση."
+
+#: includes\Admin\Settings.php
+msgid "Room Amenities"
+msgstr "Παροχές Δωματίου"
+
+#: includes\Admin\Settings.php
+msgid "Manage the list of amenities available for rooms. After adding here, you can translate them in the \"Frontend Labels\" tab."
+msgstr "Διαχειριστείτε τη λίστα παροχών για δωμάτια."
+
+#: includes\Admin\Settings.php
+msgid "Add New Amenity"
+msgstr "Προσθήκη Νέας Παροχής"
+
+#: includes\Admin\Settings.php
+msgid "Label"
+msgstr "Ετικέτα"
+
+#: includes\Admin\Settings.php
+msgid "Key (Internal)"
+msgstr "Κλειδί (Εσωτερικό)"
+
+#: includes\Admin\Settings.php
+msgid "No amenities found."
+msgstr "Δεν βρέθηκαν παροχές."
+
+#: includes\Admin\Settings.php
+msgid "API settings saved successfully."
+msgstr "Οι ρυθμίσεις API αποθηκεύτηκαν."
+
+#: includes\Admin\Settings.php
+msgid "Payment settings saved successfully."
+msgstr "Οι ρυθμίσεις πληρωμής αποθηκεύτηκαν."
+
+#: includes\Admin\Settings.php
+msgid "Pricing settings saved successfully."
+msgstr "Οι ρυθμίσεις τιμολόγησης αποθηκεύτηκαν."
+
+#: includes\Admin\Settings.php
+msgid "Amenity added successfully."
+msgstr "Η παροχή προστέθηκε επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "Amenity removed successfully."
+msgstr "Η παροχή αφαιρέθηκε επιτυχώς."
+
+#: includes\Admin\Settings.php
+msgid "Configure VAT/Sales Tax settings for your hotel bookings. Tax is disabled by default for backward compatibility."
+msgstr "Ρυθμίστε τις ρυθμίσεις ΦΠΑ/Φόρου για τις κρατήσεις."
+
+#: includes\Admin\Settings.php
+msgid "Tax Mode"
+msgstr "Λειτουργία Φόρου"
+
+#: includes\Admin\Settings.php
+msgid "Disabled"
+msgstr "Απενεργοποιημένο"
+
+#: includes\Admin\Settings.php
+msgid "No tax calculation or display. Prices shown as-is."
+msgstr "Χωρίς υπολογισμό φόρου."
+
+#: includes\Admin\Settings.php
+msgid "VAT Inclusive"
+msgstr "Συμπεριλαμβανομένου ΦΠΑ"
+
+#: includes\Admin\Settings.php
+msgid "Prices include tax (EU, UK, Australia). Shows breakdown: Net + Tax = Gross."
+msgstr "Οι τιμές περιλαμβάνουν φόρο."
+
+#: includes\Admin\Settings.php
+msgid "Sales Tax Exclusive"
+msgstr "Αποκλειστικός Φόρος Πωλήσεων"
+
+#: includes\Admin\Settings.php
+msgid "Tax added on top of prices (US, Canada). Shows: Subtotal + Tax = Total."
+msgstr "Ο φόρος προστίθεται στις τιμές."
+
+#: includes\Admin\Settings.php
+msgid "Tax Label"
+msgstr "Ετικέτα Φόρου"
+
+#: includes\Admin\Settings.php
+msgid "Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA"
+msgstr "Παραδείγματα: ΦΠΑ, VAT, Tax"
+
+#: includes\Admin\Settings.php
+msgid "Tax Registration Number"
+msgstr "Αριθμός Φορολογικού Μητρώου"
+
+#: includes\Admin\Settings.php
+msgid "Your VAT ID, GSTIN, or tax registration number. Displayed on invoices and receipts."
+msgstr "Το ΑΦΜ σας ή ο αριθμός φορολογικού μητρώου."
+
+#: includes\Admin\Settings.php
+msgid "Accommodation Tax Rate"
+msgstr "Συντελεστής Φόρου Διαμονής"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for rooms and children charges. Example: 10 for 10%"
+msgstr "Φορολογικός συντελεστής για δωμάτια και χρεώσεις παιδιών."
+
+#: includes\Admin\Settings.php
+msgid "Extras Tax Rate"
+msgstr "Συντελεστής Φόρου Παροχών"
+
+#: includes\Admin\Settings.php
+msgid "Tax rate for extras (add-ons like breakfast, transfers). Set same as accommodation if unsure."
+msgstr "Φορολογικός συντελεστής για επιπλέον παροχές."
+
+#: includes\Admin\Settings.php
+msgid "Display Options"
+msgstr "Επιλογές Εμφάνισης"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown on frontend booking form"
+msgstr "Εμφάνιση ανάλυσης φόρου στη φόρμα κράτησης"
+
+#: includes\Admin\Settings.php
+msgid "Show tax breakdown in confirmation emails"
+msgstr "Εμφάνιση ανάλυσης φόρου στα email επιβεβαίωσης"
+
+#: includes\Admin\Settings.php
+msgid "Rounding Mode"
+msgstr "Λειτουργία Στρογγυλοποίησης"
+
+#: includes\Admin\Settings.php
+msgid "Per Total (Recommended)"
+msgstr "Ανά Σύνολο (Συνιστάται)"
+
+#: includes\Admin\Settings.php
+msgid "Per Line Item"
+msgstr "Ανά Είδος Γραμμής"
+
+#: includes\Admin\Settings.php
+msgid "Per Total: Round tax on final total. Per Line: Round each item's tax separately."
+msgstr "Ανά Σύνολο: Στρογγυλοποίηση φόρου στο τελικό σύνολο."
+
+#: includes\Admin\Settings.php
+msgid "Decimal Places"
+msgstr "Δεκαδικά Ψηφία"
+
+#: includes\Admin\Settings.php
+msgid "Number of decimal places for tax amounts (usually 2)."
+msgstr "Αριθμός δεκαδικών ψηφίων για ποσά φόρων (συνήθως 2)."
+
+#: includes\Admin\Settings.php
+msgid "Country-Specific VAT Rates Reference"
+msgstr "Αναφορά Συντελεστών ΦΠΑ ανά Χώρα"
+
+#: includes\Admin\Settings.php
+msgid "Country"
+msgstr "Χώρα"
+
+#: includes\Admin\Settings.php
+msgid "Standard Rate"
+msgstr "Τυπικός Συντελεστής"
+
+#: includes\Admin\Settings.php
+msgid "Hotel Rate"
+msgstr "Ξενοδοχειακός Συντελεστής"
+
+#: includes\Admin\Settings.php
+msgid "Tax Name"
+msgstr "Όνομα Φόρου"
+
+#: includes\Admin\Settings.php
+msgid "Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities."
+msgstr "Σημείωση: Οι τιμές ξενοδοχείων μπορεί να είναι μειωμένες σε ορισμένες χώρες."
+
+#: includes\Admin\Settings.php
+msgid "Tax settings saved successfully."
+msgstr "Οι ρυθμίσεις φόρων αποθηκεύτηκαν."
+
+#: includes\Admin\Settings.php
+msgid "Performance settings saved successfully."
+msgstr "Οι ρυθμίσεις απόδοσης αποθηκεύτηκαν."
+
+#: includes\Admin\Settings.php
+msgid "Cache cleared successfully."
+msgstr "Η Cache καθαρίστηκε."
+
+#: includes\Admin\Settings.php
+msgid "Failed to clear cache."
+msgstr "Αποτυχία καθαρισμού cache."
+
+#: includes\Admin\Settings.php
+msgid "Cache class not available."
+msgstr "Η κλάση Cache δεν είναι διαθέσιμη."
+
+#: includes\Api\RestApi.php
+msgid "You do not have permission to access this booking."
+msgstr "Δεν έχετε δικαίωμα πρόσβασης σε αυτή την κράτηση."
+
+#: includes\Api\RestApi.php
+msgid "Error generating calendar data."
+msgstr "Σφάλμα δημιουργίας δεδομένων ημερολογίου."
+
+#: includes\Api\RestApi.php
+msgid "Error calculating price. Please check input data."
+msgstr "Σφάλμα υπολογισμού τιμής. Ελέγξτε τα δεδομένα εισαγωγής."
+
+#: includes\Api\RestApi.php
+msgid "Invalid webhook request."
+msgstr "Μη έγκυρο αίτημα webhook."
+
+#: includes\Core\Email.php
+msgid "Price includes %1$s - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "Η τιμή περιλαμβάνει %1$s - Διαμονή: %2$s%%, Παροχές: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "%1$s added at checkout - Accommodation: %2$s%%, Extras: %3$s%%"
+msgstr "%1$s προστέθηκε στο ταμείο - Διαμονή: %2$s%%, Παροχές: %3$s%%"
+
+#: includes\Core\Email.php
+msgid "Dear %s,"
+msgstr "Αγαπητέ/ή %s,"
+
+#: includes\Core\Email.php
+msgid "Thank you for your payment. Your booking has been confirmed."
+msgstr "Σας ευχαριστούμε για την πληρωμή. Η κράτησή σας επιβεβαιώθηκε."
+
+#: includes\Core\Email.php
+msgid "Booking Details"
+msgstr "Λεπτομέρειες Κράτησης"
+
+#: includes\Core\Email.php
+msgid "Booking ID:"
+msgstr "ID Κράτησης:"
+
+#: includes\Core\Email.php
+msgid "Check-in:"
+msgstr "Άφιξη:"
+
+#: includes\Core\Email.php
+msgid "Check-out:"
+msgstr "Αναχώρηση:"
+
+#: includes\Core\Email.php
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Αν έχετε ερωτήσεις, μη διστάσετε να επικοινωνήσετε μαζί μας."
+
+#: includes\Core\Email.php
+msgid "Best regards,"
+msgstr "Με εκτίμηση,"
+
+#: includes\Core\Email.php
+msgid "Payment Details"
+msgstr "Λεπτομέρειες Πληρωμής"
+
+#: includes\Core\Email.php
+msgid "Amount Paid:"
+msgstr "Ποσό Πληρωμής:"
+
+#: includes\Core\Email.php
+msgid "Transaction ID:"
+msgstr "ID Συναλλαγής:"
+
+#: includes\Core\Email.php
+msgid "Payment Method:"
+msgstr "Τρόπος Πληρωμής:"
+
+#: includes\Core\Email.php
+msgid "Payment Date:"
+msgstr "Ημερομηνία Πληρωμής:"
+
+#: includes\Core\I18n.php
+msgid "Search Rooms"
+msgstr "Αναζήτηση Δωματίων"
+
+#: includes\Core\I18n.php
+msgid "Available Rooms from %1$s to %2$s"
+msgstr "Διαθέσιμα Δωμάτια από %1$s έως %2$s"
+
+#: includes\Core\I18n.php
+msgid "No rooms available for these dates."
+msgstr "Δεν υπάρχουν διαθέσιμα δωμάτια για αυτές τις ημερομηνίες."
+
+#: includes\Core\I18n.php
+msgid "Dates are not available."
+msgstr "Οι ημερομηνίες δεν είναι διαθέσιμες."
+
+#: includes\Core\I18n.php
+msgid "Room not found."
+msgstr "Το δωμάτιο δεν βρέθηκε."
+
+#: includes\Core\I18n.php
+msgid "Secure Online Payment"
+msgstr "Ασφαλής Online Πληρωμή"
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page."
+msgstr "Η επαλήθευση ασφαλείας απέτυχε. Παρακαλώ ανανεώστε τη σελίδα."
+
+#: includes\Core\I18n.php
+msgid "Too many attempts. Please wait a minute."
+msgstr "Πολλές προσπάθειες. Παρακαλώ περιμένετε ένα λεπτό."
+
+#: includes\Core\I18n.php
+msgid "Leave this field empty"
+msgstr "Αφήστε αυτό το πεδίο κενό"
+
+#: includes\Core\I18n.php
+msgid "Room Image"
+msgstr "Εικόνα Δωματίου"
+
+#: includes\Core\I18n.php
+msgid "No room ID specified for calendar."
+msgstr "Δεν καθορίστηκε ID δωματίου για το ημερολόγιο."
+
+#: includes\Core\I18n.php
+msgid "Booking Page URL not configured."
+msgstr "Το URL της Σελίδας Κράτησης δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "Loading..."
+msgstr "Φόρτωση..."
+
+#: includes\Core\I18n.php
+msgid "Processing..."
+msgstr "Επεξεργασία..."
+
+#: includes\Core\I18n.php
+msgid "Please accept the privacy policy to continue."
+msgstr "Παρακαλώ αποδεχτείτε την πολιτική απορρήτου για να συνεχίσετε."
+
+#: includes\Core\I18n.php
+msgid "Please use the PayPal button to complete your payment."
+msgstr "Παρακαλώ χρησιμοποιήστε το κουμπί PayPal για να ολοκληρώσετε την πληρωμή."
+
+#: includes\Core\I18n.php
+msgid "Enhance Your Stay"
+msgstr "Βελτιώστε τη Διαμονή Σας"
+
+#: includes\Core\I18n.php
+msgid "per person"
+msgstr "ανά άτομο"
+
+#: includes\Core\I18n.php
+msgid "per person / night"
+msgstr "ανά άτομο / διανυκτέρευση"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s"
+msgstr "Η τιμή περιλαμβάνει %s"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s"
+msgstr "Τιμή συν %s"
+
+#: includes\Core\I18n.php
+msgid "Price includes %s (%s%%)"
+msgstr "Η τιμή περιλαμβάνει %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Price plus %s (%s%%)"
+msgstr "Τιμή συν %s (%s%%)"
+
+#: includes\Core\I18n.php
+msgid "Please select check-in and check-out dates."
+msgstr "Παρακαλώ επιλέξτε ημερομηνίες άφιξης και αναχώρησης."
+
+#: includes\Core\I18n.php
+msgid "Please select a Room ID in block settings."
+msgstr "Παρακαλώ επιλέξτε ένα ID Δωματίου στις ρυθμίσεις."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be in the past."
+msgstr "Η ημερομηνία άφιξης δεν μπορεί να είναι στο παρελθόν."
+
+#: includes\Core\I18n.php
+msgid "Check-out date must be after check-in date."
+msgstr "Η ημερομηνία αναχώρησης πρέπει να είναι μετά την ημερομηνία άφιξης."
+
+#: includes\Core\I18n.php
+msgid "Check-in date cannot be more than 2 years in the future."
+msgstr "Η ημερομηνία άφιξης δεν μπορεί να είναι περισσότερο από 2 χρόνια στο μέλλον."
+
+#: includes\Core\I18n.php
+msgid "Check-out date cannot be more than 2 years in the future."
+msgstr "Η ημερομηνία αναχώρησης δεν μπορεί να είναι περισσότερο από 2 χρόνια στο μέλλον."
+
+#: includes\Core\I18n.php
+msgid "Name is too long (maximum 100 characters)."
+msgstr "Το όνομα είναι πολύ μεγάλο (μέγιστο 100 χαρακτήρες)."
+
+#: includes\Core\I18n.php
+msgid "Phone number is too long (maximum 30 characters)."
+msgstr "Ο αριθμός τηλεφώνου είναι πολύ μεγάλος (μέγιστο 30 χαρακτήρες)."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum children for this room is %d."
+msgstr "Σφάλμα: Ο μέγιστος αριθμός παιδιών για αυτό το δωμάτιο είναι %d."
+
+#: includes\Core\I18n.php
+msgid "Error calculating price. Please check dates."
+msgstr "Σφάλμα υπολογισμού τιμής. Ελέγξτε τις ημερομηνίες."
+
+#: includes\Core\I18n.php
+msgid "Please fill in all required fields."
+msgstr "Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία."
+
+#: includes\Core\I18n.php
+msgid "Please provide a valid email address."
+msgstr "Παρακαλώ δώστε μια έγκυρη διεύθυνση email."
+
+#: includes\Core\I18n.php
+msgid "The field \"%s\" is required."
+msgstr "Το πεδίο \"%s\" είναι υποχρεωτικό."
+
+#: includes\Core\I18n.php
+msgid "Spam detected."
+msgstr "Ανιχνεύθηκε Spam."
+
+#: includes\Core\I18n.php
+msgid "Sorry, this room was just booked by someone else or is unavailable for these dates."
+msgstr "Λυπούμαστε, αυτό το δωμάτιο μόλις κλείστηκε από κάποιον άλλο ή δεν είναι διαθέσιμο."
+
+#: includes\Core\I18n.php
+msgid "Error: Maximum adults for this room is %d."
+msgstr "Σφάλμα: Ο μέγιστος αριθμός ενηλίκων για αυτό το δωμάτιο είναι %d."
+
+#: includes\Core\I18n.php
+msgid "REST API access is a Pro feature."
+msgstr "Η πρόσβαση REST API είναι λειτουργία Pro."
+
+#: includes\Core\I18n.php
+msgid "Invalid nonce."
+msgstr "Μη έγκυρο nonce."
+
+#: includes\Core\I18n.php
+msgid "Too many requests. Please try again later."
+msgstr "Πάρα πολλά αιτήματα. Παρακαλώ δοκιμάστε ξανά αργότερα."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking details. Cannot calculate amount."
+msgstr "Μη έγκυρα στοιχεία κράτησης. Αδυναμία υπολογισμού ποσού."
+
+#: includes\Core\I18n.php
+msgid "Stripe is not configured."
+msgstr "Το Stripe δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "PayPal is not configured. Please contact the site administrator."
+msgstr "Το PayPal δεν έχει ρυθμιστεί. Επικοινωνήστε με τον διαχειριστή."
+
+#: includes\Core\I18n.php
+msgid "Unable to connect to PayPal. Please try again later."
+msgstr "Αδυναμία σύνδεσης στο PayPal. Δοκιμάστε ξανά αργότερα."
+
+#: includes\Core\I18n.php
+msgid "Failed to authenticate with PayPal. Please check your PayPal credentials."
+msgstr "Αποτυχία ελέγχου ταυτότητας με PayPal. Ελέγξτε τα διαπιστευτήρια."
+
+#: includes\Core\I18n.php
+msgid "Unable to create PayPal order. Please try again later."
+msgstr "Αδυναμία δημιουργίας παραγγελίας PayPal."
+
+#: includes\Core\I18n.php
+msgid "Currency %s is not supported by your PayPal account."
+msgstr "Το νόμισμα %s δεν υποστηρίζεται από το λογαριασμό PayPal."
+
+#: includes\Core\I18n.php
+msgid "PayPal error: %s"
+msgstr "Σφάλμα PayPal: %s"
+
+#: includes\Core\I18n.php
+msgid "Missing order ID."
+msgstr "Λείπει το ID παραγγελίας."
+
+#: includes\Core\I18n.php
+msgid "Unable to capture payment. Please try again later."
+msgstr "Αδυναμία δέσμευσης πληρωμής. Δοκιμάστε ξανά αργότερα."
+
+#: includes\Core\I18n.php
+msgid "This payment has already been processed."
+msgstr "Αυτή η πληρωμή έχει ήδη υποβληθεί σε επεξεργασία."
+
+#: includes\Core\I18n.php
+msgid "The payment was declined by PayPal. Please try a different payment method."
+msgstr "Η πληρωμή απορρίφθηκε από το PayPal. Δοκιμάστε άλλη μέθοδο."
+
+#: includes\Core\I18n.php
+msgid "privacy policy"
+msgstr "πολιτική απορρήτου"
+
+#: includes\Core\I18n.php
+msgid "Terms & Conditions"
+msgstr "Όροι & Προϋποθέσεις"
+
+#: includes\Core\I18n.php
+msgid "Payment Information"
+msgstr "Πληροφορίες Πληρωμής"
+
+#: includes\Core\I18n.php
+msgid "Payment will be collected upon arrival at the property."
+msgstr "Η πληρωμή θα εισπραχθεί κατά την άφιξη στο κατάλυμα."
+
+#: includes\Core\I18n.php
+msgid "Amount Due"
+msgstr "Οφειλόμενο Ποσό"
+
+#: includes\Core\I18n.php
+msgid "Failed to create PayPal order."
+msgstr "Αποτυχία δημιουργίας παραγγελίας PayPal."
+
+#: includes\Core\I18n.php
+msgid "Security verification failed. Please refresh the page and try again."
+msgstr "Η επαλήθευση ασφαλείας απέτυχε. Ανανεώστε τη σελίδα."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Client ID is not configured."
+msgstr "Το PayPal %s Client ID δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "PayPal %s Secret is not configured."
+msgstr "Το PayPal %s Secret δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "Stripe payment failed: Payment intent missing."
+msgstr "Η πληρωμή Stripe απέτυχε: Λείπει η πρόθεση πληρωμής."
+
+#: includes\Core\I18n.php
+msgid "Stripe API error: %s"
+msgstr "Σφάλμα API Stripe: %s"
+
+#: includes\Core\I18n.php
+msgid "PayPal payment failed: Order ID missing."
+msgstr "Η πληρωμή PayPal απέτυχε: Λείπει το ID παραγγελίας."
+
+#: includes\Core\I18n.php
+msgid "Payment is required."
+msgstr "Απαιτείται πληρωμή."
+
+#: includes\Core\I18n.php
+msgid "API key has not been configured. Set it in Hotel Booking → Settings."
+msgstr "Το κλειδί API δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "Invalid or missing API key."
+msgstr "Μη έγκυρο ή ελλείπον κλειδί API."
+
+#: includes\Core\I18n.php
+msgid "Webhook signature required. Unauthorized requests are rejected."
+msgstr "Απαιτείται υπογραφή Webhook."
+
+#: includes\Core\I18n.php
+msgid "Stripe webhook secret not configured. Please set it in Settings."
+msgstr "Το μυστικό webhook Stripe δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe signature format."
+msgstr "Μη έγκυρη μορφή υπογραφής Stripe."
+
+#: includes\Core\I18n.php
+msgid "Webhook timestamp outside acceptable range."
+msgstr "Η χρονική σήμανση Webhook είναι εκτός εύρους."
+
+#: includes\Core\I18n.php
+msgid "Invalid Stripe webhook signature."
+msgstr "Μη έγκυρη υπογραφή webhook Stripe."
+
+#: includes\Core\I18n.php
+msgid "Missing required PayPal webhook headers."
+msgstr "Λείπουν οι απαιτούμενες επικεφαλίδες webhook PayPal."
+
+#: includes\Core\I18n.php
+msgid "Valid customer name and email are required."
+msgstr "Απαιτείται έγκυρο όνομα και email πελάτη."
+
+#: includes\Core\I18n.php
+msgid "Invalid booking dates."
+msgstr "Μη έγκυρες ημερομηνίες κράτησης."
+
+#: includes\Core\I18n.php
+msgid "Failed to create the booking."
+msgstr "Αποτυχία δημιουργίας της κράτησης."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Publishable Key is not configured."
+msgstr "Το κλειδί Stripe %s Publishable δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "Stripe %s Secret Key is not configured."
+msgstr "Το κλειδί Stripe %s Secret δεν έχει ρυθμιστεί."
+
+#: includes\Core\I18n.php
+msgid "Invalid publishable key format. Expected key starting with \"%1$s\" for %2$s mode."
+msgstr "Μη έγκυρη μορφή κλειδιού."
+
+#: includes\Core\I18n.php
+msgid "Credentials contain extra spaces"
+msgstr "Τα διαπιστευτήρια περιέχουν επιπλέον κενά"
+
+#: includes\Core\I18n.php
+msgid "Using Sandbox credentials in Live mode (or vice versa)"
+msgstr "Χρήση διαπιστευτηρίων Sandbox σε λειτουργία Live (ή αντίστροφα)"
+
+#: includes\Core\I18n.php
+msgid "Credentials have expired or been rotated"
+msgstr "Τα διαπιστευτήρια έχουν λήξει"
+
+#: includes\Core\I18n.php
+msgid "PayPal %s credentials are valid!"
+msgstr "Τα διαπιστευτήρια PayPal %s είναι έγκυρα!"
+
+#: includes\Core\I18n.php
+msgid "Stripe %s credentials are valid!"
+msgstr "Τα διαπιστευτήρια Stripe %s είναι έγκυρα!"
+
+#: includes\Core\I18n.php
+msgid "Connection failed: %s"
+msgstr "Η σύνδεση απέτυχε: %s"
+
+#: includes\Core\I18n.php
+msgid "Authentication failed: %s"
+msgstr "Ο έλεγχος ταυτότητας απέτυχε: %s"
+
+#: includes\Core\I18n.php
+msgid "Common causes:"
+msgstr "Κοινές αιτίες:"
+
+#: includes\Core\ICal.php
+msgid "Pro license required."
+msgstr "Απαιτείται άδεια Pro."
+
+#: includes\Core\ICal.php
+msgid "Invalid or missing iCal token."
+msgstr "Μη έγκυρο ή ελλείπον διακριτικό iCal."
+
+#: includes\Core\ICal.php
+msgid "Security Error"
+msgstr "Σφάλμα Ασφαλείας"
+
+#: includes\Core\ICal.php
+msgid "Booking #%1$d - %2$s"
+msgstr "Κράτηση #%1$d - %2$s"
+
+#: includes\Core\ICal.php
+msgid "Check-in: %s"
+msgstr "Άφιξη: %s"
+
+#: includes\Core\ICal.php
+msgid "Check-out: %s"
+msgstr "Αναχώρηση: %s"
+
+#: includes\Core\ICal.php
+msgid "Guests: %d"
+msgstr "Επισκέπτες: %d"
+
+#: includes\Core\ICal.php
+msgid "Email: %s"
+msgstr "Email: %s"
+
+#: includes\Core\ICal.php
+msgid "Phone: %s"
+msgstr "Τηλέφωνο: %s"
+
+#: includes\Core\ICal.php
+msgid "Source: %s"
+msgstr "Πηγή: %s"
+
+#: includes\Core\ICal.php
+msgid "External Booking"
+msgstr "Εξωτερική Κράτηση"
+
+#: includes\Core\ICalParser.php
+msgid "Airbnb Reservation"
+msgstr "Κράτηση Airbnb"
+
+#: includes\Core\ICalParser.php
+msgid "Booking.com Reservation"
+msgstr "Κράτηση Booking.com"
+
+#: includes\Core\ICalParser.php
+msgid "Google Calendar Event"
+msgstr "Συμβάν Ημερολογίου Google"
+
+#: includes\Core\License.php
+msgid "The %s feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Η λειτουργία %s είναι μέρος της εμπειρίας Pro."
+
+#: includes\Core\License.php
+msgid "This feature is part of the Modern Hotel Booking Pro Experience."
+msgstr "Αυτή η λειτουργία είναι μέρος της εμπειρίας Modern Hotel Booking Pro."
+
+#: includes\Core\License.php
+msgid "Activate Pro Now"
+msgstr "Ενεργοποιήστε το Pro Τώρα"
+
+#: includes\Core\LicenseManager.php
+msgid "Too many attempts. Please wait a minute before trying again."
+msgstr "Πάρα πολλά αιτήματα. Περιμένετε ένα λεπτό."
+
+#: includes\Core\LicenseManager.php
+msgid "License key cannot be empty."
+msgstr "Το κλειδί άδειας δεν μπορεί να είναι κενό."
+
+#: includes\Core\LicenseManager.php
+msgid "License system not configured. Please contact support."
+msgstr "Το σύστημα άδειας δεν έχει ρυθμιστεί."
+
+#: includes\Core\LicenseManager.php
+msgid "Invalid license key or server error."
+msgstr "Μη έγκυρο κλειδί άδειας ή σφάλμα διακομιστή."
+
+#: includes\Core\LicenseManager.php
+msgid "License limit reached. No activations remaining."
+msgstr "Το όριο άδειας συμπληρώθηκε."
+
+#: includes\Core\LicenseManager.php
+msgid "License activated successfully."
+msgstr "Η άδεια ενεργοποιήθηκε επιτυχώς."
+
+#: includes\Core\LicenseManager.php
+msgid "License deactivated."
+msgstr "Η άδεια απενεργοποιήθηκε."
+
+#: includes\Core\LicenseManager.php
+msgid "No license key stored."
+msgstr "Δεν έχει αποθηκευτεί κλειδί άδειας."
+
+#: includes\Core\LicenseManager.php
+msgid "API credentials not configured."
+msgstr "Διαπιστευτήρια API δεν έχουν ρυθμιστεί."
+
+#: includes\Core\LicenseManager.php
+msgid "License is valid."
+msgstr "Η άδεια είναι έγκυρη."
+
+#: includes\Core\LicenseManager.php
+msgid "License is not valid."
+msgstr "Η άδεια δεν είναι έγκυρη."
+
+#: includes\Core\LicenseValidator.php
+msgid "%d day"
+msgstr "%d ημέρα"
+
+#: includes\Core\LicenseValidator.php
+msgid "%d hour"
+msgstr "%d ώρα"
+
+#: includes\Core\LicenseValidator.php
+msgid "License Warning:"
+msgstr "Προειδοποίηση Άδειας:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Could not verify license. Grace period active: %s remaining."
+msgstr "Αδυναμία επαλήθευσης άδειας. Περίοδος χάριτος: απομένουν %s."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Error:"
+msgstr "Σφάλμα Άδειας:"
+
+#: includes\Core\LicenseValidator.php
+msgid "License verification failed. Pro features have been disabled. Please check your license or contact support."
+msgstr "Η επαλήθευση απέτυχε. Οι λειτουργίες Pro απενεργοποιήθηκαν."
+
+#: includes\Core\LicenseValidator.php
+msgid "License Expired:"
+msgstr "Η Άδεια Έληξε:"
+
+#: includes\Core\LicenseValidator.php
+msgid "Your Pro license has expired. Please renew to continue using Pro features."
+msgstr "Η άδειά σας έχει λήξει. Ανανεώστε για να συνεχίσετε."
+
+#: includes\Core\Plugin.php
+msgid "Pro license required for iCal export."
+msgstr "Απαιτείται άδεια Pro για εξαγωγή iCal."
+
+#: includes\Core\Privacy.php
+msgid "Modern Hotel Booking"
+msgstr "Modern Hotel Booking"
+
+#: includes\Core\Privacy.php
+msgid "This plugin collects the following personal data from guests during the booking process:"
+msgstr "Αυτό το πρόσθετο συλλέγει τα ακόλουθα προσωπικά δεδομένα:"
+
+#: includes\Core\Privacy.php
+msgid "Email Address"
+msgstr "Διεύθυνση Email"
+
+#: includes\Core\Privacy.php
+msgid "Phone Number"
+msgstr "Αριθμός Τηλεφώνου"
+
+#: includes\Core\Privacy.php
+msgid "Booking Dates and Details"
+msgstr "Ημερομηνίες και Λεπτομέρειες Κράτησης"
+
+#: includes\Core\Privacy.php
+msgid "This data is stored in the database for the purpose of managing reservations and contacting guests regarding their stay."
+msgstr "Αυτά τα δεδομένα αποθηκεύονται για τη διαχείριση κρατήσεων."
+
+#: includes\Core\Privacy.php
+msgid "Booking ID"
+msgstr "ID Κράτησης"
+
+#: includes\Core\Privacy.php
+msgid "Check-in Date"
+msgstr "Ημερομηνία Άφιξης"
+
+#: includes\Core\Privacy.php
+msgid "Check-out Date"
+msgstr "Ημερομηνία Αναχώρησης"
+
+#: includes\Core\Privacy.php
+msgid "Customer Phone"
+msgstr "Τηλέφωνο Πελάτη"
+
+#: includes\Core\Privacy.php
+msgid "Hotel Bookings"
+msgstr "Κρατήσεις Ξενοδοχείου"
+
+#: includes\Core\Tax.php
+msgid "Booking Summary"
+msgstr "Σύνοψη Κράτησης"
+
+#: includes\Core\Tax.php
+msgid "Item"
+msgstr "Είδος"
+
+#: includes\Core\Tax.php
+msgid "Amount"
+msgstr "Ποσό"
+
+#: includes\Core\Tax.php
+msgid "Subtotal"
+msgstr "Υποσύνολο"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Accommodation (%2$s%%)"
+msgstr "%1$s - Διαμονή (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s - Extras (%2$s%%)"
+msgstr "%1$s - Παροχές (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "%1$s (%2$s%%)"
+msgstr "%1$s (%2$s%%)"
+
+#: includes\Core\Tax.php
+msgid "Tax Registration: %s"
+msgstr "ΑΦΜ: %s"
+
+#: includes\Core\Tax.php
+msgid "  %1$s - Accommodation (%2$s%%): %3$s"
+msgstr "  %1$s - Διαμονή (%2$s%%): %3$s"
+
+#: includes\Core\Tax.php
+msgid "  %1$s - Extras (%2$s%%): %3$s"
+msgstr "  %1$s - Παροχές (%2$s%%): %3$s"
+
+#: includes\Frontend\BookingWidget.php
+msgid "MHB: Booking Search"
+msgstr "MHB: Αναζήτηση Κράτησης"
+
+#: includes\Frontend\BookingWidget.php
+msgid "A compact booking search form."
+msgstr "Μια συμπαγής φόρμα αναζήτησης."
+
+#: includes\Frontend\BookingWidget.php
+msgid "Book Your Stay"
+msgstr "Κάντε Κράτηση"
+
+#: includes\Frontend\BookingWidget.php
+msgid "Title:"
+msgstr "Τίτλος:"
+
+#: includes\Pro\Analytics.php
+msgid "Gross Revenue"
+msgstr "Μικτά Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "Collected"
+msgstr "Εισπράχθηκαν"
+
+#: includes\Pro\Analytics.php
+msgid "Tax"
+msgstr "Φόρος"
+
+#: includes\Pro\Analytics.php
+msgid "Booked"
+msgstr "Κρατήθηκε"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue"
+msgstr "Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "Hotel Booking — Revenue Overview"
+msgstr "Κρατήσεις Ξενοδοχείου — Επισκόπηση Εσόδων"
+
+#: includes\Pro\Analytics.php
+msgid "Collected (MTD)"
+msgstr "Εισπράχθηκαν (Τρέχων Μήνας)"
+
+#: includes\Pro\Analytics.php
+msgid "Outstanding Balance"
+msgstr "Υπόλοιπο Οφειλής"
+
+#: includes\Pro\Analytics.php
+msgid "Guests Now"
+msgstr "Επισκέπτες Τώρα"
+
+#: includes\Pro\Analytics.php
+msgid "pending bookings"
+msgstr "εκκρεμείς κρατήσεις"
+
+#: includes\Pro\Analytics.php
+msgid "partially paid"
+msgstr "μερικώς πληρωμένο"
+
+#: includes\Pro\Analytics.php
+msgid "View Full Analytics →"
+msgstr "Προβολή Πλήρων Αναλύσεων →"
+
+#: includes\Pro\Analytics.php
+msgid "Analytics Intelligence"
+msgstr "Ευφυΐα Αναλύσεων"
+
+#: includes\Pro\Analytics.php
+msgid "7D"
+msgstr "7Η"
+
+#: includes\Pro\Analytics.php
+msgid "30D"
+msgstr "30Η"
+
+#: includes\Pro\Analytics.php
+msgid "90D"
+msgstr "90Η"
+
+#: includes\Pro\Analytics.php
+msgid "Year"
+msgstr "Έτος"
+
+#: includes\Pro\Analytics.php
+msgid "Starts"
+msgstr "Έναρξη"
+
+#: includes\Pro\Analytics.php
+msgid "Ends"
+msgstr "Λήξη"
+
+#: includes\Pro\Analytics.php
+msgid "Update"
+msgstr "Ενημέρωση"
+
+#: includes\Pro\Analytics.php
+msgid "Key Performance Indicators"
+msgstr "Βασικοί Δείκτες Απόδοσης"
+
+#: includes\Pro\Analytics.php
+msgid "Total Revenue"
+msgstr "Συνολικά Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "vs previous period"
+msgstr "vs προηγούμενη περίοδο"
+
+#: includes\Pro\Analytics.php
+msgid "Includes"
+msgstr "Περιλαμβάνει"
+
+#: includes\Pro\Analytics.php
+msgid "tax"
+msgstr "φόρο"
+
+#: includes\Pro\Analytics.php
+msgid "Collected Revenue"
+msgstr "Εισπραχθέντα Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "of total"
+msgstr "του συνόλου"
+
+#: includes\Pro\Analytics.php
+msgid "Pending payments"
+msgstr "Εκκρεμείς πληρωμές"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy Rate"
+msgstr "Ποσοστό Πληρότητας"
+
+#: includes\Pro\Analytics.php
+msgid "ADR"
+msgstr "ADR"
+
+#: includes\Pro\Analytics.php
+msgid "Average Daily Rate"
+msgstr "Μέση Ημερήσια Τιμή"
+
+#: includes\Pro\Analytics.php
+msgid "RevPAR"
+msgstr "RevPAR"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Per Available Room"
+msgstr "Έσοδα Ανά Διαθέσιμο Δωμάτιο"
+
+#: includes\Pro\Analytics.php
+msgid "Total Bookings"
+msgstr "Σύνολο Κρατήσεων"
+
+#: includes\Pro\Analytics.php
+msgid "Confirmation Rate"
+msgstr "Ποσοστό Επιβεβαίωσης"
+
+#: includes\Pro\Analytics.php
+msgid "Avg. Booking Value"
+msgstr "Μέση Αξία Κράτησης"
+
+#: includes\Pro\Analytics.php
+msgid "Per booking"
+msgstr "Ανά κράτηση"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Collected"
+msgstr "Φόρος που Εισπράχθηκε"
+
+#: includes\Pro\Analytics.php
+msgid "VAT / Sales Tax"
+msgstr "ΦΠΑ / Φόρος Πωλήσεων"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Trends"
+msgstr "Τάσεις Εσόδων"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy by Day of Week"
+msgstr "Πληρότητα ανά Ημέρα"
+
+#: includes\Pro\Analytics.php
+msgid "30-Day Occupancy Forecast"
+msgstr "Πρόβλεψη Πληρότητας 30 Ημερών"
+
+#: includes\Pro\Analytics.php
+msgid "Booking Sources"
+msgstr "Πηγές Κρατήσεων"
+
+#: includes\Pro\Analytics.php
+msgid "No booking data available"
+msgstr "Δεν υπάρχουν δεδομένα κρατήσεων"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue by Source"
+msgstr "Έσοδα ανά Πηγή"
+
+#: includes\Pro\Analytics.php
+msgid "Source"
+msgstr "Πηγή"
+
+#: includes\Pro\Analytics.php
+msgid "Room Type Performance"
+msgstr "Απόδοση Τύπου Δωματίου"
+
+#: includes\Pro\Analytics.php
+msgid "No room performance data available"
+msgstr "Δεν υπάρχουν δεδομένα απόδοσης δωματίου"
+
+#: includes\Pro\Analytics.php
+#: includes\Pro\ICalManager.php
+msgid "Room Type"
+msgstr "Τύπος Δωματίου"
+
+#: includes\Pro\Analytics.php
+msgid "Occupancy"
+msgstr "Πληρότητα"
+
+#: includes\Pro\Analytics.php
+msgid "Tax / VAT Analytics"
+msgstr "Ανάλυση Φόρων / ΦΠΑ"
+
+#: includes\Pro\Analytics.php
+msgid "Total Tax Collected"
+msgstr "Συνολικός Φόρος που Εισπράχθηκε"
+
+#: includes\Pro\Analytics.php
+msgid "taxed bookings"
+msgstr "φορολογημένες κρατήσεις"
+
+#: includes\Pro\Analytics.php
+msgid "Net Revenue"
+msgstr "Καθαρά Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "Before tax"
+msgstr "Προ φόρων"
+
+#: includes\Pro\Analytics.php
+msgid "Including tax"
+msgstr "Συμπεριλαμβανομένου φόρου"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Breakdown by Rate"
+msgstr "Ανάλυση Φόρων ανά Συντελεστή"
+
+#: includes\Pro\Analytics.php
+msgid "Tax Rate"
+msgstr "Φορολογικός Συντελεστής"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Methods"
+msgstr "Μέθοδοι Πληρωμής"
+
+#: includes\Pro\Analytics.php
+msgid "No payment data available"
+msgstr "Δεν υπάρχουν δεδομένα πληρωμών"
+
+#: includes\Pro\Analytics.php
+msgid "Payment Status Breakdown"
+msgstr "Ανάλυση Κατάστασης Πληρωμών"
+
+#: includes\Pro\Analytics.php
+msgid "Count"
+msgstr "Πλήθος"
+
+#: includes\Pro\Analytics.php
+msgid "Real-time Activity"
+msgstr "Δραστηριότητα σε Πραγματικό Χρόνο"
+
+#: includes\Pro\Analytics.php
+msgid "No recent bookings"
+msgstr "Καμία πρόσφατη κράτηση"
+
+#: includes\Pro\Analytics.php
+msgid "Today's Operations"
+msgstr "Σημερινές Λειτουργίες"
+
+#: includes\Pro\Analytics.php
+msgid "Check-ins"
+msgstr "Αφίξεις"
+
+#: includes\Pro\Analytics.php
+msgid "Check-outs"
+msgstr "Αναχωρήσεις"
+
+#: includes\Pro\Analytics.php
+msgid "No check-ins or check-outs today"
+msgstr "Καμία άφιξη ή αναχώρηση σήμερα"
+
+#: includes\Pro\Analytics.php
+msgid "Alerts"
+msgstr "Ειδοποιήσεις"
+
+#: includes\Pro\Analytics.php
+msgid "Failed Payments"
+msgstr "Αποτυχημένες Πληρωμές"
+
+#: includes\Pro\Analytics.php
+msgid "Recent Cancellations"
+msgstr "Πρόσφατες Ακυρώσεις"
+
+#: includes\Pro\Analytics.php
+msgid "Monthly Demand"
+msgstr "Μηνιαία Ζήτηση"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time Analysis"
+msgstr "Ανάλυση Χρόνου Προκράτησης"
+
+#: includes\Pro\Analytics.php
+msgid "No lead time data available"
+msgstr "Δεν υπάρχουν δεδομένα χρόνου κράτησης"
+
+#: includes\Pro\Analytics.php
+msgid "Lead Time"
+msgstr "Χρόνος Προκράτησης"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Tracking"
+msgstr "Παρακολούθηση Ακυρώσεων"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellation Rate"
+msgstr "Ποσοστό Ακύρωσης"
+
+#: includes\Pro\Analytics.php
+msgid "Lost Revenue"
+msgstr "Χαμένα Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "From cancelled bookings"
+msgstr "Από ακυρωμένες κρατήσεις"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations"
+msgstr "Ακυρώσεις"
+
+#: includes\Pro\Analytics.php
+msgid "Total cancelled"
+msgstr "Σύνολο ακυρωμένων"
+
+#: includes\Pro\Analytics.php
+msgid "Cancellations by Lead Time"
+msgstr "Ακυρώσεις ανά Χρόνο Προκράτησης"
+
+#: includes\Pro\Analytics.php
+msgid "Revenue Impact"
+msgstr "Επίπτωση στα Έσοδα"
+
+#: includes\Pro\Analytics.php
+msgid "Export Financial Report (CSV)"
+msgstr "Εξαγωγή Οικονομικής Αναφοράς (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Occupancy Report (CSV)"
+msgstr "Εξαγωγή Αναφοράς Πληρότητας (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Tax Report (CSV)"
+msgstr "Εξαγωγή Αναφοράς Φόρων (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Export Payments (CSV)"
+msgstr "Εξαγωγή Πληρωμών (CSV)"
+
+#: includes\Pro\Analytics.php
+msgid "Security check failed. Please try again."
+msgstr "Ο έλεγχος ασφαλείας απέτυχε. Δοκιμάστε ξανά."
+
+#: includes\Pro\Analytics.php
+msgid "You do not have sufficient permissions to export data."
+msgstr "Δεν έχετε επαρκή δικαιώματα για εξαγωγή δεδομένων."
+
+#: includes\Pro\ICalManager.php
+msgid "Every 6 Hours"
+msgstr "Κάθε 6 Ώρες"
+
+#: includes\Pro\ICalManager.php
+msgid "Pro license required to sync calendars."
+msgstr "Απαιτείται άδεια Pro για συγχρονισμό."
+
+#: includes\Pro\ICalManager.php
+msgid "%s Booking"
+msgstr "%s Κράτηση"
+
+#: includes\Pro\ICalManager.php
+msgid "Import Only"
+msgstr "Μόνο Εισαγωγή"
+
+#: includes\Pro\ICalManager.php
+msgid "Export Only"
+msgstr "Μόνο Εξαγωγή"
+
+#: includes\Pro\ICalManager.php
+msgid "Bidirectional"
+msgstr "Αμφίδρομος"
+
+#: includes\Pro\ICalManager.php
+msgid "📅 iCal Calendar Sync"
+msgstr "📅 Συγχρονισμός Ημερολογίου iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "Share this URL with Airbnb, Booking.com, or other platforms to export your availability."
+msgstr "Μοιραστείτε αυτό το URL με Airbnb, Booking.com ή άλλες πλατφόρμες για εξαγωγή της διαθεσιμότητάς σας."
+
+#: includes\Pro\ICalManager.php
+msgid "Calendar Connections"
+msgstr "Συνδέσεις Ημερολογίου"
+
+#: includes\Pro\ICalManager.php
+msgid "Connection Name"
+msgstr "Όνομα Σύνδεσης"
+
+#: includes\Pro\ICalManager.php
+msgid "Synced %s ago"
+msgstr "Συγχρονίστηκε πριν %s"
+
+#: includes\Pro\ICalManager.php
+msgid "Never synced"
+msgstr "Δεν συγχρονίστηκε ποτέ"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync"
+msgstr "Συγχρονισμός"
+
+#: includes\Pro\ICalManager.php
+msgid "+ Add Connection"
+msgstr "+ Προσθήκη Σύνδεσης"
+
+#: includes\Pro\ICalManager.php
+msgid "All rooms have been synced."
+msgstr "Όλα τα δωμάτια έχουν συγχρονιστεί."
+
+#: includes\Pro\ICalManager.php
+msgid "Room #%s has been synced."
+msgstr "Το δωμάτιο #%s έχει συγχρονιστεί."
+
+#: includes\Pro\ICalManager.php
+msgid "Manage iCal feed imports and exports for each room. Sync with Airbnb, Booking.com, Google Calendar, and other platforms."
+msgstr "Διαχειριστείτε εισαγωγές και εξαγωγές iCal για κάθε δωμάτιο. Συγχρονισμός με Airbnb, Booking.com, Ημερολόγιο Google και άλλα."
+
+#: includes\Pro\ICalManager.php
+msgid "⚙️ Sync Settings"
+msgstr "⚙️ Ρυθμίσεις Συγχρονισμού"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Auto Sync"
+msgstr "Ενεργοποίηση Αυτόματου Συγχρονισμού"
+
+#: includes\Pro\ICalManager.php
+msgid "Automatically sync calendars"
+msgstr "Αυτόματος συγχρονισμός ημερολογίων"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync Interval"
+msgstr "Διάστημα Συγχρονισμού"
+
+#: includes\Pro\ICalManager.php
+msgid "Every Hour"
+msgstr "Κάθε Ώρα"
+
+#: includes\Pro\ICalManager.php
+msgid "Daily"
+msgstr "Καθημερινά"
+
+#: includes\Pro\ICalManager.php
+msgid "Enable Retry Logic"
+msgstr "Ενεργοποίηση Λογικής Επανάληψης"
+
+#: includes\Pro\ICalManager.php
+msgid "Retry failed syncs with exponential backoff (1h, 2h, 4h)"
+msgstr "Επανάληψη αποτυχημένων συγχρονισμών με εκθετική αναμονή (1ώ, 2ώ, 4ώ)"
+
+#: includes\Pro\ICalManager.php
+msgid "Email Notifications"
+msgstr "Ειδοποιήσεις Email"
+
+#: includes\Pro\ICalManager.php
+msgid "Send email on sync failure"
+msgstr "Αποστολή email σε αποτυχία συγχρονισμού"
+
+#: includes\Pro\ICalManager.php
+msgid "Save Settings"
+msgstr "Αποθήκευση Ρυθμίσεων"
+
+#: includes\Pro\ICalManager.php
+msgid "Sync all rooms? This may take a moment."
+msgstr "Συγχρονισμός όλων των δωματίων; Αυτό μπορεί να πάρει λίγο χρόνο."
+
+#: includes\Pro\ICalManager.php
+msgid "Sync All Rooms"
+msgstr "Συγχρονισμός Όλων"
+
+#: includes\Pro\ICalManager.php
+msgid "Platforms"
+msgstr "Πλατφόρμες"
+
+#: includes\Pro\ICalManager.php
+msgid "Connections"
+msgstr "Συνδέσεις"
+
+#: includes\Pro\ICalManager.php
+msgid "No rooms found. Create rooms first."
+msgstr "Δεν βρέθηκαν δωμάτια. Δημιουργήστε δωμάτια πρώτα."
+
+#: includes\Pro\ICalManager.php
+msgid "%s ago"
+msgstr "πριν %s"
+
+#: includes\Pro\ICalManager.php
+msgid "How to set up calendar sync"
+msgstr "Πώς να ρυθμίσετε τον συγχρονισμό"
+
+#: includes\Pro\ICalManager.php
+msgid "Airbnb"
+msgstr "Airbnb"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to your Airbnb listing → Calendar → Availability"
+msgstr "Πηγαίνετε στην καταχώρησή σας Airbnb → Ημερολόγιο → Διαθεσιμότητα"
+
+#: includes\Pro\ICalManager.php
+msgid "Under \"Connect calendars,\" click \"Export Calendar\""
+msgstr "Στο \"Σύνδεση ημερολογίων\", κάντε κλικ στο \"Εξαγωγή Ημερολογίου\""
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the iCal URL and add it as a new connection above"
+msgstr "Αντιγράψτε το URL iCal και προσθέστε το ως νέα σύνδεση παραπάνω"
+
+#: includes\Pro\ICalManager.php
+msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb's import field"
+msgstr "Για εισαγωγή του ημερολογίου ΣΑΣ στο Airbnb, χρησιμοποιήστε το URL Εξαγωγής παραπάνω στο πεδίο εισαγωγής του Airbnb"
+
+#: includes\Pro\ICalManager.php
+msgid "Booking.com"
+msgstr "Booking.com"
+
+#: includes\Pro\ICalManager.php
+msgid "Go to Booking.com Extranet → Rates & Availability → Sync calendars"
+msgstr "Πηγαίνετε στο Extranet Booking.com → Τιμές & Διαθεσιμότητα → Συγχρονισμός ημερολογίων"
+
+#: includes\Pro\ICalManager.php
+msgid "Copy the export URL from Booking.com and add it as a new connection above"
+msgstr "Αντιγράψτε το URL εξαγωγής από το Booking.com και προσθέστε το ως νέα σύνδεση παραπάνω"
+
+#: includes\Pro\ICalManager.php
+msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com's import field"
+msgstr "Για εξαγωγή του ημερολογίου ΣΑΣ στο Booking.com, χρησιμοποιήστε το URL Εξαγωγής παραπάνω"
+
+#: includes\Pro\ICalManager.php
+msgid "iCal"
+msgstr "iCal"
+
+#: includes\Pro\ICalManager.php
+msgid "connection"
+msgstr "σύνδεση"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Payment Gateways"
+msgstr "Πύλες Πληρωμών"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Enable and configure payment methods for your guests."
+msgstr "Ενεργοποιήστε και ρυθμίστε μεθόδους πληρωμής για τους επισκέπτες σας."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Stripe (Credit/Debit Cards)"
+msgstr "Stripe (Πιστωτικές/Χρεωστικές Κάρτες)"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept credit/debit card payments via Stripe"
+msgstr "Αποδοχή πληρωμών με κάρτα μέσω Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Mode"
+msgstr "Λειτουργία"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test"
+msgstr "Δοκιμή"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live"
+msgstr "Ζωντανή"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Publishable Key"
+msgstr "Κλειδί Δημοσίευσης Δοκιμής"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Secret Key"
+msgstr "Μυστικό Κλειδί Δοκιμής"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret key is stored securely. Enter a new value to update."
+msgstr "Το μυστικό κλειδί αποθηκεύεται με ασφάλεια. Εισάγετε νέα τιμή για ενημέρωση."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Publishable Key"
+msgstr "Κλειδί Δημοσίευσης Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret Key"
+msgstr "Μυστικό Κλειδί Live"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Stripe Credentials"
+msgstr "Δοκιμή Διαπιστευτηρίων Stripe"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Accept payments via PayPal"
+msgstr "Αποδοχή πληρωμών μέσω PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Client ID"
+msgstr "Sandbox Client ID"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Sandbox Secret"
+msgstr "Sandbox Secret"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Secret is stored securely. Enter a new value to update."
+msgstr "Το μυστικό αποθηκεύεται με ασφάλεια. Εισάγετε νέα τιμή για ενημέρωση."
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Client ID"
+msgstr "Live Client ID"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Secret"
+msgstr "Live Secret"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test Connection"
+msgstr "Δοκιμή Σύνδεσης"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Test PayPal Credentials"
+msgstr "Δοκιμή Διαπιστευτηρίων PayPal"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Pay On-site"
+msgstr "Πληρωμή στο Κατάλυμα"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Allow guests to pay at the property"
+msgstr "Επιτρέψτε στους επισκέπτες να πληρώσουν στο κατάλυμα"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions"
+msgstr "Οδηγίες"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Instructions shown to guests who select pay on-site. Supports multilingual format [:en]..[:ro].."
+msgstr "Οδηγίες που εμφανίζονται στους επισκέπτες που επιλέγουν πληρωμή στο κατάλυμα. Υποστηρίζει πολύγλωσση μορφή [:en]..[:el].."
+
+#: modern-hotel-booking.php
+msgid "Modern Hotel Booking Error"
+msgstr "Σφάλμα Modern Hotel Booking"
+
+#: modern-hotel-booking.php
+msgid "This plugin requires PHP 7.4 or higher. You are running PHP %s. Please upgrade your PHP version."
+msgstr "Αυτό το πρόσθετο απαιτεί PHP 7.4 ή νεότερη. Εκτελείτε PHP %s."
+
+#: modern-hotel-booking.php
+msgid "An error occurred while loading the plugin. Please check the debug log for details."
+msgstr "Παρουσιάστηκε σφάλμα κατά τη φόρτωση του πρόσθετου. Ελέγξτε το αρχείο καταγραφής."
+
+#: scripts\i18n-tool.php
+msgid "String"
+msgstr "Συμβολοσειρά"

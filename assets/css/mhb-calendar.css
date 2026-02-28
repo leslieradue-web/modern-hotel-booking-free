@@ -1,0 +1,484 @@
+/* MHB Calendar - Modern Responsive Layout */
+
+.mhb-calendar-wrapper * {
+    box-sizing: border-box;
+}
+
+.mhb-calendar-container {
+    max-width: 600px;
+    margin: 20px auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 0 15px;
+}
+
+.mhb-calendar-guide {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.4rem;
+    color: var(--mhb-primary);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+/* --- Booking Status Legend --- */
+.mhb-calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+}
+
+.mhb-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mhb-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mhb-legend-color.mhb-legend-confirmed {
+    background-color: #e53e3e;
+}
+
+.mhb-legend-color.mhb-legend-pending {
+    background-color: #dd6b20;
+}
+
+/* --- Flatpickr Global Overrides --- */
+/* Scope everything to avoid global pollution */
+/* CRITICAL: Override flatpickr.min.css fixed dimensions and max-height */
+.mhb-calendar-wrapper .flatpickr-calendar,
+.mhb-calendar-wrapper .flatpickr-calendar.inline,
+.mhb-calendar-wrapper .flatpickr-calendar.open {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 20px !important;
+    font-family: inherit !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    padding: 10px !important;
+    background: var(--mhb-glass) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: visible !important;
+    height: auto !important;
+    min-height: unset !important;
+    display: block !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-months {
+    padding: 15px 0 !important;
+    background: transparent !important;
+    border-bottom: 1px solid var(--mhb-border) !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-month {
+    height: 40px !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-current-month {
+    font-size: 1.25rem !important;
+    padding-top: 0 !important;
+    font-weight: 700 !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-weekdays {
+    background: transparent !important;
+    margin-bottom: 5px !important;
+    padding: 10px 0 !important;
+}
+
+.mhb-calendar-wrapper span.flatpickr-weekday {
+    color: var(--mhb-primary) !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    text-transform: uppercase;
+}
+
+/* --- Day Cells --- */
+/* CRITICAL: Override flatpickr.min.css overflow:hidden and fixed width */
+.mhb-calendar-wrapper .flatpickr-days {
+    width: 100% !important;
+    padding: 5px !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+}
+
+.mhb-calendar-wrapper .dayContainer {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+}
+
+/* Ensure calendar container expands to fit all day cells with prices */
+.mhb-calendar-wrapper .flatpickr-innerContainer,
+.mhb-calendar-wrapper .flatpickr-rContainer {
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day {
+    border-radius: 12px !important;
+    border: 1px solid transparent !important;
+    margin: 2px !important;
+    height: 85px !important;
+    /* Fixed height for consistency */
+    flex-basis: calc(14.28% - 4px) !important;
+    /* 7 days minus margin */
+    max-width: calc(14.28% - 4px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    line-height: normal !important;
+    background: #fff !important;
+    color: #2d3748 !important;
+    transition: all 0.2s ease !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day:hover {
+    background: #edf2f7 !important;
+    border-color: #cbd5e0 !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.selected,
+.mhb-calendar-wrapper .flatpickr-day.startRange,
+.mhb-calendar-wrapper .flatpickr-day.endRange {
+    background: var(--mhb-primary) !important;
+    color: #fff !important;
+    border-color: var(--mhb-primary) !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.inRange {
+    background: var(--mhb-secondary) !important;
+    border-color: var(--mhb-secondary) !important;
+    color: var(--mhb-primary) !important;
+    box-shadow: -5px 0 0 var(--mhb-secondary), 5px 0 0 var(--mhb-secondary) !important;
+}
+
+/* Hide the price display on the checkout date so it's clear you only pay per night */
+.mhb-calendar-wrapper .flatpickr-day.endRange .mhb-fp-price {
+    display: none !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled {
+    background: #f7fafc !important;
+    color: #cbd5e0 !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+}
+
+/* --- Booking Status Colors (Subtle Glass Effect) --- */
+/* Confirmed bookings - Subtle Red */
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-confirmed {
+    background: rgba(229, 62, 62, 0.15) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-color: rgba(229, 62, 62, 0.3) !important;
+    color: #742a2a !important;
+    opacity: 1 !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-confirmed .mhb-day-number {
+    color: #742a2a !important;
+}
+
+/* Pending bookings - Subtle Orange */
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-pending {
+    background: rgba(221, 107, 32, 0.15) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-color: rgba(221, 107, 32, 0.3) !important;
+    color: #744210 !important;
+    opacity: 1 !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-pending .mhb-day-number {
+    color: #744210 !important;
+}
+
+/* --- Half-Day Changeover Styling (Split Backgrounds) --- */
+
+/* Confirmed: Check-in day (afternoon booked, morning free) */
+.mhb-calendar-wrapper .flatpickr-day.mhb-booking-confirmed.mhb-half-booked-checkin {
+    background: linear-gradient(135deg, #fff 50%, rgba(229, 62, 62, 0.15) 50%) !important;
+}
+
+/* Confirmed: Check-out day (morning booked, afternoon free) */
+.mhb-calendar-wrapper .flatpickr-day.mhb-booking-confirmed.mhb-half-booked-checkout {
+    background: linear-gradient(135deg, rgba(229, 62, 62, 0.15) 50%, #fff 50%) !important;
+}
+
+/* Pending: Check-in day (afternoon booked, morning free) */
+.mhb-calendar-wrapper .flatpickr-day.mhb-booking-pending.mhb-half-booked-checkin {
+    background: linear-gradient(135deg, #fff 50%, rgba(221, 107, 32, 0.15) 50%) !important;
+}
+
+/* Pending: Check-out day (morning booked, afternoon free) */
+.mhb-calendar-wrapper .flatpickr-day.mhb-booking-pending.mhb-half-booked-checkout {
+    background: linear-gradient(135deg, rgba(221, 107, 32, 0.15) 50%, #fff 50%) !important;
+}
+
+/* Overriding the text color for half-booked days to ensure readability */
+.mhb-calendar-wrapper .flatpickr-day.mhb-half-booked-checkin .mhb-day-number,
+.mhb-calendar-wrapper .flatpickr-day.mhb-half-booked-checkout .mhb-day-number {
+    color: #2d3748 !important;
+}
+
+
+/* Unbookable dates (no price set) - Same red as booked */
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-unbookable {
+    background: rgba(229, 62, 62, 0.15) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-color: rgba(229, 62, 62, 0.3) !important;
+    color: #742a2a !important;
+    opacity: 1 !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-unbookable .mhb-day-number {
+    color: #742a2a !important;
+}
+
+/* --- Inner Day Content --- */
+.mhb-calendar-wrapper .mhb-day-number {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    display: block !important;
+    line-height: 1 !important;
+}
+
+.mhb-calendar-wrapper .mhb-fp-price {
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    color: var(--mhb-primary) !important;
+    text-align: center !important;
+    width: 100% !important;
+    display: block !important;
+    margin-top: auto !important;
+    padding-bottom: 5px;
+    line-height: 1 !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+    word-break: break-all !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.selected .mhb-fp-price,
+.mhb-calendar-wrapper .flatpickr-day.startRange .mhb-fp-price {
+    color: #fff !important;
+}
+
+/* Hide price on the checkout date when a range is selected */
+.mhb-calendar-wrapper .flatpickr-day.endRange .mhb-fp-price {
+    display: none !important;
+}
+
+.mhb-calendar-wrapper .flatpickr-day.inRange .mhb-fp-price {
+    color: var(--mhb-primary) !important;
+}
+
+/* --- Selection Box --- */
+.mhb-selection-box {
+    margin-top: 25px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.mhb-selection-header h3 {
+    margin: 0 0 15px;
+    font-size: 1.25rem;
+    color: #2d3748;
+    border-bottom: 2px solid #edf2f7;
+    padding-bottom: 10px;
+}
+
+.mhb-selection-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.mhb-selection-dates {
+    display: flex;
+    gap: 30px;
+}
+
+.mhb-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #718096;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.mhb-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* --- Check-in/out Time Info --- */
+.mhb-time-info {
+    display: block;
+    font-size: 0.75rem;
+    color: #718096;
+    font-weight: 500;
+    margin-top: 2px;
+    font-style: italic;
+}
+
+.mhb-price-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--mhb-primary);
+}
+
+.mhb-btn-primary {
+    width: 100%;
+    max-width: 100%;
+    background: var(--mhb-primary);
+    color: white;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+    text-align: center;
+    box-sizing: border-box;
+    display: block;
+    margin: 20px auto 0;
+    clear: both;
+}
+
+.mhb-btn-primary:empty::before {
+    content: "Search Rooms";
+}
+
+.mhb-btn-primary:hover {
+    filter: brightness(1.2);
+}
+
+/* --- Responsive Layout --- */
+@media (max-width: 768px) {
+    .mhb-calendar-wrapper .flatpickr-day {
+        height: 80px !important;
+        padding: 4px !important;
+    }
+
+    .mhb-calendar-wrapper .mhb-day-number {
+        font-size: 1rem !important;
+    }
+
+    .mhb-calendar-wrapper .mhb-fp-price {
+        font-size: 0.95rem !important;
+    }
+
+    .mhb-selection-details {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mhb-selection-price {
+        text-align: right;
+    }
+}
+
+@media (max-width: 480px) {
+    .mhb-calendar-wrapper .flatpickr-day {
+        height: 75px !important;
+        padding: 2px !important;
+    }
+
+    .mhb-calendar-wrapper .mhb-fp-price {
+        display: block !important;
+        font-size: 0.85rem !important;
+        padding-bottom: 2px;
+        line-height: 1.1 !important;
+    }
+
+    .mhb-calendar-container {
+        padding: 0 5px;
+    }
+}
+
+/* --- Widget Context Overrides --- */
+.mhb-widget-context .mhb-calendar-container {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+}
+
+.mhb-widget-context .mhb-calendar-guide {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.mhb-widget-context .mhb-calendar-legend {
+    gap: 10px;
+    font-size: 0.75rem;
+}
+
+.mhb-widget-context .mhb-calendar-wrapper .flatpickr-day {
+    height: 60px !important; /* Smaller height for widgets */
+}
+
+.mhb-widget-context .mhb-calendar-wrapper .mhb-day-number {
+    font-size: 0.9rem !important;
+}
+
+.mhb-widget-context .mhb-calendar-wrapper .mhb-fp-price {
+    font-size: 0.8rem !important;
+}
+
+.mhb-widget-context .mhb-selection-box {
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.mhb-widget-context .mhb-selection-details {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.mhb-widget-context .mhb-selection-dates {
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.mhb-widget-context .mhb-selection-price {
+    text-align: center;
+    border-top: 1px solid #edf2f7;
+    padding-top: 10px;
+    margin-top: 5px;
+}
+
+.mhb-widget-context .mhb-btn-primary {
+    font-size: 0.9rem;
+    padding: 10px;
+}
