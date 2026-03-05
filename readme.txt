@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.5.9
+Stable tag: 2.2.6.0
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -123,6 +123,10 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 
 == Changelog ==
 
+= 2.2.6.0 =
+* Improved: Build process to exclude PHPStan baseline from public repository.
+* Optimized: Clean distribution of development artifacts.
+
 = 2.2.5.9 =
 * Fixed: Automation error in release workflow related to deleted CI configuration.
 * Optimized: Version consistency across all plugin components and documentation.
@@ -208,6 +212,9 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 * Initial release.
 
 == Upgrade Notice ==
+
+= 2.2.6.0 =
+Maintenance update to clean up development artifacts from the public repository and distribution packages.
 
 = 2.2.5.9 =
 Hotfix for the automated release workflow. Ensures clean synchronization between private and public repositories.
