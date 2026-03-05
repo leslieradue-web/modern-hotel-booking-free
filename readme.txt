@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.5.7
+Stable tag: 2.2.5.9
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -123,6 +123,17 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 
 == Changelog ==
 
+= 2.2.5.9 =
+* Fixed: Automation error in release workflow related to deleted CI configuration.
+* Optimized: Version consistency across all plugin components and documentation.
+
+= 2.2.5.8 =
+* Added: Automated PHPStan analysis for local development.
+* Improved: Build process to preserve metadata files (.gitignore, .gitattributes) in public repository.
+* Improved: CI/CD release workflow with explicit free version sync logic.
+* Fixed: Strict type compliance for Level 10 static analysis.
+* Optimized: Distignore list to exclude all development artifacts from official ZIP.
+
 = 2.2.5.7 =
 * Added: Fallback to English for empty translations in backend.
 * Improved: Robustness of multi-language decoding for international locales.
@@ -198,7 +209,13 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 
 == Upgrade Notice ==
 
-= 2.2.5.6 =
+= 2.2.5.9 =
+Hotfix for the automated release workflow. Ensures clean synchronization between private and public repositories.
+
+= 2.2.5.8 =
+Static analysis and build optimization update. Improves code quality with Level 10 PHPStan compliance and optimizes repository synchronization.
+
+= 2.2.5.7 =
 Critical compatibility update for PHP 8.4/8.5 and WordPress 7.0. Includes major multilingual robustness fixes.
 
 = 2.2.5.5 =
