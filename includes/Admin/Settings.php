@@ -295,12 +295,12 @@ class Settings
             <div class="mhb-card" style="margin-top: 20px;">
                 <?php
                 $manual_tabs = ['emails', 'labels', 'amenities', 'gdpr', 'tax', 'pricing', 'themes', 'performance', 'general'];
-                $action = in_array($active_tab, $manual_tabs) ? '' : 'options.php';
+                $action = in_array($active_tab, $manual_tabs, true) ? '' : 'options.php';
                 ?>
                 <form method="post" action="<?php echo esc_attr($action); ?>">
                     <?php
                     // Don't use settings_fields for manual tabs to avoid WP trying to save to options.php
-                    if (!in_array($active_tab, $manual_tabs)) {
+                    if (!in_array($active_tab, $manual_tabs, true)) {
                         settings_fields('mhb_settings_group');
                     } else {
                         wp_nonce_field('mhb_settings_group-options');
@@ -345,7 +345,7 @@ class Settings
 
                     // Only show save button if not on a locked Pro tab
                     $locked_tabs = ['gdpr', 'tax'];
-                    if ($is_pro || !in_array($active_tab, $locked_tabs)) {
+                    if ($is_pro || !in_array($active_tab, $locked_tabs, true)) {
                         echo '<input type="hidden" name="mhb_save_tab" value="' . esc_attr($active_tab) . '">';
                         submit_button();
                     }
@@ -1097,7 +1097,7 @@ class Settings
         }
 
         if (isset($_GET['reset_theme']) && isset($_GET['_wpnonce']) && wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_reset_theme')) {
-            if ($_GET['reset_theme'] == 1) {
+            if ($_GET['reset_theme'] === '1') {
                 update_option('mhb_active_theme', 'midnight');
                 update_option('mhb_custom_primary_color', '');
                 update_option('mhb_custom_secondary_color', '');
@@ -1753,7 +1753,7 @@ class Settings
                             <div style="display: flex; flex-wrap: wrap; gap: 15px;">
                                 <?php foreach ($days as $val => $label): ?>
                                     <label style="display: flex; align-items: center; gap: 5px;">
-                                        <input type="checkbox" name="mhb_weekend_days[]" value="<?php echo esc_attr($val); ?>" <?php checked(in_array($val, $weekend_days)); ?>>
+                                        <input type="checkbox" name="mhb_weekend_days[]" value="<?php echo esc_attr($val); ?>" <?php checked(in_array($val, $weekend_days, true)); ?>>
                                         <?php echo esc_html($label); ?>
                                     </label>
                                 <?php endforeach; ?>
@@ -2375,7 +2375,7 @@ class Settings
         if (isset($_POST['mhb_tax_mode'])) {
             $allowed_modes = ['disabled', 'vat', 'sales_tax'];
             $mode = sanitize_text_field(wp_unslash($_POST['mhb_tax_mode']));
-            if (in_array($mode, $allowed_modes)) {
+            if (in_array($mode, $allowed_modes, true)) {
                 update_option('mhb_tax_mode', $mode);
             }
         }
@@ -2409,7 +2409,7 @@ class Settings
         if (isset($_POST['mhb_tax_rounding_mode'])) {
             $allowed_rounding = ['per_total', 'per_line'];
             $rounding = sanitize_text_field(wp_unslash($_POST['mhb_tax_rounding_mode']));
-            if (in_array($rounding, $allowed_rounding)) {
+            if (in_array($rounding, $allowed_rounding, true)) {
                 update_option('mhb_tax_rounding_mode', $rounding);
             }
         }

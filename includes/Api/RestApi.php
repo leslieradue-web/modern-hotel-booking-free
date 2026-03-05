@@ -438,7 +438,7 @@ class RestApi
         // SECURITY: Verify timestamp to prevent replay attacks (5 minute tolerance)
         $current_time = time();
         $tolerance = 300; // 5 minutes
-        if (abs($current_time - $timestamp) > $tolerance) {
+        if (abs($current_time - (int) $timestamp) > $tolerance) {
             return new \WP_Error(
                 'mhb_webhook_expired',
                 esc_html(I18n::get_label('label_webhook_expired')),
@@ -993,8 +993,8 @@ class RestApi
                     'date' => $date_str,
                     'status' => $is_booked ? 'booked' : ($is_unbookable ? 'unbookable' : 'available'),
                     'booking_status' => $is_booked ? $booked_dates[$date_str] : null,
-                    'is_checkin' => in_array($date_str, $check_ins),
-                    'is_checkout' => in_array($date_str, $check_outs),
+                    'is_checkin' => in_array($date_str, $check_ins, true),
+                    'is_checkout' => in_array($date_str, $check_outs, true),
                     'price' => $price,
                     'price_formatted' => I18n::format_currency($price)
                 ];

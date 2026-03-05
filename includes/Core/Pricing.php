@@ -159,11 +159,11 @@ class Pricing
             if (!is_array($weekend_days)) {
                 $weekend_days = is_string($weekend_days) && !empty($weekend_days) ? explode(',', $weekend_days) : [];
             }
-            $is_weekend = in_array($day_of_week, $weekend_days);
+            $is_weekend = in_array($day_of_week, $weekend_days, true);
 
             $holiday_dates_str = get_option('mhb_holiday_dates', '');
             $holiday_dates = array_map('trim', explode(',', $holiday_dates_str));
-            $is_holiday = in_array($date, $holiday_dates);
+            $is_holiday = in_array($date, $holiday_dates, true);
 
             $weekend_adj = 0;
             if ($is_weekend && get_option('mhb_weekend_pricing_enabled', 0)) {
@@ -326,7 +326,7 @@ class Pricing
                 $extra = $extras_map[$ex_id];
                 $quantity = 0;
 
-                if (($extra['control_type'] ?? 'checkbox') === 'checkbox' && '1' == $val) {
+                if (($extra['control_type'] ?? 'checkbox') === 'checkbox' && '1' === $val) {
                     $quantity = 1;
                 } elseif (($extra['control_type'] ?? 'checkbox') === 'quantity') {
                     $quantity = intval($val);

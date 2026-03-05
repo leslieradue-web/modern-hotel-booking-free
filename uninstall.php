@@ -15,9 +15,10 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 // Check if we should save data on uninstall (default to 1 for safety)
-$save_data = get_option('mhb_save_data_on_uninstall', 1);
+$option_val = get_option('mhb_save_data_on_uninstall', 1);
+$save_data = is_numeric($option_val) ? (int) $option_val : 1;
 
-if ($save_data) {
+if (0 !== $save_data) {
     // Only clear scheduled cron events, keep data and tables
     $cron_hooks = array(
         'mhb_hourly_sync',
@@ -31,6 +32,7 @@ if ($save_data) {
     return;  // Let script complete normally for WordPress
 }
 
+/** @var \wpdb $wpdb */
 global $wpdb;
 
 // Drop custom tables

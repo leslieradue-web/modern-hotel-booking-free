@@ -159,7 +159,7 @@ class Tax
     {
         $decimal_places = self::get_decimal_places();
 
-        if ($tax_rate == 0 || $gross_amount == 0) {
+        if ($tax_rate === 0.0 || $gross_amount === 0.0) {
             return [
                 'net' => $round ? round(floatval($gross_amount), $decimal_places) : floatval($gross_amount),
                 'tax' => 0.00,
@@ -199,7 +199,7 @@ class Tax
     {
         $decimal_places = self::get_decimal_places();
 
-        if ($tax_rate == 0 || $net_amount == 0) {
+        if ($tax_rate === 0.0 || $net_amount === 0.0) {
             return [
                 'net' => $round ? round(floatval($net_amount), $decimal_places) : floatval($net_amount),
                 'tax' => 0.00,

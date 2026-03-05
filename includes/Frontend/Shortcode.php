@@ -105,7 +105,7 @@ class Shortcode
         global $post;
         $has_shortcode = is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'modern_hotel_booking');
         $has_block = is_a($post, 'WP_Post') && has_block('modern-hotel-booking/booking-form', $post->post_content);
-        $is_booking_page = (get_option('mhb_booking_page') == ($post->ID ?? 0));
+        $is_booking_page = is_a($post, 'WP_Post') && ((int) get_option('mhb_booking_page') === $post->ID);
 
         // If not on booking page, no shortcode, and no block, don't enqueue
         if (!$has_shortcode && !$has_block && !$is_booking_page) {

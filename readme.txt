@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.0
+Stable tag: 2.2.6.1
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,6 +122,11 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
+
+= 2.2.6.1 =
+* Fixed: Version consistency across all plugin files including block metadata.
+* Fixed: Synchronized version numbers in block.json and block.asset.php files.
+* Improved: Build process stability and version verification.
 
 = 2.2.6.0 =
 * Improved: Build process to exclude PHPStan baseline from public repository.
