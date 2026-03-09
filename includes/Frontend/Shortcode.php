@@ -452,26 +452,7 @@ class Shortcode
         // Check License Status
         $is_pro_active = false;
 
-        // Get Stripe settings - use correct option names matching PaymentGateways.php
-        // Note: Options are saved as 1/0 (integers), not 'yes'/'no'
-        $stripe_enabled = $is_pro_active && get_option('mhb_gateway_stripe_enabled', 0);
-        $stripe_mode = get_option('mhb_stripe_mode', 'test');
-        $stripe_key = 'live' === $stripe_mode
-            ? get_option('mhb_stripe_live_publishable_key', '')
-            : get_option('mhb_stripe_test_publishable_key', '');
-
-        // Get PayPal settings - use correct option names matching PaymentGateways.php
-        // Note: Options are saved as 1/0 (integers), not 'yes'/'no'
-        $paypal_enabled = $is_pro_active && get_option('mhb_gateway_paypal_enabled', 0);
-        $paypal_mode = get_option('mhb_paypal_mode', 'sandbox');
-        $paypal_client = 'live' === $paypal_mode
-            ? get_option('mhb_paypal_live_client_id', '')
-            : get_option('mhb_paypal_sandbox_client_id', '');
-
-        // Get On-site settings - use correct option name matching PaymentGateways.php
-        // Note: Options are saved as 1/0 (integers), not 'yes'/'no'
-        $arrival_enabled = $is_pro_active && get_option('mhb_gateway_onsite_enabled', 0);
-        ?>
+        // Stripe removed in Free version// PayPal removed in Free version$arrival_enabled = true; // Always enabled in free version?>
         <div class="mhb-booking-wrapper">
             <h2><?php echo esc_html(I18n::get_label('label_complete_booking')); ?></h2>
             <div class="mhb-booking-summary">
@@ -875,27 +856,7 @@ class Shortcode
         // Validate Payment Method Requirement
         $is_pro_active = false;
 
-        // Get Stripe settings - use correct option names matching PaymentGateways.php
-        // Note: Options are saved as 1/0 (integers), not 'yes'/'no'
-        $stripe_enabled = $is_pro_active && get_option('mhb_gateway_stripe_enabled', 0);
-        $stripe_mode = get_option('mhb_stripe_mode', 'test');
-        $stripe_key = 'live' === $stripe_mode
-            ? get_option('mhb_stripe_live_publishable_key', '')
-            : get_option('mhb_stripe_test_publishable_key', '');
-
-        // Get PayPal settings - use correct option names matching PaymentGateways.php
-        // Note: Options are saved as 1/0 (integers), not 'yes'/'no'
-        $paypal_enabled = $is_pro_active && get_option('mhb_gateway_paypal_enabled', 0);
-        $paypal_mode = get_option('mhb_paypal_mode', 'sandbox');
-        $paypal_client = 'live' === $paypal_mode
-            ? get_option('mhb_paypal_live_client_id', '')
-            : get_option('mhb_paypal_sandbox_client_id', '');
-
-        // Get On-site settings - use correct option name matching PaymentGateways.php
-        // Note: Options are saved as 1/0 (integers), not 'yes'/'no'
-        $arrival_enabled = $is_pro_active && get_option('mhb_gateway_onsite_enabled', 0);
-
-        $has_active_gateways = ($stripe_enabled && !empty($stripe_key)) || ($paypal_enabled && !empty($paypal_client));
+        // Stripe removed in Free version// PayPal removed in Free version$arrival_enabled = true; // Always enabled in free version$has_active_gateways = false; // No external gateways in Free version
 
         // If gateways are active, enforce payment or arrival selection
         $payment_method = 'arrival';
@@ -903,32 +864,14 @@ class Shortcode
 
         if ($has_active_gateways) {
             $payment_method = sanitize_key(wp_unslash($_POST['mhb_payment_method'] ?? ''));
-            $stripe_payment_intent = isset($_POST['mhb_stripe_payment_intent']) ? sanitize_text_field(wp_unslash($_POST['mhb_stripe_payment_intent'])) : '';
-            $paypal_order_id = isset($_POST['mhb_paypal_order_id']) ? sanitize_text_field(wp_unslash($_POST['mhb_paypal_order_id'])) : '';
-
+                        
             // Check if payment method is actually valid and has required data
             if ('onsite' === $payment_method && $arrival_enabled) {
                 // Allowed - pay on site
                 $payment_method = 'arrival'; // Normalize for database
             } elseif ('arrival' === $payment_method && $arrival_enabled) {
                 // Allowed - pay on arrival (alternate name)
-            } elseif ('stripe' === $payment_method) {
-                if (!empty($stripe_payment_intent)) {
-                    // Stripe payment - will be verified below
-                } else {
-                    $wpdb->query($wpdb->prepare("SELECT RELEASE_LOCK(%s)", $lock_name)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release
-                    echo '<div class="mhb-error">' . esc_html(I18n::get_label('label_stripe_intent_missing')) . '</div>';
-                    return;
-                }
-            } elseif ('paypal' === $payment_method) {
-                if (!empty($paypal_order_id)) {
-                    // PayPal payment - will be verified below
-                } else {
-                    $wpdb->query($wpdb->prepare("SELECT RELEASE_LOCK(%s)", $lock_name)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release
-                    echo '<div class="mhb-error">' . esc_html(I18n::get_label('label_paypal_id_missing')) . '</div>';
-                    return;
-                }
-            } else {
+            }   else {
                 $wpdb->query($wpdb->prepare("SELECT RELEASE_LOCK(%s)", $lock_name)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release
                 echo '<div class="mhb-error">' . esc_html(I18n::get_label('label_payment_required')) . '</div>';
                 return;

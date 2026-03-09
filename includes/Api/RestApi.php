@@ -371,17 +371,9 @@ class RestApi
         $headers = $request->get_headers();
         $payload = $request->get_body();
 
-        // Check for Stripe signature
-        $stripe_signature = isset($headers['stripe_signature']) ? $headers['stripe_signature'][0] : null;
-        if ($stripe_signature) {
-            return $this->verify_stripe_signature($payload, $stripe_signature);
-        }
+        // Stripe signature verification removed
 
-        // Check for PayPal authentication headers
-        $paypal_auth = isset($headers['paypal_auth_algo']) ? $headers['paypal_auth_algo'][0] : null;
-        if ($paypal_auth) {
-            return $this->verify_paypal_signature($request);
-        }
+        // PayPal authentication verification removed
 
         // SECURITY: Reject webhooks without proper signatures
         // The old behavior of accepting 'source' in body was a critical vulnerability
@@ -392,158 +384,9 @@ class RestApi
         );
     }
 
-    /**
-     * Verify Stripe webhook signature.
-     * SECURITY: Implements proper HMAC signature verification.
-     *
-     * @param string $payload Raw request body.
-     * @param string $signature Stripe signature header.
-     * @return bool|\WP_Error
-     */
-    private function verify_stripe_signature($payload, $signature)
-    {
-        $mode = get_option('mhb_stripe_mode', 'test');
-        $webhook_secret = get_option("mhb_stripe_{$mode}_webhook_secret", '');
+    // Stripe verification removed in Free version
 
-        if (empty($webhook_secret)) {
-            // SECURITY: Reject if no webhook secret configured
-            return new \WP_Error(
-                'mhb_webhook_not_configured',
-                esc_html(I18n::get_label('label_stripe_webhook_secret_missing')),
-                array('status' => 500)
-            );
-        }
-
-        // Parse Stripe signature header
-        // Format: t=1234567890,v1=abc123def456...
-        $sig_elements = [];
-        foreach (explode(',', $signature) as $item) {
-            $parts = explode('=', $item, 2);
-            if (count($parts) === 2) {
-                $sig_elements[$parts[0]] = $parts[1];
-            }
-        }
-
-        if (!isset($sig_elements['t']) || !isset($sig_elements['v1'])) {
-            return new \WP_Error(
-                'mhb_invalid_signature_format',
-                esc_html(I18n::get_label('label_invalid_stripe_sig_format')),
-                array('status' => 400)
-            );
-        }
-
-        $timestamp = $sig_elements['t'];
-        $expected_signature = $sig_elements['v1'];
-
-        // SECURITY: Verify timestamp to prevent replay attacks (5 minute tolerance)
-        $current_time = time();
-        $tolerance = 300; // 5 minutes
-        if (abs($current_time - (int) $timestamp) > $tolerance) {
-            return new \WP_Error(
-                'mhb_webhook_expired',
-                esc_html(I18n::get_label('label_webhook_expired')),
-                array('status' => 400)
-            );
-        }
-
-        // Compute expected signature
-        $signed_payload = $timestamp . '.' . $payload;
-        $computed_signature = hash_hmac('sha256', $signed_payload, $webhook_secret);
-
-        // SECURITY: Use hash_equals to prevent timing attacks
-        if (!hash_equals($expected_signature, $computed_signature)) {
-            return new \WP_Error(
-                'mhb_invalid_signature',
-                esc_html(I18n::get_label('label_invalid_stripe_sig')),
-                array('status' => 401)
-            );
-        }
-
-        return true;
-    }
-
-    /**
-     * Verify PayPal webhook signature.
-     * SECURITY: Validates PayPal webhook authentication headers.
-     *
-     * @param \WP_REST_Request $request Request object.
-     * @return bool|\WP_Error
-     */
-    private function verify_paypal_signature($request)
-    {
-        $mode = get_option('mhb_paypal_mode', 'sandbox');
-        $client_id = get_option("mhb_paypal_{$mode}_client_id", '');
-        $gateway = null /* Pro class removed */;
-        $client_secret = $gateway->get_decrypted_secret(get_option("mhb_paypal_{$mode}_secret", ''));
-
-        if (empty($client_id) || empty($client_secret)) {
-            return new \WP_Error(
-                'mhb_paypal_not_configured',
-                esc_html(I18n::get_label('label_paypal_not_configured')),
-                array('status' => 500)
-            );
-        }
-
-        $headers = $request->get_headers();
-        $payload = $request->get_body();
-        $api_base = ('live' === $mode) ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
-
-        // 1. Get Access Token
-        $auth_response = wp_remote_post($api_base . '/v1/oauth2/token', array(
-            'headers' => array(
-                'Authorization' => 'Basic ' . base64_encode($client_id . ':' . $client_secret),
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ),
-            'body' => 'grant_type=client_credentials',
-            'timeout' => 30,
-        ));
-
-        if (is_wp_error($auth_response)) {
-            return false;
-        }
-
-        $auth_body = json_decode(wp_remote_retrieve_body($auth_response), true);
-        $access_token = $auth_body['access_token'] ?? '';
-
-        if (empty($access_token)) {
-            return false;
-        }
-
-        // 2. Call PayPal to verify signature
-        $webhook_id = get_option("mhb_paypal_{$mode}_webhook_id", '');
-        if (empty($webhook_id)) {
-            return new \WP_Error(
-                'mhb_paypal_webhook_id_missing',
-                __('PayPal Webhook ID is not configured.', 'modern-hotel-booking'),
-                array('status' => 500)
-            );
-        }
-
-        $verification_response = wp_remote_post($api_base . '/v1/notifications/verify-webhook-signature', array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $access_token,
-                'Content-Type' => 'application/json',
-            ),
-            'body' => wp_json_encode(array(
-                'auth_algo' => $headers['paypal_auth_algo'][0] ?? '',
-                'cert_url' => $headers['paypal_cert_url'][0] ?? '',
-                'transmission_id' => $headers['paypal_transmission_id'][0] ?? '',
-                'transmission_sig' => $headers['paypal_transmission_sig'][0] ?? '',
-                'transmission_time' => $headers['paypal_transmission_time'][0] ?? '',
-                'webhook_id' => $webhook_id,
-                'webhook_event' => json_decode($payload, true),
-            )),
-            'timeout' => 30,
-        ));
-
-        if (is_wp_error($verification_response)) {
-            return false;
-        }
-
-        $verification_body = json_decode(wp_remote_retrieve_body($verification_response), true);
-
-        return (isset($verification_body['verification_status']) && $verification_body['verification_status'] === 'SUCCESS');
-    }
+    // PayPal verification removed in Free version
 
     /**
      * GET /rooms — List all room types.

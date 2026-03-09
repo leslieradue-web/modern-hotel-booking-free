@@ -81,34 +81,34 @@ class Settings
     public function register_settings()
     {
         // General Settings
-        register_setting('mhb_settings_group', 'mhb_checkin_time', array('default' => '14:00'));
-        register_setting('mhb_settings_group', 'mhb_checkout_time', array('default' => '11:00'));
-        register_setting('mhb_settings_group', 'mhb_notification_email', array('default' => get_option('admin_email')));
-        register_setting('mhb_settings_group', 'mhb_prevent_same_day_turnover', array('default' => 0));
-        register_setting('mhb_settings_group', 'mhb_children_enabled', array('default' => 0));
+        register_setting('mhb_settings_group', 'mhb_checkin_time', array('default' => '14:00', 'sanitize_callback' => 'sanitize_text_field'));
+        register_setting('mhb_settings_group', 'mhb_checkout_time', array('default' => '11:00', 'sanitize_callback' => 'sanitize_text_field'));
+        register_setting('mhb_settings_group', 'mhb_notification_email', array('default' => get_option('admin_email'), 'sanitize_callback' => 'sanitize_email'));
+        register_setting('mhb_settings_group', 'mhb_prevent_same_day_turnover', array('default' => 0, 'sanitize_callback' => 'absint'));
+        register_setting('mhb_settings_group', 'mhb_children_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
 
         // Currency Settings
-        register_setting('mhb_settings_group', 'mhb_currency_code', array('default' => 'USD'));
-        register_setting('mhb_settings_group', 'mhb_currency_symbol', array('default' => '$'));
-        register_setting('mhb_settings_group', 'mhb_currency_position', array('default' => 'before'));
+        register_setting('mhb_settings_group', 'mhb_currency_code', array('default' => 'USD', 'sanitize_callback' => 'sanitize_text_field'));
+        register_setting('mhb_settings_group', 'mhb_currency_symbol', array('default' => '$', 'sanitize_callback' => 'sanitize_text_field'));
+        register_setting('mhb_settings_group', 'mhb_currency_position', array('default' => 'before', 'sanitize_callback' => 'sanitize_text_field'));
 
         // Multilingual settings handled manually in save_multilingual_settings
         // Custom Fields
-        register_setting('mhb_settings_group', 'mhb_custom_fields', array('default' => []));
-        register_setting('mhb_settings_group', 'mhb_terms_page', array('default' => 0));
+        register_setting('mhb_settings_group', 'mhb_custom_fields', array('default' => [], 'sanitize_callback' => array($this, 'sanitize_custom_fields')));
+        register_setting('mhb_settings_group', 'mhb_terms_page', array('default' => 0, 'sanitize_callback' => 'absint'));
 
         // GDPR Settings (Pro)
-        register_setting('mhb_settings_group', 'mhb_gdpr_enabled', array('default' => 0));
-        register_setting('mhb_settings_group', 'mhb_gdpr_checkbox_enabled', array('default' => 0));
-        register_setting('mhb_settings_group', 'mhb_label_gdpr_checkbox_text', array('default' => '[:en]I accept the privacy policy.[:]'));
-        register_setting('mhb_settings_group', 'mhb_gdpr_retention_days', array('default' => 365));
-        register_setting('mhb_settings_group', 'mhb_gdpr_cookie_prefix', array('default' => 'mhb_'));
+        register_setting('mhb_settings_group', 'mhb_gdpr_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
+        register_setting('mhb_settings_group', 'mhb_gdpr_checkbox_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
+        register_setting('mhb_settings_group', 'mhb_label_gdpr_checkbox_text', array('default' => '[:en]I accept the privacy policy.[:]', 'sanitize_callback' => 'wp_kses_post'));
+        register_setting('mhb_settings_group', 'mhb_gdpr_retention_days', array('default' => 365, 'sanitize_callback' => 'absint'));
+        register_setting('mhb_settings_group', 'mhb_gdpr_cookie_prefix', array('default' => 'mhb_', 'sanitize_callback' => 'sanitize_text_field'));
 
         // Uninstall Settings
-        register_setting('mhb_settings_group', 'mhb_save_data_on_uninstall', array('default' => 1));
+        register_setting('mhb_settings_group', 'mhb_save_data_on_uninstall', array('default' => 1, 'sanitize_callback' => 'absint'));
 
         // Display Settings
-        register_setting('mhb_settings_group', 'mhb_powered_by_link', array('default' => 1));
+        register_setting('mhb_settings_group', 'mhb_powered_by_link', array('default' => 0, 'sanitize_callback' => 'absint'));
         // Amenities (Dynamic) - Handled manually
         // register_setting('mhb_settings_group', 'mhb_amenities_list'); 
 
@@ -146,6 +146,30 @@ class Settings
                 'after' => __('After Amount (100$)', 'modern-hotel-booking')
             ]
         ));
+    }
+
+    public function sanitize_custom_fields($fields)
+    {
+        if (!is_array($fields))
+            return [];
+        $sanitized = [];
+        foreach ($fields as $field) {
+            $sanitized_field = [
+                'id' => isset($field['id']) ? sanitize_key($field['id']) : '',
+                'type' => isset($field['type']) ? sanitize_text_field($field['type']) : 'text',
+                'required' => isset($field['required']) ? absint($field['required']) : 0,
+            ];
+
+            if (isset($field['label']) && is_array($field['label'])) {
+                foreach ($field['label'] as $lang => $label) {
+                    $sanitized_field['label'][sanitize_key($lang)] = sanitize_text_field($label);
+                }
+            } else {
+                $sanitized_field['label'] = isset($field['label']) ? sanitize_text_field($field['label']) : '';
+            }
+            $sanitized[] = $sanitized_field;
+        }
+        return $sanitized;
     }
 
     public function render_text_field($args)
@@ -284,10 +308,8 @@ class Settings
                 <a href="?page=mhb-settings&tab=amenities"
                     class="nav-tab <?php echo 'amenities' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Amenities', 'modern-hotel-booking'); ?></a>
 
-                <a href="?page=mhb-settings&tab=gdpr"
-                    class="nav-tab <?php echo 'gdpr' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('GDPR & Privacy', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-settings&tab=tax"
-                    class="nav-tab <?php echo 'tax' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Tax Settings', 'modern-hotel-booking'); ?></a>
+                
+                
                 <a href="?page=mhb-settings&tab=performance"
                     class="nav-tab <?php echo 'performance' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Performance', 'modern-hotel-booking'); ?></a>
             </h2>
@@ -315,36 +337,12 @@ class Settings
                         self::render_labels_tab();
                     } elseif ('amenities' === $active_tab) {
                         self::render_amenities_tab();
-                    } elseif ('gdpr' === $active_tab) {
-                        if ($is_pro) {
-                            self::render_gdpr_tab();
-                        } else {
-                            self::render_pro_upsell();
-                        }
-                    } elseif ('tax' === $active_tab) {
-                        if ($is_pro) {
-                            self::render_tax_tab();
-                        } else {
-                            self::render_pro_upsell();
-                        }
-                    } elseif ('pricing' === $active_tab) {
-                        if ($is_pro) {
-                            self::render_pricing_tab();
-                        } else {
-                            self::render_pro_upsell();
-                        }
-                    } elseif ('themes' === $active_tab) {
-                        if ($is_pro) {
-                            self::render_themes_tab();
-                        } else {
-                            self::render_pro_upsell();
-                        }
-                    } elseif ('performance' === $active_tab) {
+                    }     elseif ('performance' === $active_tab) {
                         self::render_performance_tab();
                     }
 
                     // Only show save button if not on a locked Pro tab
-                    $locked_tabs = ['gdpr', 'tax'];
+                    $locked_tabs = [];
                     if ($is_pro || !in_array($active_tab, $locked_tabs, true)) {
                         echo '<input type="hidden" name="mhb_save_tab" value="' . esc_attr($active_tab) . '">';
                         submit_button();
@@ -489,66 +487,7 @@ class Settings
 
     }
 
-    private static function render_gdpr_tab()
-    {
-        $langs = I18n::get_available_languages();
-        $gdpr_enabled = get_option('mhb_gdpr_enabled', 0);
-        $checkbox_enabled = get_option('mhb_gdpr_checkbox_enabled', 0);
-        $retention = get_option('mhb_gdpr_retention_days', 365);
-        $cookie_prefix = get_option('mhb_gdpr_cookie_prefix', 'mhb_');
-
-        echo '<h3>' . esc_html__('GDPR Compliance & Data Privacy (PRO)', 'modern-hotel-booking') . '</h3>';
-        echo '<table class="form-table">';
-
-        // Master Toggle
-        echo '<tr><th>' . esc_html__('Enable Pro Privacy Suite', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="checkbox" name="mhb_gdpr_enabled" value="1" ' . checked(1, $gdpr_enabled, false) . '>';
-        echo '<p class="description">' . esc_html__('Enables automated data retention, custom cookie prefixing, and advanced privacy controls.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Consent Checkbox
-        echo '<tr><th>' . esc_html__('Require Privacy Consent', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="checkbox" name="mhb_gdpr_checkbox_enabled" value="1" ' . checked(1, $checkbox_enabled, false) . '>';
-        echo '<p class="description">' . esc_html__('Adds a mandatory checkbox to the booking form for guest consent.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Terms & Conditions Page
-        $terms_page = get_option('mhb_terms_page', 0);
-        echo '<tr><th>' . esc_html__('Terms & Conditions Page', 'modern-hotel-booking') . '</th><td>';
-        wp_dropdown_pages(array(
-            'name' => 'mhb_terms_page',
-            'selected' => absint($terms_page),
-            'show_option_none' => esc_html__('— Select a Page —', 'modern-hotel-booking'),
-            'class' => 'regular-text'
-        ));
-        echo '<p class="description">' . esc_html__('Select the page for your Terms & Conditions. Use the [terms_and_conditions] link in your consent text.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Consent Text (Multilingual)
-        echo '<tr><th>' . esc_html__('Consent Text', 'modern-hotel-booking') . '</th><td>';
-        foreach ($langs as $lang) {
-            $val = I18n::decode(get_option('mhb_label_gdpr_checkbox_text'), $lang);
-            echo '<div style="margin-bottom:5px;"><strong>' . esc_html(strtoupper($lang)) . ':</strong><br>';
-            echo '<input type="text" name="mhb_label_templates[gdpr_checkbox_text][' . esc_attr($lang) . ']" value="' . esc_attr($val) . '" class="large-text"></div>';
-        }
-        echo '<p class="description">' . esc_html__('Text displayed next to the consent checkbox. Use the [privacy_policy] link in your text to link to your policy page.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Data Retention
-        echo '<tr><th>' . esc_html__('Automated Data Retention', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="number" name="mhb_gdpr_retention_days" value="' . esc_attr($retention) . '" class="small-text"> ' . esc_html__('days', 'modern-hotel-booking');
-        echo '<p class="description">' . esc_html__('Bookings older than this will be automatically anonymized. Set to 0 to disable.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Cookie Prefix
-        echo '<tr><th>' . esc_html__('Cookie Name Prefix', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="text" name="mhb_gdpr_cookie_prefix" value="' . esc_attr($cookie_prefix) . '" class="regular-text">';
-        echo '<p class="description">' . esc_html__('Customize the prefix for all frontend cookies (e.g. for selection persistence). Helps with compatibility and auditing.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        echo '</table>';
-    }
-
+    
     private static function render_labels_tab()
     {
         $langs = I18n::get_available_languages();
@@ -1317,10 +1256,7 @@ class Settings
                             <div class="mhb-category-header">
                                 <h2><span class="mhb-category-icon">🧾</span>
                                     <?php esc_html_e('Tax Management', 'modern-hotel-booking'); ?></h2>
-                                <a href="?page=mhb-settings&tab=tax" class="mhb-configure-link">
-                                    <?php esc_html_e('Configure', 'modern-hotel-booking'); ?> <span
-                                        class="dashicons dashicons-arrow-right-alt2"></span>
-                                </a>
+                                
                             </div>
                             <div class="mhb-feature-grid">
                                 <div class="mhb-feature-card">
@@ -1416,9 +1352,7 @@ class Settings
                                     <h4><?php esc_html_e('GDPR Compliance Tools', 'modern-hotel-booking'); ?></h4>
                                     <p><?php esc_html_e('Automated data retention, consent checkboxes, and cookie management.', 'modern-hotel-booking'); ?>
                                     </p>
-                                    <a href="?page=mhb-settings&tab=gdpr" class="mhb-configure-link">
-                                        <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
-                                    </a>
+                                    
                                 </div>
                                 <div class="mhb-feature-card">
                                     <span class="mhb-feature-icon">🎨</span>
@@ -1473,10 +1407,7 @@ class Settings
                                 <span class="dashicons dashicons-money-alt"></span>
                                 <?php esc_html_e('Configure Payment Gateways', 'modern-hotel-booking'); ?>
                             </a>
-                            <a href="?page=mhb-settings&tab=tax" class="mhb-quick-action-btn">
-                                <span class="dashicons dashicons-chart-pie"></span>
-                                <?php esc_html_e('Set Up Tax Settings', 'modern-hotel-booking'); ?>
-                            </a>
+                            
                             <a href="?page=mhb-pro-analytics" class="mhb-quick-action-btn">
                                 <span class="dashicons dashicons-chart-bar"></span>
                                 <?php esc_html_e('View Analytics', 'modern-hotel-booking'); ?>
@@ -1579,37 +1510,7 @@ class Settings
     /**
      * Render Pro Upsell notice for unlicensed users trying to access Pro tabs.
      */
-    private static function render_pro_upsell()
-    {
-        ?>
-            <div class="mhb-pro-upsell"
-                style="margin-top: 20px; padding: 40px; text-align: center; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 1px solid #dee2e6;">
-                <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
-                <h3 style="margin: 0 0 10px 0; font-size: 1.4rem; color: #1a3b5d;">
-                    <?php esc_html_e('Pro Feature', 'modern-hotel-booking'); ?>
-                </h3>
-                <p style="color: #6c757d; max-width: 400px; margin: 0 auto 20px auto; font-size: 14px;">
-                    <?php esc_html_e('Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more.', 'modern-hotel-booking'); ?>
-                </p>
-                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <a href="https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/" target="_blank"
-                        rel="noopener noreferrer"
-                        class="button button-primary button-large"><?php esc_html_e('Upgrade to Pro', 'modern-hotel-booking'); ?></a>                </div>
-                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #dee2e6;">
-                    <span
-                        style="display: inline-block; font-size: 12px; color: #856404; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 12px; margin: 0 5px;">✓
-                        <?php esc_html_e('Priority Support', 'modern-hotel-booking'); ?></span>
-                    <span
-                        style="display: inline-block; font-size: 12px; color: #856404; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 12px; margin: 0 5px;">✓
-                        <?php esc_html_e('Priority Updates', 'modern-hotel-booking'); ?></span>
-                    <span
-                        style="display: inline-block; font-size: 12px; color: #856404; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 12px; margin: 0 5px;">✓
-                        <?php esc_html_e('All Premium Features', 'modern-hotel-booking'); ?></span>
-                </div>
-            </div>
-            <?php
-    }
-
+    
     /**
      * Render Payment Gateways settings tab (Pro).
      */
@@ -1716,272 +1617,11 @@ class Settings
     /**
      * Render Advanced Pricing tab (Pro).
      */
-    private static function render_pricing_tab()
-    {
-        $weekend_enabled = get_option('mhb_weekend_pricing_enabled', 0);
-        $weekend_days = get_option('mhb_weekend_days', ['friday', 'saturday', 'sunday']);
-        if (!is_array($weekend_days)) {
-            $weekend_days = is_string($weekend_days) && !empty($weekend_days) ? explode(',', $weekend_days) : [];
-        }
-        $weekend_val = get_option('mhb_weekend_rate_multiplier', 1.2);
-        $weekend_type = get_option('mhb_weekend_modifier_type', 'multiplier');
-        $holiday_enabled = get_option('mhb_holiday_pricing_enabled', 0);
-        $holiday_val = get_option('mhb_holiday_rate_modifier', 1.2);
-        $holiday_type = get_option('mhb_holiday_modifier_type', 'multiplier');
-        $holidays = get_option('mhb_holiday_dates', '');
-        $apply_weekend_to_holidays = get_option('mhb_apply_weekend_to_holidays', 1);
-
-        $days = [
-            'monday' => __('Monday', 'modern-hotel-booking'),
-            'tuesday' => __('Tuesday', 'modern-hotel-booking'),
-            'wednesday' => __('Wednesday', 'modern-hotel-booking'),
-            'thursday' => __('Thursday', 'modern-hotel-booking'),
-            'friday' => __('Friday', 'modern-hotel-booking'),
-            'saturday' => __('Saturday', 'modern-hotel-booking'),
-            'sunday' => __('Sunday', 'modern-hotel-booking'),
-        ];
-        ?>
-            <div class="mhb-settings-section">
-                <h3 style="margin-top:0;"><?php esc_html_e('Weekend Pricing', 'modern-hotel-booking'); ?></h3>
-                <p class="description">
-                    <?php esc_html_e('Define which days are considered weekends and set the adjustment.', 'modern-hotel-booking'); ?>
-                </p>
-                <table class="form-table">
-                    <tr>
-                        <th><?php esc_html_e('Weekend Days', 'modern-hotel-booking'); ?></th>
-                        <td>
-                            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-                                <?php foreach ($days as $val => $label): ?>
-                                    <label style="display: flex; align-items: center; gap: 5px;">
-                                        <input type="checkbox" name="mhb_weekend_days[]" value="<?php echo esc_attr($val); ?>" <?php checked(in_array($val, $weekend_days, true)); ?>>
-                                        <?php echo esc_html($label); ?>
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('Weekend Adjustment', 'modern-hotel-booking'); ?></th>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <label style="display: flex; align-items: center; gap: 5px; font-weight: 600;">
-                                    <input type="checkbox" name="mhb_weekend_pricing_enabled" class="mhb-adj-toggle" value="1"
-                                        <?php checked($weekend_enabled, 1); ?>>
-                                    <?php esc_html_e('Enable', 'modern-hotel-booking'); ?>
-                                </label>
-                                <div class="mhb-adj-inputs"
-                                    style="<?php echo $weekend_enabled ? '' : 'opacity: 0.5; pointer-events: none;'; ?>">
-                                    <input type="number" step="0.01" name="mhb_weekend_rate_multiplier"
-                                        value="<?php echo esc_attr($weekend_val); ?>" class="small-text">
-                                    <select name="mhb_weekend_modifier_type">
-                                        <option value="multiplier" <?php selected($weekend_type, 'multiplier'); ?>>
-                                            <?php esc_html_e('Multiplier (1.2 = +20%)', 'modern-hotel-booking'); ?>
-                                        </option>
-                                        <option value="percent" <?php selected($weekend_type, 'percent'); ?>>
-                                            <?php esc_html_e('Percentage (20 = +20%)', 'modern-hotel-booking'); ?>
-                                        </option>
-                                        <option value="fixed" <?php selected($weekend_type, 'fixed'); ?>>
-                                            <?php esc_html_e('Fixed Amount (20 = +$20)', 'modern-hotel-booking'); ?>
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-
-                <h3 style="margin-top:25px;"><?php esc_html_e('Holiday Pricing', 'modern-hotel-booking'); ?></h3>
-                <table class="form-table">
-                    <tr>
-                        <th><?php esc_html_e('Holiday Date Picker', 'modern-hotel-booking'); ?></th>
-                        <td>
-                            <div id="mhb-holiday-picker-wrap"
-                                style="max-width: 400px; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
-                                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                    <input type="date" id="mhb-new-holiday" class="regular-text" style="flex:1;">
-                                    <button type="button" id="mhb-add-holiday-btn"
-                                        class="button button-primary"><?php esc_html_e('Add', 'modern-hotel-booking'); ?></button>
-                                </div>
-                                <div id="mhb-holiday-list"
-                                    style="display: flex; flex-direction: column; gap: 5px; max-height: 200px; overflow-y: auto;">
-                                    <!-- JS populated -->
-                                </div>
-                                <input type="hidden" name="mhb_holiday_dates" id="mhb-holiday-dates-hidden"
-                                    value="<?php echo esc_attr($holidays); ?>">
-                            </div>
-                            <p class="description">
-                                <?php esc_html_e('Add specific dates that should trigger holiday pricing.', 'modern-hotel-booking'); ?>
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('Holiday Adjustment', 'modern-hotel-booking'); ?></th>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <label style="display: flex; align-items: center; gap: 5px; font-weight: 600;">
-                                    <input type="checkbox" name="mhb_holiday_pricing_enabled" class="mhb-adj-toggle" value="1"
-                                        <?php checked($holiday_enabled, 1); ?>>
-                                    <?php esc_html_e('Enable', 'modern-hotel-booking'); ?>
-                                </label>
-                                <div class="mhb-adj-inputs"
-                                    style="<?php echo $holiday_enabled ? '' : 'opacity: 0.5; pointer-events: none;'; ?>">
-                                    <input type="number" step="0.01" name="mhb_holiday_rate_modifier"
-                                        value="<?php echo esc_attr($holiday_val); ?>" class="small-text">
-                                    <select name="mhb_holiday_modifier_type">
-                                        <option value="multiplier" <?php selected($holiday_type, 'multiplier'); ?>>
-                                            <?php esc_html_e('Multiplier (1.2 = +20%)', 'modern-hotel-booking'); ?>
-                                        </option>
-                                        <option value="percent" <?php selected($holiday_type, 'percent'); ?>>
-                                            <?php esc_html_e('Percentage (20 = +20%)', 'modern-hotel-booking'); ?>
-                                        </option>
-                                        <option value="fixed" <?php selected($holiday_type, 'fixed'); ?>>
-                                            <?php esc_html_e('Fixed Amount (20 = +$20)', 'modern-hotel-booking'); ?>
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><?php esc_html_e('Conflict Resolution', 'modern-hotel-booking'); ?></th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="mhb_apply_weekend_to_holidays" value="1" <?php checked($apply_weekend_to_holidays, 1); ?>>
-                                <?php esc_html_e('Use larger of weekend vs holiday adjustment if they overlap', 'modern-hotel-booking'); ?>
-                            </label>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <?php
-        // Note: Holiday dates and adjustment toggle JavaScript logic has been moved to assets/js/mhb-admin-settings.js
-    }
-
+    
     /**
      * Render Pro Themes settings tab.
      */
-    private static function render_themes_tab()
-    {
-        $active_theme = get_option('mhb_active_theme', 'midnight');
-        $custom_primary = get_option('mhb_custom_primary_color', '#1a365d');
-        $custom_secondary = get_option('mhb_custom_secondary_color', '#f2e2c4');
-        $custom_accent = get_option('mhb_custom_accent_color', '#d4af37');
-        $custom_css = get_option('mhb_custom_css', '');
-
-        $themes = [
-            'midnight' => [
-                'name' => __('Midnight Coast', 'modern-hotel-booking'),
-                'colors' => ['#1a365d', '#f2e2c4', '#d4af37'],
-                'desc' => __('Our signature classic luxury look.', 'modern-hotel-booking')
-            ],
-            'emerald' => [
-                'name' => __('Emerald Forest', 'modern-hotel-booking'),
-                'colors' => ['#064e3b', '#34d399', '#10b981'],
-                'desc' => __('Rich greens for nature-inspired properties.', 'modern-hotel-booking')
-            ],
-            'oceanic' => [
-                'name' => __('Oceanic Drift', 'modern-hotel-booking'),
-                'colors' => ['#1e3a8a', '#60a5fa', '#3b82f6'],
-                'desc' => __('Deep blues and bright highlights.', 'modern-hotel-booking')
-            ],
-            'ruby' => [
-                'name' => __('Ruby Sunset', 'modern-hotel-booking'),
-                'colors' => ['#7f1d1d', '#f87171', '#ef4444'],
-                'desc' => __('Warm tones for cozy boutiques.', 'modern-hotel-booking')
-            ],
-            'urban' => [
-                'name' => __('Urban Modern', 'modern-hotel-booking'),
-                'colors' => ['#1f2937', '#9ca3af', '#4b5563'],
-                'desc' => __('Minimalist grays for city lofts.', 'modern-hotel-booking')
-            ],
-            'lavender' => [
-                'name' => __('Lavender Breeze', 'modern-hotel-booking'),
-                'colors' => ['#4c1d95', '#a78bfa', '#8b5cf6'],
-                'desc' => __('Elegant purples for spa and wellness.', 'modern-hotel-booking')
-            ],
-        ];
-        ?>
-            <div class="mhb-settings-section">
-                <h3 style="margin-top:0;"><?php esc_html_e('Theme Presets', 'modern-hotel-booking'); ?></h3>
-                <p class="description">
-                    <?php esc_html_e('Choose a professional color palette for your booking frontend.', 'modern-hotel-booking'); ?>
-                </p>
-
-                <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 25px 0;">
-                    <?php foreach ($themes as $slug => $theme): ?>
-                        <label class="mhb-theme-card <?php echo $active_theme === $slug ? 'active' : ''; ?>"
-                            style="cursor:pointer; border: 2px solid #ddd; border-radius: 12px; padding: 15px; display: block; background: #fff; transition: all 0.2s;">
-                            <input type="radio" name="mhb_active_theme" value="<?php echo esc_attr($slug); ?>" <?php checked($active_theme, $slug); ?> style="display:none;">
-                            <div
-                                style="display: flex; gap: 5px; height: 40px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
-                                <div style="flex: 2; background: <?php echo esc_attr($theme['colors'][0]); ?>;"></div>
-                                <div style="flex: 1; background: <?php echo esc_attr($theme['colors'][1]); ?>;"></div>
-                                <div style="flex: 1; background: <?php echo esc_attr($theme['colors'][2]); ?>;"></div>
-                            </div>
-                            <h4 style="margin: 0 0 5px 0;"><?php echo esc_html($theme['name']); ?></h4>
-                            <p style="margin: 0; font-size: 13px; color: #646970;"><?php echo esc_html($theme['desc']); ?></p>
-                        </label>
-                    <?php endforeach; ?>
-
-                    <label class="mhb-theme-card <?php echo 'custom' === $active_theme ? 'active' : ''; ?>"
-                        style="cursor:pointer; border: 2px solid #ddd; border-radius: 12px; padding: 15px; display: block; background: #fff; transition: all 0.2s;">
-                        <input type="radio" name="mhb_active_theme" value="custom" <?php checked($active_theme, 'custom'); ?>
-                            style="display:none;">
-                        <div
-                            style="display: flex; gap: 5px; height: 40px; border-radius: 6px; overflow: hidden; margin-bottom: 12px; background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);">
-                        </div>
-                        <h4 style="margin: 0 0 5px 0;"><?php esc_html_e('Custom Theme', 'modern-hotel-booking'); ?></h4>
-                        <p style="margin: 0; font-size: 13px; color: #646970;">
-                            <?php esc_html_e('Define your own brand colors below.', 'modern-hotel-booking'); ?>
-                        </p>
-                    </label>
-                </div>
-
-                <div id="mhb-custom-colors-wrap"
-                    style="display: <?php echo 'custom' === $active_theme ? 'block' : 'none'; ?>; border-top: 1px solid #ddd; padding-top: 25px; margin-top: 25px;">
-                    <h3><?php esc_html_e('Custom Branding', 'modern-hotel-booking'); ?></h3>
-                    <table class="form-table">
-                        <tr>
-                            <th><?php esc_html_e('Primary Color', 'modern-hotel-booking'); ?></th>
-                            <td><input type="color" name="mhb_custom_primary_color"
-                                    value="<?php echo esc_attr($custom_primary); ?>"></td>
-                        </tr>
-                        <tr>
-                            <th><?php esc_html_e('Secondary Color', 'modern-hotel-booking'); ?></th>
-                            <td><input type="color" name="mhb_custom_secondary_color"
-                                    value="<?php echo esc_attr($custom_secondary); ?>"></td>
-                        </tr>
-                        <tr>
-                            <th><?php esc_html_e('Accent Color', 'modern-hotel-booking'); ?></th>
-                            <td><input type="color" name="mhb_custom_accent_color"
-                                    value="<?php echo esc_attr($custom_accent); ?>">
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div style="border-top: 1px solid #ddd; padding-top: 25px; margin-top: 35px;">
-                    <h3><?php esc_html_e('Advanced Custom CSS', 'modern-hotel-booking'); ?></h3>
-                    <p class="description">
-                        <?php esc_html_e('Inject additional CSS directly into the booking frontend.', 'modern-hotel-booking'); ?>
-                    </p>
-                    <textarea name="mhb_custom_css" rows="10" class="large-text code"
-                        style="margin-top: 15px; font-family: monospace;"><?php echo esc_textarea($custom_css); ?></textarea>
-                </div>
-
-                <div style="margin-top: 30px; display: flex; gap: 15px; align-items: center;">
-                    <?php $reset_nonce = wp_create_nonce('mhb_reset_theme'); ?>
-                    <button type="button" class="button"
-                        onclick="if(confirm('<?php esc_attr_e('Reset all theme settings to default?', 'modern-hotel-booking'); ?>')) { window.location.href = window.location.href + '&reset_theme=1&_wpnonce=<?php echo esc_attr($reset_nonce); ?>'; }">
-                        <?php esc_html_e('Return to Default', 'modern-hotel-booking'); ?>
-                    </button>
-                    <?php // Note: Theme selection JavaScript logic has been moved to assets/js/mhb-admin-settings.js ?>
-                </div>
-            </div>
-            <?php
-    }
-
+    
     
 
     
@@ -2229,131 +1869,7 @@ class Settings
     /**
      * Render Tax Settings Tab
      */
-    private static function render_tax_tab()
-    {
-        $langs = I18n::get_available_languages();
-        $tax_mode = get_option('mhb_tax_mode', 'disabled');
-        $tax_rate_accommodation = get_option('mhb_tax_rate_accommodation', 0.00);
-        $tax_rate_extras = get_option('mhb_tax_rate_extras', 0.00);
-        $tax_label = get_option('mhb_tax_label', '[:en]VAT[:ro]TVA[:]');
-        $tax_registration_number = get_option('mhb_tax_registration_number', '');
-        $tax_display_frontend = get_option('mhb_tax_display_frontend', 1);
-        $tax_display_email = get_option('mhb_tax_display_email', 1);
-        $tax_rounding_mode = get_option('mhb_tax_rounding_mode', 'per_total');
-        $tax_decimal_places = get_option('mhb_tax_decimal_places', 2);
-
-        echo '<h2>' . esc_html__('Tax Settings', 'modern-hotel-booking') . '</h2>';
-        echo '<p>' . esc_html__('Configure VAT/Sales Tax settings for your hotel bookings. Tax is disabled by default for backward compatibility.', 'modern-hotel-booking') . '</p>';
-
-        echo '<table class="form-table">';
-
-        // Tax Mode
-        echo '<tr><th scope="row">' . esc_html__('Tax Mode', 'modern-hotel-booking') . '</th><td>';
-        echo '<fieldset>';
-        echo '<label style="display:block;margin-bottom:8px;">';
-        echo '<input type="radio" name="mhb_tax_mode" value="disabled" ' . checked($tax_mode, 'disabled', false) . '> ';
-        echo '<span>' . esc_html__('Disabled', 'modern-hotel-booking') . '</span>';
-        echo '<p class="description" style="margin-left:24px;">' . esc_html__('No tax calculation or display. Prices shown as-is.', 'modern-hotel-booking') . '</p>';
-        echo '</label>';
-        echo '<label style="display:block;margin-bottom:8px;">';
-        echo '<input type="radio" name="mhb_tax_mode" value="vat" ' . checked($tax_mode, 'vat', false) . '> ';
-        echo '<span>' . esc_html__('VAT Inclusive', 'modern-hotel-booking') . '</span>';
-        echo '<p class="description" style="margin-left:24px;">' . esc_html__('Prices include tax (EU, UK, Australia). Shows breakdown: Net + Tax = Gross.', 'modern-hotel-booking') . '</p>';
-        echo '</label>';
-        echo '<label style="display:block;">';
-        echo '<input type="radio" name="mhb_tax_mode" value="sales_tax" ' . checked($tax_mode, 'sales_tax', false) . '> ';
-        echo '<span>' . esc_html__('Sales Tax Exclusive', 'modern-hotel-booking') . '</span>';
-        echo '<p class="description" style="margin-left:24px;">' . esc_html__('Tax added on top of prices (US, Canada). Shows: Subtotal + Tax = Total.', 'modern-hotel-booking') . '</p>';
-        echo '</label>';
-        echo '</fieldset>';
-        echo '</td></tr>';
-
-        // Tax Label (Multilingual)
-        echo '<tr><th scope="row">' . esc_html__('Tax Label', 'modern-hotel-booking') . '</th><td>';
-        foreach ($langs as $lang) {
-            $val = I18n::decode($tax_label, $lang);
-            echo '<div style="margin-bottom:5px; display:flex; align-items:center;">';
-            echo '<span style="width:30px;font-weight:bold;">' . esc_html(strtoupper($lang)) . ':</span>';
-            echo '<input type="text" name="mhb_tax_label_lang[' . esc_attr($lang) . ']" value="' . esc_attr($val) . '" class="regular-text" style="flex:1;">';
-            echo '</div>';
-        }
-        echo '<p class="description">' . esc_html__('Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Tax Registration Number
-        echo '<tr><th scope="row">' . esc_html__('Tax Registration Number', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="text" name="mhb_tax_registration_number" value="' . esc_attr($tax_registration_number) . '" class="regular-text">';
-        echo '<p class="description">' . esc_html__('Your VAT ID, GSTIN, or tax registration number. Displayed on invoices and receipts.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Accommodation Tax Rate
-        echo '<tr><th scope="row">' . esc_html__('Accommodation Tax Rate', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="number" name="mhb_tax_rate_accommodation" value="' . esc_attr($tax_rate_accommodation) . '" min="0" max="100" step="0.01" class="small-text"> %';
-        echo '<p class="description">' . esc_html__('Tax rate for rooms and children charges. Example: 10 for 10%', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Extras Tax Rate
-        echo '<tr><th scope="row">' . esc_html__('Extras Tax Rate', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="number" name="mhb_tax_rate_extras" value="' . esc_attr($tax_rate_extras) . '" min="0" max="100" step="0.01" class="small-text"> %';
-        echo '<p class="description">' . esc_html__('Tax rate for extras (add-ons like breakfast, transfers). Set same as accommodation if unsure.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        // Display Options
-        echo '<tr><th scope="row">' . esc_html__('Display Options', 'modern-hotel-booking') . '</th><td>';
-        echo '<label style="display:block;margin-bottom:8px;">';
-        echo '<input type="checkbox" name="mhb_tax_display_frontend" value="1" ' . checked(1, $tax_display_frontend, false) . '> ';
-        echo esc_html__('Show tax breakdown on frontend booking form', 'modern-hotel-booking');
-        echo '</label>';
-        echo '<label style="display:block;">';
-        echo '<input type="checkbox" name="mhb_tax_display_email" value="1" ' . checked(1, $tax_display_email, false) . '> ';
-        echo esc_html__('Show tax breakdown in confirmation emails', 'modern-hotel-booking');
-        echo '</label>';
-        echo '</td></tr>';
-
-        // Advanced Settings
-        echo '<tr><th scope="row">' . esc_html__('Rounding Mode', 'modern-hotel-booking') . '</th><td>';
-        echo '<select name="mhb_tax_rounding_mode">';
-        echo '<option value="per_total" ' . selected($tax_rounding_mode, 'per_total', false) . '>' . esc_html__('Per Total (Recommended)', 'modern-hotel-booking') . '</option>';
-        echo '<option value="per_line" ' . selected($tax_rounding_mode, 'per_line', false) . '>' . esc_html__('Per Line Item', 'modern-hotel-booking') . '</option>';
-        echo '</select>';
-        echo '<p class="description">' . esc_html__('Per Total: Round tax on final total. Per Line: Round each item\'s tax separately.', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        echo '<tr><th scope="row">' . esc_html__('Decimal Places', 'modern-hotel-booking') . '</th><td>';
-        echo '<input type="number" name="mhb_tax_decimal_places" value="' . esc_attr($tax_decimal_places) . '" min="0" max="4" class="small-text">';
-        echo '<p class="description">' . esc_html__('Number of decimal places for tax amounts (usually 2).', 'modern-hotel-booking') . '</p>';
-        echo '</td></tr>';
-
-        echo '</table>';
-
-        // Country Reference Table
-        echo '<hr>';
-        echo '<h3>' . esc_html__('Country-Specific VAT Rates Reference', 'modern-hotel-booking') . '</h3>';
-        echo '<table class="widefat striped" style="max-width:600px;">';
-        echo '<thead><tr><th>' . esc_html__('Country', 'modern-hotel-booking') . '</th><th>' . esc_html__('Standard Rate', 'modern-hotel-booking') . '</th><th>' . esc_html__('Hotel Rate', 'modern-hotel-booking') . '</th><th>' . esc_html__('Tax Name', 'modern-hotel-booking') . '</th></tr></thead>';
-        echo '<tbody>';
-        $rates = [
-            ['Romania', '21%', '11%', 'TVA'],
-            ['Germany', '19%', '7%', 'MwSt'],
-            ['France', '20%', '10%', 'TVA'],
-            ['Italy', '22%', '10%', 'IVA'],
-            ['Spain', '21%', '10%', 'IVA'],
-            ['UK', '20%', '5%', 'VAT'],
-            ['Netherlands', '21%', '9%', 'BTW'],
-            ['Poland', '23%', '8%', 'VAT'],
-        ];
-        foreach ($rates as $rate) {
-            echo '<tr>';
-            echo '<td>' . esc_html($rate[0]) . '</td>';
-            echo '<td>' . esc_html($rate[1]) . '</td>';
-            echo '<td>' . esc_html($rate[2]) . '</td>';
-            echo '<td>' . esc_html($rate[3]) . '</td>';
-            echo '</tr>';
-        }
-        echo '</tbody></table>';
-        echo '<p class="description">' . esc_html__('Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities.', 'modern-hotel-booking') . '</p>';
-    }
-
+    
     /**
      * Save Tax Settings
      */

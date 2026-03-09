@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.1
+Stable tag: 2.2.6.2
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,6 +108,12 @@ Yes, the booking form and availability calendars are fully responsive and optimi
 = Where is credit card data stored? =
 Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). This ensures you are PCI-compliant and guest data is secure.
 
+== Privacy Policy & External Services ==
+
+This plugin utilizes external services to process payments in the Pro version. By using these features, data is transmitted to the respective providers:
+*   **Stripe**: Secure payment processing. Their privacy policy can be found at: https://stripe.com/privacy
+*   **PayPal**: Secure payment processing. Their privacy policy can be found at: https://www.paypal.com/webapps/mpp/ua/privacy-full
+
 == Screenshots ==
 
 1. **Responsive Booking Form:** Clean interface with date selection and real-time availability.
@@ -122,6 +128,9 @@ Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). T
 10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
+
+= 2.2.6.2 =
+* Fixes per WP.org review implemented.
 
 = 2.2.6.1 =
 * Fixed: Version consistency across all plugin files including block metadata.

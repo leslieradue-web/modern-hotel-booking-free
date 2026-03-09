@@ -1,0 +1,67 @@
+# Files to exclude from WordPress.org distribution
+# This file is used by WordPress.org to create the distribution zip
+
+# Version control
+.git
+.gitignore
+.gitattributes
+.svn
+.github/
+.distignore
+
+# IDE and development files
+.vscode/
+.idea/
+.kilocode/
+*.swp
+*.swo
+*~
+
+# Documentation (not needed in distribution)
+docs/
+USER_GUIDE.md
+DEVELOPMENT.md
+SECURITY_AUDIT_REPORT.md
+
+# Development stubs
+stubs/
+wordpress-stubs.php
+
+# Build and development tools
+node_modules/
+package.json
+package-lock.json
+*.map
+scripts/
+.gemini/
+.agent/
+_agent/
+_agents/
+.agents/
+stubs/
+wordpress-stubs.php
+vendor/
+composer.json
+composer.lock
+phpstan.neon
+phpstan-baseline.neon
+.phpstan.cache/
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug logs
+debug.log
+
+# Backup files
+*.bak
+*.tmp
+
+# Test files
+tests/
+phpunit.xml

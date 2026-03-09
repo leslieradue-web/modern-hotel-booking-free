@@ -304,7 +304,7 @@ class I18n
     public static function __($text, $domain = 'modern-hotel-booking', $language = null)
     {
         // First, get the WordPress translation
-        $translated = __($text, $domain); // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText, WordPress.WP.I18n.NonSingularStringLiteralDomain
+        $translated = translate($text, $domain);
 
         // If translation is empty, fallback to the original English text
         if (empty($translated)) {
