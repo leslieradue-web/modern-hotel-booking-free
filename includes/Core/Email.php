@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -24,17 +24,17 @@ class Email
     {
         global $wpdb;
 
-        $cache_key = 'mhb_booking_' . $booking_id;
-        $booking = wp_cache_get($cache_key, 'mhb_bookings');
+        $cache_key = 'mhbo_booking_' . $booking_id;
+        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
         if (false === $booking) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, specific lookup
             $booking = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}mhb_bookings WHERE id = %d",
+                "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
                 $booking_id
             ));
             if ($booking) {
-                wp_cache_set($cache_key, $booking, 'mhb_bookings', HOUR_IN_SECONDS);
+                wp_cache_set($cache_key, $booking, 'mhbo_bookings', HOUR_IN_SECONDS);
             }
         }
 
@@ -55,12 +55,12 @@ class Email
         $lang = $booking->booking_language ?: I18n::get_current_language();
 
         // Load multilingual templates from options with hardcoded fallbacks if empty
-        $template_subject = get_option("mhb_email_{$status}_subject");
+        $template_subject = get_option("mhbo_email_{$status}_subject");
         if (empty($template_subject)) {
             $template_subject = "[:en]Booking {$status} - #{$booking_id}[:]";
         }
 
-        $template_message = get_option("mhb_email_{$status}_message");
+        $template_message = get_option("mhbo_email_{$status}_message");
         if (empty($template_message)) {
             $template_message = "[:en]Hello {customer_name}, your booking #{$booking_id} status is now {$status}.[:]";
         }
@@ -75,14 +75,14 @@ class Email
         $message = I18n::decode($template_message, $lang);
 
         // Fetch room name for placeholder - with caching
-        $room_name_cache_key = 'mhb_room_name_' . $booking->room_id;
+        $room_name_cache_key = 'mhbo_room_name_' . $booking->room_id;
         $room_name = wp_cache_get($room_name_cache_key, 'mhb');
 
         if (false === $room_name) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
             $room_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT t.name FROM {$wpdb->prefix}mhb_rooms r 
-                 JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id 
+                "SELECT t.name FROM {$wpdb->prefix}mhbo_rooms r 
+                 JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id 
                  WHERE r.id = %d",
                 $booking->room_id
             ));
@@ -94,7 +94,7 @@ class Email
         $custom_fields_formatted = '';
         if (!empty($booking->custom_fields)) {
             $custom_data = json_decode($booking->custom_fields, true);
-            $custom_defn = get_option('mhb_custom_fields', []);
+            $custom_defn = get_option('mhbo_custom_fields', []);
             if (is_array($custom_data) && !empty($custom_defn)) {
                 foreach ($custom_defn as $defn) {
                     if (isset($custom_data[$defn['id']])) {
@@ -225,7 +225,7 @@ class Email
         }
 
 
-        $admin_email = get_option('mhb_notification_email', get_option('admin_email'));
+        $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $site_name = get_bloginfo('name');
 
         $headers = array(
@@ -265,7 +265,7 @@ class Email
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, specific lookup
         $booking = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mhb_bookings WHERE id = %d",
+            "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
             $booking_id
         ));
 
@@ -276,12 +276,12 @@ class Email
         $lang = $booking->booking_language ?: I18n::get_current_language();
 
         // Load multilingual templates from options with hardcoded fallbacks if empty
-        $template_subject = get_option("mhb_email_payment_subject");
+        $template_subject = get_option("mhbo_email_payment_subject");
         if (empty($template_subject)) {
             $template_subject = "[:en]Payment Confirmation - Booking #{$booking_id}[:]";
         }
 
-        $template_message = get_option("mhb_email_payment_message");
+        $template_message = get_option("mhbo_email_payment_message");
         if (empty($template_message)) {
             $template_message = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
             $template_message .= '<h2 style="color: #2e7d32;">' . __('Payment Confirmation', 'modern-hotel-booking') . '</h2>';
@@ -346,7 +346,7 @@ class Email
         $custom_fields_formatted = '';
         if (!empty($booking->custom_fields)) {
             $custom_data = json_decode($booking->custom_fields, true);
-            $custom_defn = get_option('mhb_custom_fields', []);
+            $custom_defn = get_option('mhbo_custom_fields', []);
             if (is_array($custom_data) && !empty($custom_defn)) {
                 foreach ($custom_defn as $defn) {
                     if (isset($custom_data[$defn['id']])) {
@@ -358,14 +358,14 @@ class Email
         }
 
         // Fetch room name for placeholder - with caching
-        $room_name_cache_key = 'mhb_room_name_' . $booking->room_id;
+        $room_name_cache_key = 'mhbo_room_name_' . $booking->room_id;
         $room_name = wp_cache_get($room_name_cache_key, 'mhb');
 
         if (false === $room_name) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
             $room_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT t.name FROM {$wpdb->prefix}mhb_rooms r 
-                 JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id 
+                "SELECT t.name FROM {$wpdb->prefix}mhbo_rooms r 
+                 JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id 
                  WHERE r.id = %d",
                 $booking->room_id
             ));
@@ -413,7 +413,7 @@ class Email
             $message .= $payment_details;
         }
 
-        $admin_email = get_option('mhb_notification_email', get_option('admin_email'));
+        $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $site_name = get_bloginfo('name');
 
         $headers = array(
@@ -446,7 +446,7 @@ class Email
             "VERSION:2.0\r\n" .
             "PRODID:-//Modern Hotel Booking//EN\r\n" .
             "BEGIN:VEVENT\r\n" .
-            "UID:mhb-booking-{$booking->id}\r\n" .
+            "UID:mhbo-booking-{$booking->id}\r\n" .
             "DTSTAMP:$now\r\n" .
             "DTSTART;VALUE=DATE:$dtstart\r\n" .
             "DTEND;VALUE=DATE:$dtend\r\n" .

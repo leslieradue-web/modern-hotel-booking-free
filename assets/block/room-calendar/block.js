@@ -34,8 +34,8 @@
                         })
                     )
                 ),
-                el('div', { key: 'preview', className: 'wp-block-modern-hotel-booking-room-calendar mhb-block-preview' },
-                    el('div', { className: 'mhb-block-icon dashicons dashicons-calendar-alt' }),
+                el('div', { key: 'preview', className: 'wp-block-modern-hotel-booking-room-calendar mhbo-block-preview' },
+                    el('div', { className: 'mhbo-block-icon dashicons dashicons-calendar-alt' }),
                     el('p', {}, __('Room Availability Calendar', 'modern-hotel-booking')),
                     el('p', { style: { fontSize: '13px', color: '#666' } },
                         attributes.roomId > 0

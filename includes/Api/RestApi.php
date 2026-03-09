@@ -14,14 +14,14 @@
  * @since   2.0.1
  */
 
-namespace MHB\Api;
+namespace MHBO\Api;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-use MHB\Core\I18n;
-use MHB\Core\Pricing;
+use MHBO\Core\I18n;
+use MHBO\Core\Pricing;
 
 /**
  * REST API endpoints for Modern Hotel Booking.
@@ -249,7 +249,7 @@ class RestApi
     {
         if (!false) {
             return new \WP_Error(
-                'mhb_pro_required',
+                'mhbo_pro_required',
                 esc_html(I18n::get_label('label_rest_pro_error')),
                 array('status' => 403)
             );
@@ -271,7 +271,7 @@ class RestApi
             $nonce = $request->get_header('X-WP-Nonce');
             if (empty($nonce) || !wp_verify_nonce($nonce, 'wp_rest')) {
                 return new \WP_Error(
-                    'mhb_unauthorized',
+                    'mhbo_unauthorized',
                     esc_html(I18n::get_label('label_invalid_nonce')),
                     array('status' => 403)
                 );
@@ -295,17 +295,17 @@ class RestApi
      */
     private function check_rate_limit()
     {
-        $ip = \MHB\Core\Security::get_client_ip();
+        $ip = \MHBO\Core\Security::get_client_ip();
         if (empty($ip) || '0.0.0.0' === $ip) {
             // Can't determine IP, allow but log
             return true;
         }
 
-        $transient_key = 'mhb_api_rate_' . md5($ip);
+        $transient_key = 'mhbo_api_rate_' . md5($ip);
         $request_count = get_transient($transient_key);
 
-        $limit = apply_filters('mhb_api_rate_limit', 60); // Default 60 requests
-        $window = apply_filters('mhb_api_rate_window', 60); // Per 60 seconds
+        $limit = apply_filters('mhbo_api_rate_limit', 60); // Default 60 requests
+        $window = apply_filters('mhbo_api_rate_window', 60); // Per 60 seconds
 
         if (false === $request_count) {
             set_transient($transient_key, 1, $window);
@@ -314,7 +314,7 @@ class RestApi
 
         if ($request_count >= $limit) {
             return new \WP_Error(
-                'mhb_rate_limit_exceeded',
+                'mhbo_rate_limit_exceeded',
                 esc_html(I18n::get_label('label_api_rate_limit')),
                 array('status' => 429)
             );
@@ -338,11 +338,11 @@ class RestApi
         }
 
         $api_key = $request->get_header('X-MHB-API-Key');
-        $stored_key = get_option('mhb_api_key', '');
+        $stored_key = get_option('mhbo_api_key', '');
 
         if (empty($stored_key)) {
             return new \WP_Error(
-                'mhb_api_not_configured',
+                'mhbo_api_not_configured',
                 esc_html(I18n::get_label('label_api_not_configured')),
                 array('status' => 500)
             );
@@ -350,7 +350,7 @@ class RestApi
 
         if (empty($api_key) || !hash_equals($stored_key, $api_key)) {
             return new \WP_Error(
-                'mhb_unauthorized',
+                'mhbo_unauthorized',
                 esc_html(I18n::get_label('label_invalid_api_key')),
                 array('status' => 401)
             );
@@ -378,7 +378,7 @@ class RestApi
         // SECURITY: Reject webhooks without proper signatures
         // The old behavior of accepting 'source' in body was a critical vulnerability
         return new \WP_Error(
-            'mhb_webhook_unauthorized',
+            'mhbo_webhook_unauthorized',
             esc_html(I18n::get_label('label_webhook_sig_required')),
             array('status' => 401)
         );
@@ -398,14 +398,14 @@ class RestApi
         global $wpdb;
 
         // Try cache first - room types don't change frequently
-        $cache_key = 'mhb_room_types_all';
+        $cache_key = 'mhbo_room_types_all';
         $room_types = wp_cache_get($cache_key, 'mhb');
 
         if (false === $room_types) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
             $room_types = $wpdb->get_results(
                 "SELECT id, name, description, base_price, max_adults, max_children, total_rooms, amenities, image_url
-                 FROM {$wpdb->prefix}mhb_room_types ORDER BY id ASC"
+                 FROM {$wpdb->prefix}mhbo_room_types ORDER BY id ASC"
             );
             wp_cache_set($cache_key, $room_types, 'mhb', HOUR_IN_SECONDS);
         }
@@ -443,14 +443,14 @@ class RestApi
 
         if ($check_in >= $check_out) {
             return new \WP_Error(
-                'mhb_invalid_dates',
+                'mhbo_invalid_dates',
                 esc_html(I18n::get_label('label_check_out_after')),
                 array('status' => 400)
             );
         }
 
         // Get all rooms - cache this as room configuration rarely changes
-        $rooms_cache_key = 'mhb_rooms_with_types';
+        $rooms_cache_key = 'mhbo_rooms_with_types';
         $rooms = wp_cache_get($rooms_cache_key, 'mhb');
 
         if (false === $rooms) {
@@ -458,8 +458,8 @@ class RestApi
             $rooms = $wpdb->get_results(
                 "SELECT r.id AS room_id, r.room_number, r.status, r.custom_price,
                         t.id AS type_id, t.name AS type_name, t.base_price, t.max_adults, t.max_children
-                 FROM {$wpdb->prefix}mhb_rooms r
-                 JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id
+                 FROM {$wpdb->prefix}mhbo_rooms r
+                 JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
                  ORDER BY t.id, r.id"
             );
             wp_cache_set($rooms_cache_key, $rooms, 'mhb', HOUR_IN_SECONDS);
@@ -525,7 +525,7 @@ class RestApi
         // Validate required fields
         if (empty($customer_name) || empty($customer_email) || !is_email($customer_email)) {
             return new \WP_Error(
-                'mhb_invalid_customer_data',
+                'mhbo_invalid_customer_data',
                 esc_html(I18n::get_label('label_invalid_customer')),
                 array('status' => 400)
             );
@@ -536,7 +536,7 @@ class RestApi
 
         if (true !== $available) {
             return new \WP_Error(
-                'mhb_room_unavailable',
+                'mhbo_room_unavailable',
                 esc_html(I18n::get_label($available)),
                 array('status' => 409)
             );
@@ -547,7 +547,7 @@ class RestApi
 
         if (!$calc) {
             return new \WP_Error(
-                'mhb_invalid_dates',
+                'mhbo_invalid_dates',
                 esc_html(I18n::get_label('label_invalid_dates')),
                 array('status' => 400)
             );
@@ -559,7 +559,7 @@ class RestApi
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table, no alternative for bookings insertion
         $inserted = $wpdb->insert(
-            $wpdb->prefix . 'mhb_bookings',
+            $wpdb->prefix . 'mhbo_bookings',
             array(
                 'room_id' => $room_id,
                 'customer_name' => $customer_name,
@@ -578,7 +578,7 @@ class RestApi
 
         if (!$inserted) {
             return new \WP_Error(
-                'mhb_booking_failed',
+                'mhbo_booking_failed',
                 esc_html(I18n::get_label('label_booking_failed')),
                 array('status' => 500)
             );
@@ -587,10 +587,10 @@ class RestApi
         $booking_id = $wpdb->insert_id;
 
         // Invalidate calendar cache to ensure availability is updated
-        \MHB\Core\Cache::invalidate_calendar_cache((int) $room_id);
+        \MHBO\Core\Cache::invalidate_calendar_cache((int) $room_id);
 
         // Fire webhook
-        do_action('mhb_booking_created', $booking_id);
+        do_action('mhbo_booking_created', $booking_id);
 
         return rest_ensure_response(array(
             'id' => $booking_id,
@@ -616,23 +616,23 @@ class RestApi
 
         $id = absint($request->get_param('id'));
 
-        $cache_key = 'mhb_booking_' . $id;
-        $booking = wp_cache_get($cache_key, 'mhb_bookings');
+        $cache_key = 'mhbo_booking_' . $id;
+        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
         if (false === $booking) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
             $booking = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}mhb_bookings WHERE id = %d",
+                "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
                 $id
             ));
             if ($booking) {
-                wp_cache_set($cache_key, $booking, 'mhb_bookings', HOUR_IN_SECONDS);
+                wp_cache_set($cache_key, $booking, 'mhbo_bookings', HOUR_IN_SECONDS);
             }
         }
 
         if (!$booking) {
             return new \WP_Error(
-                'mhb_not_found',
+                'mhbo_not_found',
                 esc_html(I18n::get_label('label_room_not_found')),
                 array('status' => 404)
             );
@@ -726,7 +726,7 @@ class RestApi
 
         // SECURITY: Deny access by default
         return new \WP_Error(
-            'mhb_access_denied',
+            'mhbo_access_denied',
             __('You do not have permission to access this booking.', 'modern-hotel-booking'),
             array('status' => 403)
         );
@@ -759,7 +759,7 @@ class RestApi
 
         // Fetch bookings with status to differentiate pending vs confirmed
         // Cache for a short time since calendar data is frequently accessed
-        $bookings_cache_key = 'mhb_calendar_bookings_' . $room_id;
+        $bookings_cache_key = 'mhbo_calendar_bookings_' . $room_id;
         $bookings = wp_cache_get($bookings_cache_key, 'mhb');
 
         if (false === $bookings) {
@@ -768,7 +768,7 @@ class RestApi
 
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
             $bookings = $wpdb->get_results($wpdb->prepare(
-                "SELECT check_in, check_out, status FROM {$wpdb->prefix}mhb_bookings 
+                "SELECT check_in, check_out, status FROM {$wpdb->prefix}mhbo_bookings 
                  WHERE room_id = %d 
                  AND status != 'cancelled'
                  AND NOT (status = 'pending' AND created_at < %s)",
@@ -779,13 +779,13 @@ class RestApi
         }
 
         // Get room status to mark as unbookable if maintenance/hidden
-        $cache_key = 'mhb_room_status_' . $room_id;
+        $cache_key = 'mhbo_room_status_' . $room_id;
         $room_status = wp_cache_get($cache_key, 'mhb');
 
         if (false === $room_status) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
             $room_status = $wpdb->get_var($wpdb->prepare(
-                "SELECT status FROM {$wpdb->prefix}mhb_rooms WHERE id = %d",
+                "SELECT status FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d",
                 $room_id
             )) ?: 'available';
             wp_cache_set($cache_key, $room_status, 'mhb', HOUR_IN_SECONDS);
@@ -843,7 +843,7 @@ class RestApi
                 ];
             }
         } catch (\Exception $e) {
-            return new \WP_Error('mhb_calendar_error', __('Error generating calendar data.', 'modern-hotel-booking'), array('status' => 500));
+            return new \WP_Error('mhbo_calendar_error', __('Error generating calendar data.', 'modern-hotel-booking'), array('status' => 500));
         }
 
         return rest_ensure_response($data);
@@ -858,7 +858,7 @@ class RestApi
 
         // Get all rooms
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, data changes frequently
-        $rooms = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}mhb_rooms WHERE status = 'available'");
+        $rooms = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE status = 'available'");
 
         if (empty($rooms)) {
             return rest_ensure_response([]);
@@ -869,7 +869,7 @@ class RestApi
 
         // Fetch all bookings for these rooms in the period
         // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Dynamic IN clause with room IDs is handled properly via placeholders
-        $sql = "SELECT room_id, check_in, check_out, status FROM {$wpdb->prefix}mhb_bookings 
+        $sql = "SELECT room_id, check_in, check_out, status FROM {$wpdb->prefix}mhbo_bookings 
                 WHERE room_id IN ($room_placeholders) 
                 AND status != 'cancelled' 
                 AND (check_in < %s AND check_out > %s)";
@@ -991,7 +991,7 @@ class RestApi
 
         if (!$calc) {
             return new \WP_Error(
-                'mhb_calculation_failed',
+                'mhbo_calculation_failed',
                 __('Error calculating price. Please check input data.', 'modern-hotel-booking'),
                 array('status' => 400)
             );
@@ -1014,7 +1014,7 @@ class RestApi
                     'total_gross' => $calc['total']
                 )
             ),
-            'tax_breakdown_html' => (!\MHB\Core\Tax::is_enabled() || get_option('mhb_tax_display_frontend', 1)) ? \MHB\Core\Tax::render_breakdown_html($calc['tax'] ?? array()) : '',
+            'tax_breakdown_html' => (!\MHBO\Core\Tax::is_enabled() || get_option('mhbo_tax_display_frontend', 1)) ? \MHBO\Core\Tax::render_breakdown_html($calc['tax'] ?? array()) : '',
         ));
     }
 
@@ -1025,7 +1025,7 @@ class RestApi
      */
     public function get_tax_settings()
     {
-        $tax = \MHB\Core\Tax::get_settings();
+        $tax = \MHBO\Core\Tax::get_settings();
 
         return rest_ensure_response(array(
             'enabled' => $tax['enabled'],
@@ -1071,7 +1071,7 @@ class RestApi
 
         // SECURITY: This should never be reached due to permission_callback verification
         return new \WP_Error(
-            'mhb_invalid_webhook',
+            'mhbo_invalid_webhook',
             __('Invalid webhook request.', 'modern-hotel-booking'),
             array('status' => 400)
         );
@@ -1095,17 +1095,17 @@ class RestApi
             case 'payment_intent.succeeded':
                 $payment_intent = $event['data']['object'] ?? null;
                 if ($payment_intent && isset($payment_intent['id'])) {
-                    $cache_key = 'mhb_booking_tx_' . md5($payment_intent['id']);
-                    $booking = wp_cache_get($cache_key, 'mhb_bookings');
+                    $cache_key = 'mhbo_booking_tx_' . md5($payment_intent['id']);
+                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
                     if (false === $booking) {
                         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
                         $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE payment_transaction_id = %s",
+                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
                             $payment_intent['id']
                         ));
                         if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhb_bookings', 5 * MINUTE_IN_SECONDS);
+                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
                         }
                     }
 
@@ -1119,17 +1119,17 @@ class RestApi
             case 'payment_intent.payment_failed':
                 $payment_intent = $event['data']['object'] ?? null;
                 if ($payment_intent && isset($payment_intent['id'])) {
-                    $cache_key = 'mhb_booking_tx_' . md5($payment_intent['id']);
-                    $booking = wp_cache_get($cache_key, 'mhb_bookings');
+                    $cache_key = 'mhbo_booking_tx_' . md5($payment_intent['id']);
+                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
                     if (false === $booking) {
                         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
                         $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE payment_transaction_id = %s",
+                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
                             $payment_intent['id']
                         ));
                         if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhb_bookings', 5 * MINUTE_IN_SECONDS);
+                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
                         }
                     }
 
@@ -1145,17 +1145,17 @@ class RestApi
             case 'charge.refunded':
                 $charge = $event['data']['object'] ?? null;
                 if ($charge && isset($charge['payment_intent'])) {
-                    $cache_key = 'mhb_booking_tx_' . md5($charge['payment_intent']);
-                    $booking = wp_cache_get($cache_key, 'mhb_bookings');
+                    $cache_key = 'mhbo_booking_tx_' . md5($charge['payment_intent']);
+                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
                     if (false === $booking) {
                         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
                         $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE payment_transaction_id = %s",
+                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
                             $charge['payment_intent']
                         ));
                         if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhb_bookings', 5 * MINUTE_IN_SECONDS);
+                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
                         }
                     }
                     if ($booking) {
@@ -1166,7 +1166,7 @@ class RestApi
         }
 
         // Fire action for extensibility
-        do_action('mhb_stripe_webhook_received', $event);
+        do_action('mhbo_stripe_webhook_received', $event);
 
         return rest_ensure_response(array('status' => 'received', 'event_type' => $event['type']));
     }
@@ -1207,17 +1207,17 @@ class RestApi
                     $order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? $resource['id'] ?? null;
 
                     if ($order_id) {
-                        $cache_key = 'mhb_booking_tx_' . md5($order_id);
-                        $booking = wp_cache_get($cache_key, 'mhb_bookings');
+                        $cache_key = 'mhbo_booking_tx_' . md5($order_id);
+                        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
                         if (false === $booking) {
                             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
                             $booking = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE payment_transaction_id = %s",
+                                "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
                                 $order_id
                             ));
                             if ($booking) {
-                                wp_cache_set($cache_key, $booking, 'mhb_bookings', 5 * MINUTE_IN_SECONDS);
+                                wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
                             }
                         }
 
@@ -1236,17 +1236,17 @@ class RestApi
                     $order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? $resource['id'] ?? null;
 
                     if ($order_id) {
-                        $cache_key = 'mhb_booking_tx_' . md5($order_id);
-                        $booking = wp_cache_get($cache_key, 'mhb_bookings');
+                        $cache_key = 'mhbo_booking_tx_' . md5($order_id);
+                        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
                         if (false === $booking) {
                             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
                             $booking = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE payment_transaction_id = %s",
+                                "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
                                 $order_id
                             ));
                             if ($booking) {
-                                wp_cache_set($cache_key, $booking, 'mhb_bookings', 5 * MINUTE_IN_SECONDS);
+                                wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
                             }
                         }
 
@@ -1262,17 +1262,17 @@ class RestApi
                 // Order approved but not yet captured - mark as processing
                 $resource = $event['resource'] ?? null;
                 if ($resource && isset($resource['id'])) {
-                    $cache_key = 'mhb_booking_tx_' . md5($resource['id']);
-                    $booking = wp_cache_get($cache_key, 'mhb_bookings');
+                    $cache_key = 'mhbo_booking_tx_' . md5($resource['id']);
+                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
 
                     if (false === $booking) {
                         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
                         $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE payment_transaction_id = %s",
+                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
                             $resource['id']
                         ));
                         if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhb_bookings', 5 * MINUTE_IN_SECONDS);
+                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
                         }
                     }
                     if ($booking) {
@@ -1283,7 +1283,7 @@ class RestApi
         }
 
         // Fire action for extensibility
-        do_action('mhb_paypal_webhook_received', $event);
+        do_action('mhbo_paypal_webhook_received', $event);
 
         return rest_ensure_response(array('status' => 'received', 'event_type' => $event['event_type']));
     }

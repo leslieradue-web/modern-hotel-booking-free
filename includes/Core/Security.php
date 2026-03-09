@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;

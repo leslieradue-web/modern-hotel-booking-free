@@ -6,7 +6,7 @@
 
     function initBookingForms() {
         // Handle both Shortcode and Widget Forms
-        const rangePickers = document.querySelectorAll('.mhb-range-datepicker');
+        const rangePickers = document.querySelectorAll('.mhbo-range-datepicker');
         rangePickers.forEach(pickerInput => {
             const form = pickerInput.closest('form');
             if (!form) return;
@@ -21,7 +21,7 @@
     }
 
     function initFlatpickrRange(pickerInput, checkInInput, checkOutInput) {
-        const prefix = (typeof mhb_vars !== 'undefined' && mhb_vars.storage_prefix) ? mhb_vars.storage_prefix : 'mhb_';
+        const prefix = (typeof mhbo_vars !== 'undefined' && mhbo_vars.storage_prefix) ? mhbo_vars.storage_prefix : 'mhbo_';
 
         // Restore from localStorage if empty
         if (!checkInInput.value) {
@@ -30,7 +30,7 @@
             if (savedIn && savedOut) {
                 checkInInput.value = savedIn;
                 checkOutInput.value = savedOut;
-                const toLabel = (typeof mhb_vars !== 'undefined' && mhb_vars.to) ? mhb_vars.to : 'to';
+                const toLabel = (typeof mhbo_vars !== 'undefined' && mhbo_vars.to) ? mhbo_vars.to : 'to';
                 pickerInput.value = savedIn + ' ' + toLabel + ' ' + savedOut;
             }
         }
@@ -41,12 +41,12 @@
         const roomId = roomIdInput ? roomIdInput.value : null;
 
         // Initialize flatpickr with disabled dates
-        if (roomId && typeof mhb_vars !== 'undefined' && mhb_vars.rest_url) {
+        if (roomId && typeof mhbo_vars !== 'undefined' && mhbo_vars.rest_url) {
             // Show loading state
-            pickerInput.placeholder = (typeof mhb_vars !== 'undefined' && mhb_vars.loading) ? mhb_vars.loading : 'Loading availability...';
+            pickerInput.placeholder = (typeof mhbo_vars !== 'undefined' && mhbo_vars.loading) ? mhbo_vars.loading : 'Loading availability...';
             pickerInput.disabled = true;
 
-            fetch(mhb_vars.rest_url + '/calendar-data?room_id=' + encodeURIComponent(roomId))
+            fetch(mhbo_vars.rest_url + '/calendar-data?room_id=' + encodeURIComponent(roomId))
                 .then(function (response) {
                     return response.json();
                 })

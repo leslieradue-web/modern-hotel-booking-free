@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -22,16 +22,16 @@ class Pricing
         global $wpdb;
 
         // 1. Check Room Global Status (Cached)
-        $room_status_cache_key = 'mhb_room_status_' . $room_id;
-        $room_status = wp_cache_get($room_status_cache_key, 'mhb_rooms');
+        $room_status_cache_key = 'mhbo_room_status_' . $room_id;
+        $room_status = wp_cache_get($room_status_cache_key, 'mhbo_rooms');
 
         if (false === $room_status) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented
             $room_status = $wpdb->get_var($wpdb->prepare(
-                "SELECT status FROM {$wpdb->prefix}mhb_rooms WHERE id = %d",
+                "SELECT status FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d",
                 $room_id
             ));
-            wp_cache_set($room_status_cache_key, $room_status, 'mhb_rooms', HOUR_IN_SECONDS);
+            wp_cache_set($room_status_cache_key, $room_status, 'mhbo_rooms', HOUR_IN_SECONDS);
         }
 
         if (!$room_status || 'available' !== $room_status) {
@@ -51,7 +51,7 @@ class Pricing
         // Formula: existing.check_in < new.check_out AND existing.check_out > new.check_in
 
         if ($exclude_id > 0) {
-            $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings 
+            $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings 
                     WHERE room_id = %d 
                     AND status != 'cancelled'
                     AND NOT (status = 'pending' AND created_at < %s)
@@ -59,7 +59,7 @@ class Pricing
                     AND id != %d";
             $params = [$room_id, $expiry_time, $check_out, $check_in, $exclude_id];
         } else {
-            $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings 
+            $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings 
                     WHERE room_id = %d 
                     AND status != 'cancelled'
                     AND NOT (status = 'pending' AND created_at < %s)
@@ -91,15 +91,15 @@ class Pricing
         }
 
         // Get room type data from database with caching
-        $room_cache_key = 'mhb_room_data_' . $room_id;
+        $room_cache_key = 'mhbo_room_data_' . $room_id;
         $room_data = wp_cache_get($room_cache_key, 'mhb');
 
         if (false === $room_data) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented
             $room_data = $wpdb->get_row($wpdb->prepare(
                 "SELECT r.custom_price, t.base_price, r.type_id
-                 FROM {$wpdb->prefix}mhb_rooms r 
-                 JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id 
+                 FROM {$wpdb->prefix}mhbo_rooms r 
+                 JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id 
                  WHERE r.id = %d",
                 $room_id
             ));
@@ -114,14 +114,14 @@ class Pricing
         $base_price = (float) (0 < $room_data->custom_price ? $room_data->custom_price : $room_data->base_price);
 
         // Get pricing rules from database with caching
-        $rule_cache_key = 'mhb_pricing_rule_' . $room_data->type_id . '_' . $date;
+        $rule_cache_key = 'mhbo_pricing_rule_' . $room_data->type_id . '_' . $date;
         $rule = wp_cache_get($rule_cache_key, 'mhb');
 
         if (false === $rule) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
             $rule = $wpdb->get_row($wpdb->prepare(
                 "SELECT amount, operation 
-                 FROM {$wpdb->prefix}mhb_pricing_rules 
+                 FROM {$wpdb->prefix}mhbo_pricing_rules 
                  WHERE (type_id = %d OR type_id = 0)
                  AND %s BETWEEN start_date AND end_date 
                  ORDER BY type_id DESC, priority DESC LIMIT 1",
@@ -146,7 +146,7 @@ class Pricing
          * @param int    $room_id    The room ID.
          * @param string $date       The date string (Y-m-d).
          */
-        $base_price = apply_filters('mhb_calculate_stay_price', $base_price, $room_id, $date);
+        $base_price = apply_filters('mhbo_calculate_stay_price', $base_price, $room_id, $date);
 
         // Pro Features: Weekend & Holiday Pricing
         if (false) {
@@ -155,20 +155,20 @@ class Pricing
             // regardless of site locale settings.
             $day_of_week = strtolower(gmdate('l', $dt));
 
-            $weekend_days = get_option('mhb_weekend_days', ['friday', 'saturday', 'sunday']);
+            $weekend_days = get_option('mhbo_weekend_days', ['friday', 'saturday', 'sunday']);
             if (!is_array($weekend_days)) {
                 $weekend_days = is_string($weekend_days) && !empty($weekend_days) ? explode(',', $weekend_days) : [];
             }
             $is_weekend = in_array($day_of_week, $weekend_days, true);
 
-            $holiday_dates_str = get_option('mhb_holiday_dates', '');
+            $holiday_dates_str = get_option('mhbo_holiday_dates', '');
             $holiday_dates = array_map('trim', explode(',', $holiday_dates_str));
             $is_holiday = in_array($date, $holiday_dates, true);
 
             $weekend_adj = 0;
-            if ($is_weekend && get_option('mhb_weekend_pricing_enabled', 0)) {
-                $val = (float) get_option('mhb_weekend_rate_multiplier', 1.2);
-                $type = get_option('mhb_weekend_modifier_type', 'multiplier');
+            if ($is_weekend && get_option('mhbo_weekend_pricing_enabled', 0)) {
+                $val = (float) get_option('mhbo_weekend_rate_multiplier', 1.2);
+                $type = get_option('mhbo_weekend_modifier_type', 'multiplier');
                 if ('multiplier' === $type) {
                     $weekend_adj = ($base_price * $val) - $base_price;
                 } elseif ('percent' === $type) {
@@ -179,9 +179,9 @@ class Pricing
             }
 
             $holiday_adj = 0;
-            if ($is_holiday && get_option('mhb_holiday_pricing_enabled', 0)) {
-                $val = (float) get_option('mhb_holiday_rate_modifier', 1.2);
-                $type = get_option('mhb_holiday_modifier_type', 'multiplier');
+            if ($is_holiday && get_option('mhbo_holiday_pricing_enabled', 0)) {
+                $val = (float) get_option('mhbo_holiday_rate_modifier', 1.2);
+                $type = get_option('mhbo_holiday_modifier_type', 'multiplier');
                 if ('multiplier' === $type) {
                     $holiday_adj = ($base_price * $val) - $base_price;
                 } elseif ('percent' === $type) {
@@ -191,7 +191,7 @@ class Pricing
                 }
             }
 
-            if (get_option('mhb_apply_weekend_to_holidays', 1)) {
+            if (get_option('mhbo_apply_weekend_to_holidays', 1)) {
                 // Use the larger adjustment if both apply (Conflict Resolution)
                 $base_price += max($weekend_adj, $holiday_adj);
             } else {
@@ -220,12 +220,12 @@ class Pricing
         global $wpdb;
 
         // Validate room exists and get policy - with caching
-        $room_cache_key = 'mhb_room_policy_' . $room_id;
+        $room_cache_key = 'mhbo_room_policy_' . $room_id;
         $room = wp_cache_get($room_cache_key, 'mhb');
 
         if (false === $room) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
-            $room = $wpdb->get_row($wpdb->prepare("SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate FROM {$wpdb->prefix}mhb_rooms r JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id WHERE r.id = %d", $room_id));
+            $room = $wpdb->get_row($wpdb->prepare("SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.id = %d", $room_id));
             wp_cache_set($room_cache_key, $room, 'mhb', HOUR_IN_SECONDS);
         }
 
@@ -313,7 +313,7 @@ class Pricing
         $extras_breakdown = [];
 
         if (!empty($extras) && is_array($extras)) {
-            $available_extras = get_option('mhb_pro_extras', []);
+            $available_extras = get_option('mhbo_pro_extras', []);
             $extras_map = [];
             foreach ($available_extras as $ex) {
                 $extras_map[$ex['id']] = $ex;
@@ -413,7 +413,7 @@ class Pricing
      */
     public static function get_currency_symbol()
     {
-        return get_option('mhb_currency_symbol', '$');
+        return get_option('mhbo_currency_symbol', '$');
     }
 
     /**
@@ -423,7 +423,7 @@ class Pricing
      */
     public static function get_currency_code()
     {
-        return get_option('mhb_currency_code', 'USD');
+        return get_option('mhbo_currency_code', 'USD');
     }
 
     /**
@@ -442,10 +442,10 @@ class Pricing
             $label = Tax::get_label();
             if (Tax::MODE_VAT === $mode) {
                 // translators: %s: tax label (e.g., VAT, Tax)
-                $formatted .= ' <span class="mhb-tax-note">(' . sprintf(I18n::get_label('label_tax_note_includes'), $label) . ')</span>';
+                $formatted .= ' <span class="mhbo-tax-note">(' . sprintf(I18n::get_label('label_tax_note_includes'), $label) . ')</span>';
             } elseif (Tax::MODE_SALES_TAX === $mode) {
                 // translators: %s: tax label (e.g., VAT, Tax)
-                $formatted .= ' <span class="mhb-tax-note">(' . sprintf(I18n::get_label('label_tax_note_plus'), $label) . ')</span>';
+                $formatted .= ' <span class="mhbo-tax-note">(' . sprintf(I18n::get_label('label_tax_note_plus'), $label) . ')</span>';
             }
         }
 

@@ -23,8 +23,8 @@
             }
 
             return [
-                el('div', { className: props.className + ' mhb-block-preview' },
-                    el('div', { className: 'mhb-block-icon' }, el(wp.components.Dashicon, { icon: 'building' })),
+                el('div', { className: props.className + ' mhbo-block-preview' },
+                    el('div', { className: 'mhbo-block-icon' }, el(wp.components.Dashicon, { icon: 'building' })),
                     el('p', {}, wp.i18n.__('Hotel Booking Form Preview', 'modern-hotel-booking')),
                     el('small', {}, 'Shortcode: [modern_hotel_booking' + (attributes.roomId ? ' room_id="' + attributes.roomId + '"' : '') + ']')
                 ),

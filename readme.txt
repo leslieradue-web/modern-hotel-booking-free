@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.2
+Stable tag: 2.2.6.6
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,11 +108,45 @@ Yes, the booking form and availability calendars are fully responsive and optimi
 = Where is credit card data stored? =
 Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). This ensures you are PCI-compliant and guest data is secure.
 
-== Privacy Policy & External Services ==
+== External Services ==
 
-This plugin utilizes external services to process payments in the Pro version. By using these features, data is transmitted to the respective providers:
-*   **Stripe**: Secure payment processing. Their privacy policy can be found at: https://stripe.com/privacy
-*   **PayPal**: Secure payment processing. Their privacy policy can be found at: https://www.paypal.com/webapps/mpp/ua/privacy-full
+This plugin provides hotel booking functionality. Connection to external services depends on your version:
+
+= Free Version =
+
+The free version does **not** connect to any external services. All functionality operates locally on your WordPress server with no data transmitted externally.
+
+= Pro Version (Separate Download) =
+
+The Pro version, available separately from [startmysuccess.com](https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/), includes payment gateway and calendar synchronization features that connect to external services:
+
+**Stripe Payment Processing**
+
+* Service Provider: Stripe, Inc. (https://stripe.com)
+* Purpose: Process secure credit/debit card payments for reservations
+* When Used: When a guest completes a booking using credit card payment
+* Data Transmitted: Tokenized payment data (no full card numbers stored on your server), booking amount, currency code
+* Terms of Service: https://stripe.com/legal
+* Privacy Policy: https://stripe.com/privacy
+
+**PayPal Payment Processing**
+
+* Service Provider: PayPal Holdings, Inc. (https://paypal.com)
+* Purpose: Accept PayPal payments for reservations
+* When Used: When a guest selects PayPal as their payment method during checkout
+* Data Transmitted: Order ID, booking amount, currency code
+* Terms of Service: https://www.paypal.com/legalhub/useragreement-full
+* Privacy Policy: https://www.paypal.com/webapps/mpp/ua/privacy-full
+
+**iCal Calendar Synchronization**
+
+* Service Providers: Third-party booking platforms (Airbnb, Booking.com, VRBO, Expedia, Google Calendar)
+* Purpose: Synchronize room availability to prevent double bookings across platforms
+* When Used: When configured and enabled by the site administrator
+* Data Transmitted: Room availability dates only - NO guest personal data is transmitted
+* Note: Each external platform operates under their own terms and privacy policies
+
+No personal guest data is transmitted to any external service without explicit user action (e.g., completing a booking with payment).
 
 == Screenshots ==
 
@@ -128,6 +162,20 @@ This plugin utilizes external services to process payments in the Pro version. B
 10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
+
+= 2.2.6.6 =
+* Updates and improvements as per recent changes.
+
+= 2.2.6.5 =
+* Changes as per recent updates.
+
+= 2.2.6.3 =
+* Security: Full prefix refactoring from MHB to MHBO (4-character prefix per WP.org guidelines).
+* Compliance: Changed powered_by_link default to OFF (requires user opt-in).
+* Compliance: Enhanced External Services documentation per WP.org requirements.
+* Compliance: Fully removed Stripe/PayPal API code from Free version (trialware compliance).
+* Improvement: Added automated refactoring script for prefix changes.
+* Improvement: Updated vendor libraries (Chart.js, FullCalendar).
 
 = 2.2.6.2 =
 * Fixes per WP.org review implemented.

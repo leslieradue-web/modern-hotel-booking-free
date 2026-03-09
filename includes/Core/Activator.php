@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -17,7 +17,7 @@ class Activator
 
 		// Custom tables are necessary for booking logic and historical data integrity.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
-		$sql_room_types = "CREATE TABLE {$wpdb->prefix}mhb_room_types (
+		$sql_room_types = "CREATE TABLE {$wpdb->prefix}mhbo_room_types (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			name varchar(255) NOT NULL,
 			description text,
@@ -35,7 +35,7 @@ class Activator
 
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
-		$sql_rooms = "CREATE TABLE {$wpdb->prefix}mhb_rooms (
+		$sql_rooms = "CREATE TABLE {$wpdb->prefix}mhbo_rooms (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			type_id mediumint(9) NOT NULL,
 			room_number varchar(50) NOT NULL,
@@ -48,7 +48,7 @@ class Activator
 
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
-		$sql_bookings = "CREATE TABLE {$wpdb->prefix}mhb_bookings (
+		$sql_bookings = "CREATE TABLE {$wpdb->prefix}mhbo_bookings (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
 			customer_name varchar(255) NOT NULL,
@@ -107,7 +107,7 @@ class Activator
 
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
-		$sql_ical_connections = "CREATE TABLE {$wpdb->prefix}mhb_ical_connections (
+		$sql_ical_connections = "CREATE TABLE {$wpdb->prefix}mhbo_ical_connections (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
 			platform varchar(50) DEFAULT 'custom',
@@ -127,7 +127,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_ical_connections);
 
-		$sql_ical = "CREATE TABLE {$wpdb->prefix}mhb_ical_feeds (
+		$sql_ical = "CREATE TABLE {$wpdb->prefix}mhbo_ical_feeds (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
 			feed_url text NOT NULL,
@@ -143,7 +143,7 @@ class Activator
 
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
-		$sql_pricing = "CREATE TABLE {$wpdb->prefix}mhb_pricing_rules (
+		$sql_pricing = "CREATE TABLE {$wpdb->prefix}mhbo_pricing_rules (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL DEFAULT 0,
 			type_id mediumint(9) NOT NULL DEFAULT 0,
@@ -161,41 +161,41 @@ class Activator
 		dbDelta($sql_pricing);
 
 		// Add new options for multilingual and currency
-		add_option('mhb_db_version', MHB_VERSION);
-		add_option('mhb_currency_code', 'USD');
-		add_option('mhb_currency_symbol', '$');
-		add_option('mhb_currency_position', 'before');
+		add_option('mhbo_db_version', MHBO_VERSION);
+		add_option('mhbo_currency_code', 'USD');
+		add_option('mhbo_currency_symbol', '$');
+		add_option('mhbo_currency_position', 'before');
 		// License option removed for Free version
-		add_option('mhb_gateway_stripe_enabled', 0);
-		add_option('mhb_gateway_paypal_enabled', 0);
-		add_option('mhb_gateway_onsite_enabled', 0);
-		add_option('mhb_stripe_mode', 'test');
-		add_option('mhb_paypal_mode', 'sandbox');
-		add_option('mhb_ical_token', wp_generate_password(32, false));
-		add_option('mhb_powered_by_link', 1);
+		add_option('mhbo_gateway_stripe_enabled', 0);
+		add_option('mhbo_gateway_paypal_enabled', 0);
+		add_option('mhbo_gateway_onsite_enabled', 0);
+		add_option('mhbo_stripe_mode', 'test');
+		add_option('mhbo_paypal_mode', 'sandbox');
+		add_option('mhbo_ical_token', wp_generate_password(32, false));
+		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
 
 		// Tax System Options
-		add_option('mhb_tax_mode', 'disabled');
-		add_option('mhb_tax_rate_accommodation', 0.00);
-		add_option('mhb_tax_rate_extras', 0.00);
-		add_option('mhb_tax_label', '[:en]VAT[:ro]TVA[:]');
-		add_option('mhb_tax_registration_number', '');
-		add_option('mhb_tax_display_frontend', 1);
-		add_option('mhb_tax_display_email', 1);
-		add_option('mhb_tax_rounding_mode', 'per_total');
-		add_option('mhb_tax_decimal_places', 2);
-		add_option('mhb_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
+		add_option('mhbo_tax_mode', 'disabled');
+		add_option('mhbo_tax_rate_accommodation', 0.00);
+		add_option('mhbo_tax_rate_extras', 0.00);
+		add_option('mhbo_tax_label', '[:en]VAT[:ro]TVA[:]');
+		add_option('mhbo_tax_registration_number', '');
+		add_option('mhbo_tax_display_frontend', 1);
+		add_option('mhbo_tax_display_email', 1);
+		add_option('mhbo_tax_rounding_mode', 'per_total');
+		add_option('mhbo_tax_decimal_places', 2);
+		add_option('mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
 
 		// iCal Sync Settings
-		add_option('mhb_ical_auto_sync_enabled', 1);
-		add_option('mhb_ical_sync_interval', '6hours');
-		add_option('mhb_ical_retry_enabled', 1);
-		add_option('mhb_ical_email_notifications', 0);
-		add_option('mhb_ical_notification_email', get_option('admin_email'));
-		add_option('mhb_ical_sync_lock_timeout', 30);
+		add_option('mhbo_ical_auto_sync_enabled', 1);
+		add_option('mhbo_ical_sync_interval', '6hours');
+		add_option('mhbo_ical_retry_enabled', 1);
+		add_option('mhbo_ical_email_notifications', 0);
+		add_option('mhbo_ical_notification_email', get_option('admin_email'));
+		add_option('mhbo_ical_sync_lock_timeout', 30);
 
 		// Cache Settings (optional/configurable)
-		add_option('mhb_cache_enabled', 1);
+		add_option('mhbo_cache_enabled', 1);
 
 		// License API Credentials — only seed when Pro classes are available
 		// Obfuscated to prevent casual source reading; server-side domain validation is the real security layer
@@ -218,16 +218,16 @@ class Activator
 		self::activate();
 
 		// Add tax options if they don't exist
-		add_option('mhb_tax_mode', 'disabled');
-		add_option('mhb_tax_rate_accommodation', 0.00);
-		add_option('mhb_tax_rate_extras', 0.00);
-		add_option('mhb_tax_label', '[:en]VAT[:ro]TVA[:]');
-		add_option('mhb_tax_registration_number', '');
-		add_option('mhb_tax_display_frontend', 1);
-		add_option('mhb_tax_display_email', 1);
-		add_option('mhb_tax_rounding_mode', 'per_total');
-		add_option('mhb_tax_decimal_places', 2);
-		add_option('mhb_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
+		add_option('mhbo_tax_mode', 'disabled');
+		add_option('mhbo_tax_rate_accommodation', 0.00);
+		add_option('mhbo_tax_rate_extras', 0.00);
+		add_option('mhbo_tax_label', '[:en]VAT[:ro]TVA[:]');
+		add_option('mhbo_tax_registration_number', '');
+		add_option('mhbo_tax_display_frontend', 1);
+		add_option('mhbo_tax_display_email', 1);
+		add_option('mhbo_tax_rounding_mode', 'per_total');
+		add_option('mhbo_tax_decimal_places', 2);
+		add_option('mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
 
 		// License API Credentials (for existing installations)
 		if (class_exists('MHB\Core\LicenseManager')) {
@@ -236,24 +236,24 @@ class Activator
 		}
 
 		// Cache Settings (for existing installations)
-		add_option('mhb_cache_enabled', 1);
+		add_option('mhbo_cache_enabled', 1);
 
 		// Migrate iCal feeds to new connections table
 		self::migrate_ical_feeds_to_connections();
 
 		// Add iCal sync options
-		add_option('mhb_ical_auto_sync_enabled', 1);
-		add_option('mhb_ical_sync_interval', '6hours');
-		add_option('mhb_ical_retry_enabled', 1);
-		add_option('mhb_ical_email_notifications', 0);
-		add_option('mhb_ical_notification_email', get_option('admin_email'));
-		add_option('mhb_ical_sync_lock_timeout', 30);
-		add_option('mhb_powered_by_link', 1);
+		add_option('mhbo_ical_auto_sync_enabled', 1);
+		add_option('mhbo_ical_sync_interval', '6hours');
+		add_option('mhbo_ical_retry_enabled', 1);
+		add_option('mhbo_ical_email_notifications', 0);
+		add_option('mhbo_ical_notification_email', get_option('admin_email'));
+		add_option('mhbo_ical_sync_lock_timeout', 30);
+		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
 
 		// Add new indexes for performance (for existing installations)
 		self::add_performance_indexes();
 
-		update_option('mhb_db_version', $new_version);
+		update_option('mhbo_db_version', $new_version);
 	}
 
 	/**
@@ -264,23 +264,23 @@ class Activator
 		global $wpdb;
 		// Check if old table exists
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$old_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", "{$wpdb->prefix}mhb_ical_feeds"));
+		$old_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", "{$wpdb->prefix}mhbo_ical_feeds"));
 		if (!$old_exists) {
 			return;
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$new_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhb_ical_connections");
+		$new_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_ical_connections");
 		if (0 < (int) $new_count) {
 			return; // Already migrated
 		}
 
 		// Migrate data
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$feeds = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}mhb_ical_feeds");
+		$feeds = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}mhbo_ical_feeds");
 		foreach ($feeds as $feed) {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Schema migration
-				"{$wpdb->prefix}mhb_ical_connections",
+				"{$wpdb->prefix}mhbo_ical_connections",
 				array(
 					'room_id' => $feed->room_id,
 					'platform' => $feed->platform ?? 'custom',
@@ -309,26 +309,26 @@ class Activator
 		// Add composite index for booking date range queries
 		// Add composite index for booking date range queries
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration, table name hardcoded
-		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhb_bookings WHERE Key_name = 'idx_check_in_out'");
+		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhbo_bookings WHERE Key_name = 'idx_check_in_out'");
 		if (empty($index_check)) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema migration, table name hardcoded
-			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhb_bookings ADD INDEX idx_check_in_out (check_in, check_out)");
+			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhbo_bookings ADD INDEX idx_check_in_out (check_in, check_out)");
 		}
 
 		// Add composite index for status/payment filtering
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhb_bookings WHERE Key_name = 'idx_status_payment'");
+		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhbo_bookings WHERE Key_name = 'idx_status_payment'");
 		if (empty($index_check)) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema migration
-			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhb_bookings ADD INDEX idx_status_payment (status, payment_status)");
+			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhbo_bookings ADD INDEX idx_status_payment (status, payment_status)");
 		}
 
 		// Add index for pricing rules date queries
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhb_pricing_rules WHERE Key_name = 'idx_dates'");
+		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhbo_pricing_rules WHERE Key_name = 'idx_dates'");
 		if (empty($index_check)) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema migration
-			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhb_pricing_rules ADD INDEX idx_dates (start_date, end_date)");
+			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhbo_pricing_rules ADD INDEX idx_dates (start_date, end_date)");
 		}
 	}
 }

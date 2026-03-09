@@ -1,17 +1,17 @@
 /* MHB Calendar - Modern Responsive Layout */
 
-.mhb-calendar-wrapper * {
+.mhbo-calendar-wrapper * {
     box-sizing: border-box;
 }
 
-.mhb-calendar-container {
+.mhbo-calendar-container {
     max-width: 600px;
     margin: 20px auto;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     padding: 0 15px;
 }
 
-.mhb-calendar-guide {
+.mhbo-calendar-guide {
     text-align: center;
     margin-bottom: 30px;
     font-size: 1.4rem;
@@ -21,7 +21,7 @@
 }
 
 /* --- Booking Status Legend --- */
-.mhb-calendar-legend {
+.mhbo-calendar-legend {
     display: flex;
     justify-content: center;
     gap: 20px;
@@ -30,33 +30,33 @@
     font-size: 0.85rem;
 }
 
-.mhb-legend-item {
+.mhbo-legend-item {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.mhb-legend-color {
+.mhbo-legend-color {
     width: 16px;
     height: 16px;
     border-radius: 4px;
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.mhb-legend-color.mhb-legend-confirmed {
+.mhbo-legend-color.mhbo-legend-confirmed {
     background-color: #e53e3e;
 }
 
-.mhb-legend-color.mhb-legend-pending {
+.mhbo-legend-color.mhbo-legend-pending {
     background-color: #dd6b20;
 }
 
 /* --- Flatpickr Global Overrides --- */
 /* Scope everything to avoid global pollution */
 /* CRITICAL: Override flatpickr.min.css fixed dimensions and max-height */
-.mhb-calendar-wrapper .flatpickr-calendar,
-.mhb-calendar-wrapper .flatpickr-calendar.inline,
-.mhb-calendar-wrapper .flatpickr-calendar.open {
+.mhbo-calendar-wrapper .flatpickr-calendar,
+.mhbo-calendar-wrapper .flatpickr-calendar.inline,
+.mhbo-calendar-wrapper .flatpickr-calendar.open {
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12) !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-radius: 20px !important;
@@ -74,30 +74,30 @@
     display: block !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-months {
+.mhbo-calendar-wrapper .flatpickr-months {
     padding: 15px 0 !important;
     background: transparent !important;
     border-bottom: 1px solid var(--mhb-border) !important;
     border-radius: 12px 12px 0 0 !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-month {
+.mhbo-calendar-wrapper .flatpickr-month {
     height: 40px !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-current-month {
+.mhbo-calendar-wrapper .flatpickr-current-month {
     font-size: 1.25rem !important;
     padding-top: 0 !important;
     font-weight: 700 !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-weekdays {
+.mhbo-calendar-wrapper .flatpickr-weekdays {
     background: transparent !important;
     margin-bottom: 5px !important;
     padding: 10px 0 !important;
 }
 
-.mhb-calendar-wrapper span.flatpickr-weekday {
+.mhbo-calendar-wrapper span.flatpickr-weekday {
     color: var(--mhb-primary) !important;
     font-weight: 800 !important;
     font-size: 0.9rem !important;
@@ -106,7 +106,7 @@
 
 /* --- Day Cells --- */
 /* CRITICAL: Override flatpickr.min.css overflow:hidden and fixed width */
-.mhb-calendar-wrapper .flatpickr-days {
+.mhbo-calendar-wrapper .flatpickr-days {
     width: 100% !important;
     padding: 5px !important;
     overflow: visible !important;
@@ -114,7 +114,7 @@
     flex-wrap: wrap !important;
 }
 
-.mhb-calendar-wrapper .dayContainer {
+.mhbo-calendar-wrapper .dayContainer {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
@@ -123,14 +123,14 @@
 }
 
 /* Ensure calendar container expands to fit all day cells with prices */
-.mhb-calendar-wrapper .flatpickr-innerContainer,
-.mhb-calendar-wrapper .flatpickr-rContainer {
+.mhbo-calendar-wrapper .flatpickr-innerContainer,
+.mhbo-calendar-wrapper .flatpickr-rContainer {
     overflow: visible !important;
     display: block !important;
     width: 100% !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day {
+.mhbo-calendar-wrapper .flatpickr-day {
     border-radius: 12px !important;
     border: 1px solid transparent !important;
     margin: 2px !important;
@@ -151,20 +151,20 @@
     transition: all 0.2s ease !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day:hover {
+.mhbo-calendar-wrapper .flatpickr-day:hover {
     background: #edf2f7 !important;
     border-color: #cbd5e0 !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.selected,
-.mhb-calendar-wrapper .flatpickr-day.startRange,
-.mhb-calendar-wrapper .flatpickr-day.endRange {
+.mhbo-calendar-wrapper .flatpickr-day.selected,
+.mhbo-calendar-wrapper .flatpickr-day.startRange,
+.mhbo-calendar-wrapper .flatpickr-day.endRange {
     background: var(--mhb-primary) !important;
     color: #fff !important;
     border-color: var(--mhb-primary) !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.inRange {
+.mhbo-calendar-wrapper .flatpickr-day.inRange {
     background: var(--mhb-secondary) !important;
     border-color: var(--mhb-secondary) !important;
     color: var(--mhb-primary) !important;
@@ -172,11 +172,11 @@
 }
 
 /* Hide the price display on the checkout date so it's clear you only pay per night */
-.mhb-calendar-wrapper .flatpickr-day.endRange .mhb-fp-price {
+.mhbo-calendar-wrapper .flatpickr-day.endRange .mhbo-fp-price {
     display: none !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled {
     background: #f7fafc !important;
     color: #cbd5e0 !important;
     cursor: not-allowed !important;
@@ -185,7 +185,7 @@
 
 /* --- Booking Status Colors (Subtle Glass Effect) --- */
 /* Confirmed bookings - Subtle Red */
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-confirmed {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed {
     background: rgba(229, 62, 62, 0.15) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -194,12 +194,12 @@
     opacity: 1 !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-confirmed .mhb-day-number {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed .mhbo-day-number {
     color: #742a2a !important;
 }
 
 /* Pending bookings - Subtle Orange */
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-pending {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending {
     background: rgba(221, 107, 32, 0.15) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -208,41 +208,41 @@
     opacity: 1 !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-booking-pending .mhb-day-number {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending .mhbo-day-number {
     color: #744210 !important;
 }
 
 /* --- Half-Day Changeover Styling (Split Backgrounds) --- */
 
 /* Confirmed: Check-in day (afternoon booked, morning free) */
-.mhb-calendar-wrapper .flatpickr-day.mhb-booking-confirmed.mhb-half-booked-checkin {
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-confirmed.mhbo-half-booked-checkin {
     background: linear-gradient(135deg, #fff 50%, rgba(229, 62, 62, 0.15) 50%) !important;
 }
 
 /* Confirmed: Check-out day (morning booked, afternoon free) */
-.mhb-calendar-wrapper .flatpickr-day.mhb-booking-confirmed.mhb-half-booked-checkout {
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-confirmed.mhbo-half-booked-checkout {
     background: linear-gradient(135deg, rgba(229, 62, 62, 0.15) 50%, #fff 50%) !important;
 }
 
 /* Pending: Check-in day (afternoon booked, morning free) */
-.mhb-calendar-wrapper .flatpickr-day.mhb-booking-pending.mhb-half-booked-checkin {
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-pending.mhbo-half-booked-checkin {
     background: linear-gradient(135deg, #fff 50%, rgba(221, 107, 32, 0.15) 50%) !important;
 }
 
 /* Pending: Check-out day (morning booked, afternoon free) */
-.mhb-calendar-wrapper .flatpickr-day.mhb-booking-pending.mhb-half-booked-checkout {
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-pending.mhbo-half-booked-checkout {
     background: linear-gradient(135deg, rgba(221, 107, 32, 0.15) 50%, #fff 50%) !important;
 }
 
 /* Overriding the text color for half-booked days to ensure readability */
-.mhb-calendar-wrapper .flatpickr-day.mhb-half-booked-checkin .mhb-day-number,
-.mhb-calendar-wrapper .flatpickr-day.mhb-half-booked-checkout .mhb-day-number {
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkin .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkout .mhbo-day-number {
     color: #2d3748 !important;
 }
 
 
 /* Unbookable dates (no price set) - Same red as booked */
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-unbookable {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-unbookable {
     background: rgba(229, 62, 62, 0.15) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -251,19 +251,19 @@
     opacity: 1 !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhb-unbookable .mhb-day-number {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-unbookable .mhbo-day-number {
     color: #742a2a !important;
 }
 
 /* --- Inner Day Content --- */
-.mhb-calendar-wrapper .mhb-day-number {
+.mhbo-calendar-wrapper .mhbo-day-number {
     font-size: 1.1rem !important;
     font-weight: 700 !important;
     display: block !important;
     line-height: 1 !important;
 }
 
-.mhb-calendar-wrapper .mhb-fp-price {
+.mhbo-calendar-wrapper .mhbo-fp-price {
     font-size: 1rem !important;
     font-weight: 900 !important;
     color: var(--mhb-primary) !important;
@@ -279,22 +279,22 @@
     word-break: break-all !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.selected .mhb-fp-price,
-.mhb-calendar-wrapper .flatpickr-day.startRange .mhb-fp-price {
+.mhbo-calendar-wrapper .flatpickr-day.selected .mhbo-fp-price,
+.mhbo-calendar-wrapper .flatpickr-day.startRange .mhbo-fp-price {
     color: #fff !important;
 }
 
 /* Hide price on the checkout date when a range is selected */
-.mhb-calendar-wrapper .flatpickr-day.endRange .mhb-fp-price {
+.mhbo-calendar-wrapper .flatpickr-day.endRange .mhbo-fp-price {
     display: none !important;
 }
 
-.mhb-calendar-wrapper .flatpickr-day.inRange .mhb-fp-price {
+.mhbo-calendar-wrapper .flatpickr-day.inRange .mhbo-fp-price {
     color: var(--mhb-primary) !important;
 }
 
 /* --- Selection Box --- */
-.mhb-selection-box {
+.mhbo-selection-box {
     margin-top: 25px;
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -303,7 +303,7 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.mhb-selection-header h3 {
+.mhbo-selection-header h3 {
     margin: 0 0 15px;
     font-size: 1.25rem;
     color: #2d3748;
@@ -311,7 +311,7 @@
     padding-bottom: 10px;
 }
 
-.mhb-selection-details {
+.mhbo-selection-details {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -320,12 +320,12 @@
     margin-bottom: 20px;
 }
 
-.mhb-selection-dates {
+.mhbo-selection-dates {
     display: flex;
     gap: 30px;
 }
 
-.mhb-label {
+.mhbo-label {
     display: block;
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -334,14 +334,14 @@
     margin-bottom: 4px;
 }
 
-.mhb-value {
+.mhbo-value {
     font-size: 1.1rem;
     font-weight: 600;
     color: #2d3748;
 }
 
 /* --- Check-in/out Time Info --- */
-.mhb-time-info {
+.mhbo-time-info {
     display: block;
     font-size: 0.75rem;
     color: #718096;
@@ -350,13 +350,13 @@
     font-style: italic;
 }
 
-.mhb-price-value {
+.mhbo-price-value {
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--mhb-primary);
 }
 
-.mhb-btn-primary {
+.mhbo-btn-primary {
     width: 100%;
     max-width: 100%;
     background: var(--mhb-primary);
@@ -375,110 +375,110 @@
     clear: both;
 }
 
-.mhb-btn-primary:empty::before {
+.mhbo-btn-primary:empty::before {
     content: "Search Rooms";
 }
 
-.mhb-btn-primary:hover {
+.mhbo-btn-primary:hover {
     filter: brightness(1.2);
 }
 
 /* --- Responsive Layout --- */
 @media (max-width: 768px) {
-    .mhb-calendar-wrapper .flatpickr-day {
+    .mhbo-calendar-wrapper .flatpickr-day {
         height: 80px !important;
         padding: 4px !important;
     }
 
-    .mhb-calendar-wrapper .mhb-day-number {
+    .mhbo-calendar-wrapper .mhbo-day-number {
         font-size: 1rem !important;
     }
 
-    .mhb-calendar-wrapper .mhb-fp-price {
+    .mhbo-calendar-wrapper .mhbo-fp-price {
         font-size: 0.95rem !important;
     }
 
-    .mhb-selection-details {
+    .mhbo-selection-details {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .mhb-selection-price {
+    .mhbo-selection-price {
         text-align: right;
     }
 }
 
 @media (max-width: 480px) {
-    .mhb-calendar-wrapper .flatpickr-day {
+    .mhbo-calendar-wrapper .flatpickr-day {
         height: 75px !important;
         padding: 2px !important;
     }
 
-    .mhb-calendar-wrapper .mhb-fp-price {
+    .mhbo-calendar-wrapper .mhbo-fp-price {
         display: block !important;
         font-size: 0.85rem !important;
         padding-bottom: 2px;
         line-height: 1.1 !important;
     }
 
-    .mhb-calendar-container {
+    .mhbo-calendar-container {
         padding: 0 5px;
     }
 }
 
 /* --- Widget Context Overrides --- */
-.mhb-widget-context .mhb-calendar-container {
+.mhbo-widget-context .mhbo-calendar-container {
     margin: 0;
     padding: 0;
     max-width: 100%;
 }
 
-.mhb-widget-context .mhb-calendar-guide {
+.mhbo-widget-context .mhbo-calendar-guide {
     font-size: 1.1rem;
     margin-bottom: 15px;
 }
 
-.mhb-widget-context .mhb-calendar-legend {
+.mhbo-widget-context .mhbo-calendar-legend {
     gap: 10px;
     font-size: 0.75rem;
 }
 
-.mhb-widget-context .mhb-calendar-wrapper .flatpickr-day {
+.mhbo-widget-context .mhbo-calendar-wrapper .flatpickr-day {
     height: 60px !important; /* Smaller height for widgets */
 }
 
-.mhb-widget-context .mhb-calendar-wrapper .mhb-day-number {
+.mhbo-widget-context .mhbo-calendar-wrapper .mhbo-day-number {
     font-size: 0.9rem !important;
 }
 
-.mhb-widget-context .mhb-calendar-wrapper .mhb-fp-price {
+.mhbo-widget-context .mhbo-calendar-wrapper .mhbo-fp-price {
     font-size: 0.8rem !important;
 }
 
-.mhb-widget-context .mhb-selection-box {
+.mhbo-widget-context .mhbo-selection-box {
     padding: 15px;
     margin-top: 15px;
 }
 
-.mhb-widget-context .mhb-selection-details {
+.mhbo-widget-context .mhbo-selection-details {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
 }
 
-.mhb-widget-context .mhb-selection-dates {
+.mhbo-widget-context .mhbo-selection-dates {
     gap: 15px;
     justify-content: space-between;
 }
 
-.mhb-widget-context .mhb-selection-price {
+.mhbo-widget-context .mhbo-selection-price {
     text-align: center;
     border-top: 1px solid #edf2f7;
     padding-top: 10px;
     margin-top: 5px;
 }
 
-.mhb-widget-context .mhb-btn-primary {
+.mhbo-widget-context .mhbo-btn-primary {
     font-size: 0.9rem;
     padding: 10px;
 }

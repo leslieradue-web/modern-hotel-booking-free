@@ -16,13 +16,13 @@
 
     // Debug logger - only logs when debug mode is enabled
     const debugLog = (function () {
-        const isDebug = (window.mhbAdminBookingsConfig && window.mhbAdminBookingsConfig.debug) ||
-            (typeof localStorage !== 'undefined' && localStorage.getItem('mhb_debug'));
+        const isDebug = (window.mhboAdminBookingsConfig && window.mhboAdminBookingsConfig.debug) ||
+            (typeof localStorage !== 'undefined' && localStorage.getItem('mhbo_debug'));
         return isDebug ? console.error.bind(console, '[MHB Admin]') : function () { };
     })();
 
     // Configuration is injected via wp_add_inline_script()
-    const config = window.mhbAdminBookingsConfig || {};
+    const config = window.mhboAdminBookingsConfig || {};
 
     /**
      * Price Calculation Setup
@@ -44,7 +44,7 @@
         let calculationTimeout = null;
 
         // List for changes in child ages (dynamically added inputs)
-        const childAgesContainers = ['mhb_add_child_ages_container', 'mhb_edit_child_ages_container'];
+        const childAgesContainers = ['mhbo_add_child_ages_container', 'mhbo_edit_child_ages_container'];
         childAgesContainers.forEach(id => {
             const container = document.getElementById(id);
             if (container) {
@@ -105,7 +105,7 @@
                 // Gather extras
                 const extras = {};
                 if (form) {
-                    form.querySelectorAll('.mhb-extra-input').forEach(function (input) {
+                    form.querySelectorAll('.mhbo-extra-input').forEach(function (input) {
                         const qty = input.type === 'checkbox' ? (input.checked ? 1 : 0) : (parseInt(input.value) || 0);
                         if (qty > 0) {
                             extras[input.dataset.extraId] = qty;
@@ -171,7 +171,7 @@
         });
 
         if (form) {
-            form.querySelectorAll('.mhb-extra-input').forEach(function (el) {
+            form.querySelectorAll('.mhbo-extra-input').forEach(function (el) {
                 el.addEventListener('change', updatePrices);
                 el.addEventListener('input', updatePrices);
             });
@@ -251,20 +251,20 @@
             $extrasList.append(html);
         });
 
-        $(document).on('click', '.mhb-remove-extra', function () {
-            $(this).closest('.mhb-extra-item').remove();
+        $(document).on('click', '.mhbo-remove-extra', function () {
+            $(this).closest('.mhbo-extra-item').remove();
         });
     }
 
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', function () {
         // Run Price Setup for both Add and Edit forms
-        setupCalculation('mhb_add');
-        setupCalculation('mhb_edit');
+        setupCalculation('mhbo_add');
+        setupCalculation('mhbo_edit');
 
         // Run Child Ages Setup
-        setupChildAges('mhb_add');
-        setupChildAges('mhb_edit');
+        setupChildAges('mhbo_add');
+        setupChildAges('mhbo_edit');
     });
 
     // Initialize jQuery-dependent features
@@ -276,12 +276,12 @@
      * FullCalendar Initialization for Bookings Page
      */
     function initFullCalendar() {
-        const calendarEl = document.getElementById('mhb-calendar');
+        const calendarEl = document.getElementById('mhbo-calendar');
         if (!calendarEl || typeof FullCalendar === 'undefined') {
             return;
         }
 
-        const config = window.mhbCalendarConfig || {};
+        const config = window.mhboCalendarConfig || {};
         const events = config.events || [];
 
         // eslint-disable-next-line no-undef

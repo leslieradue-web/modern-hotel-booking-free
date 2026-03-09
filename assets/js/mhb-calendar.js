@@ -3,17 +3,17 @@ jQuery(document).ready(function ($) {
     // Debug logger - only logs when mhb_calendar.debug is true or localStorage flag is set
     const debugLog = (function () {
         const isDebug = (typeof mhb_calendar !== 'undefined' && mhb_calendar.debug) ||
-            (typeof localStorage !== 'undefined' && localStorage.getItem('mhb_debug'));
+            (typeof localStorage !== 'undefined' && localStorage.getItem('mhbo_debug'));
         return isDebug ? console.error.bind(console, '[MHB]') : function () { };
     })();
 
     function initAllCalendars() {
-        $('.mhb-calendar-container').each(function () {
+        $('.mhbo-calendar-container').each(function () {
             const $wrapper = $(this);
             const roomId = $wrapper.data('room-id');
-            const $selectionBox = $wrapper.find('.mhb-selection-box');
-            const $guide = $wrapper.find('.mhb-calendar-guide');
-            const $inlineContainer = $wrapper.find('.mhb-calendar-inline');
+            const $selectionBox = $wrapper.find('.mhbo-selection-box');
+            const $guide = $wrapper.find('.mhbo-calendar-guide');
+            const $inlineContainer = $wrapper.find('.mhbo-calendar-inline');
             const showPrice = String($wrapper.data('show-price')) === '1';
 
             let picker = null;
@@ -76,7 +76,7 @@ jQuery(document).ready(function ($) {
                 // Determine locale dynamically based on loaded scripts
                 // Fallback to English if the requested locale isn't loaded
                 let locale = 'en';
-                if (mhb_calendar.current_lang && typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns[mhb_calendar.current_lang]) {
+                if (mhb_calendar.current_lang && typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns[mhbo_calendar.current_lang]) {
                     locale = mhb_calendar.current_lang;
                 }
 
@@ -168,12 +168,12 @@ jQuery(document).ready(function ($) {
                         const date = fp.formatDate(dayElem.dateObj, "Y-m-d");
                         const dayNum = dayElem.dateObj.getDate();
                         dayElem.innerHTML = '';
-                        const $num = $('<span class="mhb-day-number">' + dayNum + '</span>');
+                        const $num = $('<span class="mhbo-day-number">' + dayNum + '</span>');
                         $(dayElem).append($num);
 
                         // Apply half-day styling for checkin/checkout changeover dates
                         if (changeoverData[date]) {
-                            $(dayElem).addClass('mhb-half-booked-' + changeoverData[date]);
+                            $(dayElem).addClass('mhbo-half-booked-' + changeoverData[date]);
                         }
 
                         // Apply booking status CSS class for color coding
@@ -183,7 +183,7 @@ jQuery(document).ready(function ($) {
                             today.setHours(0, 0, 0, 0);
                             // Only apply status color if the date is not in the past
                             if (dayElem.dateObj >= today) {
-                                $(dayElem).addClass('mhb-booking-' + bookingStatusData[date]);
+                                $(dayElem).addClass('mhbo-booking-' + bookingStatusData[date]);
                             }
                         }
 
@@ -191,7 +191,7 @@ jQuery(document).ready(function ($) {
                         if (showPrice && priceData[date] && !dayElem.classList.contains('flatpickr-disabled')) {
                             // Insert a space between number and currency for better wrapping on small screens
                             const priceText = priceData[date].formatted.replace(/(\d)([^\d\s.,])/, '$1 $2');
-                            const $priceTag = $('<span class="mhb-fp-price">' + priceText + '</span>');
+                            const $priceTag = $('<span class="mhbo-fp-price">' + priceText + '</span>');
                             $(dayElem).append($priceTag);
                             $(dayElem).addClass('has-price');
                         }
@@ -205,30 +205,30 @@ jQuery(document).ready(function ($) {
                 const startStr = picker.formatDate(start, "Y-m-d");
                 const endStr = picker.formatDate(end, "Y-m-d");
 
-                $wrapper.find('.mhb-cal-check-in').val(startStr);
-                $wrapper.find('.mhb-cal-check-out').val(endStr);
-                $wrapper.find('.mhb-display-check-in').text(startStr);
-                $wrapper.find('.mhb-display-check-out').text(endStr);
+                $wrapper.find('.mhbo-cal-check-in').val(startStr);
+                $wrapper.find('.mhbo-cal-check-out').val(endStr);
+                $wrapper.find('.mhbo-display-check-in').text(startStr);
+                $wrapper.find('.mhbo-display-check-out').text(endStr);
 
                 // Update summary box labels if they have translation tags
-                if ($selectionBox.find('.mhb-selection-header h3').length) {
-                    $selectionBox.find('.mhb-selection-header h3').text(mhb_calendar.i18n.your_selection || 'Your Selection');
+                if ($selectionBox.find('.mhbo-selection-header h3').length) {
+                    $selectionBox.find('.mhbo-selection-header h3').text(mhb_calendar.i18n.your_selection || 'Your Selection');
                 }
-                const $dateLabels = $selectionBox.find('.mhb-selection-dates .mhb-label');
+                const $dateLabels = $selectionBox.find('.mhbo-selection-dates .mhbo-label');
                 if ($dateLabels.length >= 2) {
                     $($dateLabels[0]).text(mhb_calendar.i18n.check_in || 'Check-in');
                     $($dateLabels[1]).text(mhb_calendar.i18n.check_out || 'Check-out');
                 }
 
                 // Update button text if translation is available
-                const $submitBtn = $wrapper.find('.mhb-booking-btn-submit');
+                const $submitBtn = $wrapper.find('.mhbo-booking-btn-submit');
                 if ($submitBtn.length && mhb_calendar.i18n.continue_booking) {
                     $submitBtn.text(mhb_calendar.i18n.continue_booking);
                 }
 
                 // Update pricing summary only for room-specific calendars
                 if (showPrice && typeof calculateTotalPrice === 'function') {
-                    $selectionBox.find('.mhb-selection-price .mhb-label').text(mhb_calendar.i18n.total || 'Total');
+                    $selectionBox.find('.mhbo-selection-price .mhbo-label').text(mhb_calendar.i18n.total || 'Total');
                     calculateTotalPrice(start, end);
                 }
 
@@ -247,8 +247,8 @@ jQuery(document).ready(function ($) {
                     d.setDate(d.getDate() + 1);
                 }
                 const formatted = formatCurrency(total);
-                $wrapper.find('.mhb-display-price').text(formatted);
-                $wrapper.find('.mhb-cal-total-price').val(total);
+                $wrapper.find('.mhbo-display-price').text(formatted);
+                $wrapper.find('.mhbo-cal-total-price').val(total);
             }
 
             function formatCurrency(amount) {
@@ -264,17 +264,17 @@ jQuery(document).ready(function ($) {
     }
 
     // Capture the button click globally for better resilience
-    $(document).on('click', '.mhb-booking-btn-submit', function (e) {
+    $(document).on('click', '.mhbo-booking-btn-submit', function (e) {
         e.preventDefault();
         const $btn = $(this);
-        const $wrapper = $btn.closest('.mhb-calendar-container');
-        const $form = $wrapper.find('.mhb-selection-form');
+        const $wrapper = $btn.closest('.mhbo-calendar-container');
+        const $form = $wrapper.find('.mhbo-selection-form');
         const roomId = $wrapper.data('room-id');
 
         const action = $form.attr('action');
-        const checkIn = $wrapper.find('.mhb-cal-check-in').val();
-        const checkOut = $wrapper.find('.mhb-cal-check-out').val();
-        const totalPrice = $wrapper.find('.mhb-cal-total-price').val();
+        const checkIn = $wrapper.find('.mhbo-cal-check-in').val();
+        const checkOut = $wrapper.find('.mhbo-cal-check-out').val();
+        const totalPrice = $wrapper.find('.mhbo-cal-total-price').val();
 
         if (!checkIn || !checkOut) {
             alert(mhb_calendar.i18n.select_dates_error || 'Please select check-in and check-out dates.');
@@ -290,7 +290,7 @@ jQuery(document).ready(function ($) {
             url.searchParams.set('check_in', checkIn);
             url.searchParams.set('check_out', checkOut);
             url.searchParams.set('total_price', totalPrice);
-            url.searchParams.set('mhb_auto_book', '1');
+            url.searchParams.set('mhbo_auto_book', '1');
 
             finalUrl = url.toString();
         } catch (err) {

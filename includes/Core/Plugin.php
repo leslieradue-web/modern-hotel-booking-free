@@ -1,19 +1,19 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-use MHB\Admin\Menu;
-use MHB\Admin\Settings;
-use MHB\Frontend\Shortcode;
-use MHB\Frontend\Calendar;
-use MHB\Frontend\BookingWidget;
-use MHB\Frontend\Block;
-use MHB\Api\RestApi;
-use MHB\Core\Privacy;
+use MHBO\Admin\Menu;
+use MHBO\Admin\Settings;
+use MHBO\Frontend\Shortcode;
+use MHBO\Frontend\Calendar;
+use MHBO\Frontend\BookingWidget;
+use MHBO\Frontend\Block;
+use MHBO\Api\RestApi;
+use MHBO\Core\Privacy;
 // Note: Webhook and LicenseValidator are Pro-only and conditionally loaded below
 
 class Plugin
@@ -35,19 +35,19 @@ class Plugin
         /* ---- iCal Export (public endpoint) ---- */
         add_action('init', function () {
             if (
-                isset($_GET['mhb_action']) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                && 'ical_export' === $_GET['mhb_action'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                isset($_GET['mhbo_action']) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                && 'ical_export' === $_GET['mhbo_action'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 && isset($_GET['room_id']) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             ) {
                 if (!false) {
                     wp_die(esc_html__('Pro license required for iCal export.', 'modern-hotel-booking'), '', array('response' => 403));
                 }
-                \MHB\Core\ICal::generate_ics(absint($_GET['room_id']), sanitize_text_field(wp_unslash($_GET['token'] ?? ''))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                \MHBO\Core\ICal::generate_ics(absint($_GET['room_id']), sanitize_text_field(wp_unslash($_GET['token'] ?? ''))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             }
         });
 
         /* ---- Cron: hourly iCal sync ---- */
-        add_action('mhb_hourly_sync', function () {
+        add_action('mhbo_hourly_sync', function () {
             if (!false) {
                 return;
             }
@@ -55,12 +55,12 @@ class Plugin
             if (false) {
                 /* Pro method call removed */;
             } else {
-                \MHB\Core\ICal::sync_external_calendars();
+                \MHBO\Core\ICal::sync_external_calendars();
             }
         });
 
-        if (!wp_next_scheduled('mhb_hourly_sync')) {
-            wp_schedule_event(time(), 'hourly', 'mhb_hourly_sync');
+        if (!wp_next_scheduled('mhbo_hourly_sync')) {
+            wp_schedule_event(time(), 'hourly', 'mhbo_hourly_sync');
         }
 
         /* ---- REST API ---- */
@@ -109,7 +109,7 @@ class Plugin
             register_widget(BookingWidget::class);
         });
 
-        add_filter('plugin_action_links_' . MHB_PLUGIN_BASENAME, function ($links) {
+        add_filter('plugin_action_links_' . MHBO_PLUGIN_BASENAME, function ($links) {
             $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=mhb-settings')) . '">' . esc_html__('Settings', 'modern-hotel-booking') . '</a>';
             array_unshift($links, $settings_link);
             return $links;
@@ -135,8 +135,8 @@ class Plugin
      */
     private function schedule_cron()
     {
-        if (!wp_next_scheduled('mhb_daily_maintenance')) {
-            wp_schedule_event(time(), 'daily', 'mhb_daily_maintenance');
+        if (!wp_next_scheduled('mhbo_daily_maintenance')) {
+            wp_schedule_event(time(), 'daily', 'mhbo_daily_maintenance');
         }
     }
 }

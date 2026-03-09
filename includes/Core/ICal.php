@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -40,13 +40,13 @@ class ICal
         }
 
         // Support both authentication methods:
-        // 1. Legacy: Global token (mhb_ical_token)
-        // 2. Pro: Per-room key (mhb_ical_key_{room_id})
+        // 1. Legacy: Global token (mhbo_ical_token)
+        // 2. Pro: Per-room key (mhbo_ical_key_{room_id})
         $authenticated = false;
 
         // Check per-room key first (Pro version)
         if (!empty($key)) {
-            $stored_key = get_option('mhb_ical_key_' . $room_id, '');
+            $stored_key = get_option('mhbo_ical_key_' . $room_id, '');
             if (!empty($stored_key) && hash_equals($stored_key, $key)) {
                 $authenticated = true;
             }
@@ -55,7 +55,7 @@ class ICal
         // Fall back to global token (backward compatibility)
         // SECURITY: Use hash_equals for timing-safe comparison
         if (!$authenticated && !empty($token)) {
-            $saved_token = get_option('mhb_ical_token');
+            $saved_token = get_option('mhbo_ical_token');
             if (!empty($saved_token) && hash_equals($saved_token, $token)) {
                 $authenticated = true;
             }
@@ -70,16 +70,16 @@ class ICal
         global $wpdb;
 
         // Include cancelled bookings so external platforms can remove them
-        $cache_key = 'mhb_room_bookings_ics_' . $room_id;
-        $bookings = wp_cache_get($cache_key, 'mhb_bookings');
+        $cache_key = 'mhbo_room_bookings_ics_' . $room_id;
+        $bookings = wp_cache_get($cache_key, 'mhbo_bookings');
 
         if (false === $bookings) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, specific lookup, caching implemented above
             $bookings = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}mhb_bookings WHERE room_id = %d",
+                "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d",
                 $room_id
             ));
-            wp_cache_set($cache_key, $bookings, 'mhb_bookings', HOUR_IN_SECONDS);
+            wp_cache_set($cache_key, $bookings, 'mhbo_bookings', HOUR_IN_SECONDS);
         }
 
         header('Content-Type: text/calendar; charset=utf-8');
@@ -204,7 +204,7 @@ class ICal
      */
     private static function generate_vevent($booking)
     {
-        $uid = $booking->ical_uid ?: 'mhb-' . $booking->id . '@' . wp_parse_url(home_url(), PHP_URL_HOST);
+        $uid = $booking->ical_uid ?: 'mhbo-' . $booking->id . '@' . wp_parse_url(home_url(), PHP_URL_HOST);
 
         // DTSTAMP should be the time the iCal was generated, not booking creation
         $dtstamp = gmdate('Ymd\THis\Z');
@@ -222,7 +222,7 @@ class ICal
         }
 
         // Get sequence number (increment on updates)
-        $sequence = (int) get_post_meta($booking->id, '_mhb_ical_sequence', true);
+        $sequence = (int) get_post_meta($booking->id, '_mhbo_ical_sequence', true);
         if ('cancelled' === $booking->status) {
             // Increment sequence for cancellations
             $sequence = max(1, $sequence + 1);
@@ -294,7 +294,7 @@ class ICal
     }
 
     /**
-     * Sync external calendars from the mhb_ical_connections table.
+     * Sync external calendars from the mhbo_ical_connections table.
      *
      * Fetches each feed URL, parses VEVENT blocks, and creates bookings
      * for any new events not already in the database (matched by external_id).
@@ -309,8 +309,8 @@ class ICal
         global $wpdb;
 
         // Use new table if it exists, fallback to legacy table
-        $new_table = $wpdb->prefix . 'mhb_ical_connections';
-        $legacy_table = $wpdb->prefix . 'mhb_ical_feeds';
+        $new_table = $wpdb->prefix . 'mhbo_ical_connections';
+        $legacy_table = $wpdb->prefix . 'mhbo_ical_feeds';
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema check
         $new_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $new_table));
@@ -357,7 +357,7 @@ class ICal
                 // Check if this event already exists
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, existence check
                 $exists = $wpdb->get_var($wpdb->prepare(
-                    "SELECT id FROM {$wpdb->prefix}mhb_bookings WHERE room_id = %d AND external_id = %s",
+                    "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND external_id = %s",
                     $feed->room_id,
                     $external_id
                 ));
@@ -375,7 +375,7 @@ class ICal
 
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom tables
                     $wpdb->insert(
-                        $wpdb->prefix . 'mhb_bookings',
+                        $wpdb->prefix . 'mhbo_bookings',
                         array(
                             'room_id' => $feed->room_id,
                             'check_in' => $check_in,

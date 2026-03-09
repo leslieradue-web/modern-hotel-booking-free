@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -71,13 +71,13 @@ class Privacy
         $export_items = array();
         global $wpdb;
 
-        $cache_key = 'mhb_gdpr_export_' . md5($email_address . '_' . $page);
-        $bookings = wp_cache_get($cache_key, 'mhb_privacy');
+        $cache_key = 'mhbo_gdpr_export_' . md5($email_address . '_' . $page);
+        $bookings = wp_cache_get($cache_key, 'mhbo_privacy');
 
         if (false === $bookings) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, direct lookup, caching implemented above
             $bookings = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}mhb_bookings 
+                "SELECT * FROM {$wpdb->prefix}mhbo_bookings 
                  WHERE customer_email = %s 
                  ORDER BY check_in DESC 
                  LIMIT %d, %d",
@@ -85,7 +85,7 @@ class Privacy
                 ($page - 1) * $number,
                 $number
             ));
-            wp_cache_set($cache_key, $bookings, 'mhb_privacy', HOUR_IN_SECONDS);
+            wp_cache_set($cache_key, $bookings, 'mhbo_privacy', HOUR_IN_SECONDS);
         }
 
         foreach ($bookings as $booking) {
@@ -125,9 +125,9 @@ class Privacy
             );
 
             $export_items[] = array(
-                'group_id' => 'mhb-bookings',
+                'group_id' => 'mhbo-bookings',
                 'group_label' => __('Hotel Bookings', 'modern-hotel-booking'),
-                'item_id' => "mhb-booking-{$booking->id}",
+                'item_id' => "mhbo-booking-{$booking->id}",
                 'data' => $data,
             );
         }
@@ -160,7 +160,7 @@ class Privacy
         // Find bookings to anonymize
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, direct lookup
         $bookings = $wpdb->get_results($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}mhb_bookings 
+            "SELECT id FROM {$wpdb->prefix}mhbo_bookings 
              WHERE customer_email = %s 
              LIMIT %d, %d",
             $email_address,
@@ -172,7 +172,7 @@ class Privacy
             // Anonymize data instead of deleting the row to keep financial records
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, GDPR erasure
             $updated = $wpdb->update(
-                $wpdb->prefix . 'mhb_bookings',
+                $wpdb->prefix . 'mhbo_bookings',
                 array(
                     'customer_name' => '[Deleted]',
                     'customer_email' => 'deleted@site.invalid',
@@ -184,7 +184,7 @@ class Privacy
             );
 
             if ($updated) {
-                \MHB\Core\Cache::invalidate_booking($booking->id);
+                \MHBO\Core\Cache::invalidate_booking($booking->id);
                 $items_removed = true;
             } else {
                 $items_retained = true;
@@ -212,7 +212,7 @@ class Privacy
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, GDPR erasure
         $result = (bool) $wpdb->update(
-            $wpdb->prefix . 'mhb_bookings',
+            $wpdb->prefix . 'mhbo_bookings',
             array(
                 'customer_name' => '[Anonymized]',
                 'customer_email' => 'deleted@site.invalid',
@@ -225,7 +225,7 @@ class Privacy
         );
 
         if ($result) {
-            \MHB\Core\Cache::invalidate_booking($booking_id);
+            \MHBO\Core\Cache::invalidate_booking($booking_id);
         }
 
         return $result;

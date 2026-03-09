@@ -1,19 +1,19 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Frontend;
+namespace MHBO\Frontend;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-use MHB\Core\I18n;
+use MHBO\Core\I18n;
 
 class BookingWidget extends \WP_Widget
 {
     /**
      * Widget ID base - used for both parent constructor and is_active_widget() check.
      */
-    private const ID_BASE = 'mhb_booking_widget';
+    private const ID_BASE = 'mhbo_booking_widget';
 
     public function __construct()
     {
@@ -57,7 +57,7 @@ class BookingWidget extends \WP_Widget
         // This might be desired or not.
         // If widget is sidebar and shortcode is content, we might want both?
         // But flatpickr IDs might conflict if not careful.
-        // The unified view uses class-based initialization: $('.mhb-calendar-container').each(...)
+        // The unified view uses class-based initialization: $('.mhbo-calendar-container').each(...)
         // So multiple instances SHOULD be fine if HTML IDs are unique or not used.
         // The HTML uses classes, not IDs for elements (except guide? no).
         // Let's rely on Calendar::render_unified_view's protection for now.
@@ -75,7 +75,7 @@ class BookingWidget extends \WP_Widget
             // No, Calendar::render_unified_view enforces singleton per page for now.
             // If we want widget + main content, we'd need to remove that check in Calendar.php.
             // For now, let's assume one calendar per page is safer.
-            echo '<div class="mhb-widget-context">';
+            echo '<div class="mhbo-widget-context">';
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Calendar::render_unified_view returns pre-escaped HTML from internal components
             echo Calendar::render_unified_view(0);
             echo '</div>';

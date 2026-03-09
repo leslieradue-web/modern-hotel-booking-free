@@ -3,7 +3,7 @@
  * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.2.6.2
+ * Version:           2.2.6.6
  * Tested up to:      6.9
  * Requires at least: 5.6
  * Requires PHP:      7.4
@@ -36,19 +36,19 @@ if (version_compare(PHP_VERSION, '7.4.0', '<')) {
     return;
 }
 
-define('MHB_VERSION', '2.2.6.2');
+define('MHBO_VERSION', '2.2.6.6');
 
-define('MHB_IS_PRO', false);
-define('MHB_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('MHB_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('MHB_PLUGIN_BASENAME', plugin_basename(__FILE__));
+define('MHBO_IS_PRO', false);
+define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('MHBO_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('MHBO_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
  * PSR-4-style autoloader for MHB\ namespace.
  */
 spl_autoload_register(function ($class) {
-    $prefix = 'MHB\\';
-    $base_dir = MHB_PLUGIN_DIR . 'includes/';
+    $prefix = 'MHBO\\';
+    $base_dir = MHBO_PLUGIN_DIR . 'includes/';
 
     // Remove leading backslash if present
     $class = ltrim($class, '\\');
@@ -73,11 +73,11 @@ spl_autoload_register(function ($class) {
  */
 function modern_hotel_booking_activate(): void
 {
-    $activator_file = MHB_PLUGIN_DIR . 'includes/Core/Activator.php';
+    $activator_file = MHBO_PLUGIN_DIR . 'includes/Core/Activator.php';
     if (file_exists($activator_file)) {
         require_once $activator_file;
         if (class_exists('MHB\Core\Activator')) {
-            \MHB\Core\Activator::activate();
+            \MHBO\Core\Activator::activate();
         }
     }
 }
@@ -87,11 +87,11 @@ function modern_hotel_booking_activate(): void
  */
 function modern_hotel_booking_deactivate(): void
 {
-    $deactivator_file = MHB_PLUGIN_DIR . 'includes/Core/Deactivator.php';
+    $deactivator_file = MHBO_PLUGIN_DIR . 'includes/Core/Deactivator.php';
     if (file_exists($deactivator_file)) {
         require_once $deactivator_file;
         if (class_exists('MHB\Core\Deactivator')) {
-            \MHB\Core\Deactivator::deactivate();
+            \MHBO\Core\Deactivator::deactivate();
         }
     }
 }
@@ -110,19 +110,19 @@ function modern_hotel_booking_run(): void
         }
 
         // Auto-upgrade DB schema when version changes.
-        $stored = get_option('mhb_db_version');
-        if (MHB_VERSION !== $stored) {
+        $stored = get_option('mhbo_db_version');
+        if (MHBO_VERSION !== $stored) {
             if (class_exists('MHB\Core\Activator')) {
                 if (false !== $stored) {
-                    \MHB\Core\Activator::migrate(is_string($stored) ? $stored : (string) $stored, MHB_VERSION);
+                    \MHBO\Core\Activator::migrate(is_string($stored) ? $stored : (string) $stored, MHBO_VERSION);
                 } else {
-                    \MHB\Core\Activator::activate();
+                    \MHBO\Core\Activator::activate();
                 }
             }
-            update_option('mhb_db_version', MHB_VERSION);
+            update_option('mhbo_db_version', MHBO_VERSION);
         }
 
-        $plugin = new \MHB\Core\Plugin();
+        $plugin = new \MHBO\Core\Plugin();
         $plugin->run();
     } catch (Throwable $e) {
         if (WP_DEBUG) {

@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace MHB\Admin;
+namespace MHBO\Admin;
 
 /**
  * Class Upsell
@@ -30,7 +30,7 @@ class Upsell {
      */
     public static function render_pro_feature_notice(string $feature_name, string $description = ''): void {
         ?>
-        <div class="mhb-upsell-notice">
+        <div class="mhbo-upsell-notice">
             <span class="dashicons dashicons-lock"></span>
             <h3><?php echo esc_html($feature_name); ?> - <?php esc_html_e('Pro Feature', 'modern-hotel-booking'); ?></h3>
             <?php if ($description): ?>
@@ -51,7 +51,7 @@ class Upsell {
      * @return void
      */
     public static function render_pro_badge(): void {
-        echo '<span class="mhb-pro-badge" style="background:#f0ad4e;color:#fff;font-size:10px;padding:2px 5px;border-radius:3px;margin-left:5px;">PRO</span>';
+        echo '<span class="mhbo-pro-badge" style="background:#f0ad4e;color:#fff;font-size:10px;padding:2px 5px;border-radius:3px;margin-left:5px;">PRO</span>';
     }
 
     /**
@@ -68,7 +68,7 @@ class Upsell {
         <a href="<?php echo esc_url(self::PRO_URL); ?>" 
            target="_blank" 
            rel="noopener noreferrer"
-           class="mhb-upgrade-link">
+           class="mhbo-upgrade-link">
             <?php echo esc_html($text); ?>
         </a>
         <?php

@@ -15,22 +15,22 @@
     'use strict';
 
     // Configuration is injected via wp_add_inline_script()
-    const config = window.mhbAdminSettingsConfig || {};
+    const config = window.mhboAdminSettingsConfig || {};
 
     /**
      * License Management
      */
     function initLicenseManagement() {
-        const $activateBtn = $('#mhb_activate_license');
-        const $deactivateBtn = $('#mhb_deactivate_license');
-        const $spinner = $('#mhb_license_spinner');
-        const $message = $('#mhb_license_message');
+        const $activateBtn = $('#mhbo_activate_license');
+        const $deactivateBtn = $('#mhbo_deactivate_license');
+        const $spinner = $('#mhbo_license_spinner');
+        const $message = $('#mhbo_license_message');
 
         if (!$activateBtn.length && !$deactivateBtn.length) return;
 
         $activateBtn.on('click', function (e) {
             e.preventDefault();
-            const key = $('#mhb_license_key').val();
+            const key = $('#mhbo_license_key').val();
             if (!key) {
                 alert(config.i18n?.enter_license_key || 'Please enter a license key.');
                 return;
@@ -39,7 +39,7 @@
             $message.text('');
 
             $.post(ajaxurl, {
-                action: 'mhb_activate_license',
+                action: 'mhbo_activate_license',
                 license_key: key,
                 security: config.nonces?.license || ''
             }, function (response) {
@@ -62,7 +62,7 @@
 
             $spinner.addClass('is-active');
             $.post(ajaxurl, {
-                action: 'mhb_deactivate_license',
+                action: 'mhbo_deactivate_license',
                 security: config.nonces?.license || ''
             }, function (response) {
                 $spinner.removeClass('is-active');
@@ -87,40 +87,40 @@
         const langLabels = config.langLabels || {};
 
         $addBtn.on('click', function () {
-            const index = $repeater.find('.mhb-repeater-item').length;
+            const index = $repeater.find('.mhbo-repeater-item').length;
             let langFields = '';
 
             Object.keys(langLabels).forEach(function (lang) {
                 langFields += '<div style="display: flex; align-items: center; margin-bottom: 5px;">' +
                     '<span style="width: 35px; font-weight: 600; font-size: 11px;">' + lang.toUpperCase() + ':</span>' +
-                    '<input type="text" name="mhb_custom_fields[' + index + '][label][' + lang + ']" value="" class="widefat" style="flex: 1;"></div>';
+                    '<input type="text" name="mhbo_custom_fields[' + index + '][label][' + lang + ']" value="" class="widefat" style="flex: 1;"></div>';
             });
 
-            const html = '<div class="mhb-repeater-item" style="background: #fff; border: 1px solid #ccd0d4; padding: 15px; margin-bottom: 15px; position: relative; border-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">' +
-                '<button type="button" class="mhb-remove-field" style="position: absolute; top: 10px; right: 10px; color: #d63638; background: none; border: none; font-size: 20px; cursor: pointer; padding: 0;">&times;</button>' +
+            const html = '<div class="mhbo-repeater-item" style="background: #fff; border: 1px solid #ccd0d4; padding: 15px; margin-bottom: 15px; position: relative; border-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">' +
+                '<button type="button" class="mhbo-remove-field" style="position: absolute; top: 10px; right: 10px; color: #d63638; background: none; border: none; font-size: 20px; cursor: pointer; padding: 0;">&times;</button>' +
                 '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px;">' +
                 '<div>' +
                 '<label style="display: block; font-weight: bold; margin-bottom: 5px;">Field ID (slug)</label>' +
-                '<input type="text" name="mhb_custom_fields[' + index + '][id]" value="" class="widefat" placeholder="slug" required>' +
+                '<input type="text" name="mhbo_custom_fields[' + index + '][id]" value="" class="widefat" placeholder="slug" required>' +
                 '</div>' +
                 '<div>' +
                 '<label style="display: block; font-weight: bold; margin-bottom: 5px;">Type</label>' +
-                '<select name="mhb_custom_fields[' + index + '][type]" class="widefat"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Textarea</option></select>' +
+                '<select name="mhbo_custom_fields[' + index + '][type]" class="widefat"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Textarea</option></select>' +
                 '</div>' +
                 '</div>' +
                 '<div style="margin-bottom: 12px;">' +
                 '<label style="display: block; font-weight: bold; margin-bottom: 8px;">Label (Multilingual)</label>' +
                 langFields +
                 '</div>' +
-                '<div><label style="font-weight: bold;"><input type="checkbox" name="mhb_custom_fields[' + index + '][required]" value="1"> Required Field</label></div>' +
+                '<div><label style="font-weight: bold;"><input type="checkbox" name="mhbo_custom_fields[' + index + '][required]" value="1"> Required Field</label></div>' +
                 '</div>';
 
-            $repeater.find('.mhb-repeater-items').append(html);
+            $repeater.find('.mhbo-repeater-items').append(html);
         });
 
-        $(document).on('click', '.mhb-remove-field', function () {
+        $(document).on('click', '.mhbo-remove-field', function () {
             if (confirm(config.i18n?.remove_field_confirm || 'Are you sure you want to remove this field?')) {
-                $(this).closest('.mhb-repeater-item').remove();
+                $(this).closest('.mhbo-repeater-item').remove();
             }
         });
     }
@@ -147,7 +147,7 @@
                 $list.append(
                     '<div style="display:flex; justify-content:space-between; align-items:center; background:#f6f7f7; padding:6px 10px; border-radius:4px; border:1px solid #dcdcde;">' +
                     '<span style="font-family:monospace; font-weight:600;">' + date + '</span>' +
-                    '<span class="dashicons dashicons-no-alt mhb-remove-date" data-date="' + date + '" style="cursor:pointer; color:#d63638; font-size:18px;"></span>' +
+                    '<span class="dashicons dashicons-no-alt mhbo-remove-date" data-date="' + date + '" style="cursor:pointer; color:#d63638; font-size:18px;"></span>' +
                     '</div>'
                 );
             });
@@ -165,7 +165,7 @@
             $newDate.val('');
         });
 
-        $list.on('click', '.mhb-remove-date', function () {
+        $list.on('click', '.mhbo-remove-date', function () {
             const toRemove = $(this).data('date');
             let dates = $hidden.val().split(',').filter(d => d && d !== toRemove);
             $hidden.val(dates.join(','));
@@ -179,8 +179,8 @@
      * Adjustment Toggles
      */
     function initAdjustmentToggles() {
-        $(document).on('change', '.mhb-adj-toggle', function () {
-            const $inputs = $(this).closest('td').find('.mhb-adj-inputs');
+        $(document).on('change', '.mhbo-adj-toggle', function () {
+            const $inputs = $(this).closest('td').find('.mhbo-adj-inputs');
             if ($(this).is(':checked')) {
                 $inputs.css({ opacity: 1, pointerEvents: 'auto' });
             } else {
@@ -193,14 +193,14 @@
      * Theme Selection
      */
     function initThemeSelection() {
-        const $themeInputs = $('input[name="mhb_active_theme"]');
+        const $themeInputs = $('input[name="mhbo_active_theme"]');
         const $customColors = $('#mhb-custom-colors-wrap');
 
         if (!$themeInputs.length) return;
 
         $themeInputs.on('change', function () {
-            $('.mhb-theme-card').removeClass('active');
-            $(this).closest('.mhb-theme-card').addClass('active');
+            $('.mhbo-theme-card').removeClass('active');
+            $(this).closest('.mhbo-theme-card').addClass('active');
             if ($(this).val() === 'custom') {
                 $customColors.slideDown();
             } else {
@@ -220,7 +220,7 @@
         $stripeTestBtn.on('click', function (e) {
             e.preventDefault();
             const btn = $(this);
-            const selectedMode = $('select[name="mhb_stripe_mode"]').val() || 'test';
+            const selectedMode = $('select[name="mhbo_stripe_mode"]').val() || 'test';
 
             btn.prop('disabled', true);
             $stripeResult.html('<span class="spinner is-active" style="float: none; margin: 0;"></span>');
@@ -229,7 +229,7 @@
                 url: ajaxurl,
                 type: 'POST',
                 data: {
-                    action: 'mhb_test_stripe_credentials',
+                    action: 'mhbo_test_stripe_credentials',
                     security: config.nonces?.test_stripe || '',
                     mode: selectedMode
                 },
@@ -256,7 +256,7 @@
         $paypalTestBtn.on('click', function (e) {
             e.preventDefault();
             const btn = $(this);
-            const selectedMode = $('select[name="mhb_paypal_mode"]').val() || 'sandbox';
+            const selectedMode = $('select[name="mhbo_paypal_mode"]').val() || 'sandbox';
 
             btn.prop('disabled', true);
             $paypalSpinner.addClass('is-active');
@@ -266,7 +266,7 @@
                 url: ajaxurl,
                 type: 'POST',
                 data: {
-                    action: 'mhb_test_paypal_credentials',
+                    action: 'mhbo_test_paypal_credentials',
                     security: config.nonces?.test_paypal || '',
                     mode: selectedMode
                 },

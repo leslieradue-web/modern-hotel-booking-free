@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Frontend;
+namespace MHBO\Frontend;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-use MHB\Core\I18n;
+use MHBO\Core\I18n;
 
 /**
  * Handles Gutenberg Block registration for 2026 compliance.
@@ -30,32 +30,32 @@ class Block
     {
         // Register Flatpickr CSS
         wp_register_style(
-            'mhb-flatpickr-css',
-            MHB_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css',
+            'mhbo-flatpickr-css',
+            MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css',
             [],
             '4.6.13'
         );
 
         // Register MHB base style
         wp_register_style(
-            'mhb-style',
-            MHB_PLUGIN_URL . 'assets/css/mhb-style.css',
+            'mhbo-style',
+            MHBO_PLUGIN_URL . 'assets/css/mhb-style.css',
             [],
-            MHB_VERSION
+            MHBO_VERSION
         );
 
         // Register Calendar CSS (depends on flatpickr and base style)
         wp_register_style(
-            'mhb-calendar-style',
-            MHB_PLUGIN_URL . 'assets/css/mhb-calendar.css',
-            ['mhb-flatpickr-css', 'mhb-style'],
-            MHB_VERSION
+            'mhbo-calendar-style',
+            MHBO_PLUGIN_URL . 'assets/css/mhb-calendar.css',
+            ['mhbo-flatpickr-css', 'mhbo-style'],
+            MHBO_VERSION
         );
 
         // Register Flatpickr JS
         wp_register_script(
-            'mhb-flatpickr-js',
-            MHB_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
+            'mhbo-flatpickr-js',
+            MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
             [],
             '4.6.13',
             true
@@ -63,26 +63,26 @@ class Block
 
         // Register Calendar JS (depends on jQuery and Flatpickr)
         wp_register_script(
-            'mhb-calendar-js',
-            MHB_PLUGIN_URL . 'assets/js/mhb-calendar.js',
-            ['jquery', 'mhb-flatpickr-js'],
-            MHB_VERSION,
+            'mhbo-calendar-js',
+            MHBO_PLUGIN_URL . 'assets/js/mhb-calendar.js',
+            ['jquery', 'mhbo-flatpickr-js'],
+            MHBO_VERSION,
             true
         );
 
         // Register locale scripts (conditionally loaded)
         wp_register_script(
-            'mhb-flatpickr-ro',
-            MHB_PLUGIN_URL . 'assets/js/vendor/flatpickr.ro.js',
-            ['mhb-flatpickr-js'],
+            'mhbo-flatpickr-ro',
+            MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.ro.js',
+            ['mhbo-flatpickr-js'],
             '4.6.13',
             true
         );
 
         wp_register_script(
-            'mhb-flatpickr-de',
-            MHB_PLUGIN_URL . 'assets/js/vendor/flatpickr.de.js',
-            ['mhb-flatpickr-js'],
+            'mhbo-flatpickr-de',
+            MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.de.js',
+            ['mhbo-flatpickr-js'],
             '4.6.13',
             true
         );
@@ -98,12 +98,12 @@ class Block
         }
 
         // Register Booking Form using metadata
-        register_block_type(MHB_PLUGIN_DIR . 'assets/block/booking-form', [
+        register_block_type(MHBO_PLUGIN_DIR . 'assets/block/booking-form', [
             'render_callback' => [$this, 'render_booking_block'],
         ]);
 
         // Register Room Calendar using metadata
-        register_block_type(MHB_PLUGIN_DIR . 'assets/block/room-calendar', [
+        register_block_type(MHBO_PLUGIN_DIR . 'assets/block/room-calendar', [
             'render_callback' => [$this, 'render_calendar_block'],
         ]);
     }
@@ -131,9 +131,9 @@ class Block
         $room_id = !empty($attributes['roomId']) ? absint($attributes['roomId']) : 0;
 
         if (!$room_id) {
-            return '<div class="mhb-block-error">' . esc_html(I18n::get_label('label_block_no_room')) . '</div>';
+            return '<div class="mhbo-block-error">' . esc_html(I18n::get_label('label_block_no_room')) . '</div>';
         }
 
-        return do_shortcode('[mhb_room_calendar room_id="' . $room_id . '"]');
+        return do_shortcode('[mhbo_room_calendar room_id="' . $room_id . '"]');
     }
 }

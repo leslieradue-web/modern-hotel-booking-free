@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -38,9 +38,9 @@ class Deactivator
     private static function clear_scheduled_crons(): void
     {
         $crons = array(
-            'mhb_hourly_sync',
-            'mhb_daily_maintenance',
-            'mhb_ical_scheduled_sync',
+            'mhbo_hourly_sync',
+            'mhbo_daily_maintenance',
+            'mhbo_ical_scheduled_sync',
         );
 
         foreach ($crons as $cron_hook) {
@@ -64,8 +64,8 @@ class Deactivator
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Deactivation cleanup, patterns are hardcoded
         $wpdb->query(
             "DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_mhb_%' 
-             OR option_name LIKE '_site_transient_mhb_%'"
+             WHERE option_name LIKE '_transient_mhbo_%' 
+             OR option_name LIKE '_site_transient_mhbo_%'"
         );
     }
 }

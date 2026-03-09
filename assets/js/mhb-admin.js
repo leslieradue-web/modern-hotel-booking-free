@@ -22,7 +22,7 @@
      */
     function initConfirmDialogs() {
         // Booking status changes (confirm/cancel)
-        document.querySelectorAll('.mhb-confirm-action').forEach(function (el) {
+        document.querySelectorAll('.mhbo-confirm-action').forEach(function (el) {
             el.addEventListener('click', function (e) {
                 var message = el.getAttribute('data-confirm') || 'Are you sure?';
                 if (!confirm(message)) {
@@ -32,7 +32,7 @@
         });
 
         // Delete confirmations
-        document.querySelectorAll('.mhb-delete-action').forEach(function (el) {
+        document.querySelectorAll('.mhbo-delete-action').forEach(function (el) {
             el.addEventListener('click', function (e) {
                 if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
                     e.preventDefault();
@@ -45,7 +45,7 @@
      * Copy-to-clipboard for iCal URLs and API keys.
      */
     function initCopyButtons() {
-        document.querySelectorAll('.mhb-copy-btn').forEach(function (btn) {
+        document.querySelectorAll('.mhbo-copy-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var targetId = btn.getAttribute('data-copy-target');
                 var target = document.getElementById(targetId);
@@ -102,7 +102,7 @@
      * Tabbed interface for Settings page.
      */
     function initTabs() {
-        var tabNav = document.querySelectorAll('.mhb-tab-nav a, .mhb-tab-nav button');
+        var tabNav = document.querySelectorAll('.mhbo-tab-nav a, .mhbo-tab-nav button');
         if (tabNav.length === 0) return;
 
         tabNav.forEach(function (tab) {
@@ -116,14 +116,14 @@
 
                 // Remove active states
                 tabNav.forEach(function (t) {
-                    t.classList.remove('mhb-tab-active');
+                    t.classList.remove('mhbo-tab-active');
                 });
-                document.querySelectorAll('.mhb-tab-content').forEach(function (panel) {
+                document.querySelectorAll('.mhbo-tab-content').forEach(function (panel) {
                     panel.style.display = 'none';
                 });
 
                 // Activate clicked tab
-                tab.classList.add('mhb-tab-active');
+                tab.classList.add('mhbo-tab-active');
                 var targetPanel = document.getElementById(targetId);
                 if (targetPanel) {
                     targetPanel.style.display = 'block';
@@ -136,11 +136,11 @@
      * Bulk action select-all checkboxes.
      */
     function initBulkActions() {
-        var selectAll = document.getElementById('mhb-select-all');
+        var selectAll = document.getElementById('mhbo-select-all');
         if (!selectAll) return;
 
         selectAll.addEventListener('change', function () {
-            var checkboxes = document.querySelectorAll('.mhb-row-checkbox');
+            var checkboxes = document.querySelectorAll('.mhbo-row-checkbox');
             checkboxes.forEach(function (cb) {
                 cb.checked = selectAll.checked;
             });

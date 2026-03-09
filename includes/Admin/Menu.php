@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace MHB\Admin;
+namespace MHBO\Admin;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
 
-use MHB\Core\Email;
-use MHB\Core\I18n;
+use MHBO\Core\Email;
+use MHBO\Core\I18n;
 
 class Menu
 {
@@ -24,7 +24,7 @@ class Menu
 
     public function add_dashboard_widgets()
     {
-        wp_add_dashboard_widget('mhb_dashboard_overview', __('Hotel Booking Overview', 'modern-hotel-booking'), array($this, 'render_dashboard_widget'));
+        wp_add_dashboard_widget('mhbo_dashboard_overview', __('Hotel Booking Overview', 'modern-hotel-booking'), array($this, 'render_dashboard_widget'));
     }
 
     public function render_dashboard_widget()
@@ -35,40 +35,40 @@ class Menu
         }
 
         global $wpdb;
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
-        $pending = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings WHERE status='pending'"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
+        $pending = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE status='pending'"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
         $today_date = wp_date('Y-m-d');
-        $today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings WHERE check_in = %s", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+        $today = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE check_in = %s", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
         echo '<div style="display:flex;justify-content:space-between;text-align:center;">';
         printf('<div><h4 style="margin:0;color:#2271b1;font-size:24px;">%d</h4><p style="margin:0;">%s</p></div>', $total, esc_html__('Total', 'modern-hotel-booking'));
         printf('<div><h4 style="margin:0;color:#d63638;font-size:24px;">%d</h4><p style="margin:0;">%s</p></div>', $pending, esc_html__('Pending', 'modern-hotel-booking'));
         printf('<div><h4 style="margin:0;color:#00a32a;font-size:24px;">%d</h4><p style="margin:0;">%s</p></div>', $today, esc_html__('Today', 'modern-hotel-booking'));
-        echo '</div><hr><a href="' . esc_url(admin_url('admin.php?page=mhb-bookings')) . '" class="button button-primary" style="width:100%;text-align:center;">' . esc_html__('Manage Bookings', 'modern-hotel-booking') . '</a>';
+        echo '</div><hr><a href="' . esc_url(admin_url('admin.php?page=mhbo-bookings')) . '" class="button button-primary" style="width:100%;text-align:center;">' . esc_html__('Manage Bookings', 'modern-hotel-booking') . '</a>';
     }
 
     public function enqueue_admin_assets($hook)
     {
-        if (false === strpos($hook, 'modern-hotel-booking') && false === strpos($hook, 'mhb-') && 'index.php' !== $hook) {
+        if (false === strpos($hook, 'modern-hotel-booking') && false === strpos($hook, 'mhbo-') && 'index.php' !== $hook) {
             return;
         }
-        wp_enqueue_style('mhb-admin-css', MHB_PLUGIN_URL . 'assets/css/mhb-admin.css', array(), MHB_VERSION);
-        wp_enqueue_script('mhb-admin-js', MHB_PLUGIN_URL . 'assets/js/mhb-admin.js', array('jquery'), MHB_VERSION, true);
+        wp_enqueue_style('mhbo-admin-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-admin.css', array(), MHBO_VERSION);
+        wp_enqueue_script('mhbo-admin-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-admin.js', array('jquery'), MHBO_VERSION, true);
 
         // Enqueue iCal admin script on iCal pages
-        if (false !== strpos($hook, 'mhb-pro-ical')) {
-            wp_enqueue_script('mhb-ical-admin-js', MHB_PLUGIN_URL . 'assets/js/mhb-ical-admin.js', array('jquery'), MHB_VERSION, true);
-            wp_localize_script('mhb-ical-admin-js', 'mhbIcalNonce', array('nonce' => wp_create_nonce('mhb_ical_nonce')));
+        if (false !== strpos($hook, 'mhbo-pro-ical')) {
+            wp_enqueue_script('mhbo-ical-admin-js', MHBO_PLUGIN_URL . 'assets/js/mhb-ical-admin.js', array('jquery'), MHBO_VERSION, true);
+            wp_localize_script('mhbo-ical-admin-js', 'mhbIcalNonce', array('nonce' => wp_create_nonce('mhbo_ical_nonce')));
         }
 
-        if (false !== strpos($hook, 'mhb-bookings')) {
-            wp_enqueue_script('fullcalendar', MHB_PLUGIN_URL . 'assets/js/vendor/fullcalendar.min.js', array(), '6.1.10', true);
+        if (false !== strpos($hook, 'mhbo-bookings')) {
+            wp_enqueue_script('fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.min.js', array(), '6.1.10', true);
 
             // Enqueue admin bookings script
             wp_enqueue_script(
-                'mhb-admin-bookings',
-                MHB_PLUGIN_URL . 'assets/js/mhb-admin-bookings.js',
-                array('jquery', 'mhb-admin-js'),
-                MHB_VERSION,
+                'mhbo-admin-bookings',
+                MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-bookings.js',
+                array('jquery', 'mhbo-admin-js'),
+                MHBO_VERSION,
                 true
             );
 
@@ -77,32 +77,32 @@ class Menu
                 'nonce' => wp_create_nonce('wp_rest'),
                 'extrasCount' => 0,
             );
-            wp_add_inline_script('mhb-admin-bookings', 'window.mhbAdminBookingsConfig = ' . wp_json_encode($config) . ';', 'before');
+            wp_add_inline_script('mhbo-admin-bookings', 'window.mhboAdminBookingsConfig = ' . wp_json_encode($config) . ';', 'before');
         }
-        if (false !== strpos($hook, 'mhb-pro-analytics')) {
-            wp_enqueue_script('chartjs', MHB_PLUGIN_URL . 'assets/js/vendor/chart.min.js', array(), '4.4.1', true);
+        if (false !== strpos($hook, 'mhbo-pro-analytics')) {
+            wp_enqueue_script('chartjs', MHBO_PLUGIN_URL . 'assets/js/vendor/chart.min.js', array(), '4.4.1', true);
         }
     }
 
     public function add_plugin_admin_menu()
     {
         add_menu_page(I18n::__('Hotel Booking', 'modern-hotel-booking'), I18n::__('Hotel Booking', 'modern-hotel-booking'), 'manage_options', 'modern-hotel-booking', array($this, 'display_dashboard_page'), 'dashicons-building', 26);
-        add_submenu_page('modern-hotel-booking', I18n::__('Bookings', 'modern-hotel-booking'), I18n::__('Bookings', 'modern-hotel-booking'), 'manage_options', 'mhb-bookings', array($this, 'display_bookings_page'));
-        add_submenu_page('modern-hotel-booking', I18n::__('Room Types', 'modern-hotel-booking'), I18n::__('Room Types', 'modern-hotel-booking'), 'manage_options', 'mhb-room-types', array($this, 'display_room_types_page'));
-        add_submenu_page('modern-hotel-booking', I18n::__('Rooms', 'modern-hotel-booking'), I18n::__('Rooms', 'modern-hotel-booking'), 'manage_options', 'mhb-rooms', array($this, 'display_rooms_page'));
-        add_submenu_page('modern-hotel-booking', I18n::__('Pricing Rules', 'modern-hotel-booking'), I18n::__('Pricing Rules', 'modern-hotel-booking'), 'manage_options', 'mhb-pricing-rules', array($this, 'display_pricing_rules_page'));
-        add_submenu_page('modern-hotel-booking', I18n::__('Settings', 'modern-hotel-booking'), I18n::__('Settings', 'modern-hotel-booking'), 'manage_options', 'mhb-settings', array('MHB\\Admin\\Settings', 'render'));
+        add_submenu_page('modern-hotel-booking', I18n::__('Bookings', 'modern-hotel-booking'), I18n::__('Bookings', 'modern-hotel-booking'), 'manage_options', 'mhbo-bookings', array($this, 'display_bookings_page'));
+        add_submenu_page('modern-hotel-booking', I18n::__('Room Types', 'modern-hotel-booking'), I18n::__('Room Types', 'modern-hotel-booking'), 'manage_options', 'mhbo-room-types', array($this, 'display_room_types_page'));
+        add_submenu_page('modern-hotel-booking', I18n::__('Rooms', 'modern-hotel-booking'), I18n::__('Rooms', 'modern-hotel-booking'), 'manage_options', 'mhbo-rooms', array($this, 'display_rooms_page'));
+        add_submenu_page('modern-hotel-booking', I18n::__('Pricing Rules', 'modern-hotel-booking'), I18n::__('Pricing Rules', 'modern-hotel-booking'), 'manage_options', 'mhbo-pricing-rules', array($this, 'display_pricing_rules_page'));
+        add_submenu_page('modern-hotel-booking', I18n::__('Settings', 'modern-hotel-booking'), I18n::__('Settings', 'modern-hotel-booking'), 'manage_options', 'mhbo-settings', array('MHBO\\Admin\\Settings', 'render'));
 
-        add_submenu_page('modern-hotel-booking', I18n::__('PRO Features', 'modern-hotel-booking'), I18n::__('PRO Features', 'modern-hotel-booking'), 'manage_options', 'mhb-pro', array('MHB\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('modern-hotel-booking', I18n::__('PRO Features', 'modern-hotel-booking'), I18n::__('PRO Features', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro', array('MHBO\\Admin\\Settings', 'render_pro_page'));
 
         // Register Pro subpages (hidden from sidebar by passing empty parent)
-        add_submenu_page('', I18n::__('Extras', 'modern-hotel-booking'), I18n::__('Extras', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-extras', array('MHB\\Admin\\Settings', 'render_pro_page'));
-        add_submenu_page('', I18n::__('iCal Sync', 'modern-hotel-booking'), I18n::__('iCal Sync', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-ical', array('MHB\\Admin\\Settings', 'render_pro_page'));
-        add_submenu_page('', I18n::__('Payments', 'modern-hotel-booking'), I18n::__('Payments', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-payments', array('MHB\\Admin\\Settings', 'render_pro_page'));
-        add_submenu_page('', I18n::__('Webhooks', 'modern-hotel-booking'), I18n::__('Webhooks', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-webhooks', array('MHB\\Admin\\Settings', 'render_pro_page'));
-        add_submenu_page('', I18n::__('Analytics', 'modern-hotel-booking'), I18n::__('Analytics', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-analytics', array('MHB\\Admin\\Settings', 'render_pro_page'));
-        add_submenu_page('', I18n::__('Appearance', 'modern-hotel-booking'), I18n::__('Appearance', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-themes', array('MHB\\Admin\\Settings', 'render_pro_page'));
-        add_submenu_page('', I18n::__('Advanced Pricing', 'modern-hotel-booking'), I18n::__('Advanced Pricing', 'modern-hotel-booking'), 'manage_options', 'mhb-pro-pricing', array('MHB\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('Extras', 'modern-hotel-booking'), I18n::__('Extras', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-extras', array('MHBO\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('iCal Sync', 'modern-hotel-booking'), I18n::__('iCal Sync', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-ical', array('MHBO\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('Payments', 'modern-hotel-booking'), I18n::__('Payments', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-payments', array('MHBO\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('Webhooks', 'modern-hotel-booking'), I18n::__('Webhooks', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-webhooks', array('MHBO\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('Analytics', 'modern-hotel-booking'), I18n::__('Analytics', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-analytics', array('MHBO\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('Appearance', 'modern-hotel-booking'), I18n::__('Appearance', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-themes', array('MHBO\\Admin\\Settings', 'render_pro_page'));
+        add_submenu_page('', I18n::__('Advanced Pricing', 'modern-hotel-booking'), I18n::__('Advanced Pricing', 'modern-hotel-booking'), 'manage_options', 'mhbo-pro-pricing', array('MHBO\\Admin\\Settings', 'render_pro_page'));
     }
 
     public function display_dashboard_page()
@@ -115,24 +115,24 @@ class Menu
 
         // Statistics
         $today_date = wp_date('Y-m-d');
-        $total_bookings = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
-        $pending_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhb_bookings WHERE status='pending'"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
-        $earned_revenue = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(total_price),0) FROM {$wpdb->prefix}mhb_bookings WHERE status='confirmed' AND check_out <= %s", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-        $future_revenue = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(total_price),0) FROM {$wpdb->prefix}mhb_bookings WHERE status='confirmed' AND check_out > %s", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+        $total_bookings = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
+        $pending_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE status='pending'"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API
+        $earned_revenue = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(total_price),0) FROM {$wpdb->prefix}mhbo_bookings WHERE status='confirmed' AND check_out <= %s", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+        $future_revenue = (float) $wpdb->get_var($wpdb->prepare("SELECT COALESCE(SUM(total_price),0) FROM {$wpdb->prefix}mhbo_bookings WHERE status='confirmed' AND check_out > %s", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
         // Recent Activity
-        $recent_bookings = $wpdb->get_results("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhb_bookings b LEFT JOIN {$wpdb->prefix}mhb_rooms r ON b.room_id = r.id ORDER BY b.created_at DESC LIMIT 5"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API, static query
-        $today_checkins = $wpdb->get_results($wpdb->prepare("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhb_bookings b LEFT JOIN {$wpdb->prefix}mhb_rooms r ON b.room_id = r.id WHERE b.status='confirmed' AND b.check_in = %s LIMIT 5", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+        $recent_bookings = $wpdb->get_results("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id ORDER BY b.created_at DESC LIMIT 5"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API, static query
+        $today_checkins = $wpdb->get_results($wpdb->prepare("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id WHERE b.status='confirmed' AND b.check_in = %s LIMIT 5", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
         $is_pro_active = 'active' === '';
         ?>
-        <div class="wrap mhb-dashboard">
+        <div class="wrap mhbo-dashboard">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Control Center', 'modern-hotel-booking'); ?>
             </h1>
 
             <?php if (!$is_pro_active): ?>
-                <div class="mhb-card accent"
+                <div class="mhbo-card accent"
                     style="background: linear-gradient(90deg, #f4eee1 0%, #ffffff 100%); display: flex; align-items: center; justify-content: space-between; border-left: 5px solid #c5a059;">
                     <div style="flex: 1;">
                         <h3 style="margin-bottom: 8px; font-size: 1.4rem;">
@@ -150,28 +150,28 @@ class Menu
                 </div>
             <?php endif; ?>
 
-            <div class="mhb-stats-grid">
-                <div class="mhb-stat-card">
+            <div class="mhbo-stats-grid">
+                <div class="mhbo-stat-card">
                     <h3><?php esc_html_e('Stay Revenue', 'modern-hotel-booking'); ?></h3>
                     <p><?php echo esc_html(I18n::format_currency($earned_revenue)); ?></p>
                 </div>
-                <div class="mhb-stat-card">
+                <div class="mhbo-stat-card">
                     <h3><?php esc_html_e('Target Pipeline', 'modern-hotel-booking'); ?></h3>
                     <p><?php echo esc_html(I18n::format_currency($future_revenue)); ?></p>
                 </div>
-                <div class="mhb-stat-card">
+                <div class="mhbo-stat-card">
                     <h3><?php esc_html_e('Total Volume', 'modern-hotel-booking'); ?></h3>
                     <p><?php echo esc_html((string) $total_bookings); ?></p>
                 </div>
-                <div class="mhb-stat-card" style="border-color: #ffe0b2;">
+                <div class="mhbo-stat-card" style="border-color: #ffe0b2;">
                     <h3><?php esc_html_e('Attention Needed', 'modern-hotel-booking'); ?></h3>
                     <p style="color: #f57c00;"><?php echo esc_html((string) $pending_count); ?></p>
                 </div>
             </div>
 
-            <div class="mhb-dashboard-layout">
-                <div class="mhb-main-col">
-                    <div class="mhb-card">
+            <div class="mhbo-dashboard-layout">
+                <div class="mhbo-main-col">
+                    <div class="mhbo-card">
                         <h3><?php esc_html_e('Recent Activity', 'modern-hotel-booking'); ?></h3>
                         <?php if (empty($recent_bookings)): ?>
                             <p style="color: #999; font-style: italic;">
@@ -191,7 +191,7 @@ class Menu
                                         <tr>
                                             <td><strong><?php echo esc_html($b->customer_name); ?></strong></td>
                                             <td>
-                                                <span class="mhb-status-badge mhb-status-<?php echo esc_attr($b->status); ?>">
+                                                <span class="mhbo-status-badge mhbo-status-<?php echo esc_attr($b->status); ?>">
                                                     <?php echo esc_html(I18n::translate_status($b->status)); ?>
                                                 </span>
                                             </td>
@@ -204,10 +204,10 @@ class Menu
                         <?php endif; ?>
                     </div>
 
-                    <div class="mhb-card">
+                    <div class="mhbo-card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h3 style="margin:0;"><?php esc_html_e('Recent Bookings', 'modern-hotel-booking'); ?></h3>
-                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-bookings')); ?>"
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings')); ?>"
                                 class="button"><?php esc_html_e('View All', 'modern-hotel-booking'); ?></a>
                         </div>
                         <table class="wp-list-table widefat fixed striped" style="box-shadow: none; border: none;">
@@ -226,7 +226,7 @@ class Menu
                                         </td>
                                         <td><strong><?php echo esc_html(I18n::decode($b->customer_name)); ?></strong></td>
                                         <td><span
-                                                class="mhb-status-badge mhb-status-<?php echo esc_attr($b->status); ?>"><?php echo esc_html($b->status); ?></span>
+                                                class="mhbo-status-badge mhbo-status-<?php echo esc_attr($b->status); ?>"><?php echo esc_html($b->status); ?></span>
                                         </td>
                                         <td><?php echo esc_html(I18n::format_currency($b->total_price)); ?></td>
                                     </tr>
@@ -236,11 +236,11 @@ class Menu
                     </div>
                 </div>
 
-                <div class="mhb-side-col">
-                    <div class="mhb-card accent">
+                <div class="mhbo-side-col">
+                    <div class="mhbo-card accent">
                         <h3><?php esc_html_e('Quick Actions', 'modern-hotel-booking'); ?></h3>
                         <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-bookings&action=add')); ?>"
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings&action=add')); ?>"
                                 class="button button-primary button-large"
                                 style="background: #1a3b5d; border-color: #1a3b5d;"><?php esc_html_e('Create New Booking', 'modern-hotel-booking'); ?></a>
                             <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-rooms')); ?>"
@@ -250,7 +250,7 @@ class Menu
                         </div>
                     </div>
 
-                    <div class="mhb-card">
+                    <div class="mhbo-card">
                         <h3><?php esc_html_e('System Status', 'modern-hotel-booking'); ?></h3>
                         <div style="font-size: 13px; line-height: 2;">
                             <div style="display: flex; justify-content: space-between;">
@@ -260,7 +260,7 @@ class Menu
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span><?php esc_html_e('Plugin Version:', 'modern-hotel-booking'); ?></span>
-                                <strong><?php echo esc_html(MHB_VERSION); ?></strong>
+                                <strong><?php echo esc_html(MHBO_VERSION); ?></strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span><?php esc_html_e('Database Status:', 'modern-hotel-booking'); ?></span>
@@ -272,8 +272,8 @@ class Menu
                     <?php
                     // Dynamically fetch the latest changelog from readme.txt
                     $changelog_items = [];
-                    $latest_version = MHB_VERSION;
-                    $readme_file = MHB_PLUGIN_DIR . 'readme.txt';
+                    $latest_version = MHBO_VERSION;
+                    $readme_file = MHBO_PLUGIN_DIR . 'readme.txt';
 
                     if (file_exists($readme_file)) {
                         $readme_content = file_get_contents($readme_file);
@@ -294,7 +294,7 @@ class Menu
                     }
                     ?>
 
-                    <div class="mhb-card" style="margin-top: 20px; border-left: 4px solid #10b981;">
+                    <div class="mhbo-card" style="margin-top: 20px; border-left: 4px solid #10b981;">
                         <h3 style="color: #10b981; margin-top: 0; margin-bottom: 10px; font-size: 15px;">
                             <?php
                             // translators: %s: Plugin version number
@@ -329,7 +329,7 @@ class Menu
                         </div>
                     </div>
 
-                    <div class="mhb-card" style="background: #f8f6f2; border-color: #e9e5de;">
+                    <div class="mhbo-card" style="background: #f8f6f2; border-color: #e9e5de;">
                         <h3><?php esc_html_e('Need Assistance?', 'modern-hotel-booking'); ?></h3>
                         <p style="font-size: 13px; color: #646970;">
                             <?php esc_html_e('Explore our documentation or contact the support team for property management advice.', 'modern-hotel-booking'); ?>
@@ -355,11 +355,11 @@ class Menu
 
         global $wpdb;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix
-        $tb = $wpdb->prefix . 'mhb_bookings';
+        $tb = $wpdb->prefix . 'mhbo_bookings';
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix
-        $tr = $wpdb->prefix . 'mhb_rooms';
+        $tr = $wpdb->prefix . 'mhbo_rooms';
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix
-        $tt = $wpdb->prefix . 'mhb_room_types';
+        $tt = $wpdb->prefix . 'mhbo_room_types';
         $edit_mode = false;
         $add_mode = false;
         $edit_data = null;
@@ -375,49 +375,49 @@ class Menu
                 if ('edit' === $act) {
                     $edit_mode = true;
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, admin-only query
-                    $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mhb_bookings WHERE id = %d", $id));
+                    $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $id));
                 } elseif ('confirm' === $act) {
-                    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_confirm_booking_' . $id)) {
+                    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_confirm_booking_' . $id)) {
                         wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
                     }
                     $wpdb->update($tb, array('status' => 'confirmed'), array('id' => $id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-                    \MHB\Core\Cache::invalidate_booking($id);
+                    \MHBO\Core\Cache::invalidate_booking($id);
                     Email::send_email($id, 'confirmed');
-                    do_action('mhb_booking_confirmed', $id);
-                    do_action('mhb_booking_status_changed', $id, 'confirmed');
+                    do_action('mhbo_booking_confirmed', $id);
+                    do_action('mhbo_booking_status_changed', $id, 'confirmed');
                     echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Booking Confirmed & Email Sent!', 'modern-hotel-booking') . '</p></div>';
                 } elseif ('cancel' === $act) {
-                    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_cancel_booking_' . $id)) {
+                    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_cancel_booking_' . $id)) {
                         wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
                     }
                     $wpdb->update($tb, array('status' => 'cancelled'), array('id' => $id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-                    \MHB\Core\Cache::invalidate_booking($id);
+                    \MHBO\Core\Cache::invalidate_booking($id);
                     Email::send_email($id, 'cancelled');
-                    do_action('mhb_booking_cancelled', $id);
-                    do_action('mhb_booking_status_changed', $id, 'cancelled');
+                    do_action('mhbo_booking_cancelled', $id);
+                    do_action('mhbo_booking_status_changed', $id, 'cancelled');
                     echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html__('Booking Cancelled.', 'modern-hotel-booking') . '</p></div>';
                 } elseif ('delete' === $act) {
-                    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_delete_booking_' . $id)) {
+                    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_booking_' . $id)) {
                         wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
                     }
                     $wpdb->delete($tb, array('id' => $id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-                    \MHB\Core\Cache::invalidate_booking($id);
+                    \MHBO\Core\Cache::invalidate_booking($id);
                     echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Booking Deleted.', 'modern-hotel-booking') . '</p></div>';
                 }
             }
         }
 
         // Handle manual booking submission
-        if (isset($_POST['submit_manual_booking']) && check_admin_referer('mhb_add_manual_booking')) {
+        if (isset($_POST['submit_manual_booking']) && check_admin_referer('mhbo_add_manual_booking')) {
             $booking_extras = [];
-            if (isset($_POST['mhb_extras']) && is_array($_POST['mhb_extras'])) {
-                $available_extras = get_option('mhb_pro_extras', []);
+            if (isset($_POST['mhbo_extras']) && is_array($_POST['mhbo_extras'])) {
+                $available_extras = get_option('mhbo_pro_extras', []);
                 $extras_map = [];
                 foreach ($available_extras as $ex)
                     $extras_map[$ex['id']] = $ex;
 
-                $mhb_extras = array_map('sanitize_text_field', wp_unslash($_POST['mhb_extras']));
-                foreach ($mhb_extras as $ex_id => $val) {
+                $mhbo_extras = array_map('sanitize_text_field', wp_unslash($_POST['mhbo_extras']));
+                foreach ($mhbo_extras as $ex_id => $val) {
                     if (isset($extras_map[$ex_id])) {
                         $extra = $extras_map[$ex_id];
                         $quantity = 0;
@@ -449,16 +449,16 @@ class Menu
 
             // Format extras for Pricing::calculate_booking_total
             $post_extras = [];
-            if (isset($_POST['mhb_extras']) && is_array($_POST['mhb_extras'])) {
-                $mhb_extras_post = array_map('sanitize_text_field', wp_unslash($_POST['mhb_extras']));
-                foreach ($mhb_extras_post as $ex_id => $val) {
+            if (isset($_POST['mhbo_extras']) && is_array($_POST['mhbo_extras'])) {
+                $mhbo_extras_post = array_map('sanitize_text_field', wp_unslash($_POST['mhbo_extras']));
+                foreach ($mhbo_extras_post as $ex_id => $val) {
                     $qty = (isset($extras_map[$ex_id]) && $extras_map[$ex_id]['control_type'] === 'quantity') ? intval($val) : ($val === '1' ? 1 : 0);
                     if ($qty > 0)
                         $post_extras[$ex_id] = $qty;
                 }
             }
 
-            $calc = \MHB\Core\Pricing::calculate_booking_total($room_id, $check_in, $check_out, $guests, $post_extras, $children_count, $children_ages_raw);
+            $calc = \MHBO\Core\Pricing::calculate_booking_total($room_id, $check_in, $check_out, $guests, $post_extras, $children_count, $children_ages_raw);
             $tax_data = $calc['tax'] ?? null;
 
             $customer_name = isset($_POST['customer_name']) ? sanitize_text_field(wp_unslash($_POST['customer_name'])) : '';
@@ -468,10 +468,10 @@ class Menu
             $payment_received = isset($_POST['payment_received']) && !empty(sanitize_text_field(wp_unslash($_POST['payment_received'])));
             $status = isset($_POST['status']) ? sanitize_key(wp_unslash($_POST['status'])) : 'pending';
             $admin_notes = isset($_POST['admin_notes']) ? sanitize_textarea_field(wp_unslash($_POST['admin_notes'])) : '';
-            $mhb_custom = isset($_POST['mhb_custom']) && is_array($_POST['mhb_custom']) ? array_map('sanitize_text_field', wp_unslash($_POST['mhb_custom'])) : [];
+            $mhbo_custom = isset($_POST['mhbo_custom']) && is_array($_POST['mhbo_custom']) ? array_map('sanitize_text_field', wp_unslash($_POST['mhbo_custom'])) : [];
 
             // Availability Check
-            $available = \MHB\Core\Pricing::is_room_available($room_id, $check_in, $check_out);
+            $available = \MHBO\Core\Pricing::is_room_available($room_id, $check_in, $check_out);
             if (true !== $available) {
                 echo '<div class="notice notice-error is-dismissible"><p>' . esc_html(I18n::get_label($available)) . '</p></div>';
                 $add_mode = true; // Stay in add mode to allow fixing
@@ -499,7 +499,7 @@ class Menu
                     'guests' => $guests,
                     'children' => $children_count,
                     'children_ages' => !empty($children_ages_raw) ? json_encode($children_ages_raw) : null,
-                    'custom_fields' => !empty($mhb_custom) ? json_encode($mhb_custom) : null,
+                    'custom_fields' => !empty($mhbo_custom) ? json_encode($mhbo_custom) : null,
                     'created_at' => current_time('mysql'),
                     // Tax fields
                     'tax_enabled' => ($tax_data && $tax_data['enabled']) ? 1 : 0,
@@ -520,11 +520,11 @@ class Menu
                 $new_id = $wpdb->insert_id;
                 if ($new_id) {
                     // Invalidate booking and calendar cache to ensure availability and lists are updated
-                    \MHB\Core\Cache::invalidate_booking($new_id, $room_id);
-                    do_action('mhb_booking_created', $new_id);
+                    \MHBO\Core\Cache::invalidate_booking($new_id, $room_id);
+                    do_action('mhbo_booking_created', $new_id);
                     if ('confirmed' === $status) {
                         Email::send_email($new_id, 'confirmed');
-                        do_action('mhb_booking_confirmed', $new_id);
+                        do_action('mhbo_booking_confirmed', $new_id);
                     }
                 }
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Manual Booking Added!', 'modern-hotel-booking') . '</p></div>';
@@ -533,7 +533,7 @@ class Menu
         }
 
         // Handle edit submission
-        if (isset($_POST['submit_booking_update']) && check_admin_referer('mhb_update_booking')) {
+        if (isset($_POST['submit_booking_update']) && check_admin_referer('mhbo_update_booking')) {
             $booking_id = isset($_POST['booking_id']) ? absint($_POST['booking_id']) : 0;
             $new_status = isset($_POST['status']) ? sanitize_key(wp_unslash($_POST['status'])) : 'pending';
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
@@ -542,21 +542,21 @@ class Menu
             // Get existing payment data to preserve payment_date if already set
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, admin-only query
             $existing_payment = $wpdb->get_row($wpdb->prepare(
-                "SELECT payment_received, payment_date FROM {$wpdb->prefix}mhb_bookings WHERE id = %d",
+                "SELECT payment_received, payment_date FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
                 $booking_id
             ), ARRAY_A);
             $was_payment_received = !empty($existing_payment['payment_received']);
             $existing_payment_date = $existing_payment['payment_date'] ?? null;
 
             $booking_extras = [];
-            if (isset($_POST['mhb_extras']) && is_array($_POST['mhb_extras'])) {
-                $available_extras = get_option('mhb_pro_extras', []);
+            if (isset($_POST['mhbo_extras']) && is_array($_POST['mhbo_extras'])) {
+                $available_extras = get_option('mhbo_pro_extras', []);
                 $extras_map = [];
                 foreach ($available_extras as $ex)
                     $extras_map[$ex['id']] = $ex;
 
-                $mhb_extras_edit = array_map('sanitize_text_field', wp_unslash($_POST['mhb_extras']));
-                foreach ($mhb_extras_edit as $ex_id => $val) {
+                $mhbo_extras_edit = array_map('sanitize_text_field', wp_unslash($_POST['mhbo_extras']));
+                foreach ($mhbo_extras_edit as $ex_id => $val) {
                     if (isset($extras_map[$ex_id])) {
                         $extra = $extras_map[$ex_id];
                         $quantity = 0;
@@ -587,16 +587,16 @@ class Menu
             $guests = absint($_POST['guests'] ?? 1);
 
             $post_extras = [];
-            if (isset($_POST['mhb_extras']) && is_array($_POST['mhb_extras'])) {
-                $mhb_extras_post_edit = array_map('sanitize_text_field', wp_unslash($_POST['mhb_extras']));
-                foreach ($mhb_extras_post_edit as $ex_id => $val) {
+            if (isset($_POST['mhbo_extras']) && is_array($_POST['mhbo_extras'])) {
+                $mhbo_extras_post_edit = array_map('sanitize_text_field', wp_unslash($_POST['mhbo_extras']));
+                foreach ($mhbo_extras_post_edit as $ex_id => $val) {
                     $qty = (isset($extras_map[$ex_id]) && $extras_map[$ex_id]['control_type'] === 'quantity') ? intval($val) : ($val === '1' ? 1 : 0);
                     if ($qty > 0)
                         $post_extras[$ex_id] = $qty;
                 }
             }
 
-            $calc = \MHB\Core\Pricing::calculate_booking_total($room_id, $check_in, $check_out, $guests, $post_extras, $children_count, $children_ages_raw);
+            $calc = \MHBO\Core\Pricing::calculate_booking_total($room_id, $check_in, $check_out, $guests, $post_extras, $children_count, $children_ages_raw);
             $tax_data = $calc['tax'] ?? null;
 
             // Determine payment received status for auto-updating payment fields
@@ -606,10 +606,10 @@ class Menu
             $customer_email_edit = isset($_POST['customer_email']) ? sanitize_email(wp_unslash($_POST['customer_email'])) : '';
             $customer_phone_edit = isset($_POST['customer_phone']) ? sanitize_text_field(wp_unslash($_POST['customer_phone'])) : '';
             $admin_notes_edit = isset($_POST['admin_notes']) ? sanitize_textarea_field(wp_unslash($_POST['admin_notes'])) : '';
-            $mhb_custom_edit = isset($_POST['mhb_custom']) && is_array($_POST['mhb_custom']) ? array_map('sanitize_text_field', wp_unslash($_POST['mhb_custom'])) : [];
+            $mhbo_custom_edit = isset($_POST['mhbo_custom']) && is_array($_POST['mhbo_custom']) ? array_map('sanitize_text_field', wp_unslash($_POST['mhbo_custom'])) : [];
 
             // Availability Check (excluding current booking)
-            $available = \MHB\Core\Pricing::is_room_available($room_id, $check_in, $check_out, $booking_id);
+            $available = \MHBO\Core\Pricing::is_room_available($room_id, $check_in, $check_out, $booking_id);
             if (true !== $available) {
                 echo '<div class="notice notice-error is-dismissible"><p>' . esc_html(I18n::get_label($available)) . '</p></div>';
                 $edit_mode = true; // Stay in edit mode
@@ -639,7 +639,7 @@ class Menu
                     'guests' => $guests,
                     'children' => $children_count,
                     'children_ages' => !empty($children_ages_raw) ? json_encode($children_ages_raw) : null,
-                    'custom_fields' => !empty($mhb_custom_edit) ? json_encode($mhb_custom_edit) : null,
+                    'custom_fields' => !empty($mhbo_custom_edit) ? json_encode($mhbo_custom_edit) : null,
                     // Tax fields
                     'tax_enabled' => ($tax_data && $tax_data['enabled']) ? 1 : 0,
                     'tax_mode' => $tax_data['mode'] ?? 'disabled',
@@ -658,11 +658,11 @@ class Menu
                 ), array('id' => $booking_id));
 
                 if ($old_status !== $new_status) {
-                    do_action('mhb_booking_status_changed', $booking_id, $new_status);
+                    do_action('mhbo_booking_status_changed', $booking_id, $new_status);
                     if ('confirmed' === $new_status) {
-                        do_action('mhb_booking_confirmed', $booking_id);
+                        do_action('mhbo_booking_confirmed', $booking_id);
                     } elseif ('cancelled' === $new_status) {
-                        do_action('mhb_booking_cancelled', $booking_id);
+                        do_action('mhbo_booking_cancelled', $booking_id);
                     }
                 }
 
@@ -675,33 +675,33 @@ class Menu
         $allowed_statuses = ['pending', 'confirmed', 'cancelled'];
         $status = in_array($status_filter, $allowed_statuses, true) ? $status_filter : '';
 
-        $cache_key = 'mhb_bookings_' . md5($status);
-        $bookings = wp_cache_get($cache_key, 'mhb_bookings');
+        $cache_key = 'mhbo_bookings_' . md5($status);
+        $bookings = wp_cache_get($cache_key, 'mhbo_bookings');
 
         if (false === $bookings) {
-            $sql = "SELECT b.*, r.room_number, t.name as room_type FROM {$wpdb->prefix}mhb_bookings b LEFT JOIN {$wpdb->prefix}mhb_rooms r ON b.room_id = r.id LEFT JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id";
+            $sql = "SELECT b.*, r.room_number, t.name as room_type FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id";
 
             if ($status !== '') {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, admin-only, caching above
                 $bookings = $wpdb->get_results(
                     $wpdb->prepare(
-                        "SELECT b.*, r.room_number, t.name as room_type FROM {$wpdb->prefix}mhb_bookings b LEFT JOIN {$wpdb->prefix}mhb_rooms r ON b.room_id = r.id LEFT JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id WHERE b.status = %s ORDER BY b.created_at DESC",
+                        "SELECT b.*, r.room_number, t.name as room_type FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE b.status = %s ORDER BY b.created_at DESC",
                         $status
                     )
                 );
             } else {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, admin-only, caching above
                 $bookings = $wpdb->get_results(
-                    "SELECT b.*, r.room_number, t.name as room_type FROM {$wpdb->prefix}mhb_bookings b LEFT JOIN {$wpdb->prefix}mhb_rooms r ON b.room_id = r.id LEFT JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id ORDER BY b.created_at DESC"
+                    "SELECT b.*, r.room_number, t.name as room_type FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id ORDER BY b.created_at DESC"
                 );
             }
-            wp_cache_set($cache_key, $bookings, 'mhb_bookings', HOUR_IN_SECONDS);
+            wp_cache_set($cache_key, $bookings, 'mhbo_bookings', HOUR_IN_SECONDS);
         }
 
-        $all_rooms = wp_cache_get('mhb_all_rooms', 'mhb_rooms');
+        $all_rooms = wp_cache_get('mhbo_all_rooms', 'mhbo_rooms');
         if (false === $all_rooms) {
-            $all_rooms = $wpdb->get_results("SELECT r.id, r.room_number, t.name as type_name, t.base_price FROM {$wpdb->prefix}mhb_rooms r JOIN {$wpdb->prefix}mhb_room_types t ON r.type_id = t.id ORDER BY r.room_number ASC"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, admin-only query
-            wp_cache_set('mhb_all_rooms', $all_rooms, 'mhb_rooms', HOUR_IN_SECONDS);
+            $all_rooms = $wpdb->get_results("SELECT r.id, r.room_number, t.name as type_name, t.base_price FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id ORDER BY r.room_number ASC"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, admin-only query
+            wp_cache_set('mhbo_all_rooms', $all_rooms, 'mhbo_rooms', HOUR_IN_SECONDS);
         }
 
         $events = array();
@@ -713,13 +713,13 @@ class Menu
                 'start' => $b->check_in,
                 'end' => gmdate('Y-m-d', strtotime($b->check_out . ' +1 day')),
                 'color' => 'confirmed' === $b->status ? '#28a745' : '#ffc107',
-                'url' => admin_url('admin.php?page=mhb-bookings&action=edit&id=' . $b->id),
+                'url' => admin_url('admin.php?page=mhbo-bookings&action=edit&id=' . $b->id),
             );
         }
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php esc_html_e('Manage Bookings', 'modern-hotel-booking'); ?></h1>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-bookings&action=add')); ?>"
+            <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings&action=add')); ?>"
                 class="page-title-action"><?php esc_html_e('Add New Booking', 'modern-hotel-booking'); ?></a>
             <hr class="wp-header-end">
             <?php if (isset($_GET['status'])): ?>
@@ -729,19 +729,19 @@ class Menu
                         $status_filter = sanitize_key(wp_unslash($_GET['status']));
                         // translators: %s: booking status label (e.g., Pending, Confirmed)
                         printf(esc_html__('Filtering by status: %s', 'modern-hotel-booking'), '<strong>' . esc_html(ucfirst($status_filter)) . '</strong>'); ?>
-                        <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-bookings')); ?>" class="button button-small"
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings')); ?>" class="button button-small"
                             style="margin-left:10px;"><?php esc_html_e('Clear Filter', 'modern-hotel-booking'); ?></a>
                     </p>
                 </div>
             <?php endif; ?>
 
             <?php if ($add_mode): ?>
-                <div class="mhb-card">
+                <div class="mhbo-card">
                     <h2><?php esc_html_e('Add Manual Booking', 'modern-hotel-booking'); ?></h2>
-                    <form method="post"><?php wp_nonce_field('mhb_add_manual_booking'); ?>
+                    <form method="post"><?php wp_nonce_field('mhbo_add_manual_booking'); ?>
                         <table class="form-table">
                             <!-- 1. Customer Details -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Customer Details', 'modern-hotel-booking'); ?></h3>
                                 </th>
@@ -760,26 +760,26 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Guests', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" name="guests" id="mhb_add_guests" value="2" min="1" max="10"
+                                <td><input type="number" name="guests" id="mhbo_add_guests" value="2" min="1" max="10"
                                         class="small-text"></td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Children', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" name="children" id="mhb_add_children" value="0" min="0" max="10"
+                                <td><input type="number" name="children" id="mhbo_add_children" value="0" min="0" max="10"
                                         class="small-text"></td>
                             </tr>
-                            <tr id="mhb_add_child_ages_row" style="display:none;">
+                            <tr id="mhbo_add_child_ages_row" style="display:none;">
                                 <th><?php esc_html_e('Child Ages', 'modern-hotel-booking'); ?></th>
                                 <td>
-                                    <div id="mhb_add_child_ages_container"></div>
+                                    <div id="mhbo_add_child_ages_container"></div>
                                 </td>
                             </tr>
 
                             <!-- Custom Fields -->
                             <?php
-                            $custom_fields_defn = get_option('mhb_custom_fields', []);
+                            $custom_fields_defn = get_option('mhbo_custom_fields', []);
                             if (!empty($custom_fields_defn)): ?>
-                                <tr class="mhb-form-section-header">
+                                <tr class="mhbo-form-section-header">
                                     <th colspan="2">
                                         <h3><?php esc_html_e('Extra Guest Information', 'modern-hotel-booking'); ?></h3>
                                     </th>
@@ -791,11 +791,11 @@ class Menu
                                         <th><?php echo esc_html($label); ?></th>
                                         <td>
                                             <?php if ($defn['type'] === 'textarea'): ?>
-                                                <textarea name="mhb_custom[<?php echo esc_attr($defn['id']); ?>]" rows="3"
+                                                <textarea name="mhbo_custom[<?php echo esc_attr($defn['id']); ?>]" rows="3"
                                                     class="regular-text"></textarea>
                                             <?php else: ?>
                                                 <input type="<?php echo esc_attr($defn['type']); ?>"
-                                                    name="mhb_custom[<?php echo esc_attr($defn['id']); ?>]" class="regular-text">
+                                                    name="mhbo_custom[<?php echo esc_attr($defn['id']); ?>]" class="regular-text">
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -803,14 +803,14 @@ class Menu
                             <?php endif; ?>
 
                             <!-- 2. Room & Dates -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Room & Dates', 'modern-hotel-booking'); ?></h3>
                                 </th>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Room', 'modern-hotel-booking'); ?></th>
-                                <td><select name="room_id" id="mhb_add_room_id" required>
+                                <td><select name="room_id" id="mhbo_add_room_id" required>
                                         <option value=""><?php esc_html_e('-- Select Room --', 'modern-hotel-booking'); ?></option>
                                         <?php foreach ($all_rooms as $rm): ?>
                                             <option value="<?php echo esc_attr($rm->id); ?>"
@@ -822,15 +822,15 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Check-in', 'modern-hotel-booking'); ?></th>
-                                <td><input type="date" name="check_in" id="mhb_add_check_in" required></td>
+                                <td><input type="date" name="check_in" id="mhbo_add_check_in" required></td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Check-out', 'modern-hotel-booking'); ?></th>
-                                <td><input type="date" name="check_out" id="mhb_add_check_out" required></td>
+                                <td><input type="date" name="check_out" id="mhbo_add_check_out" required></td>
                             </tr>
 
                             <!-- 3. Extras & Discounts -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Extras & Discounts', 'modern-hotel-booking'); ?></h3>
                                 </th>
@@ -839,15 +839,15 @@ class Menu
                                 <th><?php esc_html_e('Extras', 'modern-hotel-booking'); ?></th>
                                 <td>
                                     <?php
-                                    $extras = get_option('mhb_pro_extras', []);
+                                    $extras = get_option('mhbo_pro_extras', []);
                                     if (!empty($extras)) {
                                         foreach ($extras as $ex) {
                                             $lbl = esc_html($ex['name']) . ' (' . I18n::format_currency($ex['price']) . ')';
                                             $pricing_type = $ex['pricing_type'] ?? 'fixed';
                                             if ($ex['control_type'] === 'quantity') {
-                                                echo '<label style="display:block;margin-bottom:5px;"><input type="number" name="mhb_extras[' . esc_attr($ex['id']) . ']" value="0" min="0" style="width:50px;" class="mhb-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
+                                                echo '<label style="display:block;margin-bottom:5px;"><input type="number" name="mhbo_extras[' . esc_attr($ex['id']) . ']" value="0" min="0" style="width:50px;" class="mhbo-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
                                             } else {
-                                                echo '<label style="display:block;margin-bottom:5px;"><input type="checkbox" name="mhb_extras[' . esc_attr($ex['id']) . ']" value="1" class="mhb-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
+                                                echo '<label style="display:block;margin-bottom:5px;"><input type="checkbox" name="mhbo_extras[' . esc_attr($ex['id']) . ']" value="1" class="mhbo-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
                                             }
                                         }
                                     } else {
@@ -858,29 +858,29 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Discount Amount', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" step="0.01" name="discount_amount" id="mhb_add_discount_amount"
+                                <td><input type="number" step="0.01" name="discount_amount" id="mhbo_add_discount_amount"
                                         value="0.00" class="regular-text"></td>
                             </tr>
 
                             <!-- 4. Payment Info -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Payment Info', 'modern-hotel-booking'); ?></h3>
                                 </th>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Total Price', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" step="0.01" name="total_price" id="mhb_add_total_price" required
+                                <td><input type="number" step="0.01" name="total_price" id="mhbo_add_total_price" required
                                         class="regular-text"></td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Deposit Amount', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" step="0.01" name="deposit_amount" id="mhb_add_deposit_amount" value="0.00"
+                                <td><input type="number" step="0.01" name="deposit_amount" id="mhbo_add_deposit_amount" value="0.00"
                                         class="regular-text"></td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Deposit Received', 'modern-hotel-booking'); ?></th>
-                                <td><label><input type="checkbox" name="deposit_received" id="mhb_add_deposit_received" value="1">
+                                <td><label><input type="checkbox" name="deposit_received" id="mhbo_add_deposit_received" value="1">
                                         <?php esc_html_e('Mark as received', 'modern-hotel-booking'); ?></label></td>
                             </tr>
                             <tr>
@@ -899,17 +899,17 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Payment Received', 'modern-hotel-booking'); ?></th>
-                                <td><label><input type="checkbox" name="payment_received" id="mhb_add_payment_received" value="1">
+                                <td><label><input type="checkbox" name="payment_received" id="mhbo_add_payment_received" value="1">
                                         <?php esc_html_e('Mark full payment as received', 'modern-hotel-booking'); ?></label></td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Amount Outstanding', 'modern-hotel-booking'); ?></th>
-                                <td><input type="text" id="mhb_add_amount_outstanding" readonly class="regular-text"
+                                <td><input type="text" id="mhbo_add_amount_outstanding" readonly class="regular-text"
                                         style="background:#f0f0f0;"></td>
                             </tr>
 
                             <!-- 5. Booking Management -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Booking Management', 'modern-hotel-booking'); ?></h3>
                                 </th>
@@ -939,7 +939,7 @@ class Menu
                         </table>
                         <p><input type="submit" name="submit_manual_booking" class="button button-primary"
                                 value="<?php esc_attr_e('Add Booking', 'modern-hotel-booking'); ?>">
-                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-bookings')); ?>"
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings')); ?>"
                                 class="button"><?php esc_html_e('Cancel', 'modern-hotel-booking'); ?></a>
                         </p>
                     </form>
@@ -947,16 +947,16 @@ class Menu
             <?php endif; ?>
 
             <?php if ($edit_mode && $edit_data): ?>
-                <div class="mhb-card">
+                <div class="mhbo-card">
                     <h2><?php
                     // translators: %d: booking ID number
                     printf(esc_html__('Edit Booking #%d', 'modern-hotel-booking'), (int) $edit_data->id); ?>
                     </h2>
-                    <form method="post"><?php wp_nonce_field('mhb_update_booking'); ?>
+                    <form method="post"><?php wp_nonce_field('mhbo_update_booking'); ?>
                         <input type="hidden" name="booking_id" value="<?php echo esc_attr($edit_data->id); ?>">
                         <table class="form-table">
                             <!-- 1. Customer Details -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Customer Details', 'modern-hotel-booking'); ?></h3>
                                 </th>
@@ -981,7 +981,7 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Guests', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" name="guests" id="mhb_edit_guests"
+                                <td><input type="number" name="guests" id="mhbo_edit_guests"
                                         value="<?php echo esc_attr($edit_data->guests ?? 2); ?>" min="1" max="10"
                                         class="small-text">
                                 </td>
@@ -994,15 +994,15 @@ class Menu
                             ?>
                             <tr>
                                 <th><?php esc_html_e('Children', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" name="children" id="mhb_edit_children"
+                                <td><input type="number" name="children" id="mhbo_edit_children"
                                         value="<?php echo esc_attr((string) $edit_children); ?>" min="0" max="10"
                                         class="small-text">
                                 </td>
                             </tr>
-                            <tr id="mhb_edit_child_ages_row" style="<?php echo $edit_children > 0 ? '' : 'display:none;'; ?>">
+                            <tr id="mhbo_edit_child_ages_row" style="<?php echo $edit_children > 0 ? '' : 'display:none;'; ?>">
                                 <th><?php esc_html_e('Child Ages', 'modern-hotel-booking'); ?></th>
                                 <td>
-                                    <div id="mhb_edit_child_ages_container">
+                                    <div id="mhbo_edit_child_ages_container">
                                         <?php for ($ca = 0; $ca < $edit_children; $ca++): ?>
                                             <label style="display:inline-block; margin-right:10px; margin-bottom:5px;">
                                                 <?php
@@ -1019,10 +1019,10 @@ class Menu
 
                             <!-- Custom Fields -->
                             <?php
-                            $custom_fields_defn = get_option('mhb_custom_fields', []);
+                            $custom_fields_defn = get_option('mhbo_custom_fields', []);
                             $saved_custom = !empty($edit_data->custom_fields) ? json_decode($edit_data->custom_fields, true) : [];
                             if (!empty($custom_fields_defn)): ?>
-                                <tr class="mhb-form-section-header">
+                                <tr class="mhbo-form-section-header">
                                     <th colspan="2">
                                         <h3><?php esc_html_e('Extra Guest Information', 'modern-hotel-booking'); ?></h3>
                                     </th>
@@ -1035,11 +1035,11 @@ class Menu
                                         <th><?php echo esc_html($label); ?></th>
                                         <td>
                                             <?php if ($defn['type'] === 'textarea'): ?>
-                                                <textarea name="mhb_custom[<?php echo esc_attr($defn['id']); ?>]" rows="3"
+                                                <textarea name="mhbo_custom[<?php echo esc_attr($defn['id']); ?>]" rows="3"
                                                     class="regular-text"><?php echo esc_textarea($val); ?></textarea>
                                             <?php else: ?>
                                                 <input type="<?php echo esc_attr($defn['type']); ?>"
-                                                    name="mhb_custom[<?php echo esc_attr($defn['id']); ?>]"
+                                                    name="mhbo_custom[<?php echo esc_attr($defn['id']); ?>]"
                                                     value="<?php echo esc_attr($val); ?>" class="regular-text">
                                             <?php endif; ?>
                                         </td>
@@ -1048,14 +1048,14 @@ class Menu
                             <?php endif; ?>
 
                             <!-- 2. Room & Dates -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Room & Dates', 'modern-hotel-booking'); ?></h3>
                                 </th>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Room', 'modern-hotel-booking'); ?></th>
-                                <td><select name="room_id" id="mhb_edit_room_id"><?php foreach ($all_rooms as $rm): ?>
+                                <td><select name="room_id" id="mhbo_edit_room_id"><?php foreach ($all_rooms as $rm): ?>
                                             <option value="<?php echo esc_attr($rm->id); ?>"
                                                 data-price="<?php echo esc_attr($rm->base_price); ?>" <?php selected($edit_data->room_id, $rm->id); ?>>
                                                 <?php echo esc_html($rm->room_number . ' (' . I18n::decode($rm->type_name) . ')'); ?>
@@ -1064,17 +1064,17 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Check-in', 'modern-hotel-booking'); ?></th>
-                                <td><input type="date" name="check_in" id="mhb_edit_check_in"
+                                <td><input type="date" name="check_in" id="mhbo_edit_check_in"
                                         value="<?php echo esc_attr($edit_data->check_in); ?>" required></td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Check-out', 'modern-hotel-booking'); ?></th>
-                                <td><input type="date" name="check_out" id="mhb_edit_check_out"
+                                <td><input type="date" name="check_out" id="mhbo_edit_check_out"
                                         value="<?php echo esc_attr($edit_data->check_out); ?>" required></td>
                             </tr>
 
                             <!-- 3. Extras & Discounts -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Extras & Discounts', 'modern-hotel-booking'); ?></h3>
                                 </th>
@@ -1083,7 +1083,7 @@ class Menu
                                 <th><?php esc_html_e('Extras', 'modern-hotel-booking'); ?></th>
                                 <td>
                                     <?php
-                                    $extras = get_option('mhb_pro_extras', []);
+                                    $extras = get_option('mhbo_pro_extras', []);
                                     $saved_extras = !empty($edit_data->booking_extras) ? json_decode($edit_data->booking_extras, true) : [];
                                     $saved_map = [];
                                     if (is_array($saved_extras)) {
@@ -1099,9 +1099,9 @@ class Menu
                                             $pricing_type = $ex['pricing_type'] ?? 'fixed';
 
                                             if ($ex['control_type'] === 'quantity') {
-                                                echo '<label style="display:block;margin-bottom:5px;"><input type="number" name="mhb_extras[' . esc_attr($ex['id']) . ']" value="' . esc_attr($qty) . '" min="0" style="width:50px;" class="mhb-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
+                                                echo '<label style="display:block;margin-bottom:5px;"><input type="number" name="mhbo_extras[' . esc_attr($ex['id']) . ']" value="' . esc_attr($qty) . '" min="0" style="width:50px;" class="mhbo-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
                                             } else {
-                                                echo '<label style="display:block;margin-bottom:5px;"><input type="checkbox" name="mhb_extras[' . esc_attr($ex['id']) . ']" value="1" ' . checked($qty > 0, true, false) . ' class="mhb-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
+                                                echo '<label style="display:block;margin-bottom:5px;"><input type="checkbox" name="mhbo_extras[' . esc_attr($ex['id']) . ']" value="1" ' . checked($qty > 0, true, false) . ' class="mhbo-extra-input" data-extra-id="' . esc_attr($ex['id']) . '" data-price="' . esc_attr($ex['price']) . '" data-pricing-type="' . esc_attr($pricing_type) . '"> ' . esc_html($lbl) . '</label>';
                                             }
                                         }
                                     } else {
@@ -1112,32 +1112,32 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Discount Amount', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" step="0.01" name="discount_amount" id="mhb_edit_discount_amount"
+                                <td><input type="number" step="0.01" name="discount_amount" id="mhbo_edit_discount_amount"
                                         value="<?php echo esc_attr($edit_data->discount_amount ?? '0.00'); ?>" class="regular-text">
                                 </td>
                             </tr>
 
                             <!-- 4. Payment Info -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Payment Info', 'modern-hotel-booking'); ?></h3>
                                 </th>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Total Price', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" step="0.01" name="total_price" id="mhb_edit_total_price"
+                                <td><input type="number" step="0.01" name="total_price" id="mhbo_edit_total_price"
                                         value="<?php echo esc_attr($edit_data->total_price); ?>" required class="regular-text">
                                 </td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Deposit Amount', 'modern-hotel-booking'); ?></th>
-                                <td><input type="number" step="0.01" name="deposit_amount" id="mhb_edit_deposit_amount"
+                                <td><input type="number" step="0.01" name="deposit_amount" id="mhbo_edit_deposit_amount"
                                         value="<?php echo esc_attr($edit_data->deposit_amount ?? '0.00'); ?>" class="regular-text">
                                 </td>
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Deposit Received', 'modern-hotel-booking'); ?></th>
-                                <td><label><input type="checkbox" name="deposit_received" id="mhb_edit_deposit_received" value="1"
+                                <td><label><input type="checkbox" name="deposit_received" id="mhbo_edit_deposit_received" value="1"
                                             <?php checked($edit_data->deposit_received ?? 0, 1); ?>>
                                         <?php esc_html_e('Mark as received', 'modern-hotel-booking'); ?></label></td>
                             </tr>
@@ -1183,7 +1183,7 @@ class Menu
                             </tr>
                             <tr>
                                 <th><?php esc_html_e('Payment Received', 'modern-hotel-booking'); ?></th>
-                                <td><label><input type="checkbox" name="payment_received" id="mhb_edit_payment_received" value="1"
+                                <td><label><input type="checkbox" name="payment_received" id="mhbo_edit_payment_received" value="1"
                                             <?php checked($edit_data->payment_received ?? 0, 1); ?>>
                                         <?php esc_html_e('Mark full payment as received', 'modern-hotel-booking'); ?></label></td>
                             </tr>
@@ -1231,7 +1231,7 @@ class Menu
                             <?php endif; ?>
                             <tr>
                                 <th><?php esc_html_e('Amount Outstanding', 'modern-hotel-booking'); ?></th>
-                                <td><input type="text" id="mhb_edit_amount_outstanding" readonly class="regular-text"
+                                <td><input type="text" id="mhbo_edit_amount_outstanding" readonly class="regular-text"
                                         style="background:#f0f0f0;"></td>
                             </tr>
 
@@ -1239,9 +1239,9 @@ class Menu
                             if (!empty($edit_data->tax_breakdown)) {
                                 $tax_data = json_decode($edit_data->tax_breakdown, true);
                                 if ($tax_data && ($tax_data['enabled'] ?? false)) {
-                                    $tax_label = \MHB\Core\Tax::get_label();
+                                    $tax_label = \MHBO\Core\Tax::get_label();
                                     ?>
-                                    <tr class="mhb-form-section-header">
+                                    <tr class="mhbo-form-section-header">
                                         <th colspan="2">
                                             <h3><?php
                                             // translators: %s: tax or fee label (e.g., Tax, VAT)
@@ -1253,7 +1253,7 @@ class Menu
                                         <td colspan="2">
                                             <?php
                                             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Method returns sanitized HTML
-                                            echo \MHB\Core\Tax::render_breakdown_html($tax_data);
+                                            echo \MHBO\Core\Tax::render_breakdown_html($tax_data);
                                             ?>
                                         </td>
                                     </tr>
@@ -1263,7 +1263,7 @@ class Menu
                             ?>
 
                             <!-- 5. Booking Management -->
-                            <tr class="mhb-form-section-header">
+                            <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Booking Management', 'modern-hotel-booking'); ?></h3>
                                 </th>
@@ -1301,10 +1301,10 @@ class Menu
                         </table>
                         <p><input type="submit" name="submit_booking_update" class="button button-primary"
                                 value="<?php esc_attr_e('Update Booking', 'modern-hotel-booking'); ?>">
-                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-bookings')); ?>"
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings')); ?>"
                                 class="button"><?php esc_html_e('Cancel', 'modern-hotel-booking'); ?></a>
-                            <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-bookings&action=delete&id={$edit_data->id}"), 'mhb_delete_booking_' . $edit_data->id)); ?>"
-                                class="button button-link-delete mhb-delete-action" style="margin-left: 10px;"
+                            <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-bookings&action=delete&id={$edit_data->id}"), 'mhbo_delete_booking_' . $edit_data->id)); ?>"
+                                class="button button-link-delete mhbo-delete-action" style="margin-left: 10px;"
                                 data-confirm="<?php echo esc_attr__('Are you sure you want to delete this booking? This action cannot be undone.', 'modern-hotel-booking'); ?>">
                                 <?php esc_html_e('Delete Booking', 'modern-hotel-booking'); ?>
                             </a>
@@ -1313,14 +1313,14 @@ class Menu
                 </div>
             <?php endif; ?>
 
-            <div id="mhb-calendar" style="background:#fff;padding:20px;margin-top:20px;"></div>
+            <div id="mhbo-calendar" style="background:#fff;padding:20px;margin-top:20px;"></div>
             <?php
-            // Note: Price calculation and child ages JavaScript logic has been moved to assets/js/mhb-admin-bookings.js
+            // Note: Price calculation and child ages JavaScript logic has been moved to assets/js/mhbo-admin-bookings.js
             // Pass calendar events for FullCalendar initialization
             $calendar_config = array(
                 'events' => $events,
             );
-            wp_add_inline_script('mhb-admin-bookings', 'window.mhbCalendarConfig = ' . wp_json_encode($calendar_config) . ';', 'before');
+            wp_add_inline_script('mhbo-admin-bookings', 'window.mhboCalendarConfig = ' . wp_json_encode($calendar_config) . ';', 'before');
             ?>
 
             <table class="wp-list-table widefat fixed striped" style="margin-top:20px;">
@@ -1340,7 +1340,7 @@ class Menu
                 <tbody>
                     <?php if (!empty($bookings)):
                         foreach ($bookings as $bk):
-                            $sc = 'mhb-status-' . esc_attr($bk->status);
+                            $sc = 'mhbo-status-' . esc_attr($bk->status);
                             ?>
                             <tr>
                                 <td data-colname="<?php esc_attr_e('ID', 'modern-hotel-booking'); ?>">#<?php echo esc_html($bk->id); ?>
@@ -1373,7 +1373,7 @@ class Menu
                                    }
                                    ?></td>
                                 <td data-colname="<?php esc_attr_e('Status', 'modern-hotel-booking'); ?>"><span
-                                        class="mhb-status-badge mhb-status-<?php echo esc_attr($bk->status); ?>">
+                                        class="mhbo-status-badge mhbo-status-<?php echo esc_attr($bk->status); ?>">
                                         <?php echo esc_html(I18n::translate_status($bk->status)); ?></span>
                                 </td>
                                 <td data-colname="<?php esc_attr_e('Payment', 'modern-hotel-booking'); ?>">
@@ -1405,7 +1405,7 @@ class Menu
                                     );
                                     $payment_color = $payment_status_colors[$payment_status] ?? '#f0ad4e';
                                     ?>
-                                    <br><small class="mhb-payment-status-badge"
+                                    <br><small class="mhbo-payment-status-badge"
                                         style="color:<?php echo esc_attr($payment_color); ?>; font-weight:bold; text-transform:uppercase;">
                                         <?php
                                         $status_p_label = '';
@@ -1436,19 +1436,19 @@ class Menu
                                     <?php endif; ?>
                                 </td>
                                 <td data-colname="<?php esc_attr_e('Lang', 'modern-hotel-booking'); ?>"><span
-                                        class="mhb-lang-badge"><?php echo esc_html(strtoupper($bk->booking_language ?? 'en')); ?></span>
+                                        class="mhbo-lang-badge"><?php echo esc_html(strtoupper($bk->booking_language ?? 'en')); ?></span>
                                 </td>
                                 <td data-colname="<?php esc_attr_e('Actions', 'modern-hotel-booking'); ?>">
-                                    <a href="<?php echo esc_url(admin_url("admin.php?page=mhb-bookings&action=edit&id={$bk->id}")); ?>"
+                                    <a href="<?php echo esc_url(admin_url("admin.php?page=mhbo-bookings&action=edit&id={$bk->id}")); ?>"
                                         class="button"><?php esc_html_e('Edit', 'modern-hotel-booking'); ?></a>
                                     <?php if ('pending' === $bk->status): ?>
-                                        <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-bookings&action=confirm&id={$bk->id}"), 'mhb_confirm_booking_' . $bk->id)); ?>"
+                                        <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-bookings&action=confirm&id={$bk->id}"), 'mhbo_confirm_booking_' . $bk->id)); ?>"
                                             class="button button-primary"><?php esc_html_e('Confirm', 'modern-hotel-booking'); ?></a>
                                     <?php endif; ?>
-                                    <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-bookings&action=cancel&id={$bk->id}"), 'mhb_cancel_booking_' . $bk->id)); ?>"
+                                    <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-bookings&action=cancel&id={$bk->id}"), 'mhbo_cancel_booking_' . $bk->id)); ?>"
                                         class="button"><?php esc_html_e('Cancel', 'modern-hotel-booking'); ?></a>
-                                    <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-bookings&action=delete&id={$bk->id}"), 'mhb_delete_booking_' . $bk->id)); ?>"
-                                        class="button button-link-delete mhb-confirm-delete"
+                                    <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-bookings&action=delete&id={$bk->id}"), 'mhbo_delete_booking_' . $bk->id)); ?>"
+                                        class="button button-link-delete mhbo-confirm-delete"
                                         data-confirm="<?php esc_attr_e('Delete this booking?', 'modern-hotel-booking'); ?>"><?php esc_html_e('Delete', 'modern-hotel-booking'); ?></a>
                                 </td>
                             </tr>
@@ -1471,13 +1471,13 @@ class Menu
         }
 
         global $wpdb;
-        $table = $wpdb->prefix . 'mhb_room_types';
+        $table = $wpdb->prefix . 'mhbo_room_types';
         $edit_mode = false;
         $edit_data = null;
 
         // Delete Action
         if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id'])) {
-            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_delete_room_type_' . absint($_GET['id']))) {
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_room_type_' . absint($_GET['id']))) {
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $wpdb->delete($table, array('id' => absint($_GET['id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
@@ -1490,7 +1490,7 @@ class Menu
             $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$table}` WHERE id = %d", absint($_GET['id'])));
         }
 
-        if (isset($_POST['submit_room_type']) && check_admin_referer('mhb_add_room_type')) {
+        if (isset($_POST['submit_room_type']) && check_admin_referer('mhbo_add_room_type')) {
             $amenities = isset($_POST['amenities']) && is_array($_POST['amenities']) ? wp_json_encode(array_map('sanitize_text_field', wp_unslash($_POST['amenities']))) : '';
             $room_name = isset($_POST['room_name']) ? (is_array($_POST['room_name']) ? I18n::encode(array_map('sanitize_text_field', wp_unslash($_POST['room_name']))) : sanitize_text_field(wp_unslash($_POST['room_name']))) : '';
             $room_desc = isset($_POST['room_description']) ? (is_array($_POST['room_description']) ? I18n::encode(array_map('sanitize_textarea_field', wp_unslash($_POST['room_description']))) : sanitize_textarea_field(wp_unslash($_POST['room_description']))) : '';
@@ -1531,7 +1531,7 @@ class Menu
             <div class="card" style="padding:20px;margin-top:20px;">
                 <h2><?php echo $edit_mode ? esc_html__('Edit Room Type', 'modern-hotel-booking') : esc_html__('Add New Type', 'modern-hotel-booking'); ?>
                 </h2>
-                <form method="post"><?php wp_nonce_field('mhb_add_room_type'); ?>
+                <form method="post"><?php wp_nonce_field('mhbo_add_room_type'); ?>
                     <?php if ($edit_mode): ?><input type="hidden" name="room_type_id"
                             value="<?php echo esc_attr($edit_data->id); ?>"><?php endif; ?>
                     <table class="form-table">
@@ -1613,7 +1613,7 @@ class Menu
                             <th><?php esc_html_e('Amenities', 'modern-hotel-booking'); ?></th>
                             <td>
                                 <?php
-                                $amenities_list = get_option('mhb_amenities_list', [
+                                $amenities_list = get_option('mhbo_amenities_list', [
                                     'wifi' => __('Free WiFi', 'modern-hotel-booking'),
                                     'ac' => __('Air Conditioning', 'modern-hotel-booking'),
                                     'tv' => __('Smart TV', 'modern-hotel-booking'),
@@ -1661,7 +1661,7 @@ class Menu
                             if (!empty($t->amenities)) {
                                 $ams_array = json_decode($t->amenities);
                                 if (is_array($ams_array)) {
-                                    $all_amenities = get_option('mhb_amenities_list', [
+                                    $all_amenities = get_option('mhbo_amenities_list', [
                                         'wifi' => __('Free WiFi', 'modern-hotel-booking'),
                                         'ac' => __('Air Conditioning', 'modern-hotel-booking'),
                                         'tv' => __('Smart TV', 'modern-hotel-booking'),
@@ -1683,7 +1683,7 @@ class Menu
                             <td>
                                 <a href="<?php echo esc_url(admin_url("admin.php?page=mhb-room-types&action=edit&id={$t->id}")); ?>"
                                     class="button"><?php esc_html_e('Edit', 'modern-hotel-booking'); ?></a>
-                                <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-room-types&action=delete&id={$t->id}"), 'mhb_delete_room_type_' . $t->id)); ?>"
+                                <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-room-types&action=delete&id={$t->id}"), 'mhbo_delete_room_type_' . $t->id)); ?>"
                                     class="button button-link-delete"
                                     onclick="return confirm('<?php esc_attr_e('Are you sure you want to delete this room type? This may affect existing rooms.', 'modern-hotel-booking'); ?>')"><?php esc_html_e('Delete', 'modern-hotel-booking'); ?></a>
                             </td>
@@ -1703,14 +1703,14 @@ class Menu
 
         global $wpdb;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
-        $t_rooms = $wpdb->prefix . 'mhb_rooms';
+        $t_rooms = $wpdb->prefix . 'mhbo_rooms';
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
-        $t_types = $wpdb->prefix . 'mhb_room_types';
+        $t_types = $wpdb->prefix . 'mhbo_room_types';
         // Use new table if it exists, fallback to legacy table
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
-        $new_ical_table = $wpdb->prefix . 'mhb_ical_connections';
+        $new_ical_table = $wpdb->prefix . 'mhbo_ical_connections';
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
-        $legacy_ical_table = $wpdb->prefix . 'mhb_ical_feeds';
+        $legacy_ical_table = $wpdb->prefix . 'mhbo_ical_feeds';
         $new_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $new_ical_table)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema check
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
         $t_ical = $new_exists ? $new_ical_table : $legacy_ical_table;
@@ -1721,7 +1721,7 @@ class Menu
 
         // Delete Action
         if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id']) && !isset($_GET['sub_action'])) {
-            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_delete_room_' . absint($_GET['id']))) {
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_room_' . absint($_GET['id']))) {
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $wpdb->delete($t_rooms, array('id' => absint($_GET['id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
@@ -1734,7 +1734,7 @@ class Menu
                 ?>
                 <div class="wrap">
                     <h1><?php esc_html_e('Manage Rooms', 'modern-hotel-booking'); ?></h1>
-                    <?php \MHB\Core\License::render_upsell_notice(__('iCal Synchronization', 'modern-hotel-booking')); ?>
+                    <?php \MHBO\Core\License::render_upsell_notice(__('iCal Synchronization', 'modern-hotel-booking')); ?>
                     <p style="margin-top: 20px;">
                         <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-rooms')); ?>" class="button">&larr;
                             <?php esc_html_e('Back to Rooms', 'modern-hotel-booking'); ?></a>
@@ -1744,7 +1744,7 @@ class Menu
                 return;
             }
             $ical_mode = true;
-            if (isset($_POST['submit_ical_feed']) && check_admin_referer('mhb_add_ical')) {
+            if (isset($_POST['submit_ical_feed']) && check_admin_referer('mhbo_add_ical')) {
                 // Insert with appropriate columns based on table version
                 $feed_name = isset($_POST['feed_name']) ? sanitize_text_field(wp_unslash($_POST['feed_name'])) : '';
                 $feed_url = isset($_POST['feed_url']) ? esc_url_raw(wp_unslash($_POST['feed_url'])) : '';
@@ -1768,12 +1768,12 @@ class Menu
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Feed Added!', 'modern-hotel-booking') . '</p></div>';
             }
             if (isset($_GET['sub_action']) && 'delete_feed' === $_GET['sub_action'] && isset($_GET['feed_id'])) {
-                check_admin_referer('mhb_delete_feed_' . absint($_GET['feed_id']));
+                check_admin_referer('mhbo_delete_feed_' . absint($_GET['feed_id']));
                 $wpdb->delete($t_ical, array('id' => absint($_GET['feed_id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
             }
             if (isset($_GET['sub_action']) && 'sync_now' === $_GET['sub_action']) {
-                check_admin_referer('mhb_sync_now_' . $room_id);
-                \MHB\Core\ICal::sync_external_calendars();
+                check_admin_referer('mhbo_sync_now_' . $room_id);
+                \MHBO\Core\ICal::sync_external_calendars();
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Sync Completed.', 'modern-hotel-booking') . '</p></div>';
             }
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
@@ -1788,7 +1788,7 @@ class Menu
             $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$t_rooms}` WHERE id = %d", absint($_GET['id'])));
         }
 
-        if (isset($_POST['submit_room']) && check_admin_referer('mhb_add_room')) {
+        if (isset($_POST['submit_room']) && check_admin_referer('mhbo_add_room')) {
             $type_id = isset($_POST['type_id']) ? absint($_POST['type_id']) : 0;
             $room_number = isset($_POST['room_number']) ? sanitize_text_field(wp_unslash($_POST['room_number'])) : '';
             $room_status = isset($_POST['status']) ? sanitize_key(wp_unslash($_POST['status'])) : 'available';
@@ -1819,14 +1819,14 @@ class Menu
             <h1><?php esc_html_e('Manage Rooms', 'modern-hotel-booking'); ?></h1>
 
             <?php if ($ical_mode && isset($room_info)): ?>
-                <div class="card mhb-ical-card" style="padding:20px;margin-bottom:20px;">
+                <div class="card mhbo-ical-card" style="padding:20px;margin-bottom:20px;">
                     <h2><?php
                     // translators: %s: room number
                     printf(esc_html__('iCal Sync — Room %s', 'modern-hotel-booking'), esc_html($room_info->room_number)); ?>
                     </h2>
                     <h3><?php esc_html_e('Export URL', 'modern-hotel-booking'); ?></h3>
                     <p><input type="text"
-                            value="<?php echo esc_url(site_url('?mhb_action=ical_export&room_id=' . $room_info->id . '&token=' . get_option('mhb_ical_token'))); ?>"
+                            value="<?php echo esc_url(site_url('?mhb_action=ical_export&room_id=' . $room_info->id . '&token=' . get_option('mhbo_ical_token'))); ?>"
                             class="large-text" readonly onclick="this.select()"></p>
                     <h3><?php esc_html_e('Import Feeds', 'modern-hotel-booking'); ?></h3>
                     <table class="wp-list-table widefat fixed striped">
@@ -1851,8 +1851,8 @@ class Menu
                                     <td><input type="text" value="<?php echo esc_url($feed_url); ?>" readonly style="width:100%">
                                     </td>
                                     <td><?php echo esc_html($last_sync ?: __('Never', 'modern-hotel-booking')); ?></td>
-                                    <td><a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-rooms&action=ical&id={$room_info->id}&sub_action=delete_feed&feed_id={$feed->id}"), 'mhb_delete_feed_' . $feed->id)); ?>"
-                                            class="button button-link-delete mhb-confirm-delete"
+                                    <td><a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-rooms&action=ical&id={$room_info->id}&sub_action=delete_feed&feed_id={$feed->id}"), 'mhbo_delete_feed_' . $feed->id)); ?>"
+                                            class="button button-link-delete mhbo-confirm-delete"
                                             data-confirm="<?php esc_attr_e('Delete?', 'modern-hotel-booking'); ?>"><?php esc_html_e('Delete', 'modern-hotel-booking'); ?></a>
                                     </td>
                                 </tr>
@@ -1860,14 +1860,14 @@ class Menu
                         </tbody>
                     </table>
                     <h4><?php esc_html_e('Add New Feed', 'modern-hotel-booking'); ?></h4>
-                    <form method="post"><?php wp_nonce_field('mhb_add_ical'); ?>
+                    <form method="post"><?php wp_nonce_field('mhbo_add_ical'); ?>
                         <p><input type="text" name="feed_name"
                                 placeholder="<?php esc_attr_e('Name (e.g. Airbnb)', 'modern-hotel-booking'); ?>" required>
                             <input type="url" name="feed_url" placeholder="<?php esc_attr_e('iCal URL', 'modern-hotel-booking'); ?>"
                                 required style="width:300px;">
                             <input type="submit" name="submit_ical_feed" class="button button-primary"
                                 value="<?php esc_attr_e('Add Feed', 'modern-hotel-booking'); ?>">
-                            <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-rooms&action=ical&id={$room_info->id}&sub_action=sync_now"), 'mhb_sync_now_' . $room_info->id)); ?>"
+                            <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-rooms&action=ical&id={$room_info->id}&sub_action=sync_now"), 'mhbo_sync_now_' . $room_info->id)); ?>"
                                 class="button"><?php esc_html_e('Sync All Now', 'modern-hotel-booking'); ?></a>
                             <a href="<?php echo esc_url(admin_url('admin.php?page=mhb-rooms')); ?>"
                                 class="button"><?php esc_html_e('Back', 'modern-hotel-booking'); ?></a>
@@ -1879,7 +1879,7 @@ class Menu
             <div class="card" style="padding:20px;margin-top:20px;">
                 <h2><?php echo $edit_mode ? esc_html__('Edit Room', 'modern-hotel-booking') : esc_html__('Add Room', 'modern-hotel-booking'); ?>
                 </h2>
-                <form method="post"><?php wp_nonce_field('mhb_add_room'); ?>
+                <form method="post"><?php wp_nonce_field('mhbo_add_room'); ?>
                     <?php if ($edit_mode): ?><input type="hidden" name="room_id"
                             value="<?php echo esc_attr($edit_data->id); ?>"><?php endif; ?>
                     <p><label><?php esc_html_e('Type', 'modern-hotel-booking'); ?></label><br><select
@@ -1939,8 +1939,8 @@ class Menu
                                         <?php esc_html_e('iCal Sync', 'modern-hotel-booking'); ?>
                                     </a>
                                 <?php endif; ?>
-                                <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-rooms&action=delete&id={$r->id}"), 'mhb_delete_room_' . $r->id)); ?>"
-                                    class="button button-link-delete mhb-confirm-delete"
+                                <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-rooms&action=delete&id={$r->id}"), 'mhbo_delete_room_' . $r->id)); ?>"
+                                    class="button button-link-delete mhbo-confirm-delete"
                                     data-confirm="<?php esc_attr_e('Delete?', 'modern-hotel-booking'); ?>"><?php esc_html_e('Delete', 'modern-hotel-booking'); ?></a>
                             </td>
                         </tr><?php endforeach; ?>
@@ -1958,9 +1958,9 @@ class Menu
 
         global $wpdb;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
-        $table = $wpdb->prefix . 'mhb_pricing_rules';
+        $table = $wpdb->prefix . 'mhbo_pricing_rules';
 
-        if (isset($_POST['submit_pricing']) && check_admin_referer('mhb_add_pricing')) {
+        if (isset($_POST['submit_pricing']) && check_admin_referer('mhbo_add_pricing')) {
             $rule_name = isset($_POST['rule_name']) ? sanitize_text_field(wp_unslash($_POST['rule_name'])) : '';
             $start_date = isset($_POST['start_date']) ? sanitize_text_field(wp_unslash($_POST['start_date'])) : '';
             $end_date = isset($_POST['end_date']) ? sanitize_text_field(wp_unslash($_POST['end_date'])) : '';
@@ -1978,7 +1978,7 @@ class Menu
         }
 
         if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id'])) {
-            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhb_delete_pricing_' . absint($_GET['id']))) {
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_pricing_' . absint($_GET['id']))) {
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $wpdb->delete($table, array('id' => absint($_GET['id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
@@ -1987,11 +1987,11 @@ class Menu
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
         $rules = $wpdb->get_results("SELECT * FROM `{$table}`");
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
-        $types = $wpdb->get_results("SELECT * FROM `{$wpdb->prefix}mhb_room_types`");
+        $types = $wpdb->get_results("SELECT * FROM `{$wpdb->prefix}mhbo_room_types`");
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Pricing Rules', 'modern-hotel-booking'); ?></h1>
-            <form method="post" class="card" style="padding:20px;"><?php wp_nonce_field('mhb_add_pricing'); ?>
+            <form method="post" class="card" style="padding:20px;"><?php wp_nonce_field('mhbo_add_pricing'); ?>
                 <p><label><?php esc_html_e('Name', 'modern-hotel-booking'); ?></label> <input type="text" name="rule_name"
                         required></p>
                 <p><label><?php esc_html_e('Dates', 'modern-hotel-booking'); ?></label> <input type="date" name="start_date"
@@ -2024,7 +2024,7 @@ class Menu
                             <td><?php echo esc_html($r->name); ?></td>
                             <td><?php echo esc_html($r->start_date . ' → ' . $r->end_date); ?></td>
                             <td><?php echo esc_html($r->amount . ('percent' === $r->operation ? '%' : '')); ?></td>
-                            <td><a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-pricing-rules&action=delete&id={$r->id}"), 'mhb_delete_pricing_' . $r->id)); ?>"
+                            <td><a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhb-pricing-rules&action=delete&id={$r->id}"), 'mhbo_delete_pricing_' . $r->id)); ?>"
                                     class="button button-link-delete"
                                     onclick="return confirm('<?php esc_attr_e('Delete this pricing rule?', 'modern-hotel-booking'); ?>')"><?php esc_html_e('Delete', 'modern-hotel-booking'); ?></a>
                             </td>
@@ -2042,7 +2042,7 @@ class Menu
         }
 
         // Handle Form Submission
-        if (isset($_POST['mhb_save_extras']) && check_admin_referer('mhb_save_extras_action')) {
+        if (isset($_POST['mhbo_save_extras']) && check_admin_referer('mhbo_save_extras_action')) {
             $new_extras = [];
             if (isset($_POST['extras']) && is_array($_POST['extras'])) {
                 // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
@@ -2067,17 +2067,17 @@ class Menu
                     ];
                 }
             }
-            update_option('mhb_pro_extras', $new_extras);
+            update_option('mhbo_pro_extras', $new_extras);
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Extras Saved!', 'modern-hotel-booking') . '</p></div>';
         }
 
-        $extras = get_option('mhb_pro_extras', []);
+        $extras = get_option('mhbo_pro_extras', []);
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Booking Extras & Add-ons', 'modern-hotel-booking'); ?></h1>
             <form method="post">
-                <?php wp_nonce_field('mhb_save_extras_action'); ?>
-                <div id="mhb-extras-list">
+                <?php wp_nonce_field('mhbo_save_extras_action'); ?>
+                <div id="mhbo-extras-list">
                     <?php
                     if (!empty($extras)) {
                         foreach ($extras as $index => $extra) {
@@ -2090,15 +2090,15 @@ class Menu
                     ?>
                 </div>
                 <button type="button" class="button"
-                    id="mhb-add-extra"><?php esc_html_e('+ Add New Extra', 'modern-hotel-booking'); ?></button>
+                    id="mhbo-add-extra"><?php esc_html_e('+ Add New Extra', 'modern-hotel-booking'); ?></button>
                 <hr>
-                <input type="submit" name="mhb_save_extras" class="button button-primary"
+                <input type="submit" name="mhbo_save_extras" class="button button-primary"
                     value="<?php esc_attr_e('Save Changes', 'modern-hotel-booking'); ?>">
             </form>
 
             <script type="text/template" id="tmpl-mhb-extra">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="mhb-extra-item card" style="padding:15px; margin-bottom:15px; background:#f9f9f9;">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button type="button" class="notice-dismiss mhb-remove-extra" style="position:absolute; right:10px; top:10px;"></button>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="mhbo-extra-item card" style="padding:15px; margin-bottom:15px; background:#f9f9f9;">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button type="button" class="notice-dismiss mhbo-remove-extra" style="position:absolute; right:10px; top:10px;"></button>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <input type="hidden" name="extras[{{index}}][id]" value="{{id}}">
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <table class="form-table" style="margin:0;">
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <tr>
@@ -2137,9 +2137,9 @@ class Menu
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         </div>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      </script>
             <?php
-            // Note: Extras management JavaScript logic has been moved to assets/js/mhb-admin-bookings.js
+            // Note: Extras management JavaScript logic has been moved to assets/js/mhbo-admin-bookings.js
             // Pass extras count for the script
-            wp_add_inline_script('mhb-admin-bookings', 'window.mhbExtrasCount = ' . count($extras) . ';', 'before');
+            wp_add_inline_script('mhbo-admin-bookings', 'window.mhbExtrasCount = ' . count($extras) . ';', 'before');
             ?>
         </div>
         <?php
@@ -2154,8 +2154,8 @@ class Menu
         $pt = $extra['pricing_type'] ?? 'fixed';
         $ct = $extra['control_type'] ?? 'checkbox';
         ?>
-        <div class="mhb-extra-item card" style="padding:15px; margin-bottom:15px; background:#f9f9f9;">
-            <button type="button" class="notice-dismiss mhb-remove-extra"
+        <div class="mhbo-extra-item card" style="padding:15px; margin-bottom:15px; background:#f9f9f9;">
+            <button type="button" class="notice-dismiss mhbo-remove-extra"
                 style="position:absolute; right:10px; top:10px;"></button>
             <input type="hidden" name="extras[<?php echo esc_attr($index); ?>][id]" value="<?php echo esc_attr($id); ?>">
             <table class="form-table" style="margin:0;">

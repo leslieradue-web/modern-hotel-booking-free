@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -105,8 +105,8 @@ class Cache
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cache flush operation, patterns are hardcoded
         $deleted = $wpdb->query(
             "DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_mhb_cache_%' 
-             OR option_name LIKE '_site_transient_mhb_cache_%'"
+             WHERE option_name LIKE '_transient_mhbo_cache_%' 
+             OR option_name LIKE '_site_transient_mhbo_cache_%'"
         );
 
         // Flush object cache group if available
@@ -156,8 +156,8 @@ class Cache
             "DELETE FROM {$wpdb->options} 
              WHERE option_name LIKE %s 
              OR option_name LIKE %s",
-            '_transient_mhb_cache_pricing_rules_' . $room_id . '_%',
-            '_site_transient_mhb_cache_pricing_rules_' . $room_id . '_%'
+            '_transient_mhbo_cache_pricing_rules_' . $room_id . '_%',
+            '_site_transient_mhbo_cache_pricing_rules_' . $room_id . '_%'
         ));
 
         self::invalidate_calendar_cache($room_id);
@@ -172,11 +172,11 @@ class Cache
     public static function invalidate_booking($booking_id, ?int $room_id = null): void
     {
         // Clear direct ID cache
-        wp_cache_delete('mhb_booking_' . $booking_id, 'mhb_bookings');
+        wp_cache_delete('mhbo_booking_' . $booking_id, 'mhbo_bookings');
 
         // Clear transaction lookup cache if it looks like a TX ID
         if (is_string($booking_id) && strlen($booking_id) > 10) {
-            wp_cache_delete('mhb_booking_tx_' . md5($booking_id), 'mhb_bookings');
+            wp_cache_delete('mhbo_booking_tx_' . md5($booking_id), 'mhbo_bookings');
         }
 
         // Clear all bookings list
@@ -194,7 +194,7 @@ class Cache
     public static function invalidate_all_bookings(): void
     {
         if (self::is_object_cache_available() && function_exists('wp_cache_flush_group')) {
-            wp_cache_flush_group('mhb_bookings');
+            wp_cache_flush_group('mhbo_bookings');
         }
     }
 
@@ -205,14 +205,14 @@ class Cache
      */
     public static function invalidate_calendar_cache(int $room_id): void
     {
-        wp_cache_delete('mhb_calendar_bookings_' . $room_id, self::GROUP);
+        wp_cache_delete('mhbo_calendar_bookings_' . $room_id, self::GROUP);
 
         // Also clear room status/availability cache from Pricing.php
         $today = gmdate('Y-m-d');
-        wp_cache_delete('room_status_' . $room_id . '_' . $today, 'mhb_rooms');
+        wp_cache_delete('room_status_' . $room_id . '_' . $today, 'mhbo_rooms');
 
         // Clear general room cache
-        wp_cache_delete('mhb_all_rooms', 'mhb_rooms');
+        wp_cache_delete('mhbo_all_rooms', 'mhbo_rooms');
     }
 
     /**
@@ -220,7 +220,7 @@ class Cache
      */
     private static function get_cache_key(string $key): string
     {
-        return 'mhb_' . $key;
+        return 'mhbo_' . $key;
     }
 
     /**
@@ -228,6 +228,6 @@ class Cache
      */
     private static function get_transient_key(string $key): string
     {
-        return 'mhb_cache_' . $key;
+        return 'mhbo_cache_' . $key;
     }
 }

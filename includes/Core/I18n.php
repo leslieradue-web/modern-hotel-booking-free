@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types=1);
 
 /**
  * I18n — Multilingual Abstraction Layer
@@ -6,11 +7,23 @@
  * Supports qTranslate-X, WPML, Polylang, and vanilla WordPress.
  * Internal storage format: [:en]English[:ro]Romanian[:de]German[:]
  *
+ * IMPORTANT — WordPress i18n compliance:
+ * All gettext calls (__(), esc_html__(), etc.) MUST use literal string
+ * arguments for both the text and the text domain. Never pass variables
+ * or constants to these functions — the translation parser reads code
+ * statically and cannot resolve runtime values.
+ *
+ * Correct:   __( 'Hello', 'modern-hotel-booking' )
+ * Incorrect: __( $text,   $domain )
+ *
+ * If you need to include dynamic values, use printf/sprintf with placeholders:
+ *   printf( esc_html__( 'Hello %s', 'modern-hotel-booking' ), esc_html( $name ) );
+ *
  * @package MHB\Core
  * @since   2.0.0
  */
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -28,7 +41,7 @@ class I18n
 
     /**
      * Filter plugin translations to prevent blank strings.
-     * 
+     *
      * If a translation is found to be empty or just whitespace in the .mo file,
      * WP returns it as is. We force it to fallback to the original English string.
      *
@@ -44,6 +57,7 @@ class I18n
         }
         return $translated;
     }
+
     /**
      * Detect which multilingual plugin is active.
      *
@@ -143,7 +157,7 @@ class I18n
 
             default:
                 $langs = array_unique(array('en', self::locale_code()));
-                return apply_filters('mhb_i18n_get_available_languages', array_values($langs));
+                return apply_filters('mhbo_i18n_get_available_languages', array_values($langs));
         }
     }
 
@@ -175,9 +189,6 @@ class I18n
         $is_plain = false === strpos($text, '[:');
 
         // Handle plain strings on multilingual sites
-        // If it's a plain string AND we are on a multilingual site AND fallback is disabled,
-        // treat it as not translated for ANY specific language request.
-        // This allows the caller to fall back to other localized settings (like translated pages).
         if ($is_plain && 'none' !== self::detect_plugin() && !$fallback) {
             return null;
         }
@@ -188,7 +199,6 @@ class I18n
         }
 
         // qTranslate style parsing
-        // Supports both 2-letter codes [:en] and 5-letter codes [:ro_RO]
         $blocks = preg_split('/\[:([a-z]{2}(?:_[a-z]{2})?)\]/i', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
 
         if (count($blocks) < 3) {
@@ -202,7 +212,6 @@ class I18n
                 $lang_key = strtolower($blocks[$i]);
                 $content = $blocks[$i + 1];
 
-                // Strip optional closing tag [:] if it was caught in the split
                 if (substr($content, -3) === '[:]') {
                     $content = substr($content, 0, -3);
                 }
@@ -215,12 +224,12 @@ class I18n
         $lang = strtolower($lang);
         $lang_short = substr($lang, 0, 2);
 
-        // 1. Try exact match (e.g. ro_RO == ro_RO)
+        // 1. Try exact match
         if (!empty($map[$lang])) {
             return $map[$lang];
         }
 
-        // 2. Try prefix match (e.g. ro requested, ro_RO available)
+        // 2. Try prefix match
         if (2 === strlen($lang)) {
             foreach ($map as $k => $v) {
                 if (0 === strpos($k, $lang . '_')) {
@@ -229,7 +238,7 @@ class I18n
             }
         }
 
-        // 3. Try short match (e.g. ro_RO requested, ro available)
+        // 3. Try short match
         if (!empty($map[$lang_short])) {
             return $map[$lang_short];
         }
@@ -257,7 +266,7 @@ class I18n
         // 6. Final fallback to the first available non-empty block
         foreach ($map as $val) {
             if (!empty($val)) {
-                return apply_filters('mhb_i18n_decode', $val, $text, $lang);
+                return apply_filters('mhbo_i18n_decode', $val, $text, $lang);
             }
         }
 
@@ -265,7 +274,7 @@ class I18n
         $result = preg_replace('/\[:([a-z]{2}(?:_[a-z]{2})?)\]/i', '', $text);
         $result = str_replace('[:]', '', $result);
 
-        return apply_filters('mhb_i18n_decode', trim($result) ?: $text, $text, $lang);
+        return apply_filters('mhbo_i18n_decode', trim($result) ?: $text, $text, $lang);
     }
 
     /**
@@ -292,26 +301,34 @@ class I18n
     }
 
     /**
-     * Translate a string with optional language support.
-     * 
-     * This is a wrapper for WordPress __() function with language-specific decoding.
+     * Decode an already-translated string for multilingual (qTranslate-style) support.
      *
-     * @param string $text Text to translate.
-     * @param string $domain Text domain (default: 'modern-hotel-booking').
-     * @param string|null $language Optional language code for multilingual strings.
-     * @return string Translated text.
+     * -------------------------------------------------------------------------
+     * IMPORTANT — Do NOT use this method for gettext string extraction.
+     * Always call WordPress __() / esc_html__() etc. with LITERAL strings
+     * and a LITERAL text domain FIRST, then pass the result here when you
+     * need multilingual (qTranslate-style [:xx]) decoding.
+     *
+     * Correct usage:
+     *   $translated = __( 'Search Rooms', 'modern-hotel-booking' );
+     *   $decoded    = I18n::translate_and_decode( $translated, 'ro' );
+     *
+     * Incorrect (blocks translation parser):
+     *   $decoded = I18n::translate_and_decode( $variable );
+     * -------------------------------------------------------------------------
+     *
+     * @param string      $translated Already-translated text (from __() or similar).
+     * @param string|null $language   Optional language code for multilingual strings.
+     * @return string Decoded text.
      */
-    public static function __($text, $domain = 'modern-hotel-booking', $language = null)
+    public static function translate_and_decode($translated, $language = null)
     {
-        // First, get the WordPress translation
-        $translated = translate($text, $domain);
-
-        // If translation is empty, fallback to the original English text
+        // If translation is empty, return as-is
         if (empty($translated)) {
-            $translated = $text;
+            return $translated;
         }
 
-        // If a specific language is requested, decode any multilingual format
+        // If the translated string contains multilingual format, decode it
         if (false !== strpos($translated, '[:')) {
             $decoded = self::decode($translated, $language);
             if (!empty($decoded)) {
@@ -330,11 +347,11 @@ class I18n
      */
     public static function format_currency($amount)
     {
-        $symbol = get_option('mhb_currency_symbol', '$');
-        $position = get_option('mhb_currency_position', 'before');
-        $decimal_separator = apply_filters('mhb_currency_decimal_separator', '.');
-        $thousand_separator = apply_filters('mhb_currency_thousand_separator', ',');
-        $decimals = apply_filters('mhb_currency_decimals', 0);
+        $symbol = get_option('mhbo_currency_symbol', '$');
+        $position = get_option('mhbo_currency_position', 'before');
+        $decimal_separator = apply_filters('mhbo_currency_decimal_separator', '.');
+        $thousand_separator = apply_filters('mhbo_currency_thousand_separator', ',');
+        $decimals = apply_filters('mhbo_currency_decimals', 0);
 
         $formatted = number_format((float) $amount, $decimals, $decimal_separator, $thousand_separator);
 
@@ -367,7 +384,7 @@ class I18n
     public static function get_label($key)
     {
         // Check for database override first
-        $override = get_option("mhb_label_{$key}");
+        $override = get_option("mhbo_label_{$key}");
 
         $labels = self::get_all_default_labels();
         $default_val = isset($labels[$key]) ? $labels[$key] : $key;
@@ -375,7 +392,6 @@ class I18n
         $value = !empty($override) ? $override : $default_val;
 
         // Check for translated string via WPML/Polylang
-        // Pass the value as default so plugins can find/translate it
         $translated = self::get_translated_string("Label: {$key}", $value, 'MHB Frontend Labels');
 
         // If translation is found and not empty, decode it (it might still be qTranslate format)
@@ -387,7 +403,6 @@ class I18n
         }
 
         // Fallback to English if the result is empty
-        // This ensures buttons/labels are never blank
         if (isset($labels[$key])) {
             return self::decode($labels[$key], 'en');
         }
@@ -397,6 +412,10 @@ class I18n
 
     /**
      * Get all default labels in multilingual format.
+     *
+     * NOTE: Every __() call below uses a LITERAL string and the LITERAL
+     * text domain 'modern-hotel-booking' so that the WordPress translation
+     * parser can extract them. Never replace these with variables.
      *
      * @return array
      */
@@ -481,10 +500,14 @@ class I18n
             'label_enhance_stay' => __('Enhance Your Stay', 'modern-hotel-booking'),
             'label_per_person' => __('per person', 'modern-hotel-booking'),
             'label_per_person_per_night' => __('per person / night', 'modern-hotel-booking'),
-            'label_tax_note_includes' => /* translators: %s: Tax rate percentage */ __('Price includes %s', 'modern-hotel-booking'),
-            'label_tax_note_plus' => /* translators: %s: Tax rate percentage */ __('Price plus %s', 'modern-hotel-booking'),
-            'label_tax_note_includes_multi' => /* translators: %1$s: Tax label, %2$s: Tax rate percentage */ __('Price includes %1$s (%2$s%%)', 'modern-hotel-booking'),
-            'label_tax_note_plus_multi' => /* translators: %1$s: Tax label, %2$s: Tax rate percentage */ __('Price plus %1$s (%2$s%%)', 'modern-hotel-booking'),
+            /* translators: %s: Tax rate percentage */
+            'label_tax_note_includes' => __('Price includes %s', 'modern-hotel-booking'),
+            /* translators: %s: Tax rate percentage */
+            'label_tax_note_plus' => __('Price plus %s', 'modern-hotel-booking'),
+            /* translators: %1$s: Tax label, %2$s: Tax rate percentage */
+            'label_tax_note_includes_multi' => __('Price includes %1$s (%2$s%%)', 'modern-hotel-booking'),
+            /* translators: %1$s: Tax label, %2$s: Tax rate percentage */
+            'label_tax_note_plus_multi' => __('Price plus %1$s (%2$s%%)', 'modern-hotel-booking'),
             'label_select_dates_error' => __('Please select check-in and check-out dates.', 'modern-hotel-booking'),
             'label_legend_confirmed' => '[:en]Booked[:ro]Rezervat[:de]Gebucht[:es]Reservado[:fr]Réservé[:it]Prenotato[:pt]Reservado[:nl]Geboekt[:ru]Забронировано[:zh]已预订[:ja]予約済み[:ar]محجوز[:tr]Rezerve[:]',
             'label_legend_pending' => '[:en]Pending[:ro]În așteptare[:de]Ausstehend[:es]Pendiente[:fr]En attente[:it]In attesa[:pt]Pendente[:nl]In afwachting[:ru]Ожидание[:zh]待定[:ja]保留中[:ar]قيد الانتظار[:tr]Beklemede[:]',
@@ -496,14 +519,17 @@ class I18n
             'label_check_out_future' => __('Check-out date cannot be more than 2 years in the future.', 'modern-hotel-booking'),
             'label_name_too_long' => __('Name is too long (maximum 100 characters).', 'modern-hotel-booking'),
             'label_phone_too_long' => __('Phone number is too long (maximum 30 characters).', 'modern-hotel-booking'),
-            'label_max_children_error' => /* translators: %d: Maximum number of children */ __('Error: Maximum children for this room is %d.', 'modern-hotel-booking'),
+            /* translators: %d: Maximum number of children */
+            'label_max_children_error' => __('Error: Maximum children for this room is %d.', 'modern-hotel-booking'),
             'label_price_calc_error' => __('Error calculating price. Please check dates.', 'modern-hotel-booking'),
             'label_fill_all_fields' => __('Please fill in all required fields.', 'modern-hotel-booking'),
             'label_invalid_email' => __('Please provide a valid email address.', 'modern-hotel-booking'),
-            'label_field_required' => /* translators: %s: Field name */ __('The field "%s" is required.', 'modern-hotel-booking'),
+            /* translators: %s: Field name */
+            'label_field_required' => __('The field "%s" is required.', 'modern-hotel-booking'),
             'label_spam_detected' => __('Spam detected.', 'modern-hotel-booking'),
             'label_already_booked' => __('Sorry, this room was just booked by someone else or is unavailable for these dates.', 'modern-hotel-booking'),
-            'label_max_adults_error' => /* translators: %d: Maximum number of adults */ __('Error: Maximum adults for this room is %d.', 'modern-hotel-booking'),
+            /* translators: %d: Maximum number of adults */
+            'label_max_adults_error' => __('Error: Maximum adults for this room is %d.', 'modern-hotel-booking'),
             'label_rest_pro_error' => __('REST API access is a Pro feature.', 'modern-hotel-booking'),
             'label_invalid_nonce' => __('Invalid nonce.', 'modern-hotel-booking'),
             'label_api_rate_limit' => __('Too many requests. Please try again later.', 'modern-hotel-booking'),
@@ -524,8 +550,10 @@ class I18n
             'label_paypal_connection_error' => __('Unable to connect to PayPal. Please try again later.', 'modern-hotel-booking'),
             'label_paypal_auth_failed' => __('Failed to authenticate with PayPal. Please check your PayPal credentials.', 'modern-hotel-booking'),
             'label_paypal_order_create_error' => __('Unable to create PayPal order. Please try again later.', 'modern-hotel-booking'),
-            'label_paypal_currency_unsupported' => /* translators: %s: Currency code */ __('Currency %s is not supported by your PayPal account.', 'modern-hotel-booking'),
-            'label_paypal_generic_error' => /* translators: %s: Error message */ __('PayPal error: %s', 'modern-hotel-booking'),
+            /* translators: %s: Currency code */
+            'label_paypal_currency_unsupported' => __('Currency %s is not supported by your PayPal account.', 'modern-hotel-booking'),
+            /* translators: %s: Error message */
+            'label_paypal_generic_error' => __('PayPal error: %s', 'modern-hotel-booking'),
             'label_missing_order_id' => __('Missing order ID.', 'modern-hotel-booking'),
             'label_paypal_capture_error' => __('Unable to capture payment. Please try again later.', 'modern-hotel-booking'),
             'label_payment_already_processed' => __('This payment has already been processed.', 'modern-hotel-booking'),
@@ -539,10 +567,13 @@ class I18n
             'label_payment_date' => __('Payment Date', 'modern-hotel-booking'),
             'label_paypal_order_failed' => __('Failed to create PayPal order.', 'modern-hotel-booking'),
             'label_security_verification_failed' => __('Security verification failed. Please refresh the page and try again.', 'modern-hotel-booking'),
-            'label_paypal_client_id_missing' => /* translators: %s: Environment (Sandbox/Live) */ __('PayPal %s Client ID is not configured.', 'modern-hotel-booking'),
-            'label_paypal_secret_missing' => /* translators: %s: Environment (Sandbox/Live) */ __('PayPal %s Secret is not configured.', 'modern-hotel-booking'),
+            /* translators: %s: Environment (Sandbox/Live) */
+            'label_paypal_client_id_missing' => __('PayPal %s Client ID is not configured.', 'modern-hotel-booking'),
+            /* translators: %s: Environment (Sandbox/Live) */
+            'label_paypal_secret_missing' => __('PayPal %s Secret is not configured.', 'modern-hotel-booking'),
             'label_stripe_intent_missing' => __('Stripe payment failed: Payment intent missing.', 'modern-hotel-booking'),
-            'label_stripe_generic_error' => /* translators: %s: Error message */ __('Stripe API error: %s', 'modern-hotel-booking'),
+            /* translators: %s: Error message */
+            'label_stripe_generic_error' => __('Stripe API error: %s', 'modern-hotel-booking'),
             'label_paypal_id_missing' => __('PayPal payment failed: Order ID missing.', 'modern-hotel-booking'),
             'label_payment_required' => __('Payment is required.', 'modern-hotel-booking'),
             'label_api_not_configured' => __('API key has not been configured. Set it in Hotel Booking → Settings.', 'modern-hotel-booking'),
@@ -557,16 +588,23 @@ class I18n
             'label_invalid_dates' => __('Invalid booking dates.', 'modern-hotel-booking'),
             'label_booking_failed' => __('Failed to create the booking.', 'modern-hotel-booking'),
             'label_permission_denied' => __('Permission denied.', 'modern-hotel-booking'),
-            'label_stripe_pk_missing' => /* translators: %s: Environment (Sandbox/Live) */ __('Stripe %s Publishable Key is not configured.', 'modern-hotel-booking'),
-            'label_stripe_sk_missing' => /* translators: %s: Environment (Sandbox/Live) */ __('Stripe %s Secret Key is not configured.', 'modern-hotel-booking'),
-            'label_stripe_invalid_pk_format' => /* translators: %1$s: Expected key prefix, %2$s: Environment mode */ __('Invalid publishable key format. Expected key starting with "%1$s" for %2$s mode.', 'modern-hotel-booking'),
+            /* translators: %s: Environment (Sandbox/Live) */
+            'label_stripe_pk_missing' => __('Stripe %s Publishable Key is not configured.', 'modern-hotel-booking'),
+            /* translators: %s: Environment (Sandbox/Live) */
+            'label_stripe_sk_missing' => __('Stripe %s Secret Key is not configured.', 'modern-hotel-booking'),
+            /* translators: %1$s: Expected key prefix, %2$s: Environment mode */
+            'label_stripe_invalid_pk_format' => __('Invalid publishable key format. Expected key starting with "%1$s" for %2$s mode.', 'modern-hotel-booking'),
             'label_credentials_spaces' => __('Credentials contain extra spaces', 'modern-hotel-booking'),
             'label_mode_mismatch' => __('Using Sandbox credentials in Live mode (or vice versa)', 'modern-hotel-booking'),
             'label_credentials_expired' => __('Credentials have expired or been rotated', 'modern-hotel-booking'),
-            'label_creds_valid_env' => /* translators: %s: Environment (Sandbox/Live) */ __('PayPal %s credentials are valid!', 'modern-hotel-booking'),
-            'label_stripe_creds_valid' => /* translators: %s: Environment (Sandbox/Live) */ __('Stripe %s credentials are valid!', 'modern-hotel-booking'),
-            'label_connection_failed' => /* translators: %s: Error message */ __('Connection failed: %s', 'modern-hotel-booking'),
-            'label_auth_failed_env' => /* translators: %s: Error message */ __('Authentication failed: %s', 'modern-hotel-booking'),
+            /* translators: %s: Environment (Sandbox/Live) */
+            'label_creds_valid_env' => __('PayPal %s credentials are valid!', 'modern-hotel-booking'),
+            /* translators: %s: Environment (Sandbox/Live) */
+            'label_stripe_creds_valid' => __('Stripe %s credentials are valid!', 'modern-hotel-booking'),
+            /* translators: %s: Error message */
+            'label_connection_failed' => __('Connection failed: %s', 'modern-hotel-booking'),
+            /* translators: %s: Error message */
+            'label_auth_failed_env' => __('Authentication failed: %s', 'modern-hotel-booking'),
             'label_common_causes' => __('Common causes:', 'modern-hotel-booking'),
         );
     }
@@ -583,15 +621,12 @@ class I18n
         $plugin = self::detect_plugin();
 
         if ('wpml' === $plugin) {
-            // WPML String Translation
             do_action('wpml_register_single_string', $context, $name, $value);
         } elseif ('polylang' === $plugin) {
-            // Polylang String Translation (if Polylang String Translation addon is available)
             if (function_exists('pll_register_string')) {
                 call_user_func('pll_register_string', $name, $value, $context);
             }
         }
-        // qTranslate-X doesn't require string registration - uses inline format
     }
 
     /**
@@ -612,18 +647,15 @@ class I18n
         }
 
         if ('wpml' === $plugin) {
-            // WPML String Translation
             $translated = apply_filters('wpml_translate_single_string', $default, $context, $name, $language);
             return !empty($translated) ? $translated : $default;
         } elseif ('polylang' === $plugin) {
-            // Polylang String Translation
             if (function_exists('pll__')) {
                 $translated = call_user_func('pll__', $default);
                 return !empty($translated) ? $translated : $default;
             }
         }
 
-        // qTranslate-X or no plugin - return default (which may contain qTranslate format)
         $decoded = self::decode($default, $language);
         return !empty($decoded) ? $decoded : $default;
     }
@@ -635,31 +667,29 @@ class I18n
     public static function register_plugin_strings()
     {
         // Register tax-related strings
-        $tax_label = get_option('mhb_tax_label', '[:en]VAT[:ro]TVA[:]');
+        $tax_label = get_option('mhbo_tax_label', '[:en]VAT[:ro]TVA[:]');
         self::register_string('Tax Label', $tax_label, 'MHB Tax Settings');
 
         // Register email template subjects and messages
         $statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
         foreach ($statuses as $status) {
-            $subject = get_option("mhb_email_{$status}_subject", '');
+            $subject = get_option("mhbo_email_{$status}_subject", '');
             if (!empty($subject)) {
                 self::register_string("Email {$status} Subject", $subject, 'MHB Email Templates');
             }
-            $message = get_option("mhb_email_{$status}_message", '');
+            $message = get_option("mhbo_email_{$status}_message", '');
             if (!empty($message)) {
                 self::register_string("Email {$status} Message", $message, 'MHB Email Templates');
             }
         }
 
         // Register frontend labels
-        // Register all available frontend labels
         $labels = self::get_all_default_labels();
         foreach ($labels as $key => $default_val) {
-            $label = get_option("mhb_label_{$key}", '');
+            $label = get_option("mhbo_label_{$key}", '');
             if (!empty($label)) {
                 self::register_string("Label: {$key}", $label, 'MHB Frontend Labels');
             } else {
-                // Register default value so it appears in string translation tools
                 self::register_string("Label: {$key}", $default_val, 'MHB Frontend Labels');
             }
         }
@@ -732,7 +762,7 @@ class I18n
 
     /**
      * Check if a currency code is a valid ISO-4217 code.
-     * 
+     *
      * This list includes common currencies supported by major payment processors (Stripe/PayPal).
      *
      * @param string $code 3-letter currency code.
@@ -865,4 +895,3 @@ class I18n
         return in_array($code, $valid_codes, true);
     }
 }
-

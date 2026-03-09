@@ -12,7 +12,7 @@
 
 
 
-namespace MHB\Core;
+namespace MHBO\Core;
 
 /**
  * Class License
@@ -43,7 +43,7 @@ class License
         $feature_display = $feature_name ? $feature_name : __('Pro Feature', 'modern-hotel-booking');
 
         printf(
-            '<div class="mhb-upsell-notice"><p><strong>%s</strong> %s <a href="%s" target="_blank" rel="noopener noreferrer">%s</a></p></div>',
+            '<div class="mhbo-upsell-notice"><p><strong>%s</strong> %s <a href="%s" target="_blank" rel="noopener noreferrer">%s</a></p></div>',
             /* translators: %s: Feature name */
             sprintf(esc_html__('%s is a Pro feature.', 'modern-hotel-booking'), esc_html($feature_display)),
             esc_html__('Upgrade to unlock this feature.', 'modern-hotel-booking'),
