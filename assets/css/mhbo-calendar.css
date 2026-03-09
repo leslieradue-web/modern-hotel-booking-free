@@ -15,7 +15,7 @@
     text-align: center;
     margin-bottom: 30px;
     font-size: 1.4rem;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     font-weight: 800;
     letter-spacing: -0.5px;
 }
@@ -65,7 +65,7 @@
     max-width: 100% !important;
     max-height: none !important;
     padding: 10px !important;
-    background: var(--mhb-glass) !important;
+    background: var(--mhbo-glass) !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     overflow: visible !important;
@@ -77,7 +77,7 @@
 .mhbo-calendar-wrapper .flatpickr-months {
     padding: 15px 0 !important;
     background: transparent !important;
-    border-bottom: 1px solid var(--mhb-border) !important;
+    border-bottom: 1px solid var(--mhbo-border) !important;
     border-radius: 12px 12px 0 0 !important;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .mhbo-calendar-wrapper span.flatpickr-weekday {
-    color: var(--mhb-primary) !important;
+    color: var(--mhbo-primary) !important;
     font-weight: 800 !important;
     font-size: 0.9rem !important;
     text-transform: uppercase;
@@ -159,16 +159,16 @@
 .mhbo-calendar-wrapper .flatpickr-day.selected,
 .mhbo-calendar-wrapper .flatpickr-day.startRange,
 .mhbo-calendar-wrapper .flatpickr-day.endRange {
-    background: var(--mhb-primary) !important;
+    background: var(--mhbo-primary) !important;
     color: #fff !important;
-    border-color: var(--mhb-primary) !important;
+    border-color: var(--mhbo-primary) !important;
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.inRange {
-    background: var(--mhb-secondary) !important;
-    border-color: var(--mhb-secondary) !important;
-    color: var(--mhb-primary) !important;
-    box-shadow: -5px 0 0 var(--mhb-secondary), 5px 0 0 var(--mhb-secondary) !important;
+    background: var(--mhbo-secondary) !important;
+    border-color: var(--mhbo-secondary) !important;
+    color: var(--mhbo-primary) !important;
+    box-shadow: -5px 0 0 var(--mhbo-secondary), 5px 0 0 var(--mhbo-secondary) !important;
 }
 
 /* Hide the price display on the checkout date so it's clear you only pay per night */
@@ -266,7 +266,7 @@
 .mhbo-calendar-wrapper .mhbo-fp-price {
     font-size: 1rem !important;
     font-weight: 900 !important;
-    color: var(--mhb-primary) !important;
+    color: var(--mhbo-primary) !important;
     text-align: center !important;
     width: 100% !important;
     display: block !important;
@@ -290,7 +290,7 @@
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.inRange .mhbo-fp-price {
-    color: var(--mhb-primary) !important;
+    color: var(--mhbo-primary) !important;
 }
 
 /* --- Selection Box --- */
@@ -353,13 +353,13 @@
 .mhbo-price-value {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
 }
 
 .mhbo-btn-primary {
     width: 100%;
     max-width: 100%;
-    background: var(--mhb-primary);
+    background: var(--mhbo-primary);
     color: white;
     font-weight: 600;
     padding: 12px 20px;
@@ -444,7 +444,8 @@
 }
 
 .mhbo-widget-context .mhbo-calendar-wrapper .flatpickr-day {
-    height: 60px !important; /* Smaller height for widgets */
+    height: 60px !important;
+    /* Smaller height for widgets */
 }
 
 .mhbo-widget-context .mhbo-calendar-wrapper .mhbo-day-number {

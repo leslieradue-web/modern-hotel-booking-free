@@ -19,7 +19,7 @@ class BookingWidget extends \WP_Widget
     {
         parent::__construct(
             self::ID_BASE,
-            __('MHB: Booking Search', 'modern-hotel-booking'),
+            __('MHBO: Booking Search', 'modern-hotel-booking'),
             array('description' => __('A compact booking search form.', 'modern-hotel-booking'))
         );
 
@@ -41,7 +41,7 @@ class BookingWidget extends \WP_Widget
         }
 
         // Delegate to Calendar to load unified assets
-        if (class_exists('MHB\Frontend\Calendar')) {
+        if (class_exists('MHBO\Frontend\Calendar')) {
             Calendar::enqueue_assets();
         }
     }
@@ -70,7 +70,7 @@ class BookingWidget extends \WP_Widget
         }
 
         // Render the unified calendar view (aggregated)
-        if (class_exists('MHB\Frontend\Calendar')) {
+        if (class_exists('MHBO\Frontend\Calendar')) {
             // Reset the static flag to allow widget to render even if shortcode rendered?
             // No, Calendar::render_unified_view enforces singleton per page for now.
             // If we want widget + main content, we'd need to remove that check in Calendar.php.

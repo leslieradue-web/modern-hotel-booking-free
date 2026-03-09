@@ -1,14 +1,14 @@
 ﻿/* Modern Hotel Booking Styles */
 
 :root {
-    --mhb-primary: #1a365d;
-    --mhb-secondary: #f2e2c4;
-    --mhb-accent: #d4af37;
-    --mhb-bg: #fdfbf7;
-    --mhb-text: #2d3748;
-    --mhb-border: #e2e8f0;
-    --mhb-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --mhb-glass: rgba(255, 255, 255, 0.8);
+    --mhbo-primary: #1a365d;
+    --mhbo-secondary: #f2e2c4;
+    --mhbo-accent: #d4af37;
+    --mhbo-bg: #fdfbf7;
+    --mhbo-text: #2d3748;
+    --mhbo-border: #e2e8f0;
+    --mhbo-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --mhbo-glass: rgba(255, 255, 255, 0.8);
 }
 
 /* Container */
@@ -16,16 +16,16 @@
     font-family: inherit !important;
     max-width: 1200px !important;
     margin: 0 auto !important;
-    color: var(--mhb-text) !important;
+    color: var(--mhbo-text) !important;
 }
 
 /* Search Form */
 .mhbo-search-container {
-    background: var(--mhb-glass);
+    background: var(--mhbo-glass);
     backdrop-filter: blur(10px);
     padding: 35px;
     border-radius: 24px;
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
     margin-bottom: 60px;
     border: 1px solid rgba(255, 255, 255, 0.4);
     box-sizing: border-box;
@@ -55,8 +55,8 @@
 }
 
 .flatpickr-day.selected {
-    background: var(--mhb-primary) !important;
-    border-color: var(--mhb-primary) !important;
+    background: var(--mhbo-primary) !important;
+    border-color: var(--mhbo-primary) !important;
 }
 
 .mhbo-form-group {
@@ -71,7 +71,7 @@
     margin-bottom: 14px;
     font-weight: 800;
     font-size: 1.1rem;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     letter-spacing: 0.8px;
     text-transform: uppercase;
 }
@@ -81,12 +81,12 @@
     width: 100%;
     max-width: 100%;
     padding: 14px 18px;
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
     border-radius: 12px;
     font-size: 1rem;
     background: #fff;
     transition: all 0.3s ease;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
     font-weight: 500;
     box-sizing: border-box;
     height: 54px !important;
@@ -95,7 +95,7 @@
 .mhbo-form-group input:focus,
 .mhbo-form-group select:focus,
 .mhbo-form-group textarea:focus {
-    border-color: var(--mhb-accent);
+    border-color: var(--mhbo-accent);
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
     outline: none;
 }
@@ -121,18 +121,18 @@
 .mhbo-form-group textarea {
     width: 100%;
     padding: 18px;
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
     border-radius: 12px;
     font-size: 1.1rem;
     background: #fff;
     transition: all 0.3s ease;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
     resize: vertical;
     line-height: 1.6;
 }
 
 .mhbo-btn {
-    background: var(--mhb-primary) !important;
+    background: var(--mhbo-primary) !important;
     color: #ffffff !important;
     padding: 12px 36px !important;
     border: none !important;
@@ -200,13 +200,13 @@
 }
 
 .mhbo-room-card {
-    background: var(--mhb-glass);
+    background: var(--mhbo-glass);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 24px;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
 }
 
 .mhbo-room-card:hover {
@@ -225,7 +225,7 @@
 .mhbo-room-title {
     font-size: 1.6rem;
     margin: 0 0 15px 0;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     font-weight: 800;
     letter-spacing: -0.5px;
 }
@@ -233,7 +233,7 @@
 .mhbo-room-price {
     font-size: 1.8rem;
     font-weight: 900;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
     margin-bottom: 20px;
 }
 
@@ -268,7 +268,7 @@
 
 .mhbo-payment-options label {
     background: #fff;
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
     padding: 18px 25px;
     border-radius: 14px;
     cursor: pointer;
@@ -284,19 +284,19 @@
 
 .mhbo-payment-options input[type="radio"]:checked+span,
 .mhbo-payment-options label:has(input:checked) {
-    border-color: var(--mhb-accent);
+    border-color: var(--mhbo-accent);
     background: #fdfcf6;
-    color: var(--mhb-primary);
-    box-shadow: 0 0 0 3px var(--mhb-accent);
+    color: var(--mhbo-primary);
+    box-shadow: 0 0 0 3px var(--mhbo-accent);
 }
 
 /* Booking Form */
 .mhbo-booking-wrapper {
-    background: var(--mhb-glass) !important;
+    background: var(--mhbo-glass) !important;
     backdrop-filter: blur(12px) !important;
     padding: 60px !important;
     border-radius: 28px !important;
-    box-shadow: var(--mhb-shadow) !important;
+    box-shadow: var(--mhbo-shadow) !important;
     max-width: 800px !important;
     margin: 50px auto !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
@@ -308,13 +308,13 @@
     padding: 35px;
     border-radius: 20px;
     margin-bottom: 40px;
-    border-left: 8px solid var(--mhb-primary);
+    border-left: 8px solid var(--mhbo-primary);
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .mhbo-booking-summary h3 {
     margin-top: 0;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     font-weight: 900;
     font-size: 1.4rem;
     margin-bottom: 20px;
@@ -330,7 +330,7 @@
 .mhbo-booking-times {
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px dashed var(--mhb-border);
+    border-top: 1px dashed var(--mhbo-border);
     display: flex;
     gap: 30px;
     flex-wrap: wrap;
@@ -371,7 +371,7 @@
     padding: 30px;
     border-radius: 15px;
     margin-bottom: 30px;
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
 }
 
 .mhbo-extras-section h4 {
@@ -379,7 +379,7 @@
     margin-bottom: 20px;
     font-size: 1.25rem;
     font-weight: 800;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -387,7 +387,7 @@
 .mhbo-extra-item {
     margin-bottom: 15px;
     padding-bottom: 15px;
-    border-bottom: 1px dashed var(--mhb-border);
+    border-bottom: 1px dashed var(--mhbo-border);
 }
 
 .mhbo-extra-item:last-child {
@@ -425,7 +425,7 @@
 
 .mhbo-extra-name {
     font-weight: 700;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
 }
 
 .mhbo-extra-desc {
@@ -436,7 +436,7 @@
 
 .mhbo-extra-price {
     font-weight: 800;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
     margin-left: 15px;
 }
 
@@ -444,14 +444,14 @@
 .mhbo-payment-section {
     margin-top: 35px;
     padding-top: 25px;
-    border-top: 2px solid var(--mhb-border);
+    border-top: 2px solid var(--mhbo-border);
 }
 
 .mhbo-payment-section h4 {
     margin-bottom: 20px;
     font-weight: 900;
     font-size: 1.3rem;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     text-transform: uppercase;
 }
 
@@ -464,7 +464,7 @@
 .mhbo-payment-option-wrapper {
     display: flex;
     flex-direction: column;
-    border: 2px solid var(--mhb-border);
+    border: 2px solid var(--mhbo-border);
     border-radius: 16px;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -472,11 +472,11 @@
 }
 
 .mhbo-payment-option-wrapper:hover {
-    border-color: var(--mhb-accent);
+    border-color: var(--mhbo-accent);
 }
 
 .mhbo-payment-option-wrapper:has(input:checked) {
-    border-color: var(--mhb-accent);
+    border-color: var(--mhbo-accent);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -508,35 +508,35 @@
 .mhbo-payment-option .label-text {
     font-weight: 700;
     font-size: 1.15rem;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
 }
 
 .mhbo-payment-detail {
     padding: 20px 25px;
     background: rgba(240, 247, 251, 0.5);
-    border-top: 1px solid var(--mhb-border);
+    border-top: 1px solid var(--mhbo-border);
 }
 
 /* Stripe Card Element Styling */
-#mhb-stripe-card-element {
+#mhbo-stripe-card-element {
     padding: 5px 0;
 }
 
-#mhb-card-element {
+#mhbo-card-element {
     padding: 16px 18px;
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
     border-radius: 12px;
     background: #fff;
     transition: all 0.3s ease;
     min-height: 54px;
 }
 
-#mhb-card-element:focus-within {
-    border-color: var(--mhb-accent);
+#mhbo-card-element:focus-within {
+    border-color: var(--mhbo-accent);
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
 }
 
-#mhb-card-errors {
+#mhbo-card-errors {
     margin-top: 12px;
     color: #ef4444;
     font-size: 0.95rem;
@@ -546,24 +546,24 @@
 
 /* Stripe Element Label */
 .mhbo-payment-detail label,
-#mhb-stripe-card-element .stripe-label {
+#mhbo-stripe-card-element .stripe-label {
     display: block;
     margin-bottom: 12px;
     font-weight: 700;
     font-size: 1rem;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 /* PayPal Button Container */
-#mhb-paypal-button-container {
+#mhbo-paypal-button-container {
     min-height: 50px;
     display: flex;
     justify-content: center;
 }
 
-#mhb-paypal-button-container>div {
+#mhbo-paypal-button-container>div {
     width: 100%;
     max-width: 400px;
 }
@@ -571,7 +571,7 @@
 /* Payment Summary Box */
 .mhbo-payment-summary {
     background: linear-gradient(135deg, rgba(26, 54, 93, 0.05) 0%, rgba(212, 175, 55, 0.08) 100%);
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
     border-radius: 16px;
     padding: 25px;
     margin-top: 25px;
@@ -583,7 +583,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px dashed var(--mhb-border);
+    border-bottom: 1px dashed var(--mhbo-border);
 }
 
 .mhbo-payment-summary-row:last-child {
@@ -594,8 +594,8 @@
 .mhbo-payment-summary-row.total {
     font-size: 1.3rem;
     font-weight: 800;
-    color: var(--mhb-primary);
-    border-top: 2px solid var(--mhb-primary);
+    color: var(--mhbo-primary);
+    border-top: 2px solid var(--mhbo-primary);
     margin-top: 10px;
     padding-top: 18px;
 }
@@ -607,14 +607,14 @@
 
 .mhbo-payment-summary-value {
     font-weight: 700;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
 }
 
 /* Submit Button Container */
 .mhbo-submit-container {
     margin-top: 30px;
     padding-top: 25px;
-    border-top: 2px solid var(--mhb-border);
+    border-top: 2px solid var(--mhbo-border);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -677,7 +677,7 @@
 }
 
 .mhbo-gdpr-consent label a {
-    color: var(--mhb-primary) !important;
+    color: var(--mhbo-primary) !important;
     font-weight: 700 !important;
     text-decoration: underline !important;
 }
@@ -691,7 +691,7 @@
     padding: 10px 15px;
     background: #fff;
     border-radius: 8px;
-    border: 1px solid var(--mhb-border);
+    border: 1px solid var(--mhbo-border);
 }
 
 .mhbo-child-age-group label {
@@ -712,7 +712,7 @@
     padding: 40px;
     background: #fff;
     border-radius: 12px;
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
     border-top: 5px solid #28a745;
 }
 
@@ -745,7 +745,7 @@
 .mhbo-payment-received {
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px dashed var(--mhb-border);
+    border-top: 1px dashed var(--mhbo-border);
 }
 
 .mhbo-badge-success {
@@ -990,7 +990,7 @@
     padding: 25px;
     border-radius: 16px;
     margin-top: 25px;
-    border: 1.5px solid var(--mhb-border);
+    border: 1.5px solid var(--mhbo-border);
 }
 
 .mhbo-tax-breakdown h4 {
@@ -998,7 +998,7 @@
     margin-bottom: 20px;
     font-size: 1.2rem;
     font-weight: 800;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -1014,7 +1014,7 @@
     font-size: 0.9rem;
     text-transform: uppercase;
     color: #718096;
-    border-bottom: 1.5px solid var(--mhb-border);
+    border-bottom: 1.5px solid var(--mhbo-border);
     font-weight: 700;
 }
 
@@ -1022,7 +1022,7 @@
     padding: 12px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     font-size: 1rem;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
 }
 
 .mhbo-tax-total {
@@ -1030,10 +1030,10 @@
 }
 
 .mhbo-tax-grand-total td {
-    border-top: 2px solid var(--mhb-primary);
+    border-top: 2px solid var(--mhbo-primary);
     padding-top: 15px;
     font-size: 1.2rem;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
 }
 
 .mhbo-tax-registration {
@@ -1045,11 +1045,11 @@
 
 /* Widget Styles */
 .mhbo-widget-search {
-    background: var(--mhb-glass);
+    background: var(--mhbo-glass);
     padding: 20px;
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
 }
 
 .mhbo-widget-field {
@@ -1061,13 +1061,13 @@
     font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 5px;
-    color: var(--mhb-primary);
+    color: var(--mhbo-primary);
 }
 
 .mhbo-widget-input {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--mhb-border);
+    border: 1px solid var(--mhbo-border);
     border-radius: 8px;
     background: white;
     font-size: 0.9rem;

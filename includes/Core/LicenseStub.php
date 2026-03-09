@@ -6,7 +6,7 @@
  * This file is used only in the free version build.
  * It provides stub methods to prevent fatal errors when Pro features are accessed.
  *
- * @package MHB\Core
+ * @package MHBO\Core
  * @since 2.2.3
  */
 

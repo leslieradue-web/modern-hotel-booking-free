@@ -19,7 +19,7 @@ declare(strict_types=1);
  * If you need to include dynamic values, use printf/sprintf with placeholders:
  *   printf( esc_html__( 'Hello %s', 'modern-hotel-booking' ), esc_html( $name ) );
  *
- * @package MHB\Core
+ * @package MHBO\Core
  * @since   2.0.0
  */
 
@@ -37,6 +37,18 @@ class I18n
     public static function init()
     {
         add_filter('gettext_modern-hotel-booking', array(self::class, 'filter_gettext'), 10, 3);
+    }
+
+    /**
+     * Translate a string.
+     *
+     * @param string $text   Text to translate.
+     * @param string $domain Optional. Text domain. Default 'modern-hotel-booking'.
+     * @return string
+     */
+    public static function __($text, $domain = 'modern-hotel-booking')
+    {
+        return __($text, $domain);
     }
 
     /**
@@ -392,7 +404,7 @@ class I18n
         $value = !empty($override) ? $override : $default_val;
 
         // Check for translated string via WPML/Polylang
-        $translated = self::get_translated_string("Label: {$key}", $value, 'MHB Frontend Labels');
+        $translated = self::get_translated_string("Label: {$key}", $value, 'MHBO Frontend Labels');
 
         // If translation is found and not empty, decode it (it might still be qTranslate format)
         if (!empty($translated)) {
@@ -668,18 +680,18 @@ class I18n
     {
         // Register tax-related strings
         $tax_label = get_option('mhbo_tax_label', '[:en]VAT[:ro]TVA[:]');
-        self::register_string('Tax Label', $tax_label, 'MHB Tax Settings');
+        self::register_string('Tax Label', $tax_label, 'MHBO Tax Settings');
 
         // Register email template subjects and messages
         $statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
         foreach ($statuses as $status) {
             $subject = get_option("mhbo_email_{$status}_subject", '');
             if (!empty($subject)) {
-                self::register_string("Email {$status} Subject", $subject, 'MHB Email Templates');
+                self::register_string("Email {$status} Subject", $subject, 'MHBO Email Templates');
             }
             $message = get_option("mhbo_email_{$status}_message", '');
             if (!empty($message)) {
-                self::register_string("Email {$status} Message", $message, 'MHB Email Templates');
+                self::register_string("Email {$status} Message", $message, 'MHBO Email Templates');
             }
         }
 
@@ -688,9 +700,9 @@ class I18n
         foreach ($labels as $key => $default_val) {
             $label = get_option("mhbo_label_{$key}", '');
             if (!empty($label)) {
-                self::register_string("Label: {$key}", $label, 'MHB Frontend Labels');
+                self::register_string("Label: {$key}", $label, 'MHBO Frontend Labels');
             } else {
-                self::register_string("Label: {$key}", $default_val, 'MHB Frontend Labels');
+                self::register_string("Label: {$key}", $default_val, 'MHBO Frontend Labels');
             }
         }
     }

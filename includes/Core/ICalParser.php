@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
  * Parses iCal VEVENT blocks from raw iCal data.
  * Used by both Core\ICal and Pro\ICalManager.
  *
- * @package MHB\Core
+ * @package MHBO\Core
  * @since   2.1.0
  */
 class ICalParser

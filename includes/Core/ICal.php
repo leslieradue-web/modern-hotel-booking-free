@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
  * - Airbnb
  * - Booking.com
  *
- * @package MHB\Core
+ * @package MHBO\Core
  * @since   2.0.1
  */
 class ICal

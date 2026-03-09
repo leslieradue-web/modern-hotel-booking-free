@@ -116,7 +116,7 @@
                 // Visual feedback
                 totalPriceInput.style.opacity = '0.5';
 
-                fetch('/wp-json/mhb/v1/recalculate-price', {
+                fetch('/wp-json/mhbo/v1/recalculate-price', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -227,9 +227,9 @@
      * Extras Management
      */
     function initExtrasManagement() {
-        const $addBtn = $('#mhb-add-extra');
-        const $extrasList = $('#mhb-extras-list');
-        const $template = $('#tmpl-mhb-extra');
+        const $addBtn = $('#mhbo-add-extra');
+        const $extrasList = $('#mhbo-extras-list');
+        const $template = $('#tmpl-mhbo-extra');
 
         if (!$addBtn.length || !$template.length) return;
 

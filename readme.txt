@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.6
+Stable tag: 2.2.6.7
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -91,7 +91,7 @@ Stop double bookings! Automatically sync your availability with:
 Yes! Modern Hotel Booking is perfect for single properties, villas, apartments, and Bed & Breakfasts. You simply create one "Room Type" and assign one "Room" to it.
 
 = Does it support Elementor, Divi, or other page builders? =
-Yes. While we have native Gutenberg blocks, you can use our shortcodes `[mhb_booking_form]` and `[mhb_calendar]` inside any page builder, including Elementor, Divi, Beaver Builder, and WPBakery.
+Yes. While we have native Gutenberg blocks, you can use our shortcodes `[mhbo_booking_form]` and `[mhbo_calendar]` inside any page builder, including Elementor, Divi, Beaver Builder, and WPBakery.
 
 = Can I sync availability with Airbnb and Booking.com? =
 Yes. The Pro version includes a bi-directional iCal synchronization engine. You can import calendars from OTAs (Airbnb, Booking.com) to block dates on your site, and export your site's bookings back to them to prevent double bookings.
@@ -148,6 +148,28 @@ The Pro version, available separately from [startmysuccess.com](https://startmys
 
 No personal guest data is transmitted to any external service without explicit user action (e.g., completing a booking with payment).
 
+== Credits ==
+
+This plugin uses the following third-party libraries:
+
+* **FullCalendar** - Copyright (c) 2024 Adam Shaw
+  * License: MIT
+  * License File: docs/FullCalendar-LICENSE.md
+  * Source: https://fullcalendar.io
+  * Used for: Admin bookings calendar display
+
+* **Chart.js** - Copyright (c) 2014-2024 Chart.js Contributors
+  * License: MIT
+  * Source: https://www.chartjs.org
+  * Used for: Revenue analytics charts
+
+* **Flatpickr** - Copyright (c) 2023 Gregory Petrosyan
+  * License: MIT
+  * Source: https://flatpickr.js.org
+  * Used for: Date and time picker in booking forms
+
+All third-party libraries are bundled locally and are not loaded from external CDNs.
+
 == Screenshots ==
 
 1. **Responsive Booking Form:** Clean interface with date selection and real-time availability.
@@ -162,6 +184,11 @@ No personal guest data is transmitted to any external service without explicit u
 10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
+
+= 2.2.6.7 =
+* Fixed: Admin bookings calendar not loading (FullCalendar missing plugins)
+* Updated: FullCalendar library to bundle version including dayGrid, timeGrid, interaction plugins
+* Added: Credits section documenting third-party libraries
 
 = 2.2.6.6 =
 * Updates and improvements as per recent changes.

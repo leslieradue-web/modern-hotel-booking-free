@@ -36,7 +36,7 @@
         const guestsSelect = document.getElementById('mhbo-booking-guests');
         const totalDisplay = document.getElementById('mhbo-display-total');
         const totalHidden = document.querySelector('input[name="total_price"]');
-        const arrivalTotal = document.querySelector('#mhb-arrival-container strong');
+        const arrivalTotal = document.querySelector('#mhbo-arrival-container strong');
 
         /**
          * Format currency based on settings

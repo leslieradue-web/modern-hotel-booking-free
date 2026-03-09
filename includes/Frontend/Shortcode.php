@@ -29,7 +29,7 @@ class Shortcode
     {
         // Enqueue main styles
         if (!wp_style_is('mhbo-style', 'enqueued')) {
-            wp_enqueue_style('mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhb-style.css', [], MHBO_VERSION);
+            wp_enqueue_style('mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', [], MHBO_VERSION);
         }
 
         // Enqueue flatpickr first since frontend script depends on it
@@ -57,7 +57,7 @@ class Shortcode
         }
 
         // Enqueue calendar assets via centralized handler
-        if (class_exists('MHB\Frontend\Calendar')) {
+        if (class_exists('MHBO\Frontend\Calendar')) {
             Calendar::enqueue_assets();
         }
 
@@ -78,7 +78,7 @@ class Shortcode
                 'loading' => I18n::get_label('label_loading'),
                 'to' => I18n::get_label('label_to'),
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'rest_url' => get_rest_url(null, 'mhb/v1'),
+                'rest_url' => get_rest_url(null, 'mhbo/v1'),
                 'nonce' => wp_create_nonce('wp_rest'),
                 'label_child_n_age' => I18n::get_label('label_child_n_age'),
                 'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
@@ -112,7 +112,7 @@ class Shortcode
             return;
         }
 
-        wp_enqueue_style('mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhb-style.css', [], MHBO_VERSION);
+        wp_enqueue_style('mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', [], MHBO_VERSION);
 
         // Enqueue flatpickr first since frontend script depends on it
         wp_enqueue_style(
@@ -133,8 +133,8 @@ class Shortcode
         wp_enqueue_script('mhbo-frontend', MHBO_PLUGIN_URL . 'assets/js/mhbo-frontend.js', ['jquery', 'mhbo-flatpickr-js'], MHBO_VERSION, true);
 
         // Enqueue calendar assets for the new search form
-        wp_enqueue_style('mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhb-calendar.css', [], MHBO_VERSION);
-        wp_enqueue_script('mhbo-calendar-js', MHBO_PLUGIN_URL . 'assets/js/mhb-calendar.js', ['jquery', 'mhbo-flatpickr-js'], MHBO_VERSION, true);
+        wp_enqueue_style('mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css', [], MHBO_VERSION);
+        wp_enqueue_script('mhbo-calendar-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js', ['jquery', 'mhbo-flatpickr-js'], MHBO_VERSION, true);
 
         // Inject theme styles (must be after enqueuing styles)
         self::inject_theme_styles();
@@ -150,7 +150,7 @@ class Shortcode
             'loading' => I18n::get_label('label_loading'),
             'to' => I18n::get_label('label_to'),
             'ajax_url' => admin_url('admin-ajax.php'),
-            'rest_url' => get_rest_url(null, 'mhb/v1'),
+            'rest_url' => get_rest_url(null, 'mhbo/v1'),
             'nonce' => wp_create_nonce('wp_rest'),
             'label_child_n_age' => I18n::get_label('label_child_n_age'),
             'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
@@ -452,7 +452,9 @@ class Shortcode
         // Check License Status
         $is_pro_active = false;
 
-        // Stripe removed in Free version// PayPal removed in Free version$arrival_enabled = true; // Always enabled in free version?>
+        // Stripe removed in Free version
+// PayPal removed in Free version
+$arrival_enabled = true; // Always enabled in free version?>
         <div class="mhbo-booking-wrapper">
             <h2><?php echo esc_html(I18n::get_label('label_complete_booking')); ?></h2>
             <div class="mhbo-booking-summary">
@@ -856,7 +858,9 @@ class Shortcode
         // Validate Payment Method Requirement
         $is_pro_active = false;
 
-        // Stripe removed in Free version// PayPal removed in Free version$arrival_enabled = true; // Always enabled in free version$has_active_gateways = false; // No external gateways in Free version
+        // Stripe removed in Free version
+// PayPal removed in Free version
+$arrival_enabled = true; // Always enabled in free version$has_active_gateways = false; // No external gateways in Free version
 
         // If gateways are active, enforce payment or arrival selection
         $payment_method = 'arrival';
@@ -949,7 +953,7 @@ class Shortcode
         }
 
         // Send Email - only for completed payments or arrival payments
-        if (class_exists('MHB\Core\Email')) {
+        if (class_exists('MHBO\Core\Email')) {
             if ('completed' === $payment_status || 'arrival' === $payment_method) {
                 Email::send_email($booking_id, $status);
             }
@@ -1039,9 +1043,9 @@ class Shortcode
 
         if ($primary) {
             $custom_css = ":root {
-                --mhb-primary: {$primary};
-                --mhb-secondary: {$secondary};
-                --mhb-accent: {$accent};
+                --mhbo-primary: {$primary};
+                --mhbo-secondary: {$secondary};
+                --mhbo-accent: {$accent};
             }";
             wp_add_inline_style('mhbo-style', $custom_css);
             wp_add_inline_style('mhbo-calendar-style', $custom_css);

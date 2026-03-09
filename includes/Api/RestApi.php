@@ -3,14 +3,14 @@
 /**
  * REST API endpoints for Modern Hotel Booking.
  *
- * Namespace: mhb/v1
+ * Namespace: mhbo/v1
  * Endpoints:
  *   GET  /rooms         — list room types
  *   GET  /availability  — check availability for date range
  *   POST /bookings      — create a booking (API key required)
  *   GET  /bookings/{id} — get booking details (API key required)
  *
- * @package MHB\Api
+ * @package MHBO\Api
  * @since   2.0.1
  */
 
@@ -26,14 +26,14 @@ use MHBO\Core\Pricing;
 /**
  * REST API endpoints for Modern Hotel Booking.
  *
- * Namespace: mhb/v1
+ * Namespace: mhbo/v1
  * Endpoints:
  *   GET  /rooms         — list room types
  *   GET  /availability  — check availability for date range
  *   POST /bookings      — create a booking (API key required)
  *   GET  /bookings/{id} — get booking details (API key required)
  *
- * @package MHB\Api
+ * @package MHBO\Api
  * @since   2.0.1
  */
 class RestApi
@@ -43,7 +43,7 @@ class RestApi
      */
     public function register_routes()
     {
-        $namespace = 'mhb/v1';
+        $namespace = 'mhbo/v1';
 
         register_rest_route($namespace, '/rooms', array(
             'methods' => 'GET',
@@ -337,7 +337,7 @@ class RestApi
             return $pro_check;
         }
 
-        $api_key = $request->get_header('X-MHB-API-Key');
+        $api_key = $request->get_header('X-MHBO-API-Key');
         $stored_key = get_option('mhbo_api_key', '');
 
         if (empty($stored_key)) {
@@ -399,7 +399,7 @@ class RestApi
 
         // Try cache first - room types don't change frequently
         $cache_key = 'mhbo_room_types_all';
-        $room_types = wp_cache_get($cache_key, 'mhb');
+        $room_types = wp_cache_get($cache_key, 'mhbo');
 
         if (false === $room_types) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
@@ -407,7 +407,7 @@ class RestApi
                 "SELECT id, name, description, base_price, max_adults, max_children, total_rooms, amenities, image_url
                  FROM {$wpdb->prefix}mhbo_room_types ORDER BY id ASC"
             );
-            wp_cache_set($cache_key, $room_types, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($cache_key, $room_types, 'mhbo', HOUR_IN_SECONDS);
         }
 
         $data = array();
@@ -451,7 +451,7 @@ class RestApi
 
         // Get all rooms - cache this as room configuration rarely changes
         $rooms_cache_key = 'mhbo_rooms_with_types';
-        $rooms = wp_cache_get($rooms_cache_key, 'mhb');
+        $rooms = wp_cache_get($rooms_cache_key, 'mhbo');
 
         if (false === $rooms) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
@@ -462,7 +462,7 @@ class RestApi
                  JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
                  ORDER BY t.id, r.id"
             );
-            wp_cache_set($rooms_cache_key, $rooms, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($rooms_cache_key, $rooms, 'mhbo', HOUR_IN_SECONDS);
         }
 
         $available = array();
@@ -760,7 +760,7 @@ class RestApi
         // Fetch bookings with status to differentiate pending vs confirmed
         // Cache for a short time since calendar data is frequently accessed
         $bookings_cache_key = 'mhbo_calendar_bookings_' . $room_id;
-        $bookings = wp_cache_get($bookings_cache_key, 'mhb');
+        $bookings = wp_cache_get($bookings_cache_key, 'mhbo');
 
         if (false === $bookings) {
             // Respect pending expiration here too for calendar display
@@ -775,12 +775,12 @@ class RestApi
                 $room_id,
                 $expiry_time
             ));
-            wp_cache_set($bookings_cache_key, $bookings, 'mhb', 1 * MINUTE_IN_SECONDS); // Reduced cache for more real-time feel
+            wp_cache_set($bookings_cache_key, $bookings, 'mhbo', 1 * MINUTE_IN_SECONDS); // Reduced cache for more real-time feel
         }
 
         // Get room status to mark as unbookable if maintenance/hidden
         $cache_key = 'mhbo_room_status_' . $room_id;
-        $room_status = wp_cache_get($cache_key, 'mhb');
+        $room_status = wp_cache_get($cache_key, 'mhbo');
 
         if (false === $room_status) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
@@ -788,7 +788,7 @@ class RestApi
                 "SELECT status FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d",
                 $room_id
             )) ?: 'available';
-            wp_cache_set($cache_key, $room_status, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($cache_key, $room_status, 'mhbo', HOUR_IN_SECONDS);
         }
 
         // Map each date to its booking status (pending or confirmed)

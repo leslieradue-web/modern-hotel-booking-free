@@ -76,7 +76,7 @@ class Email
 
         // Fetch room name for placeholder - with caching
         $room_name_cache_key = 'mhbo_room_name_' . $booking->room_id;
-        $room_name = wp_cache_get($room_name_cache_key, 'mhb');
+        $room_name = wp_cache_get($room_name_cache_key, 'mhbo');
 
         if (false === $room_name) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
@@ -86,7 +86,7 @@ class Email
                  WHERE r.id = %d",
                 $booking->room_id
             ));
-            wp_cache_set($room_name_cache_key, $room_name, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($room_name_cache_key, $room_name, 'mhbo', HOUR_IN_SECONDS);
         }
         $room_name = I18n::decode($room_name, $lang);
 
@@ -359,7 +359,7 @@ class Email
 
         // Fetch room name for placeholder - with caching
         $room_name_cache_key = 'mhbo_room_name_' . $booking->room_id;
-        $room_name = wp_cache_get($room_name_cache_key, 'mhb');
+        $room_name = wp_cache_get($room_name_cache_key, 'mhbo');
 
         if (false === $room_name) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
@@ -369,7 +369,7 @@ class Email
                  WHERE r.id = %d",
                 $booking->room_id
             ));
-            wp_cache_set($room_name_cache_key, $room_name, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($room_name_cache_key, $room_name, 'mhbo', HOUR_IN_SECONDS);
         }
         $room_name = I18n::decode($room_name, $lang);
 

@@ -199,7 +199,7 @@ class Activator
 
 		// License API Credentials — only seed when Pro classes are available
 		// Obfuscated to prevent casual source reading; server-side domain validation is the real security layer
-		if (class_exists('MHB\Core\LicenseManager')) {
+		if (class_exists('MHBO\Core\LicenseManager')) {
 			// License option removed for Free version
 			// License option removed for Free version
 		}
@@ -230,7 +230,7 @@ class Activator
 		add_option('mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
 
 		// License API Credentials (for existing installations)
-		if (class_exists('MHB\Core\LicenseManager')) {
+		if (class_exists('MHBO\Core\LicenseManager')) {
 			// License option removed for Free version
 			// License option removed for Free version
 		}

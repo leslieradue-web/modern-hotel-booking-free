@@ -3,7 +3,7 @@
  * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.2.6.6
+ * Version:           2.2.6.7
  * Tested up to:      6.9
  * Requires at least: 5.6
  * Requires PHP:      7.4
@@ -36,7 +36,7 @@ if (version_compare(PHP_VERSION, '7.4.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.2.6.6');
+define('MHBO_VERSION', '2.2.6.7');
 
 define('MHBO_IS_PRO', false);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -44,7 +44,7 @@ define('MHBO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('MHBO_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
- * PSR-4-style autoloader for MHB\ namespace.
+ * PSR-4-style autoloader for MHBO\ namespace.
  */
 spl_autoload_register(function ($class) {
     $prefix = 'MHBO\\';
@@ -76,7 +76,7 @@ function modern_hotel_booking_activate(): void
     $activator_file = MHBO_PLUGIN_DIR . 'includes/Core/Activator.php';
     if (file_exists($activator_file)) {
         require_once $activator_file;
-        if (class_exists('MHB\Core\Activator')) {
+        if (class_exists('MHBO\Core\Activator')) {
             \MHBO\Core\Activator::activate();
         }
     }
@@ -90,7 +90,7 @@ function modern_hotel_booking_deactivate(): void
     $deactivator_file = MHBO_PLUGIN_DIR . 'includes/Core/Deactivator.php';
     if (file_exists($deactivator_file)) {
         require_once $deactivator_file;
-        if (class_exists('MHB\Core\Deactivator')) {
+        if (class_exists('MHBO\Core\Deactivator')) {
             \MHBO\Core\Deactivator::deactivate();
         }
     }
@@ -105,14 +105,14 @@ register_deactivation_hook(__FILE__, 'modern_hotel_booking_deactivate');
 function modern_hotel_booking_run(): void
 {
     try {
-        if (!class_exists('MHB\Core\Plugin')) {
+        if (!class_exists('MHBO\Core\Plugin')) {
             return;
         }
 
         // Auto-upgrade DB schema when version changes.
         $stored = get_option('mhbo_db_version');
         if (MHBO_VERSION !== $stored) {
-            if (class_exists('MHB\Core\Activator')) {
+            if (class_exists('MHBO\Core\Activator')) {
                 if (false !== $stored) {
                     \MHBO\Core\Activator::migrate(is_string($stored) ? $stored : (string) $stored, MHBO_VERSION);
                 } else {

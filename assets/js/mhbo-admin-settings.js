@@ -79,8 +79,8 @@
      * Custom Fields Repeater
      */
     function initCustomFieldsRepeater() {
-        const $addBtn = $('#mhb-add-custom-field');
-        const $repeater = $('#mhb-custom-fields-repeater');
+        const $addBtn = $('#mhbo-add-custom-field');
+        const $repeater = $('#mhbo-custom-fields-repeater');
 
         if (!$addBtn.length) return;
 
@@ -129,10 +129,10 @@
      * Holiday Dates Management
      */
     function initHolidayManagement() {
-        const $list = $('#mhb-holiday-list');
-        const $hidden = $('#mhb-holiday-dates-hidden');
-        const $newDate = $('#mhb-new-holiday');
-        const $addBtn = $('#mhb-add-holiday-btn');
+        const $list = $('#mhbo-holiday-list');
+        const $hidden = $('#mhbo-holiday-dates-hidden');
+        const $newDate = $('#mhbo-new-holiday');
+        const $addBtn = $('#mhbo-add-holiday-btn');
 
         if (!$list.length) return;
 
@@ -194,7 +194,7 @@
      */
     function initThemeSelection() {
         const $themeInputs = $('input[name="mhbo_active_theme"]');
-        const $customColors = $('#mhb-custom-colors-wrap');
+        const $customColors = $('#mhbo-custom-colors-wrap');
 
         if (!$themeInputs.length) return;
 
@@ -214,8 +214,8 @@
      */
     function initPaymentGatewayTests() {
         // Stripe Test
-        const $stripeTestBtn = $('#mhb-test-stripe-btn');
-        const $stripeResult = $('#mhb-stripe-test-result');
+        const $stripeTestBtn = $('#mhbo-test-stripe-btn');
+        const $stripeResult = $('#mhbo-stripe-test-result');
 
         $stripeTestBtn.on('click', function (e) {
             e.preventDefault();
@@ -249,9 +249,9 @@
         });
 
         // PayPal Test
-        const $paypalTestBtn = $('#mhb-test-paypal-btn');
-        const $paypalSpinner = $('#mhb-paypal-test-spinner');
-        const $paypalResult = $('#mhb-paypal-test-result');
+        const $paypalTestBtn = $('#mhbo-test-paypal-btn');
+        const $paypalSpinner = $('#mhbo-paypal-test-spinner');
+        const $paypalResult = $('#mhbo-paypal-test-result');
 
         $paypalTestBtn.on('click', function (e) {
             e.preventDefault();

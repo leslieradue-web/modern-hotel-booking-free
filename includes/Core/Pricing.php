@@ -92,7 +92,7 @@ class Pricing
 
         // Get room type data from database with caching
         $room_cache_key = 'mhbo_room_data_' . $room_id;
-        $room_data = wp_cache_get($room_cache_key, 'mhb');
+        $room_data = wp_cache_get($room_cache_key, 'mhbo');
 
         if (false === $room_data) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented
@@ -103,7 +103,7 @@ class Pricing
                  WHERE r.id = %d",
                 $room_id
             ));
-            wp_cache_set($room_cache_key, $room_data, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($room_cache_key, $room_data, 'mhbo', HOUR_IN_SECONDS);
         }
 
         if (!$room_data || !isset($room_data->base_price)) {
@@ -115,7 +115,7 @@ class Pricing
 
         // Get pricing rules from database with caching
         $rule_cache_key = 'mhbo_pricing_rule_' . $room_data->type_id . '_' . $date;
-        $rule = wp_cache_get($rule_cache_key, 'mhb');
+        $rule = wp_cache_get($rule_cache_key, 'mhbo');
 
         if (false === $rule) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
@@ -128,7 +128,7 @@ class Pricing
                 $room_data->type_id ?? 0,
                 $date
             ));
-            wp_cache_set($rule_cache_key, $rule, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($rule_cache_key, $rule, 'mhbo', HOUR_IN_SECONDS);
         }
 
         if ($rule && isset($rule->operation) && isset($rule->amount)) {
@@ -221,12 +221,12 @@ class Pricing
 
         // Validate room exists and get policy - with caching
         $room_cache_key = 'mhbo_room_policy_' . $room_id;
-        $room = wp_cache_get($room_cache_key, 'mhb');
+        $room = wp_cache_get($room_cache_key, 'mhbo');
 
         if (false === $room) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
             $room = $wpdb->get_row($wpdb->prepare("SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.id = %d", $room_id));
-            wp_cache_set($room_cache_key, $room, 'mhb', HOUR_IN_SECONDS);
+            wp_cache_set($room_cache_key, $room, 'mhbo', HOUR_IN_SECONDS);
         }
 
         if (!$room) {

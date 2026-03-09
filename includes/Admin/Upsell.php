@@ -2,7 +2,7 @@
 /**
  * Upsell Component for Free Version
  *
- * @package MHB\Admin
+ * @package MHBO\Admin
  * @since 2.2.3
  */
 

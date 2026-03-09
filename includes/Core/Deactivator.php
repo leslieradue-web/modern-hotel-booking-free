@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
  * Handles cleanup of scheduled events, transients, and rewrite rules
  * when the plugin is deactivated.
  *
- * @package MHB\Core
+ * @package MHBO\Core
  * @since   2.2.3
  */
 class Deactivator
@@ -60,7 +60,7 @@ class Deactivator
     {
         global $wpdb;
 
-        // Delete all MHB transients (rate limits, cache, locks, etc.)
+        // Delete all MHBO transients (rate limits, cache, locks, etc.)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Deactivation cleanup, patterns are hardcoded
         $wpdb->query(
             "DELETE FROM {$wpdb->options} 

@@ -30,7 +30,7 @@ class Calendar
         if (!wp_style_is('mhbo-calendar-style', 'registered')) {
             wp_register_style(
                 'mhbo-calendar-style',
-                MHBO_PLUGIN_URL . 'assets/css/mhb-calendar.css',
+                MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
                 ['mhbo-flatpickr-css', 'mhbo-style'],
                 MHBO_VERSION
             );
@@ -46,7 +46,7 @@ class Calendar
         if (!wp_style_is('mhbo-style', 'registered')) {
             wp_register_style(
                 'mhbo-style',
-                MHBO_PLUGIN_URL . 'assets/css/mhb-style.css',
+                MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css',
                 [],
                 MHBO_VERSION
             );
@@ -54,7 +54,7 @@ class Calendar
         if (!wp_script_is('mhbo-calendar-js', 'registered')) {
             wp_register_script(
                 'mhbo-calendar-js',
-                MHBO_PLUGIN_URL . 'assets/js/mhb-calendar.js',
+                MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js',
                 ['jquery', 'mhbo-flatpickr-js'],
                 MHBO_VERSION,
                 true
@@ -134,7 +134,7 @@ class Calendar
         // Add localization data for the calendar script (only once)
         if (!wp_script_is('mhbo-calendar-js', 'done')) {
             wp_localize_script('mhbo-calendar-js', 'mhbo_calendar', [
-                'rest_url' => get_rest_url(null, 'mhb/v1/calendar-data'),
+                'rest_url' => get_rest_url(null, 'mhbo/v1/calendar-data'),
                 'nonce' => wp_create_nonce('wp_rest'),
                 'settings' => [
                     'currency_symbol' => get_option('mhbo_currency_symbol', '$'),

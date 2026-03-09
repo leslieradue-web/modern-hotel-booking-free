@@ -1,8 +1,8 @@
 jQuery(document).ready(function ($) {
 
-    // Debug logger - only logs when mhb_calendar.debug is true or localStorage flag is set
+    // Debug logger - only logs when mhbo_calendar.debug is true or localStorage flag is set
     const debugLog = (function () {
-        const isDebug = (typeof mhb_calendar !== 'undefined' && mhb_calendar.debug) ||
+        const isDebug = (typeof mhbo_calendar !== 'undefined' && mhbo_calendar.debug) ||
             (typeof localStorage !== 'undefined' && localStorage.getItem('mhbo_debug'));
         return isDebug ? console.error.bind(console, '[MHB]') : function () { };
     })();
@@ -24,7 +24,7 @@ jQuery(document).ready(function ($) {
 
             function initFlatpickr() {
                 $.ajax({
-                    url: mhb_calendar.rest_url,
+                    url: mhbo_calendar.rest_url,
                     method: 'GET',
                     data: {
                         room_id: roomId,
@@ -32,7 +32,7 @@ jQuery(document).ready(function ($) {
                         month: new Date().getMonth() + 1
                     },
                     beforeSend: function (xhr) {
-                        xhr.setRequestHeader('X-WP-Nonce', mhb_calendar.nonce);
+                        xhr.setRequestHeader('X-WP-Nonce', mhbo_calendar.nonce);
                     },
                     success: function (data) {
                         if (data && Array.isArray(data)) {
@@ -76,8 +76,8 @@ jQuery(document).ready(function ($) {
                 // Determine locale dynamically based on loaded scripts
                 // Fallback to English if the requested locale isn't loaded
                 let locale = 'en';
-                if (mhb_calendar.current_lang && typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns[mhbo_calendar.current_lang]) {
-                    locale = mhb_calendar.current_lang;
+                if (mhbo_calendar.current_lang && typeof flatpickr !== 'undefined' && flatpickr.l10ns && flatpickr.l10ns[mhbo_calendar.current_lang]) {
+                    locale = mhbo_calendar.current_lang;
                 }
 
                 picker = flatpickr($inlineContainer[0], {
@@ -161,7 +161,7 @@ jQuery(document).ready(function ($) {
                             instance.set('maxDate', new Date().fp_incr(365));
                             instance.set('disable', disabledDates);
                             $selectionBox.hide();
-                            $guide.text(mhb_calendar.i18n.select_checkout || 'Now select your check-out date');
+                            $guide.text(mhbo_calendar.i18n.select_checkout || 'Now select your check-out date');
                         }
                     },
                     onDayCreate: function (dObj, dStr, fp, dayElem) {
@@ -212,27 +212,27 @@ jQuery(document).ready(function ($) {
 
                 // Update summary box labels if they have translation tags
                 if ($selectionBox.find('.mhbo-selection-header h3').length) {
-                    $selectionBox.find('.mhbo-selection-header h3').text(mhb_calendar.i18n.your_selection || 'Your Selection');
+                    $selectionBox.find('.mhbo-selection-header h3').text(mhbo_calendar.i18n.your_selection || 'Your Selection');
                 }
                 const $dateLabels = $selectionBox.find('.mhbo-selection-dates .mhbo-label');
                 if ($dateLabels.length >= 2) {
-                    $($dateLabels[0]).text(mhb_calendar.i18n.check_in || 'Check-in');
-                    $($dateLabels[1]).text(mhb_calendar.i18n.check_out || 'Check-out');
+                    $($dateLabels[0]).text(mhbo_calendar.i18n.check_in || 'Check-in');
+                    $($dateLabels[1]).text(mhbo_calendar.i18n.check_out || 'Check-out');
                 }
 
                 // Update button text if translation is available
                 const $submitBtn = $wrapper.find('.mhbo-booking-btn-submit');
-                if ($submitBtn.length && mhb_calendar.i18n.continue_booking) {
-                    $submitBtn.text(mhb_calendar.i18n.continue_booking);
+                if ($submitBtn.length && mhbo_calendar.i18n.continue_booking) {
+                    $submitBtn.text(mhbo_calendar.i18n.continue_booking);
                 }
 
                 // Update pricing summary only for room-specific calendars
                 if (showPrice && typeof calculateTotalPrice === 'function') {
-                    $selectionBox.find('.mhbo-selection-price .mhbo-label').text(mhb_calendar.i18n.total || 'Total');
+                    $selectionBox.find('.mhbo-selection-price .mhbo-label').text(mhbo_calendar.i18n.total || 'Total');
                     calculateTotalPrice(start, end);
                 }
 
-                $guide.text(mhb_calendar.i18n.dates_selected || 'Dates selected. Complete the form below.');
+                $guide.text(mhbo_calendar.i18n.dates_selected || 'Dates selected. Complete the form below.');
                 $selectionBox.fadeIn();
             }
 
@@ -252,9 +252,9 @@ jQuery(document).ready(function ($) {
             }
 
             function formatCurrency(amount) {
-                const pos = mhb_calendar.settings.currency_pos;
-                const symbol = mhb_calendar.settings.currency_symbol;
-                const decimals = (typeof mhb_calendar.settings.currency_decimals !== 'undefined') ? parseInt(mhb_calendar.settings.currency_decimals) : 2;
+                const pos = mhbo_calendar.settings.currency_pos;
+                const symbol = mhbo_calendar.settings.currency_symbol;
+                const decimals = (typeof mhbo_calendar.settings.currency_decimals !== 'undefined') ? parseInt(mhbo_calendar.settings.currency_decimals) : 2;
                 const formatted = amount.toFixed(decimals);
                 return pos === 'before' ? (symbol + formatted) : (formatted + symbol);
             }
@@ -277,7 +277,7 @@ jQuery(document).ready(function ($) {
         const totalPrice = $wrapper.find('.mhbo-cal-total-price').val();
 
         if (!checkIn || !checkOut) {
-            alert(mhb_calendar.i18n.select_dates_error || 'Please select check-in and check-out dates.');
+            alert(mhbo_calendar.i18n.select_dates_error || 'Please select check-in and check-out dates.');
             return;
         }
 
@@ -297,7 +297,7 @@ jQuery(document).ready(function ($) {
             debugLog('Redirect error:', err);
             const sep = (action && action.indexOf('?') !== -1) ? '&' : '?';
             const baseUrl = (action && action !== '#' && action !== '') ? action : window.location.href.split('?')[0];
-            finalUrl = baseUrl + sep + 'room_id=' + roomId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&total_price=' + totalPrice + '&mhb_auto_book=1';
+            finalUrl = baseUrl + sep + 'room_id=' + roomId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&total_price=' + totalPrice + '&mhbo_auto_book=1';
         }
 
         window.location.href = finalUrl;

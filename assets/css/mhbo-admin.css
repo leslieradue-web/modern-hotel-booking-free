@@ -1,15 +1,15 @@
 /* Modern Hotel Booking — Premium Admin Styles */
 
 :root {
-    --mhb-midnight: #1a3b5d;
-    --mhb-sand: #c5a059;
-    --mhb-sand-light: #f4eee1;
-    --mhb-white: #ffffff;
-    --mhb-offwhite: #f8f9fa;
-    --mhb-text: #2c3338;
-    --mhb-text-light: #646970;
-    --mhb-border: #dcdcde;
-    --mhb-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --mhbo-midnight: #1a3b5d;
+    --mhbo-sand: #c5a059;
+    --mhbo-sand-light: #f4eee1;
+    --mhbo-white: #ffffff;
+    --mhbo-offwhite: #f8f9fa;
+    --mhbo-text: #2c3338;
+    --mhbo-text-light: #646970;
+    --mhbo-border: #dcdcde;
+    --mhbo-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Global Polish */
@@ -17,17 +17,17 @@
 .wrap.mhbo-admin-wrap,
 .mhbo-settings-section {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    color: var(--mhb-text);
+    color: var(--mhbo-text);
     max-width: none !important;
     margin: 20px 40px 0 20px !important;
 }
 
 /* Premium Card Component */
 .mhbo-card {
-    background: var(--mhb-white);
+    background: var(--mhbo-white);
     border-radius: 12px;
-    border: 1px solid var(--mhb-border);
-    box-shadow: var(--mhb-shadow);
+    border: 1px solid var(--mhbo-border);
+    box-shadow: var(--mhbo-shadow);
     padding: 30px;
     margin-bottom: 30px;
     position: relative;
@@ -44,17 +44,17 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background: var(--mhb-midnight);
+    background: var(--mhbo-midnight);
 }
 
 .mhbo-card.accent::before {
-    background: var(--mhb-sand);
+    background: var(--mhbo-sand);
 }
 
 .mhbo-card h2,
 .mhbo-card h3 {
     margin-top: 0;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
     font-weight: 700;
 }
 
@@ -67,13 +67,13 @@
 }
 
 .mhbo-stat-card {
-    background: var(--mhb-white);
+    background: var(--mhbo-white);
     padding: 24px;
     border-radius: 12px;
-    border: 1px solid var(--mhb-border);
+    border: 1px solid var(--mhbo-border);
     text-align: center;
     transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
 }
 
 .mhbo-stat-card:hover {
@@ -86,14 +86,14 @@
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--mhb-text-light);
+    color: var(--mhbo-text-light);
 }
 
 .mhbo-stat-card p {
     font-size: 2.2rem;
     font-weight: 800;
     margin: 12px 0 0;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
 }
 
 /* Status Pills */
@@ -139,7 +139,7 @@
 
 /* Admin Tabs Redesign */
 .mhbo-admin-wrap .nav-tab-wrapper {
-    border-bottom: 2px solid var(--mhb-border);
+    border-bottom: 2px solid var(--mhbo-border);
     margin-bottom: 30px !important;
     padding-top: 10px;
     display: flex;
@@ -151,27 +151,27 @@
     border: none;
     padding: 10px 20px;
     font-weight: 600;
-    color: var(--mhb-text-light);
+    color: var(--mhbo-text-light);
     margin: 0;
     transition: all 0.2s;
     border-radius: 6px 6px 0 0;
 }
 
 .mhbo-admin-wrap .nav-tab:hover {
-    background: var(--mhb-offwhite);
-    color: var(--mhb-midnight);
+    background: var(--mhbo-offwhite);
+    color: var(--mhbo-midnight);
 }
 
 .mhbo-admin-wrap .nav-tab-active {
-    background: var(--mhb-midnight) !important;
-    color: var(--mhb-white) !important;
+    background: var(--mhbo-midnight) !important;
+    color: var(--mhbo-white) !important;
     border-bottom: none;
 }
 
 /* Form Polish */
 .form-table th {
     font-weight: 600;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
     display: block;
     width: 100% !important;
     padding: 20px 0 5px 0 !important;
@@ -188,25 +188,25 @@
 }
 
 .mhbo-holiday-tag {
-    background: var(--mhb-sand-light) !important;
-    border: 1px solid var(--mhb-sand) !important;
-    color: var(--mhb-midnight) !important;
+    background: var(--mhbo-sand-light) !important;
+    border: 1px solid var(--mhbo-sand) !important;
+    color: var(--mhbo-midnight) !important;
     font-weight: 600;
 }
 
 /* Booking Form Restructure */
 .mhbo-form-section-header th {
-    background: var(--mhb-sand-light) !important;
+    background: var(--mhbo-sand-light) !important;
     padding: 15px 20px !important;
-    border-top: 1px solid var(--mhb-border);
-    border-bottom: 2px solid var(--mhb-sand) !important;
+    border-top: 1px solid var(--mhbo-border);
+    border-bottom: 2px solid var(--mhbo-sand) !important;
     width: 100% !important;
 }
 
 .mhbo-form-section-header h3 {
     margin: 0 !important;
     font-size: 1.1rem !important;
-    color: var(--mhb-midnight) !important;
+    color: var(--mhbo-midnight) !important;
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
@@ -215,8 +215,8 @@
 #mhbo_edit_amount_outstanding {
     font-weight: 700;
     font-size: 1.1rem;
-    color: var(--mhb-midnight);
-    border-color: var(--mhb-sand);
+    color: var(--mhbo-midnight);
+    border-color: var(--mhbo-sand);
 }
 
 /* Dashboard Layout */
@@ -236,16 +236,16 @@
 
 /* List Table Polish */
 .wp-list-table {
-    border: 1px solid var(--mhb-border) !important;
+    border: 1px solid var(--mhbo-border) !important;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
 }
 
 .wp-list-table thead th {
-    background: var(--mhb-offwhite);
-    border-bottom: 2px solid var(--mhb-border) !important;
-    color: var(--mhb-midnight);
+    background: var(--mhbo-offwhite);
+    border-bottom: 2px solid var(--mhbo-border) !important;
+    color: var(--mhbo-midnight);
     font-weight: 700;
 }
 
@@ -280,7 +280,7 @@
     }
 
     .wp-list-table tr {
-        border-bottom: 2px solid var(--mhb-border) !important;
+        border-bottom: 2px solid var(--mhbo-border) !important;
         margin-bottom: 10px;
         background: #fff;
     }
@@ -301,7 +301,7 @@
         padding-right: 10px;
         white-space: nowrap;
         font-weight: bold;
-        color: var(--mhb-midnight);
+        color: var(--mhbo-midnight);
         content: attr(data-colname);
     }
 
@@ -369,7 +369,7 @@
     border-radius: 12px;
     padding: 20px 25px;
     margin-bottom: 25px;
-    border: 1px solid var(--mhb-border);
+    border: 1px solid var(--mhbo-border);
     position: relative;
     overflow: hidden;
 }
@@ -381,7 +381,7 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background: var(--mhb-border);
+    background: var(--mhbo-border);
 }
 
 .mhbo-license-banner.mhbo-license-active {
@@ -440,12 +440,12 @@
 .mhbo-license-info h3 {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
 }
 
 .mhbo-license-info p {
     margin: 0;
-    color: var(--mhb-text-light);
+    color: var(--mhbo-text-light);
     font-size: 14px;
 }
 
@@ -487,15 +487,15 @@
 }
 
 .mhbo-feature-category {
-    background: var(--mhb-white);
+    background: var(--mhbo-white);
     border-radius: 12px;
-    border: 1px solid var(--mhb-border);
+    border: 1px solid var(--mhbo-border);
     overflow: hidden;
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
 }
 
 .mhbo-feature-category-dark {
-    background: var(--mhb-midnight);
+    background: var(--mhbo-midnight);
     border-color: #0f2a45;
 }
 
@@ -504,8 +504,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 25px;
-    background: var(--mhb-offwhite);
-    border-bottom: 1px solid var(--mhb-border);
+    background: var(--mhbo-offwhite);
+    border-bottom: 1px solid var(--mhbo-border);
 }
 
 .mhbo-feature-category-dark .mhbo-category-header {
@@ -516,7 +516,7 @@
 .mhbo-category-header h2 {
     margin: 0;
     font-size: 1.2rem;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -531,7 +531,7 @@
 }
 
 .mhbo-configure-link {
-    color: var(--mhb-sand);
+    color: var(--mhbo-sand);
     text-decoration: none;
     font-weight: 600;
     font-size: 13px;
@@ -560,7 +560,7 @@
 }
 
 .mhbo-feature-card {
-    background: var(--mhb-offwhite);
+    background: var(--mhbo-offwhite);
     border-radius: 10px;
     padding: 20px;
     position: relative;
@@ -571,7 +571,7 @@
 .mhbo-feature-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: var(--mhb-sand);
+    border-color: var(--mhbo-sand);
 }
 
 .mhbo-feature-card-dark {
@@ -580,7 +580,7 @@
 }
 
 .mhbo-feature-card-dark:hover {
-    border-color: var(--mhb-sand);
+    border-color: var(--mhbo-sand);
 }
 
 .mhbo-feature-icon {
@@ -591,7 +591,7 @@
 
 .mhbo-feature-card h4 {
     margin: 0 0 8px 0;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
     font-size: 1rem;
 }
 
@@ -602,7 +602,7 @@
 .mhbo-feature-card p {
     margin: 0;
     font-size: 13px;
-    color: var(--mhb-text-light);
+    color: var(--mhbo-text-light);
     line-height: 1.5;
 }
 
@@ -640,18 +640,18 @@
 
 /* Quick Actions Section */
 .mhbo-quick-actions {
-    background: var(--mhb-white);
+    background: var(--mhbo-white);
     border-radius: 12px;
-    border: 1px solid var(--mhb-border);
+    border: 1px solid var(--mhbo-border);
     padding: 25px;
     margin-top: 25px;
-    box-shadow: var(--mhb-shadow);
+    box-shadow: var(--mhbo-shadow);
 }
 
 .mhbo-quick-actions h2 {
     margin: 0 0 20px 0;
     font-size: 1.2rem;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
 }
 
 .mhbo-quick-actions-grid {
@@ -665,10 +665,10 @@
     align-items: center;
     gap: 12px;
     padding: 15px 20px;
-    background: var(--mhb-offwhite);
+    background: var(--mhbo-offwhite);
     border-radius: 8px;
     text-decoration: none;
-    color: var(--mhb-midnight);
+    color: var(--mhbo-midnight);
     font-weight: 600;
     font-size: 14px;
     transition: all 0.2s;
@@ -676,16 +676,16 @@
 }
 
 .mhbo-quick-action-btn:hover {
-    background: var(--mhb-sand-light);
-    border-color: var(--mhb-sand);
-    color: var(--mhb-midnight);
+    background: var(--mhbo-sand-light);
+    border-color: var(--mhbo-sand);
+    color: var(--mhbo-midnight);
 }
 
 .mhbo-quick-action-btn .dashicons {
     font-size: 20px;
     width: 20px;
     height: 20px;
-    color: var(--mhb-sand);
+    color: var(--mhbo-sand);
 }
 
 /* Pro Page Responsive Styles */

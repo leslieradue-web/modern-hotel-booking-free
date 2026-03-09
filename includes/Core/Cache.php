@@ -15,8 +15,8 @@ if (!defined('ABSPATH')) {
  */
 class Cache
 {
-    /** @var string Cache group for MHB */
-    private const GROUP = 'mhb';
+    /** @var string Cache group for MHBO */
+    private const GROUP = 'mhbo';
 
     /** @var int Default expiration in seconds (1 hour) */
     private const DEFAULT_EXPIRY = 3600;
@@ -93,7 +93,7 @@ class Cache
     }
 
     /**
-     * Flush all MHB-related cache and transients.
+     * Flush all MHBO-related cache and transients.
      *
      * @return bool True on success.
      */
@@ -101,7 +101,7 @@ class Cache
     {
         global $wpdb;
 
-        // Delete all MHB transients
+        // Delete all MHBO transients
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cache flush operation, patterns are hardcoded
         $deleted = $wpdb->query(
             "DELETE FROM {$wpdb->options} 

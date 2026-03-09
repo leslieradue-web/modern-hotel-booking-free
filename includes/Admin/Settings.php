@@ -270,8 +270,8 @@ class Settings
 
                             <div>
                                 <label style="font-weight: bold;">
-                                    <input type="checkbox" name="mhbo_custom_fields[<?php echo esc_attr($index); ?>][required]" value="1"
-                                        <?php checked(isset($field['required']) && $field['required']); ?>>
+                                    <input type="checkbox" name="mhbo_custom_fields[<?php echo esc_attr($index); ?>][required]"
+                                        value="1" <?php checked(isset($field['required']) && $field['required']); ?>>
                                     <?php esc_html_e('Required Field', 'modern-hotel-booking'); ?>
                                 </label>
                             </div>
@@ -299,18 +299,18 @@ class Settings
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Configuration', 'modern-hotel-booking'); ?>
             </h1>
-            <h2 class="nav-tab-wrapper">                <a href="?page=mhb-settings&tab=general"
+            <h2 class="nav-tab-wrapper">                <a href="?page=mhbo-settings&tab=general"
                     class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('General', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-settings&tab=emails"
+                <a href="?page=mhbo-settings&tab=emails"
                     class="nav-tab <?php echo 'emails' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Email Templates', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-settings&tab=labels"
+                <a href="?page=mhbo-settings&tab=labels"
                     class="nav-tab <?php echo 'labels' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Frontend Labels', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-settings&tab=amenities"
+                <a href="?page=mhbo-settings&tab=amenities"
                     class="nav-tab <?php echo 'amenities' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Amenities', 'modern-hotel-booking'); ?></a>
 
                 
                 
-                <a href="?page=mhb-settings&tab=performance"
+                <a href="?page=mhbo-settings&tab=performance"
                     class="nav-tab <?php echo 'performance' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Performance', 'modern-hotel-booking'); ?></a>
             </h2>
 
@@ -1066,21 +1066,21 @@ class Settings
             </h1>
 
             <h2 class="nav-tab-wrapper">
-                <a href="?page=mhb-pro"
+                <a href="?page=mhbo-pro"
                     class="nav-tab <?php echo 'overview' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Overview', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-extras"
+                <a href="?page=mhbo-pro-extras"
                     class="nav-tab <?php echo 'extras' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Booking Extras', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-ical"
+                <a href="?page=mhbo-pro-ical"
                     class="nav-tab <?php echo 'ical' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('iCal Sync', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-payments"
+                <a href="?page=mhbo-pro-payments"
                     class="nav-tab <?php echo 'payments' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Payments', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-webhooks"
+                <a href="?page=mhbo-pro-webhooks"
                     class="nav-tab <?php echo 'webhooks' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Webhooks', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-themes"
+                <a href="?page=mhbo-pro-themes"
                     class="nav-tab <?php echo 'themes' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Pro Themes', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-analytics"
+                <a href="?page=mhbo-pro-analytics"
                     class="nav-tab <?php echo 'analytics' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Analytics', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhb-pro-pricing"
+                <a href="?page=mhbo-pro-pricing"
                     class="nav-tab <?php echo 'pricing' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Advanced Pricing', 'modern-hotel-booking'); ?></a>
             </h2>
 
@@ -1210,7 +1210,7 @@ class Settings
                             <div class="mhbo-category-header">
                                 <h2><span class="mhbo-category-icon">💳</span>
                                     <?php esc_html_e('Payment Processing', 'modern-hotel-booking'); ?></h2>
-                                <a href="?page=mhb-pro-payments" class="mhbo-configure-link">
+                                <a href="?page=mhbo-pro-payments" class="mhbo-configure-link">
                                     <?php esc_html_e('Configure', 'modern-hotel-booking'); ?> <span
                                         class="dashicons dashicons-arrow-right-alt2"></span>
                                 </a>
@@ -1304,7 +1304,7 @@ class Settings
                                     <h4><?php esc_html_e('Seasonal Pricing', 'modern-hotel-booking'); ?></h4>
                                     <p><?php esc_html_e('Set automated weekend and holiday multipliers for dynamic pricing.', 'modern-hotel-booking'); ?>
                                     </p>
-                                    <a href="?page=mhb-pro-pricing" class="mhbo-configure-link">
+                                    <a href="?page=mhbo-pro-pricing" class="mhbo-configure-link">
                                         <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
                                     </a>
                                 </div>
@@ -1313,7 +1313,7 @@ class Settings
                                     <h4><?php esc_html_e('Booking Extras', 'modern-hotel-booking'); ?></h4>
                                     <p><?php esc_html_e('Offer guided tours, airport transfers, breakfast packages, and local experiences.', 'modern-hotel-booking'); ?>
                                     </p>
-                                    <a href="?page=mhb-pro-extras" class="mhbo-configure-link">
+                                    <a href="?page=mhbo-pro-extras" class="mhbo-configure-link">
                                         <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
                                     </a>
                                 </div>
@@ -1322,7 +1322,7 @@ class Settings
                                     <h4><?php esc_html_e('iCal Synchronization', 'modern-hotel-booking'); ?></h4>
                                     <p><?php esc_html_e('Bi-directional sync with Airbnb, Booking.com, and Google Calendar.', 'modern-hotel-booking'); ?>
                                     </p>
-                                    <a href="?page=mhb-pro-ical" class="mhbo-configure-link">
+                                    <a href="?page=mhbo-pro-ical" class="mhbo-configure-link">
                                         <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
                                     </a>
                                     <span
@@ -1333,7 +1333,7 @@ class Settings
                                     <h4><?php esc_html_e('Analytics Dashboard', 'modern-hotel-booking'); ?></h4>
                                     <p><?php esc_html_e('Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization.', 'modern-hotel-booking'); ?>
                                     </p>
-                                    <a href="?page=mhb-pro-analytics" class="mhbo-configure-link">
+                                    <a href="?page=mhbo-pro-analytics" class="mhbo-configure-link">
                                         <?php esc_html_e('View', 'modern-hotel-booking'); ?>
                                     </a>
                                 </div>
@@ -1359,7 +1359,7 @@ class Settings
                                     <h4><?php esc_html_e('Theme Customization', 'modern-hotel-booking'); ?></h4>
                                     <p><?php esc_html_e('6 designer presets, custom branding colors, and advanced CSS injection.', 'modern-hotel-booking'); ?>
                                     </p>
-                                    <a href="?page=mhb-pro-themes" class="mhbo-configure-link">
+                                    <a href="?page=mhbo-pro-themes" class="mhbo-configure-link">
                                         <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
                                     </a>
                                 </div>
@@ -1377,7 +1377,7 @@ class Settings
                             <div class="mhbo-category-header">
                                 <h2><span class="mhbo-category-icon">⚡</span>
                                     <?php esc_html_e('Developer Platform', 'modern-hotel-booking'); ?></h2>
-                                <a href="?page=mhb-pro-webhooks" class="mhbo-configure-link">
+                                <a href="?page=mhbo-pro-webhooks" class="mhbo-configure-link">
                                     <?php esc_html_e('Configure', 'modern-hotel-booking'); ?> <span
                                         class="dashicons dashicons-arrow-right-alt2"></span>
                                 </a>
@@ -1403,16 +1403,16 @@ class Settings
                     <div class="mhbo-quick-actions">
                         <h2><?php esc_html_e('Quick Actions', 'modern-hotel-booking'); ?></h2>
                         <div class="mhbo-quick-actions-grid">
-                            <a href="?page=mhb-pro-payments" class="mhbo-quick-action-btn">
+                            <a href="?page=mhbo-pro-payments" class="mhbo-quick-action-btn">
                                 <span class="dashicons dashicons-money-alt"></span>
                                 <?php esc_html_e('Configure Payment Gateways', 'modern-hotel-booking'); ?>
                             </a>
                             
-                            <a href="?page=mhb-pro-analytics" class="mhbo-quick-action-btn">
+                            <a href="?page=mhbo-pro-analytics" class="mhbo-quick-action-btn">
                                 <span class="dashicons dashicons-chart-bar"></span>
                                 <?php esc_html_e('View Analytics', 'modern-hotel-booking'); ?>
                             </a>
-                            <a href="?page=mhb-pro-ical" class="mhbo-quick-action-btn">
+                            <a href="?page=mhbo-pro-ical" class="mhbo-quick-action-btn">
                                 <span class="dashicons dashicons-calendar-alt"></span>
                                 <?php esc_html_e('Manage iCal Feeds', 'modern-hotel-booking'); ?>
                             </a>
@@ -1569,15 +1569,15 @@ class Settings
                 <h3><?php esc_html_e('REST API', 'modern-hotel-booking'); ?></h3>
                 <p class="description">
                     <?php esc_html_e('The REST API allows external systems to query room availability and manage bookings. API base:', 'modern-hotel-booking'); ?>
-                    <code><?php echo esc_html(rest_url('mhb/v1/')); ?></code>
+                    <code><?php echo esc_html(rest_url('mhbo/v1/')); ?></code>
                 </p>
                 <table class="form-table">
                     <tr>
                         <th><?php esc_html_e('API Key', 'modern-hotel-booking'); ?></th>
                         <td>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="mhbo_api_key" name="mhbo_api_key" value="<?php echo esc_attr($api_key); ?>"
-                                    class="regular-text">
+                                <input type="text" id="mhbo_api_key" name="mhbo_api_key"
+                                    value="<?php echo esc_attr($api_key); ?>" class="regular-text">
                                 <button type="button" class="button"
                                     onclick="document.getElementById('mhbo_api_key').value = '<?php echo esc_js(wp_generate_password(32, false)); ?>';">🔑
                                     <?php esc_html_e('Generate', 'modern-hotel-booking'); ?></button>
@@ -1585,7 +1585,7 @@ class Settings
                                     data-copy-target="mhbo_api_key"><?php esc_html_e('Copy', 'modern-hotel-booking'); ?></button>
                             </div>
                             <p class="description">
-                                <?php esc_html_e('Include as X-MHB-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id}).', 'modern-hotel-booking'); ?>
+                                <?php esc_html_e('Include as X-mhbo-API-Key header for authenticated endpoints (POST /bookings, GET /bookings/{id}).', 'modern-hotel-booking'); ?>
                             </p>
                         </td>
                     </tr>
@@ -1617,32 +1617,32 @@ class Settings
                     <tbody>
                         <tr>
                             <td><code>GET</code></td>
-                            <td><code>/mhb/v1/rooms</code></td>
+                            <td><code>/mhbo/v1/rooms</code></td>
                             <td><?php esc_html_e('Pro (Rate Limited)', 'modern-hotel-booking'); ?></td>
                         </tr>
                         <tr>
                             <td><code>GET</code></td>
-                            <td><code>/mhb/v1/availability</code></td>
+                            <td><code>/mhbo/v1/availability</code></td>
                             <td><?php esc_html_e('Pro (Rate Limited)', 'modern-hotel-booking'); ?></td>
                         </tr>
                         <tr>
                             <td><code>POST</code></td>
-                            <td><code>/mhb/v1/recalculate-price</code></td>
+                            <td><code>/mhbo/v1/recalculate-price</code></td>
                             <td><?php esc_html_e('Public (Rate Limited)', 'modern-hotel-booking'); ?></td>
                         </tr>
                         <tr>
                             <td><code>GET</code></td>
-                            <td><code>/mhb/v1/calendar-data</code></td>
+                            <td><code>/mhbo/v1/calendar-data</code></td>
                             <td><?php esc_html_e('Public (Rate Limited)', 'modern-hotel-booking'); ?></td>
                         </tr>
                         <tr>
                             <td><code>POST</code></td>
-                            <td><code>/mhb/v1/bookings</code></td>
+                            <td><code>/mhbo/v1/bookings</code></td>
                             <td>🔑 <?php esc_html_e('API Key Required', 'modern-hotel-booking'); ?></td>
                         </tr>
                         <tr>
                             <td><code>GET</code></td>
-                            <td><code>/mhb/v1/bookings/{id}</code></td>
+                            <td><code>/mhbo/v1/bookings/{id}</code></td>
                             <td>🔑 <?php esc_html_e('API Key Required', 'modern-hotel-booking'); ?></td>
                         </tr>
                     </tbody>

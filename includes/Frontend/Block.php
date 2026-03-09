@@ -36,10 +36,10 @@ class Block
             '4.6.13'
         );
 
-        // Register MHB base style
+        // Register MHBO base style
         wp_register_style(
             'mhbo-style',
-            MHBO_PLUGIN_URL . 'assets/css/mhb-style.css',
+            MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css',
             [],
             MHBO_VERSION
         );
@@ -47,7 +47,7 @@ class Block
         // Register Calendar CSS (depends on flatpickr and base style)
         wp_register_style(
             'mhbo-calendar-style',
-            MHBO_PLUGIN_URL . 'assets/css/mhb-calendar.css',
+            MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
             ['mhbo-flatpickr-css', 'mhbo-style'],
             MHBO_VERSION
         );
@@ -64,7 +64,7 @@ class Block
         // Register Calendar JS (depends on jQuery and Flatpickr)
         wp_register_script(
             'mhbo-calendar-js',
-            MHBO_PLUGIN_URL . 'assets/js/mhb-calendar.js',
+            MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js',
             ['jquery', 'mhbo-flatpickr-js'],
             MHBO_VERSION,
             true

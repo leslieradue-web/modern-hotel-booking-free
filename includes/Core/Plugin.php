@@ -110,7 +110,7 @@ class Plugin
         });
 
         add_filter('plugin_action_links_' . MHBO_PLUGIN_BASENAME, function ($links) {
-            $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=mhb-settings')) . '">' . esc_html__('Settings', 'modern-hotel-booking') . '</a>';
+            $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=mhbo-settings')) . '">' . esc_html__('Settings', 'modern-hotel-booking') . '</a>';
             array_unshift($links, $settings_link);
             return $links;
         });

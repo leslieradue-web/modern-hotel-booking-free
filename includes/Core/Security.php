@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
  *
  * Consolidates SSRF protection, IP validation, and other security functions.
  *
- * @package MHB\Core
+ * @package MHBOCore
  * @since   2.1.0
  */
 class Security
