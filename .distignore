@@ -62,6 +62,9 @@ debug.log
 *.bak
 *.tmp
 
+# Build artifacts
+fullcalendar.tgz
+
 # Test files
 tests/
 phpunit.xml

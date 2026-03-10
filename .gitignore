@@ -28,6 +28,10 @@ phpunit.xml.dist
 
 # Build outputs (generated)
 dist/
+build/
+
+# Build artifacts
+fullcalendar.tgz
 
 # Environment files
 .env

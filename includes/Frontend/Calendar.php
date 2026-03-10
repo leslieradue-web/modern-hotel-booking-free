@@ -285,8 +285,8 @@ class Calendar
 
             <?php if (get_option('mhbo_powered_by_link', 1)): ?>
                 <div class="mhbo-powered-by" style="text-align: right; margin-top: 10px; font-size: 11px; opacity: 0.7;">
-                    <a href="https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/" target="_blank"
-                        rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
+                    <a href="<?php echo esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'); ?>"
+                        target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
                         Powered by <strong>Modern Hotel Booking</strong>
                     </a>
                 </div>

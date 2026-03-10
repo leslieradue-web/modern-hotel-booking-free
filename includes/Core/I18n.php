@@ -17,7 +17,7 @@ declare(strict_types=1);
  * Incorrect: __( $text,   $domain )
  *
  * If you need to include dynamic values, use printf/sprintf with placeholders:
- *   printf( esc_html__( 'Hello %s', 'modern-hotel-booking' ), esc_html( $name ) );
+ *   echo esc_html( sprintf( __( 'Hello %s', 'text-domain' ), $name ) );
  *
  * @package MHBO\Core
  * @since   2.0.0

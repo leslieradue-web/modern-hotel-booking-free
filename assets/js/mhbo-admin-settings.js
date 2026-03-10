@@ -6,6 +6,7 @@
  * - Custom fields repeater
  * - Holiday dates management
  * - Theme selection
+ * - Cache clear handler
  * 
  * @package MHB
  * @since 2.0.1
@@ -288,6 +289,42 @@
         });
     }
 
+    /**
+     * Cache Clear Handler
+     */
+    function initCacheClear() {
+        var $btn = $('#mhbo_clear_cache');
+        var $spinner = $('#mhbo_cache_spinner');
+
+        if (!$btn.length) return;
+
+        $btn.on('click', function () {
+            $btn.prop('disabled', true);
+            $spinner.addClass('is-active');
+
+            // Remove any previous status message
+            $btn.siblings('.mhbo-cache-status').remove();
+
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'mhbo_clear_cache',
+                    nonce: config.nonces?.clear_cache || ''
+                },
+                success: function (response) {
+                    var color = response.success ? 'green' : 'red';
+                    var message = response.data ? response.data.message : 'Unknown error';
+                    $btn.after('<span class="mhbo-cache-status" style="color: ' + color + '; margin-left: 10px;">' + message + '</span>');
+                },
+                complete: function () {
+                    $spinner.removeClass('is-active');
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
+    }
+
     // Initialize on DOM ready
     $(document).ready(function () {
         initLicenseManagement();
@@ -296,6 +333,7 @@
         initAdjustmentToggles();
         initThemeSelection();
         initPaymentGatewayTests();
+        initCacheClear();
     });
 
 })(jQuery);

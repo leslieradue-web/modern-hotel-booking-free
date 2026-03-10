@@ -36,6 +36,7 @@
         const depositInput = document.getElementById(prefix + '_deposit_amount');
         const depositReceivedInput = document.getElementById(prefix + '_deposit_received');
         const paymentReceivedInput = document.getElementById(prefix + '_payment_received');
+        const paymentAmountInput = document.getElementById(prefix + '_payment_amount');
         const outstandingInput = document.getElementById(prefix + '_amount_outstanding');
 
         if (!totalPriceInput) return; // Not on Add or Edit page for this prefix
@@ -146,8 +147,13 @@
                                 } else {
                                     const deposit = parseFloat(depositInput.value) || 0;
                                     const received = depositReceivedInput ? depositReceivedInput.checked : false;
-                                    const outstanding = total - (received ? deposit : 0);
-                                    outstandingInput.value = outstanding.toFixed(2);
+                                    const paymentAmount = parseFloat(paymentAmountInput ? paymentAmountInput.value : 0) || 0;
+                                    let outstanding = total - (received ? deposit : 0);
+                                    // Subtract manually entered payment amount if payment is not fully received
+                                    if (!paymentReceivedInput || !paymentReceivedInput.checked) {
+                                        outstanding = outstanding - paymentAmount;
+                                    }
+                                    outstandingInput.value = Math.max(0, outstanding).toFixed(2);
                                 }
                             }
                         }
@@ -162,7 +168,7 @@
         // Attach Listeners
         const guestsInput = document.getElementById(prefix + '_guests');
         const childrenInput = document.getElementById(prefix + '_children');
-        const listeners = [roomSelect, checkInInput, checkOutInput, guestsInput, childrenInput, discountInput, depositInput, depositReceivedInput, paymentReceivedInput];
+        const listeners = [roomSelect, checkInInput, checkOutInput, guestsInput, childrenInput, discountInput, depositInput, depositReceivedInput, paymentReceivedInput, paymentAmountInput];
         listeners.forEach(function (el) {
             if (el) {
                 el.addEventListener('change', updatePrices);

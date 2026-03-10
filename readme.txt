@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.7
+Stable tag: 2.2.6.8
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -152,7 +152,7 @@ No personal guest data is transmitted to any external service without explicit u
 
 This plugin uses the following third-party libraries:
 
-* **FullCalendar** - Copyright (c) 2024 Adam Shaw
+* **FullCalendar** - Copyright (c) 2024-2025 Adam Shaw
   * License: MIT
   * License File: docs/FullCalendar-LICENSE.md
   * Source: https://fullcalendar.io
@@ -184,6 +184,12 @@ All third-party libraries are bundled locally and are not loaded from external C
 10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
+
+= 2.2.6.8 =
+* Fixed: WordPress.org Guideline 5 (Trialware) compliance - completely removed all Pro-gated code from FREE version
+* Fixed: Removed all $is_pro_active conditional checks from FREE build
+* Fixed: Replaced Pro feature blocks with upsell notices
+* Fixed: Various undefined variable warnings
 
 = 2.2.6.7 =
 * Fixed: Admin bookings calendar not loading (FullCalendar missing plugins)

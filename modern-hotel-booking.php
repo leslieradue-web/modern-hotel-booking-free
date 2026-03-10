@@ -1,9 +1,9 @@
 <?php
 /*
  * Plugin Name:       Modern Hotel Booking
- * Plugin URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
+ * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.2.6.7
+ * Version:           2.2.6.8
  * Tested up to:      6.9
  * Requires at least: 5.6
  * Requires PHP:      7.4
@@ -36,7 +36,7 @@ if (version_compare(PHP_VERSION, '7.4.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.2.6.7');
+define('MHBO_VERSION', '2.2.6.8');
 
 define('MHBO_IS_PRO', false);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -71,7 +71,7 @@ spl_autoload_register(function ($class) {
 /**
  * Activation hook.
  */
-function modern_hotel_booking_activate(): void
+function mhbo_activate(): void
 {
     $activator_file = MHBO_PLUGIN_DIR . 'includes/Core/Activator.php';
     if (file_exists($activator_file)) {
@@ -85,7 +85,7 @@ function modern_hotel_booking_activate(): void
 /**
  * Deactivation hook.
  */
-function modern_hotel_booking_deactivate(): void
+function mhbo_deactivate(): void
 {
     $deactivator_file = MHBO_PLUGIN_DIR . 'includes/Core/Deactivator.php';
     if (file_exists($deactivator_file)) {
@@ -96,13 +96,13 @@ function modern_hotel_booking_deactivate(): void
     }
 }
 
-register_activation_hook(__FILE__, 'modern_hotel_booking_activate');
-register_deactivation_hook(__FILE__, 'modern_hotel_booking_deactivate');
+register_activation_hook(__FILE__, 'mhbo_activate');
+register_deactivation_hook(__FILE__, 'mhbo_deactivate');
 
 /**
  * Boot the plugin.
  */
-function modern_hotel_booking_run(): void
+function mhbo_run(): void
 {
     try {
         if (!class_exists('MHBO\Core\Plugin')) {
@@ -141,4 +141,4 @@ function modern_hotel_booking_run(): void
     }
 }
 
-add_action('plugins_loaded', 'modern_hotel_booking_run');
+add_action('plugins_loaded', 'mhbo_run');

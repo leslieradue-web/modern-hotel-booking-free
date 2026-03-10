@@ -45,7 +45,7 @@ class License
         printf(
             '<div class="mhbo-upsell-notice"><p><strong>%s</strong> %s <a href="%s" target="_blank" rel="noopener noreferrer">%s</a></p></div>',
             /* translators: %s: Feature name */
-            sprintf(esc_html__('%s is a Pro feature.', 'modern-hotel-booking'), esc_html($feature_display)),
+            esc_html(sprintf(__('%s is a Pro feature.', 'modern-hotel-booking'), $feature_display)),
             esc_html__('Upgrade to unlock this feature.', 'modern-hotel-booking'),
             esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'),
             esc_html__('Upgrade Now', 'modern-hotel-booking')

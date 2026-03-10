@@ -341,7 +341,7 @@ class Shortcode
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, $sql prepared via $wpdb->prepare() below
         $available_rooms = $wpdb->get_results($wpdb->prepare($sql, $guests, $check_out, $check_in, $expiry_time));
 
-        echo '<h3>' . sprintf(wp_kses_post(I18n::get_label('label_available_rooms')), esc_html($check_in), esc_html($check_out)) . '</h3>';
+        echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_in, $check_out)) . '</h3>';
         if (empty($available_rooms)) {
             echo '<p>' . esc_html(I18n::get_label('label_no_rooms')) . '</p>';
             $this->render_search_form();
@@ -390,7 +390,7 @@ class Shortcode
 
             echo '<div class="mhbo-room-details">';
             echo wp_kses_post(sprintf(I18n::get_label('label_total_nights'), $days, '<strong>' . esc_html(I18n::format_currency($total)) . '</strong>'));
-            echo '<p>' . sprintf(esc_html(I18n::get_label('label_max_guests')), esc_html($room->max_adults)) . '</p>';
+            echo '<p>' . esc_html(sprintf(I18n::get_label('label_max_guests'), $room->max_adults)) . '</p>';
             echo '</div>';
 
             echo '<form method="post">';
@@ -450,11 +450,10 @@ class Shortcode
         $total = $calc ? (float) $calc['total'] : (!empty($total) ? $total : 0);
 
         // Check License Status
-        $is_pro_active = false;
-
-        // Stripe removed in Free version
+// Stripe removed in Free version
 // PayPal removed in Free version
-$arrival_enabled = true; // Always enabled in free version?>
+$arrival_enabled = true; // Always enabled in free version
+        ?>
         <div class="mhbo-booking-wrapper">
             <h2><?php echo esc_html(I18n::get_label('label_complete_booking')); ?></h2>
             <div class="mhbo-booking-summary">
@@ -753,20 +752,14 @@ $arrival_enabled = true; // Always enabled in free version?>
         $room_type = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mhbo_room_types WHERE id = %d", $room->type_id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
         $extras_input = [];
-        $is_pro_active = false;
-
-        if ($is_pro_active && isset($_POST['mhbo_extras']) && is_array($_POST['mhbo_extras'])) {
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via array_map below
-            $extras_raw = wp_unslash($_POST['mhbo_extras']);
-            $extras_input = array_map('sanitize_text_field', $extras_raw);
-        }
+// Pro-only conditional logic removed for Free version
 
         // Validate Children
         $max_children = $room_type ? intval($room_type->max_children) : 0;
         $children = isset($_POST['children']) ? intval($_POST['children']) : 0;
         if ($children > $max_children) {
             // translators: %d: maximum number of children allowed
-            echo '<div class="mhbo-error">' . sprintf(esc_html(I18n::get_label('label_max_children_error')), esc_html((string) $max_children)) . '</div>';
+            echo '<div class="mhbo-error">' . esc_html(sprintf(I18n::get_label('label_max_children_error'), $max_children)) . '</div>';
             return;
         }
 
@@ -809,7 +802,7 @@ $arrival_enabled = true; // Always enabled in free version?>
                 if (!empty($defn['required']) && empty($val)) {
                     $label = I18n::decode(I18n::encode($defn['label']));
                     // translators: %s: field label
-                    echo '<div class="mhbo-error">' . sprintf(esc_html(I18n::get_label('label_field_required')), esc_html($label)) . '</div>';
+                    echo '<div class="mhbo-error">' . esc_html(sprintf(I18n::get_label('label_field_required'), $label)) . '</div>';
                     return;
                 }
 
@@ -850,17 +843,17 @@ $arrival_enabled = true; // Always enabled in free version?>
         if ($guests > $max_adults) {
             $wpdb->query($wpdb->prepare("SELECT RELEASE_LOCK(%s)", $lock_name)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release
             // translators: %d: maximum number of adults allowed
-            echo '<div class="mhbo-error">' . sprintf(esc_html(I18n::get_label('label_max_adults_error')), esc_html((string) $max_adults)) . '</div>';
+            echo '<div class="mhbo-error">' . esc_html(sprintf(I18n::get_label('label_max_adults_error'), $max_adults)) . '</div>';
             return;
         }
 
 
         // Validate Payment Method Requirement
-        $is_pro_active = false;
-
-        // Stripe removed in Free version
+// Stripe removed in Free version
 // PayPal removed in Free version
-$arrival_enabled = true; // Always enabled in free version$has_active_gateways = false; // No external gateways in Free version
+$arrival_enabled = true; // Always enabled in free version
+
+        $has_active_gateways = false; // No external gateways in Free version
 
         // If gateways are active, enforce payment or arrival selection
         $payment_method = 'arrival';
