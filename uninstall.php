@@ -15,19 +15,19 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 // Check if we should save data on uninstall (default to 1 for safety)
-$option_val = get_option('mhbo_save_data_on_uninstall', 1);
-$save_data = is_numeric($option_val) ? (int) $option_val : 1;
+$mhbo_option_val = get_option('mhbo_save_data_on_uninstall', 1);
+$mhbo_save_data = is_numeric($mhbo_option_val) ? (int) $mhbo_option_val : 1;
 
-if (0 !== $save_data) {
+if (0 !== $mhbo_save_data) {
     // Only clear scheduled cron events, keep data and tables
-    $cron_hooks = array(
+    $mhbo_cron_hooks = array(
         'mhbo_hourly_sync',
         'mhbo_daily_maintenance',
         'mhbo_ical_scheduled_sync',
     );
 
-    foreach ($cron_hooks as $hook) {
-        wp_clear_scheduled_hook($hook);
+    foreach ($mhbo_cron_hooks as $mhbo_hook) {
+        wp_clear_scheduled_hook($mhbo_hook);
     }
     return;  // Let script complete normally for WordPress
 }
@@ -36,7 +36,7 @@ if (0 !== $save_data) {
 global $wpdb;
 
 // Drop custom tables
-$tables = array(
+$mhbo_tables = array(
     $wpdb->prefix . 'mhbo_room_types',
     $wpdb->prefix . 'mhbo_rooms',
     $wpdb->prefix . 'mhbo_bookings',
@@ -45,8 +45,8 @@ $tables = array(
     $wpdb->prefix . 'mhbo_pricing_rules',
 );
 
-foreach ($tables as $table) {
-    $wpdb->query("DROP TABLE IF EXISTS {$table}"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL
+foreach ($mhbo_tables as $mhbo_table) {
+    $wpdb->query("DROP TABLE IF EXISTS {$mhbo_table}"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL
 }
 
 // Delete ALL mhbo_ options (comprehensive cleanup)
@@ -56,14 +56,14 @@ $wpdb->query(
 );
 
 // Clear all scheduled cron events
-$cron_hooks = array(
+$mhbo_cron_hooks = array(
     'mhbo_hourly_sync',
     'mhbo_daily_maintenance',
     'mhbo_ical_scheduled_sync',
 );
 
-foreach ($cron_hooks as $hook) {
-    wp_clear_scheduled_hook($hook);
+foreach ($mhbo_cron_hooks as $mhbo_hook) {
+    wp_clear_scheduled_hook($mhbo_hook);
 }
 
 // Clear any remaining single events for iCal retries

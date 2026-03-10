@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.8
+Stable tag: 2.2.6.9
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -184,6 +184,14 @@ All third-party libraries are bundled locally and are not loaded from external C
 10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
+
+= 2.2.6.9 =
+* Fixed: WordPress.org i18n linting errors - added translators comments for placeholder strings
+* Fixed: Ordered placeholders in translation strings (%1$s, %2$s format)
+* Fixed: WPML hooks with phpcs:ignore comments (third-party integration)
+* Fixed: Output escaping in admin dashboard widget
+* Fixed: Global variable prefixes in uninstall.php (WordPress security standards)
+* Security: Enhanced escaping for all frontend and admin outputs
 
 = 2.2.6.8 =
 * Fixed: WordPress.org Guideline 5 (Trialware) compliance - completely removed all Pro-gated code from FREE version

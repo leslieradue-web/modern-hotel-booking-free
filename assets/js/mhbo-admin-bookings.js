@@ -143,18 +143,25 @@
 
                             if (outstandingInput && depositInput) {
                                 if (paymentReceivedInput && paymentReceivedInput.checked) {
+                                    // Full payment received - everything is paid
                                     outstandingInput.value = '0.00';
                                 } else {
                                     const deposit = parseFloat(depositInput.value) || 0;
-                                    const received = depositReceivedInput ? depositReceivedInput.checked : false;
+                                    const depositReceived = depositReceivedInput ? depositReceivedInput.checked : false;
                                     const paymentAmount = parseFloat(paymentAmountInput ? paymentAmountInput.value : 0) || 0;
-                                    let outstanding = total - (received ? deposit : 0);
-                                    // Subtract manually entered payment amount if payment is not fully received
-                                    if (!paymentReceivedInput || !paymentReceivedInput.checked) {
-                                        outstanding = outstanding - paymentAmount;
+                                    debugLog('Outstanding calculation for', prefix, { paymentReceived: paymentReceivedInput?.checked, deposit: deposit, depositReceived: depositReceived, paymentAmount: paymentAmount, total: total });
+                                    // Start with total
+                                    let outstanding = total;
+                                    // Only subtract deposit if Deposit Received checkbox is checked
+                                    if (depositReceived) {
+                                        outstanding = outstanding - deposit;
                                     }
+                                    // Subtract manually entered payment amount (partial payment)
+                                    outstanding = outstanding - paymentAmount;
                                     outstandingInput.value = Math.max(0, outstanding).toFixed(2);
                                 }
+                            } else {
+                                debugLog('Missing required fields for outstanding calculation:', { outstandingInput: !!outstandingInput, depositInput: !!depositInput, prefix: prefix });
                             }
                         }
                     })
@@ -169,6 +176,7 @@
         const guestsInput = document.getElementById(prefix + '_guests');
         const childrenInput = document.getElementById(prefix + '_children');
         const listeners = [roomSelect, checkInInput, checkOutInput, guestsInput, childrenInput, discountInput, depositInput, depositReceivedInput, paymentReceivedInput, paymentAmountInput];
+        debugLog('Setting up listeners for', prefix, { depositInput: !!depositInput, depositReceivedInput: !!depositReceivedInput, paymentAmountInput: !!paymentAmountInput, paymentReceivedInput: !!paymentReceivedInput, outstandingInput: !!outstandingInput });
         listeners.forEach(function (el) {
             if (el) {
                 el.addEventListener('change', updatePrices);
