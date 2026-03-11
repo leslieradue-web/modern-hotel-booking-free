@@ -70,7 +70,7 @@ class Plugin
         });
 
         /* ---- Webhook System (Pro-only) ---- */
-        if (class_exists('MHB\Core\Webhook')) {
+        if (class_exists('MHBO\Core\Webhook')) {
             $webhook = new Webhook();
             $webhook->init();
         }
@@ -94,7 +94,7 @@ class Plugin
         $calendar->init();
 
         // Initialize License Validator for periodic revalidation (Pro-only)
-        if (class_exists('MHB\Core\LicenseValidator')) {
+        if (class_exists('MHBO\Core\LicenseValidator')) {
             $license_validator = new LicenseValidator();
             $license_validator->init();
         }

@@ -880,7 +880,7 @@ class Tax
             'subtotal_net' => $totals['subtotal_net'] ?? 0,
             'total_tax' => $totals['total_tax'] ?? 0,
             'total_gross' => $totals['total_gross'] ?? 0,
-            'tax_breakdown' => json_encode($tax_breakdown)
+            'tax_breakdown' => wp_json_encode($tax_breakdown)
         ];
 
         // Fallback for extras if totals not populated (should not happen with latest calculate_booking_tax)

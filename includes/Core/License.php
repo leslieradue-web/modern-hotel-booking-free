@@ -33,6 +33,16 @@ class License
     }
 
     /**
+     * Check if Pro features should be available (always false in free version)
+     *
+     * @return bool Always returns false in free version.
+     */
+    public static function is_pro_active(): bool
+    {
+        return false;
+    }
+
+    /**
      * Render upsell notice for Pro features
      *
      * @param string $feature_name Name of the Pro feature being accessed.
@@ -65,10 +75,9 @@ class License
     /**
      * Check license (always returns false in free version)
      *
-     * @param string|null $license_key Optional license key (ignored).
      * @return bool Always returns false.
      */
-    public static function check(?string $license_key = null): bool
+    public static function check(?string $key = null): bool
     {
         return false;
     }

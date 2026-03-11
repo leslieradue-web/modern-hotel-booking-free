@@ -62,11 +62,11 @@ class BookingWidget extends \WP_Widget
         // The HTML uses classes, not IDs for elements (except guide? no).
         // Let's rely on Calendar::render_unified_view's protection for now.
 
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core provides HTML for widget wrappers
-        echo $args['before_widget'];
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core provides HTML for widget wrappers, still using wp_kses_post for compliance
+        echo wp_kses_post($args['before_widget']);
         if (!empty($instance['title'])) {
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core provides HTML for widget wrappers
-            echo $args['before_title'] . apply_filters('widget_title', $instance['title']) . $args['after_title'];
+            echo wp_kses_post($args['before_title']) . esc_html(apply_filters('widget_title', $instance['title'])) . wp_kses_post($args['after_title']);
         }
 
         // Render the unified calendar view (aggregated)
@@ -82,7 +82,7 @@ class BookingWidget extends \WP_Widget
         }
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core provides HTML for widget wrappers
-        echo $args['after_widget'];
+        echo wp_kses_post($args['after_widget']);
     }
 
     public function form($instance)

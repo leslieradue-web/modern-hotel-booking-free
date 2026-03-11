@@ -1,174 +1,90 @@
-Modern Hotel Booking
+=== Modern Hotel Booking ===
 Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.6.9
+Stable tag: 2.2.7.0
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The ultimate Hotel Booking & Reservation System. Manage rooms and reservations and handle availability.
+The ultimate Hotel Booking & Reservation System for managing rooms, availability, and direct guest reservations.
 
 == Description ==
 
-**Modern Hotel Booking** is a comprehensive **WordPress Hotel Booking Plugin** designed for Hotels, Bed & Breakfasts (BnBs), Guest Houses, Apartments, and Vacation Rentals.
+Modern Hotel Booking is a high-performance Property Management System (PMS) designed for Hotels, Bed & Breakfasts, and Vacation Rentals. Manage room types, set pricing, and take direct bookings with zero commissions.
 
-Unlike bloated reservation systems, Modern Hotel Booking offers a high-performance, mobile-responsive booking engine that lets you take direct bookings with **zero commissions**.
+This plugin provides a robust booking engine that operates entirely within your WordPress environment.
 
-Whether you are building a site for a luxury hotel or a single vacation rental, this plugin provides a complete Property Management System (PMS) to handle room types, seasonal pricing, and guest management directly from your WordPress dashboard.
+=== Features (Included in this version) ===
+* Complete Room Management: Create unlimited room types with capacity controls.
+* Real-Time Availability Calendar: Interactive visual status for all rooms.
+* Smart Booking Form: AJAX-powered form with instant price calculation.
+* Native Gutenberg Blocks: Seamlessly add booking forms to any page.
+* Automated Notifications: Customizable email confirmations for guests and admins.
+* Multilingual Support: Ready for WPML, Polylang, and qTranslate-X.
+* GDPR Compliant: Built-in tools for data privacy.
+* Developer API: REST API endpoints for custom integrations.
 
-### 🚀 Why Choose Modern Hotel Booking?
-
-*   **Boost Direct Bookings:** Professional booking forms that convert visitors into guests.
-*   **Mobile Ready:** Fully responsive design works perfectly on all devices.
-*   **Developer Friendly:** Built with a modern PHP architecture, REST API, and strict coding standards.
-*   **Performance First:** Smart micro-caching ensures your site remains fast, even with complex availability checks.
-
-### ✨ Key Features (Free)
-
-*   **Complete Room Management:** Create unlimited room types (Deluxe, Standard, Hostel Beds) with capacity controls.
-*   **Real-Time Availability Calendar:** Interactive calendar showing immediate room status.
-*   **Smart Booking Form:** AJAX-powered form with date picker, guest count, and instant price calculation.
-*   **Native Gutenberg Blocks:** Drag-and-drop the `Booking Form` and `Room Calendar` directly into your pages.
-*   **Automated Notifications:** Send customizable confirmation emails to guests and admins.
-*   **Multilingual Ready:** Full support for WPML, Polylang, and qTranslate-X. Perfect for international tourism.
-*   **GDPR Compliant:** Built-in privacy tools for data export and erasure.
-*   **Developer API:** Robust REST API endpoints for custom integrations and mobile apps.
-
-### 🏆 Pro Features (Business Automation)
-
-Take your hospitality business to the next level with advanced payment and synchronization tools.
-
-**💳 Secure Payment Processing**
-*   **Stripe Integration:** Accept Credit Cards, Apple Pay, and Google Pay.
-*   **PayPal Standard:** Secure payments with full IPN verification.
-*   **Pay on Arrival:** Offer flexibility for guests to pay at the hotel.
-*   **Fraud Protection:** Advanced rate limiting and MySQL advisory locks to prevent double bookings.
-
-**🔄 Channel Manager (iCal Sync)**
-Stop double bookings! Automatically sync your availability with:
-*   **Airbnb**
-*   **Booking.com**
-*   **Expedia**
-*   **Google Calendar**
-*   **VRBO** & HomeAway
-
-**📈 Dynamic Pricing & Extras**
-*   **Seasonal Rates:** Set higher prices for weekends, holidays, or peak seasons.
-*   **Booking Add-ons:** Upsell breakfast, airport transfers, tours, and spa packages.
-*   **Children Pricing:** Smart logic for age-specific pricing and room allocation.
-*   **Advanced Tax System:** Configure VAT, Sales Tax, and city taxes with country-specific rules.
-
-**📊 Analytics & Reporting**
-*   Visual Dashboard with revenue charts.
-*   Track Occupancy Rates and Average Daily Rate (ADR).
-*   Export booking data for accounting.
+== Pro Version Availability ==
+Modern Hotel Booking Pro is available for users requiring advanced business automation, including Stripe/PayPal payment gateway integration, iCal channel management (Airbnb, Booking.com), and detailed revenue analytics. Please visit our website for details on the Pro edition.
 
 == Installation ==
+1. Go to Plugins > Add New in your WordPress admin.
+2. Search for "Modern Hotel Booking".
+3. Click Install Now and then Activate.
 
-= Automatic Installation =
-
-1. Go to **Plugins > Add New** in your WordPress admin.
-2. Search for **"Modern Hotel Booking"**.
-3. Click **Install Now** and then **Activate**.
-
-= Manual Installation =
-
-1. Upload the `modern-hotel-booking` folder to `/wp-content/plugins/`.
-2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. A new menu item **Hotel Booking** will appear in your sidebar.
-
-= Quick Start Guide =
+== Quick Start Guide ==
 
 1. Go to **Hotel Booking > Room Types** to define your accommodation (e.g., "Sea View Suite").
 2. Go to **Hotel Booking > Rooms** to add the actual rooms available.
 3. Add the **Modern Hotel Booking** block to any page to display the reservation form.
-
-== Frequently Asked Questions ==
-
-= Can I use this for a single vacation rental or BnB? =
-Yes! Modern Hotel Booking is perfect for single properties, villas, apartments, and Bed & Breakfasts. You simply create one "Room Type" and assign one "Room" to it.
-
-= Does it support Elementor, Divi, or other page builders? =
-Yes. While we have native Gutenberg blocks, you can use our shortcodes `[mhbo_booking_form]` and `[mhbo_calendar]` inside any page builder, including Elementor, Divi, Beaver Builder, and WPBakery.
-
-= Can I sync availability with Airbnb and Booking.com? =
-Yes. The Pro version includes a bi-directional iCal synchronization engine. You can import calendars from OTAs (Airbnb, Booking.com) to block dates on your site, and export your site's bookings back to them to prevent double bookings.
-
-= Is the plugin translation ready? =
-Absolutely. We support WPML, Polylang, and qTranslate-X. All frontend labels and email templates can be translated to serve international guests.
-
-= How do I enable Apple Pay and Google Pay? =
-This is a Pro feature available via the Stripe integration. Once you enable Stripe in the settings, Apple Pay and Google Pay buttons will appear automatically for supported devices.
-
-= Is the booking form responsive? =
-Yes, the booking form and availability calendars are fully responsive and optimized for mobile phones and tablets.
-
-= Where is credit card data stored? =
-Nowhere on your server. We use tokenized payments via Stripe and PayPal (Pro). This ensures you are PCI-compliant and guest data is secure.
-
-== External Services ==
-
-This plugin provides hotel booking functionality. Connection to external services depends on your version:
-
-= Free Version =
-
-The free version does **not** connect to any external services. All functionality operates locally on your WordPress server with no data transmitted externally.
-
-= Pro Version (Separate Download) =
-
-The Pro version, available separately from [startmysuccess.com](https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/), includes payment gateway and calendar synchronization features that connect to external services:
-
-**Stripe Payment Processing**
-
-* Service Provider: Stripe, Inc. (https://stripe.com)
-* Purpose: Process secure credit/debit card payments for reservations
-* When Used: When a guest completes a booking using credit card payment
-* Data Transmitted: Tokenized payment data (no full card numbers stored on your server), booking amount, currency code
-* Terms of Service: https://stripe.com/legal
-* Privacy Policy: https://stripe.com/privacy
-
-**PayPal Payment Processing**
-
-* Service Provider: PayPal Holdings, Inc. (https://paypal.com)
-* Purpose: Accept PayPal payments for reservations
-* When Used: When a guest selects PayPal as their payment method during checkout
-* Data Transmitted: Order ID, booking amount, currency code
-* Terms of Service: https://www.paypal.com/legalhub/useragreement-full
-* Privacy Policy: https://www.paypal.com/webapps/mpp/ua/privacy-full
-
-**iCal Calendar Synchronization**
-
-* Service Providers: Third-party booking platforms (Airbnb, Booking.com, VRBO, Expedia, Google Calendar)
-* Purpose: Synchronize room availability to prevent double bookings across platforms
-* When Used: When configured and enabled by the site administrator
-* Data Transmitted: Room availability dates only - NO guest personal data is transmitted
-* Note: Each external platform operates under their own terms and privacy policies
-
-No personal guest data is transmitted to any external service without explicit user action (e.g., completing a booking with payment).
 
 == Credits ==
 
 This plugin uses the following third-party libraries:
 
 * **FullCalendar** - Copyright (c) 2024-2025 Adam Shaw
+  * Version: 6.1.20
   * License: MIT
   * License File: docs/FullCalendar-LICENSE.md
   * Source: https://fullcalendar.io
   * Used for: Admin bookings calendar display
 
 * **Chart.js** - Copyright (c) 2014-2024 Chart.js Contributors
+  * Version: 4.5.1
   * License: MIT
   * Source: https://www.chartjs.org
   * Used for: Revenue analytics charts
 
 * **Flatpickr** - Copyright (c) 2023 Gregory Petrosyan
+  * Version: 4.6.13
   * License: MIT
   * Source: https://flatpickr.js.org
   * Used for: Date and time picker in booking forms
 
 All third-party libraries are bundled locally and are not loaded from external CDNs.
+
+== Privacy Policy ==
+
+Modern Hotel Booking is designed with privacy in mind. This plugin does not collect or transmit any guest or admin data to our servers. All booking details are stored locally in your WordPress database.
+
+If you choose to use the "Powered By" link (disabled by default), a backlink to our website will be displayed on the frontend booking forms. No tracking data is sent.
+
+For more information, please see our [Privacy Policy](https://startmysuccess.com/privacy-policy/).
+
+== External Services ==
+
+This plugin (Free version) works entirely offline within your WordPress installation.
+
+The **Pro version** (available separately) integrates with the following external services:
+
+* **Stripe** (Payment Processing) - Used for processing credit card payments for bookings.
+  * [Terms of Service](https://stripe.com/terms)
+  * [Privacy Policy](https://stripe.com/privacy)
+* **iCal Synchronisation** - Connects to external calendars like Airbnb, Booking.com, and Google Calendar via their public iCal feeds. No data is sent to our servers.
+
+Both services are optional and only active if configured in the Pro version.
 
 == Screenshots ==
 
@@ -177,15 +93,18 @@ All third-party libraries are bundled locally and are not loaded from external C
 3. **Room Management:** Easy setup for room types, capacity, and base pricing.
 4. **Availability Calendar:** Interactive visual calendar for checking room status.
 5. **Settings Panel:** Extensive configuration for emails, currencies, and rules.
-6. **Payment Gateways (Pro):** Stripe and PayPal configuration with sandbox modes.
-7. **Tax Settings (Pro):** Advanced VAT and Sales Tax management.
-8. **Analytics (Pro):** Visual charts for occupancy and revenue tracking.
-9. **Booking Extras (Pro):** Management of add-on services like breakfast.
-10. **iCal Sync (Pro):** Synchronization manager for Airbnb and Booking.com.
 
 == Changelog ==
 
+= 2.2.7.0 =
+* Fixed: Performance tab removed from Free version (was causing fatal error)
+* Fixed: Removed Pro-only settings hooks from Free build
+* Fixed: WordPress.DB PHPCS warnings - added NoCaching ignores for database queries using transients
+* Fixed: WordPress.DB.PreparedSQLPlaceholders.UnnecessaryPrepare warnings
+* Security: Full input sanitization and output escaping review completed
+
 = 2.2.6.9 =
+* Major release: Compliance audit completed to ensure full functionality and removal of restricted features per WordPress.org guidelines.
 * Fixed: WordPress.org i18n linting errors - added translators comments for placeholder strings
 * Fixed: Ordered placeholders in translation strings (%1$s, %2$s format)
 * Fixed: WPML hooks with phpcs:ignore comments (third-party integration)
@@ -284,49 +203,9 @@ All third-party libraries are bundled locally and are not loaded from external C
 * Security: Comprehensive audit of sanitization and escaping.
 * Added: Race condition protection via MySQL advisory locks.
 
-= 2.2.4.1 =
-* Fixed: Fatal error regarding missing Pro classes in Free version.
-
-= 2.2.3 =
-* Code: Added strict typing compliance and caching layer.
-* Standards: Added index.php files for directory compliance.
-
-= 2.2.2 =
-* Feature: Enhanced VAT/TAX breakdown renderer.
-* Security: HMAC-SHA256 signature verification for webhooks.
-
-= 2.2.0 =
-* Major Feature: Stripe & PayPal Integration.
-* Major Feature: VAT/TAX System.
-* Major Feature: Payment Webhooks and Status Tracking.
-
-= 2.1.0 =
-* Feature: Children pricing logic and email placeholders.
-* Improved: iCal parsing robustness.
-
-= 2.0.8 =
-* Feature: Native Block Editor (Gutenberg) support.
-
-= 2.0.0 =
-* Rewrite: Complete architecture overhaul with PSR-4.
-* Feature: Multilingual support and GDPR tools.
-
-= 1.0.0 =
-* Initial release.
 
 == Upgrade Notice ==
 
 = 2.2.6.0 =
 Maintenance update to clean up development artifacts from the public repository and distribution packages.
 
-= 2.2.5.9 =
-Hotfix for the automated release workflow. Ensures clean synchronization between private and public repositories.
-
-= 2.2.5.8 =
-Static analysis and build optimization update. Improves code quality with Level 10 PHPStan compliance and optimizes repository synchronization.
-
-= 2.2.5.7 =
-Critical compatibility update for PHP 8.4/8.5 and WordPress 7.0. Includes major multilingual robustness fixes.
-
-= 2.2.5.5 =
-SEO and Header optimization. Please update to ensure proper directory listing and PHP compatibility.

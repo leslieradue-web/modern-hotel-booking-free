@@ -49,10 +49,7 @@ class RestApi
             'methods' => 'GET',
             'callback' => array($this, 'get_rooms'),
             'permission_callback' => function ($request) {
-                // Combine Pro check and Rate limiting
-                $pro = $this->check_pro_access();
-                if (is_wp_error($pro))
-                    return $pro;
+                
                 return $this->check_read_access($request);
             },
         ));
@@ -61,9 +58,7 @@ class RestApi
             'methods' => 'GET',
             'callback' => array($this, 'get_availability'),
             'permission_callback' => function ($request) {
-                $pro = $this->check_pro_access();
-                if (is_wp_error($pro))
-                    return $pro;
+                
                 return $this->check_read_access($request);
             },
             'args' => array(
@@ -80,55 +75,7 @@ class RestApi
             ),
         ));
 
-        register_rest_route($namespace, '/bookings', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'create_booking'),
-            'permission_callback' => array($this, 'check_api_key'),
-            'args' => array(
-                'room_id' => array(
-                    'required' => true,
-                    'validate_callback' => function ($value) {
-                        return is_numeric($value) && intval($value) > 0;
-                    },
-                    'sanitize_callback' => 'absint',
-                ),
-                'check_in' => array(
-                    'required' => true,
-                    'validate_callback' => array($this, 'validate_date'),
-                    'sanitize_callback' => 'sanitize_text_field',
-                ),
-                'check_out' => array(
-                    'required' => true,
-                    'validate_callback' => array($this, 'validate_date'),
-                    'sanitize_callback' => 'sanitize_text_field',
-                ),
-                'customer_name' => array(
-                    'required' => true,
-                    'sanitize_callback' => 'sanitize_text_field',
-                ),
-                'customer_email' => array(
-                    'required' => true,
-                    'validate_callback' => function ($value) {
-                        return is_email($value);
-                    },
-                    'sanitize_callback' => 'sanitize_email',
-                ),
-                'customer_phone' => array(
-                    'required' => false,
-                    'sanitize_callback' => 'sanitize_text_field',
-                ),
-                'language' => array(
-                    'required' => false,
-                    'sanitize_callback' => 'sanitize_key',
-                ),
-            ),
-        ));
-
-        register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
-            'methods' => 'GET',
-            'callback' => array($this, 'get_booking'),
-            'permission_callback' => array($this, 'check_api_key'),
-        ));
+        
 
         register_rest_route($namespace, '/calendar-data', array(
             'methods' => 'GET',
@@ -150,81 +97,11 @@ class RestApi
             ),
         ));
 
-        register_rest_route($namespace, '/recalculate-price', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'recalculate_price'),
-            'permission_callback' => array($this, 'check_read_access'),
-            'args' => array(
-                'room_id' => array(
-                    'required' => true,
-                    'validate_callback' => function ($value) {
-                        return is_numeric($value) && intval($value) > 0;
-                    },
-                    'sanitize_callback' => 'absint'
-                ),
-                'check_in' => array(
-                    'required' => true,
-                    'validate_callback' => array($this, 'validate_date'),
-                    'sanitize_callback' => 'sanitize_text_field'
-                ),
-                'check_out' => array(
-                    'required' => true,
-                    'validate_callback' => array($this, 'validate_date'),
-                    'sanitize_callback' => 'sanitize_text_field'
-                ),
-                'guests' => array(
-                    'required' => false,
-                    'sanitize_callback' => 'absint',
-                    'default' => 1
-                ),
-                'children' => array(
-                    'required' => false,
-                    'sanitize_callback' => 'absint',
-                    'default' => 0
-                ),
-                'children_ages' => array(
-                    'required' => false,
-                    'validate_callback' => function ($value) {
-                        return is_array($value);
-                    },
-                    'sanitize_callback' => function ($value) {
-                        return is_array($value) ? array_map('absint', $value) : array();
-                    },
-                    'default' => array()
-                ),
-                'extras' => array(
-                    'required' => false,
-                    'validate_callback' => function ($value) {
-                        return is_array($value);
-                    },
-                    'sanitize_callback' => function ($value) {
-                        if (!is_array($value))
-                            return array();
-                        $sanitized = array();
-                        foreach ($value as $k => $v) {
-                            $sanitized[sanitize_key($k)] = sanitize_text_field($v);
-                        }
-                        return $sanitized;
-                    },
-                    'default' => array()
-                ),
-            ),
-        ));
+        
 
-        // Payment webhook endpoint for Stripe/PayPal webhooks
-        // SECURITY: Permission callback verifies webhook signature internally
-        register_rest_route($namespace, '/payment-webhook', array(
-            'methods' => 'POST',
-            'callback' => array($this, 'handle_payment_webhook'),
-            'permission_callback' => array($this, 'verify_webhook_permission'),
-        ));
+        
 
-        // Tax settings endpoint for frontend
-        register_rest_route($namespace, '/tax-settings', array(
-            'methods' => 'GET',
-            'callback' => array($this, 'get_tax_settings'),
-            'permission_callback' => array($this, 'check_read_access'),
-        ));
+        
 
     }
 
@@ -247,13 +124,7 @@ class RestApi
      */
     public function check_pro_access()
     {
-        if (!false) {
-            return new \WP_Error(
-                'mhbo_pro_required',
-                esc_html(I18n::get_label('label_rest_pro_error')),
-                array('status' => 403)
-            );
-        }
+        
         return true;
     }
 
@@ -324,40 +195,7 @@ class RestApi
         return true;
     }
 
-    /**
-     * Check API key from request header for sensitive endpoints.
-     *
-     * @param \WP_REST_Request $request Request object.
-     * @return bool|\WP_Error
-     */
-    public function check_api_key($request)
-    {
-        $pro_check = $this->check_pro_access();
-        if (is_wp_error($pro_check)) {
-            return $pro_check;
-        }
-
-        $api_key = $request->get_header('X-MHBO-API-Key');
-        $stored_key = get_option('mhbo_api_key', '');
-
-        if (empty($stored_key)) {
-            return new \WP_Error(
-                'mhbo_api_not_configured',
-                esc_html(I18n::get_label('label_api_not_configured')),
-                array('status' => 500)
-            );
-        }
-
-        if (empty($api_key) || !hash_equals($stored_key, $api_key)) {
-            return new \WP_Error(
-                'mhbo_unauthorized',
-                esc_html(I18n::get_label('label_invalid_api_key')),
-                array('status' => 401)
-            );
-        }
-
-        return true;
-    }
+    
 
     /**
      * Verify webhook permission - check for valid webhook signature.
@@ -384,9 +222,7 @@ class RestApi
         );
     }
 
-    // Stripe verification removed in Free version
-
-    // PayPal verification removed in Free version
+    
 
     /**
      * GET /rooms — List all room types.
@@ -396,8 +232,6 @@ class RestApi
     public function get_rooms()
     {
         global $wpdb;
-
-        // Try cache first - room types don't change frequently
         $cache_key = 'mhbo_room_types_all';
         $room_types = wp_cache_get($cache_key, 'mhbo');
 
@@ -504,233 +338,11 @@ class RestApi
         ));
     }
 
-    /**
-     * POST /bookings — Create a new booking.
-     *
-     * @param \WP_REST_Request $request Request object.
-     * @return \WP_REST_Response|\WP_Error
-     */
-    public function create_booking($request)
-    {
-        global $wpdb;
+    
 
-        $room_id = absint($request->get_param('room_id'));
-        $check_in = sanitize_text_field($request->get_param('check_in'));
-        $check_out = sanitize_text_field($request->get_param('check_out'));
-        $customer_name = sanitize_text_field($request->get_param('customer_name'));
-        $customer_email = sanitize_email($request->get_param('customer_email'));
-        $customer_phone = sanitize_text_field($request->get_param('customer_phone') ?: '');
-        $language = sanitize_text_field($request->get_param('language') ?: I18n::get_current_language());
+    
 
-        // Validate required fields
-        if (empty($customer_name) || empty($customer_email) || !is_email($customer_email)) {
-            return new \WP_Error(
-                'mhbo_invalid_customer_data',
-                esc_html(I18n::get_label('label_invalid_customer')),
-                array('status' => 400)
-            );
-        }
-
-        // Check availability
-        $available = Pricing::is_room_available((int) $room_id, $check_in, $check_out);
-
-        if (true !== $available) {
-            return new \WP_Error(
-                'mhbo_room_unavailable',
-                esc_html(I18n::get_label($available)),
-                array('status' => 409)
-            );
-        }
-
-        // Calculate total price using central logic
-        $calc = Pricing::calculate_booking_total($room_id, $check_in, $check_out);
-
-        if (!$calc) {
-            return new \WP_Error(
-                'mhbo_invalid_dates',
-                esc_html(I18n::get_label('label_invalid_dates')),
-                array('status' => 400)
-            );
-        }
-
-        $total_price = $calc['total'];
-
-        $booking_token = wp_generate_password(32, false);
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table, no alternative for bookings insertion
-        $inserted = $wpdb->insert(
-            $wpdb->prefix . 'mhbo_bookings',
-            array(
-                'room_id' => $room_id,
-                'customer_name' => $customer_name,
-                'customer_email' => $customer_email,
-                'customer_phone' => $customer_phone,
-                'check_in' => $check_in,
-                'check_out' => $check_out,
-                'total_price' => $total_price,
-                'status' => 'pending',
-                'booking_token' => $booking_token,
-                'booking_language' => $language,
-                'source' => 'api',
-            ),
-            array('%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s')
-        );
-
-        if (!$inserted) {
-            return new \WP_Error(
-                'mhbo_booking_failed',
-                esc_html(I18n::get_label('label_booking_failed')),
-                array('status' => 500)
-            );
-        }
-
-        $booking_id = $wpdb->insert_id;
-
-        // Invalidate calendar cache to ensure availability is updated
-        \MHBO\Core\Cache::invalidate_calendar_cache((int) $room_id);
-
-        // Fire webhook
-        do_action('mhbo_booking_created', $booking_id);
-
-        return rest_ensure_response(array(
-            'id' => $booking_id,
-            'room_id' => $room_id,
-            'check_in' => $check_in,
-            'check_out' => $check_out,
-            'total_price' => round($total_price, 2),
-            'status' => 'pending',
-            'booking_token' => $booking_token,
-        ));
-    }
-
-    /**
-     * GET /bookings/{id} — Get a single booking.
-     * SECURITY: Requires API key and verifies booking access.
-     *
-     * @param \WP_REST_Request $request Request object.
-     * @return \WP_REST_Response|\WP_Error
-     */
-    public function get_booking($request)
-    {
-        global $wpdb;
-
-        $id = absint($request->get_param('id'));
-
-        $cache_key = 'mhbo_booking_' . $id;
-        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-        if (false === $booking) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-            $booking = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
-                $id
-            ));
-            if ($booking) {
-                wp_cache_set($cache_key, $booking, 'mhbo_bookings', HOUR_IN_SECONDS);
-            }
-        }
-
-        if (!$booking) {
-            return new \WP_Error(
-                'mhbo_not_found',
-                esc_html(I18n::get_label('label_room_not_found')),
-                array('status' => 404)
-            );
-        }
-
-        // SECURITY: Verify access to this booking
-        // Option 1: User is logged in and has manage_options capability (admin)
-        // Option 2: API key is associated with this booking (via booking_reference)
-        // Option 3: Request includes the booking's customer email for verification
-        $has_access = $this->verify_booking_access($request, $booking);
-
-        if (is_wp_error($has_access)) {
-            return $has_access;
-        }
-
-        // Return limited data for non-admin access
-        $is_admin = current_user_can('manage_options');
-
-        $response_data = array(
-            'id' => (int) $booking->id,
-            'room_id' => (int) $booking->room_id,
-            'check_in' => $booking->check_in,
-            'check_out' => $booking->check_out,
-            'total_price' => (float) $booking->total_price,
-            'status' => $booking->status,
-            'booking_language' => $booking->booking_language,
-            'source' => $booking->source,
-            'created_at' => $booking->created_at,
-        );
-
-        // Include PII only for admin access or verified owners
-        if ($is_admin || 'owner' === $has_access) {
-            $response_data['customer_name'] = $booking->customer_name;
-            $response_data['customer_email'] = $booking->customer_email;
-            $response_data['customer_phone'] = $booking->customer_phone;
-            $breakdown = $booking->tax_breakdown ? json_decode($booking->tax_breakdown, true) : null;
-            if (isset($breakdown['extras']) && is_array($breakdown['extras'])) {
-                foreach ($breakdown['extras'] as &$extra) {
-                    if (isset($extra['name'])) {
-                        $extra['name'] = I18n::decode($extra['name'], $booking->booking_language);
-                    }
-                }
-            }
-
-            $response_data['tax'] = array(
-                'enabled' => (bool) ($booking->tax_enabled ?? 0),
-                'mode' => $booking->tax_mode ?? 'disabled',
-                'subtotal_net' => (float) ($booking->subtotal_net ?? $booking->total_price),
-                'total_tax' => (float) ($booking->total_tax ?? 0),
-                'total_gross' => (float) ($booking->total_gross ?? $booking->total_price),
-                'breakdown' => $breakdown,
-            );
-        }
-
-        return rest_ensure_response($response_data);
-    }
-
-    /**
-     * Verify access to a booking.
-     * SECURITY: Prevents unauthorized access to booking PII.
-     *
-     * @param \WP_REST_Request $request Request object.
-     * @param object $booking Booking object.
-     * @return bool|string|\WP_Error True for admin, 'owner' for verified owner, WP_Error for denied.
-     */
-    private function verify_booking_access($request, $booking)
-    {
-        // Admin users have full access
-        if (current_user_can('manage_options')) {
-            return true;
-        }
-
-        // Check for booking reference in request (for customer verification)
-        // This allows customers to view their own bookings with a reference code
-        $booking_reference = $request->get_param('reference');
-        if (!empty($booking_reference)) {
-            $expected_reference = hash('sha256', $booking->id . $booking->customer_email . wp_salt('auth'));
-            if (hash_equals($expected_reference, $booking_reference)) {
-                return 'owner';
-            }
-        }
-
-        // Check for email verification
-        $verify_email = $request->get_param('verify_email');
-        if (!empty($verify_email)) {
-            $verify_email = sanitize_email($verify_email);
-            if (hash_equals(strtolower($booking->customer_email), strtolower($verify_email))) {
-                return 'owner';
-            }
-        }
-
-        // SECURITY: Deny access by default
-        return new \WP_Error(
-            'mhbo_access_denied',
-            __('You do not have permission to access this booking.', 'modern-hotel-booking'),
-            array('status' => 403)
-        );
-    }
+    
 
     /**
      * GET /calendar-data — Get availability data for calendar display.
@@ -1039,252 +651,7 @@ class RestApi
         ));
     }
 
-    /**
-     * POST /payment-webhook - Handle Stripe/PayPal webhook events.
-     * SECURITY: Signature verification is performed in verify_webhook_permission().
-     *
-     * @param \WP_REST_Request $request Request object.
-     * @return \WP_REST_Response|\WP_Error
-     */
-    public function handle_payment_webhook($request)
-    {
-        global $wpdb;
+    
 
-        // Get raw body for processing
-        $payload = $request->get_body();
-        $headers = $request->get_headers();
-
-        // Determine webhook source (Stripe or PayPal)
-        $stripe_signature = isset($headers['stripe_signature']) ? $headers['stripe_signature'][0] : null;
-        $paypal_auth = isset($headers['paypal_auth_algo']) ? $headers['paypal_auth_algo'][0] : null;
-
-        // Handle Stripe webhook
-        if ($stripe_signature) {
-            $event = json_decode($payload, true);
-            return $this->process_stripe_event($event);
-        }
-
-        // Handle PayPal webhook
-        if ($paypal_auth) {
-            return $this->handle_paypal_webhook($payload, $headers);
-        }
-
-        // SECURITY: This should never be reached due to permission_callback verification
-        return new \WP_Error(
-            'mhbo_invalid_webhook',
-            __('Invalid webhook request.', 'modern-hotel-booking'),
-            array('status' => 400)
-        );
-    }
-
-    /**
-     * Process Stripe webhook event.
-     *
-     * @param array $event Stripe event data.
-     * @return \WP_REST_Response
-     */
-    private function process_stripe_event($event)
-    {
-        if (!isset($event['type'])) {
-            return rest_ensure_response(array('status' => 'ignored', 'reason' => __('No event type', 'modern-hotel-booking')));
-        }
-
-        global $wpdb;
-
-        switch ($event['type']) {
-            case 'payment_intent.succeeded':
-                $payment_intent = $event['data']['object'] ?? null;
-                if ($payment_intent && isset($payment_intent['id'])) {
-                    $cache_key = 'mhbo_booking_tx_' . md5($payment_intent['id']);
-                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-                    if (false === $booking) {
-                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-                        $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
-                            $payment_intent['id']
-                        ));
-                        if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
-                        }
-                    }
-
-                    if ($booking) {
-                        $amount = isset($payment_intent['amount']) ? $payment_intent['amount'] / 100 : null;
-                        // PaymentGateways::update_payment_status() removed for Free version;
-                    }
-                }
-                break;
-
-            case 'payment_intent.payment_failed':
-                $payment_intent = $event['data']['object'] ?? null;
-                if ($payment_intent && isset($payment_intent['id'])) {
-                    $cache_key = 'mhbo_booking_tx_' . md5($payment_intent['id']);
-                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-                    if (false === $booking) {
-                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-                        $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
-                            $payment_intent['id']
-                        ));
-                        if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
-                        }
-                    }
-
-                    if ($booking) {
-                        $error_message = isset($payment_intent['last_payment_error']['message'])
-                            ? $payment_intent['last_payment_error']['message']
-                            : __('Payment failed', 'modern-hotel-booking');
-                        // PaymentGateways::update_payment_status() removed for Free version;
-                    }
-                }
-                break;
-
-            case 'charge.refunded':
-                $charge = $event['data']['object'] ?? null;
-                if ($charge && isset($charge['payment_intent'])) {
-                    $cache_key = 'mhbo_booking_tx_' . md5($charge['payment_intent']);
-                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-                    if (false === $booking) {
-                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-                        $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
-                            $charge['payment_intent']
-                        ));
-                        if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
-                        }
-                    }
-                    if ($booking) {
-                        // PaymentGateways::update_payment_status() removed for Free version;
-                    }
-                }
-                break;
-        }
-
-        // Fire action for extensibility
-        do_action('mhbo_stripe_webhook_received', $event);
-
-        return rest_ensure_response(array('status' => 'received', 'event_type' => $event['type']));
-    }
-
-    /**
-     * Handle PayPal webhook with header verification.
-     *
-     * @param string $payload Raw request body.
-     * @param array $headers Request headers.
-     * @return \WP_REST_Response|\WP_Error
-     */
-    private function handle_paypal_webhook($payload, $headers)
-    {
-        // For full verification, you'd verify the PayPal signature
-        // This is a simplified version
-        $event = json_decode($payload, true);
-        return $this->process_paypal_event($event);
-    }
-
-    /**
-     * Process PayPal webhook event.
-     *
-     * @param array $event PayPal event data.
-     * @return \WP_REST_Response
-     */
-    private function process_paypal_event($event)
-    {
-        if (!isset($event['event_type'])) {
-            return rest_ensure_response(array('status' => 'ignored', 'reason' => __('No event type', 'modern-hotel-booking')));
-        }
-
-        global $wpdb;
-
-        switch ($event['event_type']) {
-            case 'PAYMENT.CAPTURE.COMPLETED':
-                $resource = $event['resource'] ?? null;
-                if ($resource) {
-                    $order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? $resource['id'] ?? null;
-
-                    if ($order_id) {
-                        $cache_key = 'mhbo_booking_tx_' . md5($order_id);
-                        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-                        if (false === $booking) {
-                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-                            $booking = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
-                                $order_id
-                            ));
-                            if ($booking) {
-                                wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
-                            }
-                        }
-
-                        if ($booking) {
-                            $amount = isset($resource['amount']['value']) ? floatval($resource['amount']['value']) : null;
-                            // PaymentGateways::update_payment_status() removed for Free version;
-                        }
-                    }
-                }
-                break;
-
-            case 'PAYMENT.CAPTURE.DENIED':
-            case 'PAYMENT.CAPTURE.REFUNDED':
-                $resource = $event['resource'] ?? null;
-                if ($resource) {
-                    $order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? $resource['id'] ?? null;
-
-                    if ($order_id) {
-                        $cache_key = 'mhbo_booking_tx_' . md5($order_id);
-                        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-                        if (false === $booking) {
-                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-                            $booking = $wpdb->get_row($wpdb->prepare(
-                                "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
-                                $order_id
-                            ));
-                            if ($booking) {
-                                wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
-                            }
-                        }
-
-                        if ($booking) {
-                            $status = ($event['event_type'] === 'PAYMENT.CAPTURE.REFUNDED') ? 'refunded' : 'failed';
-                            // PaymentGateways::update_payment_status() removed for Free version;
-                        }
-                    }
-                }
-                break;
-
-            case 'CHECKOUT.ORDER.APPROVED':
-                // Order approved but not yet captured - mark as processing
-                $resource = $event['resource'] ?? null;
-                if ($resource && isset($resource['id'])) {
-                    $cache_key = 'mhbo_booking_tx_' . md5($resource['id']);
-                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
-
-                    if (false === $booking) {
-                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
-                        $booking = $wpdb->get_row($wpdb->prepare(
-                            "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE payment_transaction_id = %s",
-                            $resource['id']
-                        ));
-                        if ($booking) {
-                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 5 * MINUTE_IN_SECONDS);
-                        }
-                    }
-                    if ($booking) {
-                        // PaymentGateways::update_payment_status() removed for Free version;
-                    }
-                }
-                break;
-        }
-
-        // Fire action for extensibility
-        do_action('mhbo_paypal_webhook_received', $event);
-
-        return rest_ensure_response(array('status' => 'received', 'event_type' => $event['event_type']));
-    }
+    
 }

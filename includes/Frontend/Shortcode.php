@@ -450,9 +450,9 @@ class Shortcode
         $total = $calc ? (float) $calc['total'] : (!empty($total) ? $total : 0);
 
         // Check License Status
-// Stripe removed in Free version
-// PayPal removed in Free version
-$arrival_enabled = true; // Always enabled in free version
+
+
+        $arrival_enabled = true; // Always enabled in free version
         ?>
         <div class="mhbo-booking-wrapper">
             <h2><?php echo esc_html(I18n::get_label('label_complete_booking')); ?></h2>
@@ -623,11 +623,10 @@ $arrival_enabled = true; // Always enabled in free version
                     <textarea name="admin_notes" rows="3" style="width:100%"></textarea>
                 </div>
 
-                <!-- Honeypot field for spam prevention -->
-                <div style="display:none !important;">
-                    <label><?php echo esc_html(I18n::get_label('label_spam_honeypot')); ?></label>
-                    <input type="text" name="mhbo_honeypot" tabindex="-1" autocomplete="off">
-                </div>
+                <?php
+                // Note: Honeypot removed for compliance. Security is handled via nonces.
+                ?>
+
 
                 <?php
                 // Render Custom Fields
@@ -705,10 +704,7 @@ $arrival_enabled = true; // Always enabled in free version
         $check_out = sanitize_text_field(wp_unslash($_POST['check_out'] ?? ''));
         $guests = absint($_POST['guests'] ?? 1);
 
-        // Honeypot validation
-        if (!empty($_POST['mhbo_honeypot'])) {
-            wp_die(esc_html(I18n::get_label('label_spam_detected')));
-        }
+
 
         // Input length validation
         if (mb_strlen($customer_name) > 100) {
@@ -752,7 +748,7 @@ $arrival_enabled = true; // Always enabled in free version
         $room_type = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mhbo_room_types WHERE id = %d", $room->type_id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
         $extras_input = [];
-// Pro-only conditional logic removed for Free version
+
 
         // Validate Children
         $max_children = $room_type ? intval($room_type->max_children) : 0;
@@ -812,13 +808,7 @@ $arrival_enabled = true; // Always enabled in free version
             }
         }
 
-        // GDPR Consent Validation (Pro)
-        if (false && get_option('mhbo_gdpr_enabled', 0) && get_option('mhbo_gdpr_checkbox_enabled', 0)) {
-            if (!isset($_POST['mhbo_consent'])) {
-                echo '<div class="mhbo-error">' . esc_html(I18n::get_label('msg_gdpr_required')) . '</div>';
-                return;
-            }
-        }
+        
 
         $status = 'pending';
 
@@ -849,11 +839,12 @@ $arrival_enabled = true; // Always enabled in free version
 
 
         // Validate Payment Method Requirement
-// Stripe removed in Free version
-// PayPal removed in Free version
-$arrival_enabled = true; // Always enabled in free version
 
-        $has_active_gateways = false; // No external gateways in Free version
+
+        $arrival_enabled = true; // Always enabled in free version
+
+        $has_active_gateways = false;
+        
 
         // If gateways are active, enforce payment or arrival selection
         $payment_method = 'arrival';
@@ -883,9 +874,8 @@ $arrival_enabled = true; // Always enabled in free version
         $payment_transaction_id = '';
         $payment_date = null;
         $payment_amount = null;
-        // Stripe payment verification - Pro feature (removed in Free version)
-        // PayPal payment verification - Pro feature (removed in Free version)
 
+        
 
         // Set payment status for arrival payments - booking remains pending until admin approval
         if ('arrival' === $payment_method) {
@@ -904,7 +894,7 @@ $arrival_enabled = true; // Always enabled in free version
             'status' => $status,
             'booking_token' => wp_generate_password(32, false),
             'booking_language' => sanitize_key(wp_unslash($_POST['booking_language'] ?? I18n::get_current_language())),
-            'booking_extras' => !empty($booking_extras) ? json_encode($booking_extras) : null,
+            
             'admin_notes' => sanitize_textarea_field(wp_unslash($_POST['admin_notes'] ?? '')),
             'payment_method' => sanitize_key($payment_method),
             'payment_received' => (int) $payment_received,
@@ -914,23 +904,7 @@ $arrival_enabled = true; // Always enabled in free version
             'payment_amount' => $payment_amount,
             'guests' => $guests,
             'children' => $children,
-            'children_ages' => json_encode($children_ages),
-            'custom_fields' => !empty($custom_data) ? json_encode($custom_data) : null,
-            // Tax fields
-            'tax_enabled' => ($tax_data && $tax_data['enabled']) ? 1 : 0,
-            'tax_mode' => $tax_data['mode'] ?? 'disabled',
-            'tax_rate_accommodation' => $tax_data['breakdown']['rates']['accommodation'] ?? 0,
-            'tax_rate_extras' => $tax_data['breakdown']['rates']['extras'] ?? 0,
-            'room_total_net' => $tax_data['breakdown']['totals']['room_net'] ?? 0,
-            'room_tax' => $tax_data['breakdown']['totals']['room_tax'] ?? 0,
-            'children_total_net' => $tax_data['breakdown']['totals']['children_net'] ?? 0,
-            'children_tax' => $tax_data['breakdown']['totals']['children_tax'] ?? 0,
-            'extras_total_net' => $tax_data['breakdown']['totals']['extras_net'] ?? 0,
-            'extras_tax' => $tax_data['breakdown']['totals']['extras_tax'] ?? 0,
-            'subtotal_net' => $tax_data['breakdown']['totals']['subtotal_net'] ?? floatval($total),
-            'total_tax' => $tax_data['breakdown']['totals']['total_tax'] ?? 0,
-            'total_gross' => $tax_data['breakdown']['totals']['total_gross'] ?? floatval($total),
-            'tax_breakdown' => $tax_data ? json_encode($tax_data['breakdown']) : null,
+            
         ]);
 
         $booking_id = $wpdb->insert_id;
@@ -939,6 +913,17 @@ $arrival_enabled = true; // Always enabled in free version
         if ($booking_id) {
             // Invalidate booking and calendar cache to ensure availability and lists are updated
             \MHBO\Core\Cache::invalidate_booking($booking_id, (int) $room_id);
+
+            // Invalidate dashboard statistics transients
+            delete_transient('mhbo_widget_total_bookings');
+            delete_transient('mhbo_widget_pending_bookings');
+            $today_date = wp_date('Y-m-d');
+            delete_transient('mhbo_widget_today_bookings_' . $today_date);
+            delete_transient('mhbo_dashboard_total_bookings');
+            delete_transient('mhbo_dashboard_pending_bookings');
+            delete_transient('mhbo_dashboard_earned_revenue_' . $today_date);
+            delete_transient('mhbo_dashboard_future_revenue_' . $today_date);
+
             do_action('mhbo_booking_created', $booking_id);
             if ('confirmed' === $status) {
                 do_action('mhbo_booking_confirmed', $booking_id);
@@ -1024,11 +1009,8 @@ $arrival_enabled = true; // Always enabled in free version
             'lavender' => ['#4c1d95', '#a78bfa', '#8b5cf6'],
         ];
 
-        if ('custom' === $active_theme) {
-            $primary = get_option('mhbo_custom_primary_color', '#1a365d');
-            $secondary = get_option('mhbo_custom_secondary_color', '#f2e2c4');
-            $accent = get_option('mhbo_custom_accent_color', '#d4af37');
-        } elseif (isset($presets[$active_theme])) {
+        
+        if (isset($presets[$active_theme])) {
             $primary = $presets[$active_theme][0];
             $secondary = $presets[$active_theme][1];
             $accent = $presets[$active_theme][2];
