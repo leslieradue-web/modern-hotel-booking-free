@@ -46,9 +46,14 @@ class Email
         $payment_status = isset($booking->payment_status) ? $booking->payment_status : 'pending';
         $payment_method = isset($booking->payment_method) ? $booking->payment_method : 'onsite';
 
-        // Only send email for completed payments or arrival payments
-        if ('completed' !== $payment_status && 'arrival' !== $payment_method && 'onsite' !== $payment_method) {
-            // Payment not confirmed - don't send confirmation email yet
+        // Allow email if:
+        // 1. Status is explicitly 'confirmed' (admin manually confirmed the booking), OR
+        // 2. Payment is completed, OR
+        // 3. Payment method is 'arrival' or 'onsite'
+        $email_allowed = ('confirmed' === $status) || ('completed' === $payment_status) || ('arrival' === $payment_method) || ('onsite' === $payment_method);
+
+        if (!$email_allowed) {
+            // Payment not confirmed and not explicitly confirmed by admin - don't send confirmation email yet
             return;
         }
 
