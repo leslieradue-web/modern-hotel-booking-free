@@ -97,7 +97,66 @@ class RestApi
             ),
         ));
 
-        
+        register_rest_route($namespace, '/recalculate-price', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'recalculate_price'),
+            'permission_callback' => array($this, 'check_read_access'),
+            'args' => array(
+                'room_id' => array(
+                    'required' => true,
+                    'validate_callback' => function ($value) {
+                        return is_numeric($value) && intval($value) > 0;
+                    },
+                    'sanitize_callback' => 'absint'
+                ),
+                'check_in' => array(
+                    'required' => true,
+                    'validate_callback' => array($this, 'validate_date'),
+                    'sanitize_callback' => 'sanitize_text_field'
+                ),
+                'check_out' => array(
+                    'required' => true,
+                    'validate_callback' => array($this, 'validate_date'),
+                    'sanitize_callback' => 'sanitize_text_field'
+                ),
+                'guests' => array(
+                    'required' => false,
+                    'sanitize_callback' => 'absint',
+                    'default' => 1
+                ),
+                'children' => array(
+                    'required' => false,
+                    'sanitize_callback' => 'absint',
+                    'default' => 0
+                ),
+                'children_ages' => array(
+                    'required' => false,
+                    'validate_callback' => function ($value) {
+                        return is_array($value);
+                    },
+                    'sanitize_callback' => function ($value) {
+                        return is_array($value) ? array_map('absint', $value) : array();
+                    },
+                    'default' => array()
+                ),
+                'extras' => array(
+                    'required' => false,
+                    'validate_callback' => function ($value) {
+                        return is_array($value);
+                    },
+                    'sanitize_callback' => function ($value) {
+                        if (!is_array($value))
+                            return array();
+                        $sanitized = array();
+                        foreach ($value as $k => $v) {
+                            $sanitized[sanitize_key($k)] = sanitize_text_field($v);
+                        }
+                        return $sanitized;
+                    },
+                    'default' => array()
+                ),
+            ),
+        ));
 
         
 

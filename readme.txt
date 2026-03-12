@@ -3,7 +3,7 @@ Contributors: leslieradue-web
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.7.0
+Stable tag: 2.2.7.1
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -36,9 +36,20 @@ Modern Hotel Booking Pro is available for users requiring advanced business auto
 
 == Quick Start Guide ==
 
-1. Go to **Hotel Booking > Room Types** to define your accommodation (e.g., "Sea View Suite").
-2. Go to **Hotel Booking > Rooms** to add the actual rooms available.
-3. Add the **Modern Hotel Booking** block to any page to display the reservation form.
+How to use the Modern Hotel Booking Plugin after installing
+
+1. Go to **Hotel Booking > Room Types** — Create your room types (e.g., Double Room, Triple Room). Set capacity, base price, and all other options.
+2. Go to **Hotel Booking > Rooms** — Add the actual rooms and assign them to a room type. You can set custom prices or availability status here.
+3. (Optional) Go to **Hotel Booking > Pricing Rules** — Add seasonal pricing (fixed amount or percentage).
+4. Create or choose a page for bookings and add one of these:
+   - Gutenberg block: **Modern Hotel Booking** (or **Hotel Booking Form Preview**)
+   - Shortcode: `[modern_hotel_booking]`
+   - Or use the widget
+5. Go to **Hotel Booking > Settings** — **IMPORTANT**: Select your Booking Page from the dropdown and save. Configure any other options (emails, currency, etc.) and save again.
+6. (Optional) For individual room pages, use the **Room Availability Calendar** block or shortcode `[mhbo_room_calendar room_id="1"]` (replace 1 with the actual room ID).
+
+How it works  
+Once set up, guests can search and create bookings from your dedicated booking page or from individual room pages. The system shows real-time availability and calculates prices instantly.
 
 == Credits ==
 
@@ -95,6 +106,9 @@ Both services are optional and only active if configured in the Pro version.
 5. **Settings Panel:** Extensive configuration for emails, currencies, and rules.
 
 == Changelog ==
+
+= 2.2.7.1 =
+* Updated: Version bump for release
 
 = 2.2.7.0 =
 * Fixed: Performance tab removed from Free version (was causing fatal error)

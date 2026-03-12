@@ -904,6 +904,8 @@ class Shortcode
             'payment_amount' => $payment_amount,
             'guests' => $guests,
             'children' => $children,
+            'children_ages' => !empty($children_ages) ? wp_json_encode($children_ages) : null,
+            'custom_fields' => !empty($custom_data) ? wp_json_encode($custom_data) : null,
             
         ]);
 
@@ -1010,11 +1012,11 @@ class Shortcode
         ];
 
         
-        if (isset($presets[$active_theme])) {
-            $primary = $presets[$active_theme][0];
-            $secondary = $presets[$active_theme][1];
-            $accent = $presets[$active_theme][2];
-        }
+            if (isset($presets[$active_theme])) {
+                $primary = $presets[$active_theme][0];
+                $secondary = $presets[$active_theme][1];
+                $accent = $presets[$active_theme][2];
+            }
 
         if ($primary) {
             $custom_css = ":root {

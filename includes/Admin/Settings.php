@@ -312,7 +312,7 @@ class Settings
     public static function render()
     {
         $active_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        
+        $is_pro_active = \MHBO\Core\License::is_pro_active();
         ?>
         <div class="wrap mhbo-admin-wrap">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
