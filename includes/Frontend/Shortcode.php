@@ -108,7 +108,7 @@ class Shortcode
         /** @var \WP_Post $post */
         global $post;
         $has_shortcode = is_a($post, 'WP_Post') && (
-            has_shortcode($post->post_content, 'mhbo_booking_form') || 
+            has_shortcode($post->post_content, 'mhbo_booking_form') ||
             has_shortcode($post->post_content, 'modern_hotel_booking')
         );
         $has_block = is_a($post, 'WP_Post') && has_block('modern-hotel-booking/booking-form', $post->post_content);
@@ -142,7 +142,7 @@ class Shortcode
         // Enqueue calendar assets for the new search form
         wp_enqueue_style('mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css', [], MHBO_VERSION);
         wp_enqueue_script('mhbo-calendar-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js', ['jquery', 'mhbo-flatpickr-js'], MHBO_VERSION, true);
-        
+
         // Ensure calendar script is localized if enqueued here
         if (class_exists('MHBO\Frontend\Calendar')) {
             Calendar::enqueue_assets();
@@ -293,10 +293,10 @@ class Shortcode
 
             // Auto-book GET redirect — renders the booking form (read-only display)
             $this->render_booking_form(array(
-                'room_id'     => $active_room_id,
-                'check_in'    => $auto_check_in,
-                'check_out'   => $auto_check_out,
-                'guests'      => $auto_guests,
+                'room_id' => $active_room_id,
+                'check_in' => $auto_check_in,
+                'check_out' => $auto_check_out,
+                'guests' => $auto_guests,
                 'total_price' => $auto_total,
             ));
             return;
@@ -395,7 +395,7 @@ class Shortcode
             $avg_price = $days > 0 ? $total / $days : ($room->custom_price ?: $room->base_price);
 
             $amenities = $room->amenities ? json_decode($room->amenities) : [];
-            
+
             // 2026 Best Practice: Avoid 404s by using a CSS-based placeholder if no image exists
             $img_style = '';
             if ($room->image_url) {
@@ -406,7 +406,7 @@ class Shortcode
             }
 
             echo '<div class="mhbo-room-card">';
-            echo '<div class="mhbo-room-image" style="height:200px; ' . $img_style . '"></div>';
+            echo '<div class="mhbo-room-image" style="height:200px; ' . esc_attr($img_style) . '"></div>';
             echo '<div class="mhbo-room-content">';
             echo '<h4 class="mhbo-room-title">' . esc_html(I18n::decode($room->type_name)) . '</h4>';
 
@@ -445,17 +445,17 @@ class Shortcode
 
         // Read booking data from params (auto-book) or POST (nonce-verified form submission)
         if (!empty($params)) {
-            $room_id   = isset($params['room_id']) ? intval($params['room_id']) : 0;
-            $check_in  = isset($params['check_in']) ? sanitize_text_field($params['check_in']) : '';
+            $room_id = isset($params['room_id']) ? intval($params['room_id']) : 0;
+            $check_in = isset($params['check_in']) ? sanitize_text_field($params['check_in']) : '';
             $check_out = isset($params['check_out']) ? sanitize_text_field($params['check_out']) : '';
-            $guests    = isset($params['guests']) ? intval($params['guests']) : 2;
+            $guests = isset($params['guests']) ? intval($params['guests']) : 2;
             $total_hint = isset($params['total_price']) ? floatval($params['total_price']) : 0;
         } else {
             // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in calling function (mhbo_book_now_action)
-            $room_id   = isset($_POST['room_id']) ? intval($_POST['room_id']) : 0;
-            $check_in  = isset($_POST['check_in']) ? sanitize_text_field(wp_unslash($_POST['check_in'])) : '';
+            $room_id = isset($_POST['room_id']) ? intval($_POST['room_id']) : 0;
+            $check_in = isset($_POST['check_in']) ? sanitize_text_field(wp_unslash($_POST['check_in'])) : '';
             $check_out = isset($_POST['check_out']) ? sanitize_text_field(wp_unslash($_POST['check_out'])) : '';
-            $guests    = isset($_POST['guests']) ? intval($_POST['guests']) : 2;
+            $guests = isset($_POST['guests']) ? intval($_POST['guests']) : 2;
             $total_hint = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0;
             // phpcs:enable WordPress.Security.NonceVerification.Missing
         }
@@ -638,7 +638,8 @@ class Shortcode
                             <?php endfor; ?>
                         </select>
                     </div>
-                    <div id="mhbo-child-ages-container" style="display:<?php echo esc_attr($selected_children > 0 ? 'block' : 'none'); ?>;">
+                    <div id="mhbo-child-ages-container"
+                        style="display:<?php echo esc_attr($selected_children > 0 ? 'block' : 'none'); ?>;">
                         <label><?php echo esc_html(I18n::get_label('label_child_ages')); ?></label>
                         <div id="mhbo-child-ages-inputs">
                             <?php
