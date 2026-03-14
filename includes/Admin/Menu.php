@@ -1816,7 +1816,7 @@ class Menu
                             }
                             ?></td>
                             <td>
-                                <a href="<?php echo esc_url(admin_url("admin.php?page=mhbo-room-types&action=edit&id={$t->id}")); ?>"
+                                <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-room-types&action=edit&id={$t->id}"), 'mhbo_edit_room_type_' . $t->id)); ?>"
                                     class="button"><?php esc_html_e('Edit', 'modern-hotel-booking'); ?></a>
                                 <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-room-types&action=delete&id={$t->id}"), 'mhbo_delete_room_type_' . $t->id)); ?>"
                                     class="button button-link-delete"
@@ -1866,6 +1866,9 @@ class Menu
         }
 
         if (isset($_GET['action']) && 'ical' === $_GET['action'] && isset($_GET['id'])) {
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_ical_room_' . absint($_GET['id']))) {
+                wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
+            }
             $room_id = absint($_GET['id']);
             // Assignment removed for compliance
             if (!MHBO_IS_PRO ) {
@@ -1930,6 +1933,9 @@ class Menu
         }
 
         if (isset($_GET['action']) && 'edit' === $_GET['action'] && isset($_GET['id'])) {
+            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_edit_room_' . absint($_GET['id']))) {
+                wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
+            }
             $edit_mode = true;
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
             $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$t_rooms}` WHERE id = %d", absint($_GET['id'])));
@@ -2078,10 +2084,10 @@ class Menu
                             <td><?php echo esc_html(I18n::decode($r->type_name)); ?></td>
                             <td><?php echo esc_html(I18n::format_currency($r->custom_price ?: $r->base_price)); ?></td>
                             <td><?php echo esc_html(ucfirst($r->status)); ?></td>
-                            <td><a href="<?php echo esc_url(admin_url("admin.php?page=mhbo-rooms&action=edit&id={$r->id}")); ?>"
+                            <td><a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-rooms&action=edit&id={$r->id}"), 'mhbo_edit_room_' . $r->id)); ?>"
                                     class="button"><?php esc_html_e('Edit', 'modern-hotel-booking'); ?></a>
                                 <?php if (MHBO_IS_PRO): // Pro version has iCal button ?>
-                                    <a href="<?php echo esc_url(admin_url("admin.php?page=mhbo-rooms&action=ical&id={$r->id}")); ?>"
+                                    <a href="<?php echo esc_url(wp_nonce_url(admin_url("admin.php?page=mhbo-rooms&action=ical&id={$r->id}"), 'mhbo_ical_room_' . $r->id)); ?>"
                                         class="button"
                                         style="border-color:#0073aa;color:#0073aa;"><?php esc_html_e('iCal Sync', 'modern-hotel-booking'); ?></a>
                                 <?php endif; ?>
