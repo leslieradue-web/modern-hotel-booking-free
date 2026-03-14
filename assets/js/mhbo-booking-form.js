@@ -7,7 +7,7 @@
  * - GDPR consent enforcement
  * - Form submission validation
  * 
- * @package MHB
+ * @package MHBO
  * @since 2.0.1
  */
 
@@ -18,7 +18,7 @@
     const debugLog = (function () {
         const isDebug = (typeof mhbo_vars !== 'undefined' && mhbo_vars.debug) ||
             (typeof localStorage !== 'undefined' && localStorage.getItem('mhbo_debug'));
-        return isDebug ? console.error.bind(console, '[MHB]') : function () { };
+        return isDebug ? console.error.bind(console, '[MHBO]') : function () { };
     })();
 
     // Wait for DOMContentLoaded to ensure mhbo_vars is defined
@@ -66,7 +66,7 @@
             if (submitBtn) submitBtn.disabled = true;
 
             debounceTimer = setTimeout(function () {
-                const roomId = document.querySelector('input[name="room_id"]').value;
+                const roomId = document.querySelector('input[name="mhbo_room_id"]').value;
                 const checkIn = document.querySelector('input[name="check_in"]').value;
                 const checkOut = document.querySelector('input[name="check_out"]').value;
                 const guests = guestsSelect.value;
@@ -191,7 +191,7 @@
         }
 
         // Expose globally for PaymentGateways.php JS
-        window.mhbShowBookingError = showBookingError;
+        window.mhboShowBookingError = showBookingError;
 
         /**
          * Form submission handler - validate payment method from PaymentGateways.php

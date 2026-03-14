@@ -15,23 +15,16 @@
  */
 
 namespace MHBO\Api;
-
 if (!defined('ABSPATH')) {
     exit;
 }
+
 
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
 
 /**
  * REST API endpoints for Modern Hotel Booking.
- *
- * Namespace: mhbo/v1
- * Endpoints:
- *   GET  /rooms         — list room types
- *   GET  /availability  — check availability for date range
- *   POST /bookings      — create a booking (API key required)
- *   GET  /bookings/{id} — get booking details (API key required)
  *
  * @package MHBO\Api
  * @since   2.0.1
@@ -268,9 +261,7 @@ class RestApi
         $headers = $request->get_headers();
         $payload = $request->get_body();
 
-        // Stripe signature verification removed
-
-        // PayPal authentication verification removed
+        
 
         // SECURITY: Reject webhooks without proper signatures
         // The old behavior of accepting 'source' in body was a critical vulnerability

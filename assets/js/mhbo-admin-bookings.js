@@ -7,7 +7,7 @@
  * - Calendar integration
  * - Extras management
  * 
- * @package MHB
+ * @package MHBO
  * @since 2.0.1
  */
 
@@ -18,7 +18,7 @@
     const debugLog = (function () {
         const isDebug = (window.mhboAdminBookingsConfig && window.mhboAdminBookingsConfig.debug) ||
             (typeof localStorage !== 'undefined' && localStorage.getItem('mhbo_debug'));
-        return isDebug ? console.error.bind(console, '[MHB Admin]') : function () { };
+        return isDebug ? console.error.bind(console, '[MHBO Admin]') : function () { };
     })();
 
     // Configuration is injected via wp_add_inline_script()
@@ -58,8 +58,8 @@
                 container.addEventListener('input', function (e) {
                     if (e.target && e.target.name === 'child_ages[]') {
                         // Debounce price update for typing
-                        clearTimeout(window.mhbPriceTimer);
-                        window.mhbPriceTimer = setTimeout(updatePrices, 300);
+                        clearTimeout(window.mhboPriceTimer);
+                        window.mhboPriceTimer = setTimeout(updatePrices, 300);
                     }
                 });
             }
@@ -247,7 +247,7 @@
 
         if (!$addBtn.length || !$template.length) return;
 
-        let extraCount = config.extrasCount || 0;
+        let extraCount = window.mhboExtrasCount || config.extrasCount || 0;
         const tmpl = $template.html();
 
         $addBtn.on('click', function () {

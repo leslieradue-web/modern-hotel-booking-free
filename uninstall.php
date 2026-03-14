@@ -5,12 +5,14 @@
  * @package Modern_Hotel_Booking
  */
 
+
+
 // If uninstall not called from WordPress, exit.
-if (!defined('ABSPATH')) {
+if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-if (!defined('WP_UNINSTALL_PLUGIN')) {
+if (!defined('ABSPATH')) {
     exit;
 }
 

@@ -4,7 +4,7 @@
  * Provides admin UI enhancements: confirm dialogs for status changes,
  * copy-to-clipboard for iCal URLs, and tabbed interface support.
  *
- * @package MHB
+ * @package MHBO
  * @since   2.0.1
  */
 (function () {

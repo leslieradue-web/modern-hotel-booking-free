@@ -148,57 +148,7 @@ class Pricing
          */
         $base_price = apply_filters('mhbo_calculate_stay_price', $base_price, $room_id, $date);
 
-        // Pro Features: Weekend & Holiday Pricing
-        if (false) {
-            $dt = strtotime($date);
-            // Use gmdate() with 'l' to always get English day names (monday, etc.) 
-            // regardless of site locale settings.
-            $day_of_week = strtolower(gmdate('l', $dt));
-
-            $weekend_days = get_option('mhbo_weekend_days', ['friday', 'saturday', 'sunday']);
-            if (!is_array($weekend_days)) {
-                $weekend_days = is_string($weekend_days) && !empty($weekend_days) ? explode(',', $weekend_days) : [];
-            }
-            $is_weekend = in_array($day_of_week, $weekend_days, true);
-
-            $holiday_dates_str = get_option('mhbo_holiday_dates', '');
-            $holiday_dates = array_map('trim', explode(',', $holiday_dates_str));
-            $is_holiday = in_array($date, $holiday_dates, true);
-
-            $weekend_adj = 0;
-            if ($is_weekend && get_option('mhbo_weekend_pricing_enabled', 0)) {
-                $val = (float) get_option('mhbo_weekend_rate_multiplier', 1.2);
-                $type = get_option('mhbo_weekend_modifier_type', 'multiplier');
-                if ('multiplier' === $type) {
-                    $weekend_adj = ($base_price * $val) - $base_price;
-                } elseif ('percent' === $type) {
-                    $weekend_adj = ($base_price * ($val / 100));
-                } else {
-                    $weekend_adj = $val;
-                }
-            }
-
-            $holiday_adj = 0;
-            if ($is_holiday && get_option('mhbo_holiday_pricing_enabled', 0)) {
-                $val = (float) get_option('mhbo_holiday_rate_modifier', 1.2);
-                $type = get_option('mhbo_holiday_modifier_type', 'multiplier');
-                if ('multiplier' === $type) {
-                    $holiday_adj = ($base_price * $val) - $base_price;
-                } elseif ('percent' === $type) {
-                    $holiday_adj = ($base_price * ($val / 100));
-                } else {
-                    $holiday_adj = $val;
-                }
-            }
-
-            if (get_option('mhbo_apply_weekend_to_holidays', 1)) {
-                // Use the larger adjustment if both apply (Conflict Resolution)
-                $base_price += max($weekend_adj, $holiday_adj);
-            } else {
-                // Apply both if both apply (cumulative)
-                $base_price += $weekend_adj + $holiday_adj;
-            }
-        }
+        
 
         return (float) max(0, $base_price);
     }
@@ -312,83 +262,11 @@ class Pricing
         $extras_total = 0;
         $extras_breakdown = [];
 
-        if (!empty($extras) && is_array($extras)) {
-            $available_extras = get_option('mhbo_pro_extras', []);
-            $extras_map = [];
-            foreach ($available_extras as $ex) {
-                $extras_map[$ex['id']] = $ex;
-            }
-
-            foreach ($extras as $ex_id => $val) {
-                if (!isset($extras_map[$ex_id])) {
-                    continue;
-                }
-                $extra = $extras_map[$ex_id];
-                $quantity = 0;
-
-                if (($extra['control_type'] ?? 'checkbox') === 'checkbox' && '1' === $val) {
-                    $quantity = 1;
-                } elseif (($extra['control_type'] ?? 'checkbox') === 'quantity') {
-                    $quantity = intval($val);
-                }
-
-                if (0 < $quantity) {
-                    $price = floatval($extra['price']);
-                    $pricing_type = $extra['pricing_type'] ?? 'fixed';
-                    $cost = 0;
-                    $total_guests = $guests + $children;
-
-                    switch ($pricing_type) {
-                        case 'fixed':
-                            $cost = $price * $quantity;
-                            break;
-                        case 'per_person':
-                            $cost = ($extra['control_type'] === 'checkbox') ? ($price * $total_guests) : ($price * $quantity);
-                            break;
-                        case 'per_night':
-                            $cost = $price * $quantity * $nights;
-                            break;
-                        case 'per_person_per_night':
-                            $cost = ($extra['control_type'] === 'checkbox') ? ($price * $total_guests * $nights) : ($price * $quantity * $nights);
-                            break;
-                    }
-                    $extras_total += $cost;
-                    $extras_breakdown[] = [
-                        'name' => I18n::decode($extra['name']),
-                        'price' => $price,
-                        'quantity' => $quantity, // Raw quantity (1 for checkbox)
-                        'total' => $cost
-                    ];
-                }
-            }
-        }
+        
 
         $grand_total = (float) max(0, $room_total + $extras_total);
 
-        // Prepare data for tax calculation (Tax class handles disabled mode internally)
-        $tax_data = [
-            'room_total' => $room_total - $child_cost_total, // Room only (without children)
-            'children_total' => $child_cost_total,
-            'extras_total' => $extras_total,
-            'extras' => []
-        ];
-
-        // Add extras breakdown for tax calculation
-        foreach ($extras_breakdown as $extra) {
-            $tax_data['extras'][] = [
-                'id' => sanitize_key($extra['name']),
-                'name' => $extra['name'],
-                'total' => $extra['total']
-            ];
-        }
-
-        $tax_breakdown = Tax::calculate_booking_tax($tax_data);
-        $tax_totals = $tax_breakdown['totals'];
-
-        // For sales tax mode, update grand total to include tax
-        if (Tax::get_mode() === Tax::MODE_SALES_TAX) {
-            $grand_total = $tax_totals['total_gross'];
-        }
+        
 
         return [
             'room_total' => $room_total,
@@ -397,12 +275,7 @@ class Pricing
             'total' => $grand_total,
             'extras_breakdown' => $extras_breakdown,
             'nights' => $nights,
-            'tax' => [
-                'enabled' => Tax::is_enabled(),
-                'mode' => Tax::get_mode(),
-                'breakdown' => $tax_breakdown,
-                'totals' => $tax_totals
-            ]
+            
         ];
     }
 
@@ -437,17 +310,7 @@ class Pricing
     {
         $formatted = I18n::format_currency($amount);
 
-        if ($include_tax_note && Tax::is_enabled()) {
-            $mode = Tax::get_mode();
-            $label = Tax::get_label();
-            if (Tax::MODE_VAT === $mode) {
-                // translators: %s: tax label (e.g., VAT, Tax)
-                $formatted .= ' <span class="mhbo-tax-note">(' . sprintf(I18n::get_label('label_tax_note_includes'), $label) . ')</span>';
-            } elseif (Tax::MODE_SALES_TAX === $mode) {
-                // translators: %s: tax label (e.g., VAT, Tax)
-                $formatted .= ' <span class="mhbo-tax-note">(' . sprintf(I18n::get_label('label_tax_note_plus'), $label) . ')</span>';
-            }
-        }
+        
 
         return $formatted;
     }

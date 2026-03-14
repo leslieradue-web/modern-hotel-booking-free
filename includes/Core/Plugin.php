@@ -33,35 +33,12 @@ class Plugin
         I18n::init();
 
         /* ---- iCal Export (public endpoint) ---- */
-        add_action('init', function () {
-            if (
-                isset($_GET['mhbo_action']) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                && 'ical_export' === $_GET['mhbo_action'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                && isset($_GET['room_id']) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            ) {
-                if (!false) {
-                    wp_die(esc_html__('Pro license required for iCal export.', 'modern-hotel-booking'), '', array('response' => 403));
-                }
-                \MHBO\Core\ICal::generate_ics(absint($_GET['room_id']), sanitize_text_field(wp_unslash($_GET['token'] ?? ''))); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            }
-        });
-
-        /* ---- Cron: hourly iCal sync ---- */
-        add_action('mhbo_hourly_sync', function () {
-            if (!false) {
-                return;
-            }
-
-            if (false) {
-                /* Pro method call removed */;
-            } else {
-                \MHBO\Core\ICal::sync_external_calendars();
-            }
-        });
+        
 
         if (!wp_next_scheduled('mhbo_hourly_sync')) {
             wp_schedule_event(time(), 'hourly', 'mhbo_hourly_sync');
         }
+        /* BUILD_PRO_END */
 
         /* ---- REST API ---- */
         add_action('rest_api_init', function () {
@@ -70,10 +47,7 @@ class Plugin
         });
 
         /* ---- Webhook System (Pro-only) ---- */
-        if (class_exists('MHBO\Core\Webhook')) {
-            $webhook = new Webhook();
-            $webhook->init();
-        }
+        
 
         /* ---- GDPR / Privacy ---- */
         $privacy = new Privacy();
@@ -94,15 +68,7 @@ class Plugin
         $calendar->init();
 
         // Initialize License Validator for periodic revalidation (Pro-only)
-        if (class_exists('MHBO\Core\LicenseValidator')) {
-            $license_validator = new LicenseValidator();
-            $license_validator->init();
-        }
-
-        // Load Pro Features if license is active
-        if (false) {
-            // Pro features not available in Free version
-        }
+        
 
         // Register Widget (Must be global to show in Admin > Widgets)
         add_action('widgets_init', function () {

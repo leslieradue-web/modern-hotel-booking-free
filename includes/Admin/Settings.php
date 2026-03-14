@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
 namespace MHBO\Admin;
-
-use MHBO\Core\I18n;
-
 if (!defined('ABSPATH')) {
     exit;
 }
+
+
+use MHBO\Core\I18n;
 
 class Settings
 {
@@ -15,16 +15,11 @@ class Settings
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_init', array($this, 'save_general_settings'));
         add_action('admin_init', array($this, 'save_multilingual_settings'));
-
-
-
-
-
-
-
-
-        add_action('admin_init', array($this, 'register_wpml_polylang_strings'));        add_action('wp_ajax_mhbo_clear_cache', array($this, 'ajax_clear_cache'));
+        add_action('admin_init', array($this, 'save_amenities_settings'));
+        add_action('admin_init', array($this, 'register_wpml_polylang_strings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
+
+        
     }
 
     /**
@@ -105,12 +100,7 @@ class Settings
         register_setting('mhbo_settings_group', 'mhbo_booking_page', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
         register_setting('mhbo_settings_group', 'mhbo_booking_page_url', array('type' => 'string', 'sanitize_callback' => 'esc_url_raw', 'default' => ''));
 
-        // GDPR Settings (Pro)
-        register_setting('mhbo_settings_group', 'mhbo_gdpr_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
-        register_setting('mhbo_settings_group', 'mhbo_gdpr_checkbox_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
-        register_setting('mhbo_settings_group', 'mhbo_label_gdpr_checkbox_text', array('default' => '[:en]I accept the privacy policy.[:]', 'sanitize_callback' => 'wp_kses_post'));
-        register_setting('mhbo_settings_group', 'mhbo_gdpr_retention_days', array('default' => 365, 'sanitize_callback' => 'absint'));
-        register_setting('mhbo_settings_group', 'mhbo_gdpr_cookie_prefix', array('default' => 'mhbo_', 'sanitize_callback' => 'sanitize_key'));
+        
 
         // Uninstall Settings
         register_setting('mhbo_settings_group', 'mhbo_save_data_on_uninstall', array('default' => 1, 'sanitize_callback' => 'absint'));
@@ -119,14 +109,10 @@ class Settings
         register_setting('mhbo_settings_group', 'mhbo_powered_by_link', array('default' => 0, 'sanitize_callback' => 'absint'));
 
         // Performance Settings
-        register_setting('mhbo_settings_group', 'mhbo_cache_enabled', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 1));
+        
 
         // Theme Settings
-        register_setting('mhbo_settings_group', 'mhbo_active_theme', array('type' => 'string', 'sanitize_callback' => 'sanitize_key', 'default' => 'midnight'));
-        register_setting('mhbo_settings_group', 'mhbo_custom_primary_color', array('type' => 'string', 'sanitize_callback' => 'sanitize_hex_color', 'default' => ''));
-        register_setting('mhbo_settings_group', 'mhbo_custom_secondary_color', array('type' => 'string', 'sanitize_callback' => 'sanitize_hex_color', 'default' => ''));
-        register_setting('mhbo_settings_group', 'mhbo_custom_accent_color', array('type' => 'string', 'sanitize_callback' => 'sanitize_hex_color', 'default' => ''));
-        register_setting('mhbo_settings_group', 'mhbo_custom_css', array('type' => 'string', 'sanitize_callback' => 'wp_strip_all_tags', 'default' => ''));
+        
 
         // Amenities (Dynamic) - Handled manually with inline sanitization
         // register_setting('mhbo_settings_group', 'mhbo_amenities_list');
@@ -312,13 +298,17 @@ class Settings
     public static function render()
     {
         $active_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $is_pro_active = \MHBO\Core\License::is_pro_active();
+        // Assignment removed for compliance
         ?>
         <div class="wrap mhbo-admin-wrap">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Configuration', 'modern-hotel-booking'); ?>
             </h1>
-            <h2 class="nav-tab-wrapper">                <a href="?page=mhbo-settings&tab=general"
+            <?php settings_errors('mhbo_settings'); ?>
+            <?php settings_errors('mhbo_amenities'); ?>
+            <h2 class="nav-tab-wrapper">
+                
+                <a href="?page=mhbo-settings&tab=general"
                     class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('General', 'modern-hotel-booking'); ?></a>
                 <a href="?page=mhbo-settings&tab=emails"
                     class="nav-tab <?php echo 'emails' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Email Templates', 'modern-hotel-booking'); ?></a>
@@ -327,8 +317,6 @@ class Settings
                 <a href="?page=mhbo-settings&tab=amenities"
                     class="nav-tab <?php echo 'amenities' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Amenities', 'modern-hotel-booking'); ?></a>
 
-                
-                
                 
             </h2>
 
@@ -343,7 +331,7 @@ class Settings
                     if (!in_array($active_tab, $manual_tabs, true)) {
                         settings_fields('mhbo_settings_group');
                     } else {
-                        wp_nonce_field('mhbo_settings_group-options');
+                        wp_nonce_field('mhbo_settings_nonce', 'mhbo_nonce');
                     }
 
                     if ('general' === $active_tab) {
@@ -361,7 +349,7 @@ class Settings
 
                     // Only show save button if not on a locked Pro tab
                     $locked_tabs = [];
-                    if ($is_pro_active || !in_array($active_tab, $locked_tabs, true)) {
+                    if (MHBO_IS_PRO || !in_array($active_tab, $locked_tabs, true)) {
                         echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
                         submit_button();
                     }
@@ -603,13 +591,17 @@ class Settings
         ];
 
         // Add dynamic amenities to labels
-        $amenities = get_option('mhbo_amenities_list', [
-            'wifi' => __('Free WiFi', 'modern-hotel-booking'),
-            'ac' => __('Air Conditioning', 'modern-hotel-booking'),
-            'tv' => __('Smart TV', 'modern-hotel-booking'),
-            'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
-            'pool' => __('Pool View', 'modern-hotel-booking')
-        ]);
+        $amenities = get_option('mhbo_amenities_list');
+        if (false === $amenities) {
+            $amenities = [
+                'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
+                'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
+                'tv'        => __('Smart TV', 'modern-hotel-booking'),
+                'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
+                'pool'      => __('Pool View', 'modern-hotel-booking')
+            ];
+        }
+        $amenities = is_array($amenities) ? $amenities : [];
         foreach ($amenities as $key => $label) {
             $label_groups['Amenities'][$key] = $label;
         }
@@ -647,23 +639,23 @@ class Settings
             return;
         }
 
-        if (!check_admin_referer('mhbo_settings_group-options')) {
-            return;
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
         }
 
-        if (!current_user_can('manage_options')) {
-            return;
+        if (!check_admin_referer('mhbo_settings_nonce', 'mhbo_nonce')) {
+            wp_die('Security check failed');
         }
 
         // Save Emails
+        $allowed_email_statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
         if (isset($_POST['mhbo_email_templates']) && is_array($_POST['mhbo_email_templates'])) {
-            $allowed_email_statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
-            $email_templates = wp_unslash($_POST['mhbo_email_templates']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
-            foreach ($email_templates as $status => $data) {
-                $status = sanitize_key($status);
-                if (!in_array($status, $allowed_email_statuses, true)) {
+            $email_templates_post = wp_unslash($_POST['mhbo_email_templates']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
+            foreach ($allowed_email_statuses as $status) {
+                if (!isset($email_templates_post[$status]) || !is_array($email_templates_post[$status])) {
                     continue;
                 }
+                $data = $email_templates_post[$status];
                 if (isset($data['subject'])) {
                     $subject_data = is_array($data['subject'])
                         ? array_map('sanitize_text_field', $data['subject'])
@@ -765,12 +757,12 @@ class Settings
             $amenities = get_option('mhbo_amenities_list', []);
             $allowed_label_keys = array_merge($allowed_label_keys, array_keys($amenities));
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- wp_unslash applied, sanitization performed per-field below
-            $label_templates = wp_unslash($_POST['mhbo_label_templates']);
-            foreach ($label_templates as $key => $data) {
-                $key = sanitize_key($key);
-                if (!in_array($key, $allowed_label_keys, true)) {
+            $label_templates_post = wp_unslash($_POST['mhbo_label_templates']);
+            foreach ($allowed_label_keys as $key) {
+                if (!isset($label_templates_post[$key])) {
                     continue;
                 }
+                $data = $label_templates_post[$key];
                 $label_data = is_array($data)
                     ? array_map('sanitize_text_field', $data)
                     : sanitize_text_field($data);
@@ -790,13 +782,12 @@ class Settings
             return;
         }
 
-        // Check nonce
-        if (!check_admin_referer('mhbo_settings_group-options')) {
-            return;
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
         }
 
-        if (!current_user_can('manage_options')) {
-            return;
+        if (!check_admin_referer('mhbo_settings_nonce', 'mhbo_nonce')) {
+            wp_die('Security check failed');
         }
 
         // General
@@ -870,554 +861,87 @@ class Settings
             return;
         }
 
-        if (!check_admin_referer('mhbo_settings_group-options')) {
-            return;
-        }
-
         if (!current_user_can('manage_options')) {
-            return;
+            wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
         }
 
-        self::save_theme_options_from_post($_POST);
+        if (!check_admin_referer('mhbo_settings_nonce', 'mhbo_nonce')) {
+            wp_die('Security check failed');
+        }
+
+        // Sanitize and save fields directly from $_POST rather than passing the whole array
+        if (isset($_POST['mhbo_active_theme'])) {
+            update_option('mhbo_active_theme', sanitize_key(wp_unslash($_POST['mhbo_active_theme'])));
+        }
+        if (isset($_POST['mhbo_custom_primary_color'])) {
+            update_option('mhbo_custom_primary_color', sanitize_hex_color(wp_unslash($_POST['mhbo_custom_primary_color'])));
+        }
+        if (isset($_POST['mhbo_custom_secondary_color'])) {
+            update_option('mhbo_custom_secondary_color', sanitize_hex_color(wp_unslash($_POST['mhbo_custom_secondary_color'])));
+        }
+        if (isset($_POST['mhbo_custom_accent_color'])) {
+            update_option('mhbo_custom_accent_color', sanitize_hex_color(wp_unslash($_POST['mhbo_custom_accent_color'])));
+        }
+        if (isset($_POST['mhbo_custom_css'])) {
+            update_option('mhbo_custom_css', wp_strip_all_tags(wp_unslash($_POST['mhbo_custom_css'])));
+        }
 
         add_settings_error('mhbo_settings', 'saved', __('Theme settings saved successfully.', 'modern-hotel-booking'), 'success');
     }
 
+    
+
     /**
-     * Shared theme option saving logic for Settings and Pro Themes pages.
-     *
-     * @param array $source Raw $_POST-like array.
+     * Render Pro Upsell notice for unlicensed users trying to access Pro tabs.
      */
-    private static function save_theme_options_from_post(array $source): void
+    public static function render_pro_upsell()
     {
-        if (isset($source['mhbo_active_theme'])) {
-            update_option('mhbo_active_theme', sanitize_key(wp_unslash($source['mhbo_active_theme'])));
-        }
-        if (isset($source['mhbo_custom_primary_color'])) {
-            update_option('mhbo_custom_primary_color', sanitize_hex_color(wp_unslash($source['mhbo_custom_primary_color'])));
-        }
-        if (isset($source['mhbo_custom_secondary_color'])) {
-            update_option('mhbo_custom_secondary_color', sanitize_hex_color(wp_unslash($source['mhbo_custom_secondary_color'])));
-        }
-        if (isset($source['mhbo_custom_accent_color'])) {
-            update_option('mhbo_custom_accent_color', sanitize_hex_color(wp_unslash($source['mhbo_custom_accent_color'])));
-        }
-        if (isset($source['mhbo_custom_css'])) {
-            update_option('mhbo_custom_css', wp_strip_all_tags(wp_unslash($source['mhbo_custom_css'])));
-        }
-    }
-
-    public static function render_pro_page()
-    {
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified on the next line via check_admin_referer()
-        if (isset($_POST['mhbo_save_pro_settings'])) {
-            check_admin_referer('mhbo_pro_settings');
-            $key = ''; // License key removed for Free version
-            $result = ['success' => false, 'message' => 'License system not available'];
-
-            if ($result['success']) {
-                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($result['message']) . '</p></div>';
-            } else {
-                echo '<div class="notice notice-error is-dismissible"><p>' . esc_html($result['message']) . '</p></div>';
-            }
-        }
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified on the next line via check_admin_referer()
-        if (isset($_POST['mhbo_remove_license'])) {
-            check_admin_referer('mhbo_pro_settings');
-            $result = ['success' => false, 'message' => 'License system not available'];
-            echo '<div class="notice notice-info is-dismissible"><p>' . esc_html($result['message']) . '</p></div>';
-        }
-
-        if (isset($_GET['reset_theme']) && isset($_GET['_wpnonce']) && wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_reset_theme')) {
-            if (sanitize_text_field(wp_unslash($_GET['reset_theme'])) === '1') {
-                update_option('mhbo_active_theme', 'midnight');
-                update_option('mhbo_custom_primary_color', '');
-                update_option('mhbo_custom_secondary_color', '');
-                update_option('mhbo_custom_accent_color', '');
-                update_option('mhbo_custom_css', '');
-                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Theme reset to default successfully.', 'modern-hotel-booking') . '</p></div>';
-            }
-        }
-
-                        $is_active = ('active' === 'inactive');
-        $active_tab = isset($_GET['page']) && 'mhbo-pro' !== sanitize_key(wp_unslash($_GET['page'])) ? str_replace('mhbo-pro-', '', sanitize_key(wp_unslash($_GET['page']))) : 'overview'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-        // Handle theme settings save from the Pro Themes page.
-        if ('themes' === $active_tab && isset($_POST['mhbo_pro_themes_save'])) {
-            if (check_admin_referer('mhbo_pro_themes_settings')) {
-                if (current_user_can('manage_options')) {
-                    self::save_theme_options_from_post($_POST);
-                    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Theme settings saved successfully.', 'modern-hotel-booking') . '</p></div>';
-                }
-            }
-        }
-
         ?>
-        <div class="wrap mhbo-pro-wrap">
-            <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
-                <?php esc_html_e('Pro Experience', 'modern-hotel-booking'); ?>
-            </h1>
-
-            <h2 class="nav-tab-wrapper">
-                <a href="?page=mhbo-pro"
-                    class="nav-tab <?php echo 'overview' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Overview', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-extras"
-                    class="nav-tab <?php echo 'extras' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Booking Extras', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-ical"
-                    class="nav-tab <?php echo 'ical' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('iCal Sync', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-payments"
-                    class="nav-tab <?php echo 'payments' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Payments', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-webhooks"
-                    class="nav-tab <?php echo 'webhooks' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Webhooks', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-themes"
-                    class="nav-tab <?php echo 'themes' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Pro Themes', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-analytics"
-                    class="nav-tab <?php echo 'analytics' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Analytics', 'modern-hotel-booking'); ?></a>
-                <a href="?page=mhbo-pro-pricing"
-                    class="nav-tab <?php echo 'pricing' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Advanced Pricing', 'modern-hotel-booking'); ?></a>
-            </h2>
-
-            <div class="mhbo-pro-content-area" style="margin-top: 20px;">
-                <?php if ('overview' === $active_tab): ?>
-                    <?php
-                    // License status for display
-                                        ?>
-
-                    <!-- License Status Banner -->
-                    <div class="mhbo-license-banner <?php echo $is_active ? 'mhbo-license-active' : 'mhbo-license-inactive'; ?>">
-                        <div class="mhbo-license-banner-content">
-                            <div class="mhbo-license-icon">
-                                <?php if ($is_active): ?>
-                                    <span class="dashicons dashicons-yes-alt"></span>
-                                <?php else: ?>
-                                    <span class="dashicons dashicons-lock"></span>
-                                <?php endif; ?>
-                            </div>
-                            <div class="mhbo-license-info">
-                                <h3>
-                                    <?php if ($is_active): ?>
-                                        <?php esc_html_e('Pro License Active', 'modern-hotel-booking'); ?>
-                                    <?php else: ?>
-                                        <?php esc_html_e('Pro License Required', 'modern-hotel-booking'); ?>
-                                    <?php endif; ?>
-                                </h3>
-                                <p>
-                                    <?php if ($is_active): ?>
-                                        <?php if (''): ?>
-                                            <?php
-                                            // translators: %s: license expiration date
-                                            echo esc_html(sprintf(__('Expires: %s', 'modern-hotel-booking'), date_i18n(get_option('date_format'), strtotime('')))); ?>
-                                        <?php else: ?>
-                                            <?php esc_html_e('All Pro features are unlocked and ready to use.', 'modern-hotel-booking'); ?>
-                                        <?php endif; ?>
-                                    <?php else: ?>
-                                        <?php esc_html_e('Unlock all premium features to maximize your booking potential.', 'modern-hotel-booking'); ?>
-                                    <?php endif; ?>
-                                </p>
-                            </div>
-                            <div class="mhbo-license-action">
-                                <?php if ($is_active): ?>                                <?php else: ?>
-                                    <div style="display: flex; gap: 10px;">
-                                        <a href="<?php echo esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'); ?>"
-                                            target="_blank" rel="noopener noreferrer" class="button button-primary">
-                                            <?php esc_html_e('Upgrade to Pro', 'modern-hotel-booking'); ?>
-                                        </a>                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php if (!$is_active): ?>
-                            <div class="mhbo-license-benefits">
-                                <span class="mhbo-benefit-item"><?php esc_html_e('Priority Support', 'modern-hotel-booking'); ?></span>
-                                <span class="mhbo-benefit-item"><?php esc_html_e('Priority Updates', 'modern-hotel-booking'); ?></span>
-                                <span
-                                    class="mhbo-benefit-item"><?php esc_html_e('All Premium Features', 'modern-hotel-booking'); ?></span>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <?php
-                    // Dynamically fetch the latest changelog from readme.txt
-                    $changelog_items = [];
-                    $latest_version = MHBO_VERSION;
-                    $readme_file = MHBO_PLUGIN_DIR . 'readme.txt';
-
-                    if (file_exists($readme_file)) {
-                        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file read
-                        $readme_content = file_get_contents($readme_file);
-                        if ($readme_content && preg_match('/==\s*Changelog\s*==(.*?)($|==)/s', $readme_content, $matches)) {
-                            $changelog_section = $matches[1];
-                            if (preg_match('/^\s*=\s*([0-9\.]+.*?)\s*=(.*?)(?:\n\s*=\s*[0-9]|$)/s', $changelog_section, $version_matches)) {
-                                $latest_version = trim($version_matches[1]);
-                                $version_notes = trim($version_matches[2]);
-                                $lines = explode("\n", $version_notes);
-                                foreach ($lines as $line) {
-                                    $line = trim($line);
-                                    if (strpos($line, '*') === 0 || strpos($line, '-') === 0) {
-                                        $changelog_items[] = trim(substr($line, 1));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    ?>
-
-                    <div class="mhbo-card" style="margin-top: 20px; border-left: 4px solid #10b981;">
-                        <h3 style="color: #10b981; margin-top: 0; margin-bottom: 10px; font-size: 15px;">
-                            <?php
-                            // translators: %s: Plugin version number
-                            echo esc_html(sprintf(__('Version %s Updates', 'modern-hotel-booking'), $latest_version));
-                            ?>
-                        </h3>
-                        <?php if (!empty($changelog_items)): ?>
-                            <ul style="margin-left: 20px; font-size: 12px; color: #646970;">
-                                <?php foreach ($changelog_items as $item): ?>
-                                    <li style="margin-bottom: 4px;"><?php
-                                    $item_clean = trim($item);
-                                    if (preg_match('/^([^:]+:)(.*)$/', $item_clean, $parts)) {
-                                        echo '<strong>' . esc_html($parts[1]) . '</strong>' . esc_html($parts[2]);
-                                    } else {
-                                        echo esc_html($item_clean);
-                                    }
-                                    ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php else: ?>
-                            <p style="font-size: 12px; color: #646970;">
-                                <?php esc_html_e('Please check the plugin readme.txt for the latest updates.', 'modern-hotel-booking'); ?>
-                            </p>
-                        <?php endif; ?>
-
-                        <div style="margin-top: 10px;">
-                            <a href="https://github.com/leslieradue-web/modern-hotel-booking-free" target="_blank"
-                                rel="noopener noreferrer"
-                                style="font-size: 12px; color: #10b981; text-decoration: none; font-weight: bold;">
-                                <?php esc_html_e('View Full Changelog →', 'modern-hotel-booking'); ?>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Feature Categories -->
-                    <div class="mhbo-feature-categories">
-
-                        <!-- Payment Processing Category -->
-                        <div class="mhbo-feature-category">
-                            <div class="mhbo-category-header">
-                                <h2><span class="mhbo-category-icon">💳</span>
-                                    <?php esc_html_e('Payment Processing', 'modern-hotel-booking'); ?></h2>
-                                <a href="?page=mhbo-pro-payments" class="mhbo-configure-link">
-                                    <?php esc_html_e('Configure', 'modern-hotel-booking'); ?> <span
-                                        class="dashicons dashicons-arrow-right-alt2"></span>
-                                </a>
-                            </div>
-                            <div class="mhbo-feature-grid">
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">💳</span>
-                                    <h4><?php esc_html_e('Stripe Integration', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Accept payments with Stripe including Apple Pay and Google Pay support.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    <span
-                                        class="mhbo-badge mhbo-badge-popular"><?php esc_html_e('Popular', 'modern-hotel-booking'); ?></span>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🅿️</span>
-                                    <h4><?php esc_html_e('PayPal Integration', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Accept PayPal payments with automatic IPN verification and status updates.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🏨</span>
-                                    <h4><?php esc_html_e('Pay On-site Option', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Allow guests to pay upon arrival with flexible payment tracking.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🔄</span>
-                                    <h4><?php esc_html_e('Payment Webhooks', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Automatic payment status updates from Stripe and PayPal webhooks.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">📊</span>
-                                    <h4><?php esc_html_e('Payment Status Tracking', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Full payment lifecycle management: pending, deposit paid, fully paid, refunded.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tax Management Category -->
-                        <div class="mhbo-feature-category">
-                            <div class="mhbo-category-header">
-                                <h2><span class="mhbo-category-icon">🧾</span>
-                                    <?php esc_html_e('Tax Management', 'modern-hotel-booking'); ?></h2>
-                                
-                            </div>
-                            <div class="mhbo-feature-grid">
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🧾</span>
-                                    <h4><?php esc_html_e('VAT/TAX System', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Three modes: VAT inclusive, Sales Tax exclusive, or Disabled. Flexible configuration.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">📈</span>
-                                    <h4><?php esc_html_e('Separate Tax Rates', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Different tax rates for accommodation vs extras services.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🌍</span>
-                                    <h4><?php esc_html_e('Country-Specific VAT', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Set different VAT rates per country for international guests.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">📝</span>
-                                    <h4><?php esc_html_e('Tax Breakdown Display', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Detailed tax display by room, children, and extras in booking confirmations.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🌐</span>
-                                    <h4><?php esc_html_e('Multilingual Tax Labels', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Per-language tax terminology (VAT, IVA, TVA, MwSt, etc.).', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Booking Management Category -->
-                        <div class="mhbo-feature-category">
-                            <div class="mhbo-category-header">
-                                <h2><span class="mhbo-category-icon">📅</span>
-                                    <?php esc_html_e('Booking Management', 'modern-hotel-booking'); ?></h2>
-                            </div>
-                            <div class="mhbo-feature-grid">
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🏷️</span>
-                                    <h4><?php esc_html_e('Seasonal Pricing', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Set automated weekend and holiday multipliers for dynamic pricing.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    <a href="?page=mhbo-pro-pricing" class="mhbo-configure-link">
-                                        <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
-                                    </a>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">➕</span>
-                                    <h4><?php esc_html_e('Booking Extras', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Offer guided tours, airport transfers, breakfast packages, and local experiences.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    <a href="?page=mhbo-pro-extras" class="mhbo-configure-link">
-                                        <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
-                                    </a>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🔄</span>
-                                    <h4><?php esc_html_e('iCal Synchronization', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Bi-directional sync with Airbnb, Booking.com, and Google Calendar.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    <a href="?page=mhbo-pro-ical" class="mhbo-configure-link">
-                                        <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
-                                    </a>
-                                    <span
-                                        class="mhbo-badge mhbo-badge-popular"><?php esc_html_e('Popular', 'modern-hotel-booking'); ?></span>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">📊</span>
-                                    <h4><?php esc_html_e('Analytics Dashboard', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Chart.js visualizations, occupancy rates, and ADR tracking for yield optimization.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    <a href="?page=mhbo-pro-analytics" class="mhbo-configure-link">
-                                        <?php esc_html_e('View', 'modern-hotel-booking'); ?>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Compliance & UX Category -->
-                        <div class="mhbo-feature-category">
-                            <div class="mhbo-category-header">
-                                <h2><span class="mhbo-category-icon">🔒</span>
-                                    <?php esc_html_e('Compliance & UX', 'modern-hotel-booking'); ?></h2>
-                            </div>
-                            <div class="mhbo-feature-grid">
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🔒</span>
-                                    <h4><?php esc_html_e('GDPR Compliance Tools', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Automated data retention, consent checkboxes, and cookie management.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🎨</span>
-                                    <h4><?php esc_html_e('Theme Customization', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('6 designer presets, custom branding colors, and advanced CSS injection.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                    <a href="?page=mhbo-pro-themes" class="mhbo-configure-link">
-                                        <?php esc_html_e('Configure', 'modern-hotel-booking'); ?>
-                                    </a>
-                                </div>
-                                <div class="mhbo-feature-card">
-                                    <span class="mhbo-feature-icon">🌐</span>
-                                    <h4><?php esc_html_e('Multilingual Support', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Compatible with qTranslate, WPML, and Polylang for full translation support.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Developer Tools Category -->
-                        <div class="mhbo-feature-category mhbo-feature-category-dark">
-                            <div class="mhbo-category-header">
-                                <h2><span class="mhbo-category-icon">⚡</span>
-                                    <?php esc_html_e('Developer Platform', 'modern-hotel-booking'); ?></h2>
-                                <a href="?page=mhbo-pro-webhooks" class="mhbo-configure-link">
-                                    <?php esc_html_e('Configure', 'modern-hotel-booking'); ?> <span
-                                        class="dashicons dashicons-arrow-right-alt2"></span>
-                                </a>
-                            </div>
-                            <div class="mhbo-feature-grid">
-                                <div class="mhbo-feature-card mhbo-feature-card-dark">
-                                    <span class="mhbo-feature-icon">🔐</span>
-                                    <h4><?php esc_html_e('REST API', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Full REST API access for external integrations and custom applications.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                                <div class="mhbo-feature-card mhbo-feature-card-dark">
-                                    <span class="mhbo-feature-icon">🔗</span>
-                                    <h4><?php esc_html_e('HMAC Webhooks', 'modern-hotel-booking'); ?></h4>
-                                    <p><?php esc_html_e('Secure webhooks with HMAC-signed payloads for booking events.', 'modern-hotel-booking'); ?>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions Section -->
-                    <div class="mhbo-quick-actions">
-                        <h2><?php esc_html_e('Quick Actions', 'modern-hotel-booking'); ?></h2>
-                        <div class="mhbo-quick-actions-grid">
-                            <a href="?page=mhbo-pro-payments" class="mhbo-quick-action-btn">
-                                <span class="dashicons dashicons-money-alt"></span>
-                                <?php esc_html_e('Configure Payment Gateways', 'modern-hotel-booking'); ?>
-                            </a>
-                            
-                            <a href="?page=mhbo-pro-analytics" class="mhbo-quick-action-btn">
-                                <span class="dashicons dashicons-chart-bar"></span>
-                                <?php esc_html_e('View Analytics', 'modern-hotel-booking'); ?>
-                            </a>
-                            <a href="?page=mhbo-pro-ical" class="mhbo-quick-action-btn">
-                                <span class="dashicons dashicons-calendar-alt"></span>
-                                <?php esc_html_e('Manage iCal Feeds', 'modern-hotel-booking'); ?>
-                            </a>
-                        </div>
-                    </div>
-
-                <?php elseif ('extras' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <div class="mhbo-card">
-                            <?php
-                            if (method_exists('MHBO\Admin\Menu', 'display_extras_page')) {
-                                (new Menu())->display_extras_page();
-                            }
-                            ?>
-                        </div>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-
-                <?php elseif ('payments' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <div class="mhbo-card">
-                            <form method="post" action="">
-                                <?php wp_nonce_field('mhbo_settings_group-options'); ?>
-                                <input type="hidden" name="mhbo_save_tab" value="payments">
-                                <?php self::render_payments_tab(); ?>
-                                <?php submit_button(__('Save Payment Settings', 'modern-hotel-booking')); ?>
-                            </form>
-                        </div>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-
-                <?php elseif ('webhooks' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <div class="mhbo-card">
-                            <?php self::render_api_tab(); ?>
-                        </div>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-
-                <?php elseif ('themes' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <form method="post">
-                            <?php wp_nonce_field('mhbo_pro_themes_settings'); ?>
-                            <div class="mhbo-card">
-                                <?php self::render_pro_upsell(); ?>
-                            </div>
-                            <p class="submit">
-                                <button type="submit" name="mhbo_pro_themes_save" value="1" class="button button-primary">
-                                    <?php esc_html_e('Save Theme Settings', 'modern-hotel-booking'); ?>
-                                </button>
-                            </p>
-                        </form>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-
-                <?php elseif ('analytics' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <div class="mhbo-card">
-                            <?php
-                            // Pro feature: Analytics not available in Free version
-                            ?>
-                        </div>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-
-                <?php elseif ('pricing' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <div class="mhbo-card">
-                            <?php self::render_pro_upsell(); ?>
-                        </div>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-
-                <?php elseif ('ical' === $active_tab): ?>
-                    <?php if ($is_active): ?>
-                        <div class="mhbo-card">
-                            <?php
-                            // Pro feature: iCal export not available in Free version
-                            ?>
-                        </div>
-                    <?php else:
-                        self::render_pro_upsell();
-                    endif; ?>
-                <?php endif; ?>
+            <div class="mhbo-pro-upsell"
+                style="margin-top: 20px; padding: 40px; text-align: center; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 1px solid #dee2e6;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
+                <h3 style="margin: 0 0 10px 0; font-size: 1.4rem; color: #1a3b5d;">
+                    <?php esc_html_e('Pro Feature', 'modern-hotel-booking'); ?>
+                </h3>
+                <p style="color: #6c757d; max-width: 400px; margin: 0 auto 20px auto; font-size: 14px;">
+                    <?php esc_html_e('Unlock this feature and many more with a Pro license. Get access to payment processing, VAT/TAX management, analytics, and more.', 'modern-hotel-booking'); ?>
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a href="<?php echo esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'); ?>"
+                        target="_blank" rel="noopener noreferrer"
+                        class="button button-primary button-large"><?php esc_html_e('Upgrade to Pro', 'modern-hotel-booking'); ?></a>                </div>
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+                    <span
+                        style="display: inline-block; font-size: 12px; color: #856404; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 12px; margin: 0 5px;">✓
+                        <?php esc_html_e('Priority Support', 'modern-hotel-booking'); ?></span>
+                    <span
+                        style="display: inline-block; font-size: 12px; color: #856404; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 12px; margin: 0 5px;">✓
+                        <?php esc_html_e('Priority Updates', 'modern-hotel-booking'); ?></span>
+                    <span
+                        style="display: inline-block; font-size: 12px; color: #856404; background: rgba(255,255,255,0.8); padding: 4px 12px; border-radius: 12px; margin: 0 5px;">✓
+                        <?php esc_html_e('All Premium Features', 'modern-hotel-booking'); ?></span>
+                </div>
             </div>
             <?php
     }
 
     
 
+    
+
     private static function render_amenities_tab()
     {
         $amenities = get_option('mhbo_amenities_list');
-        $default_amenities = [
-            'wifi' => __('Free WiFi', 'modern-hotel-booking'),
-            'ac' => __('Air Conditioning', 'modern-hotel-booking'),
-            'tv' => __('Smart TV', 'modern-hotel-booking'),
-            'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
-            'pool' => __('Pool View', 'modern-hotel-booking')
-        ];
-
-        if (empty($amenities) || !is_array($amenities)) {
-            $amenities = $default_amenities;
+        if (false === $amenities) { // If option doesn't exist, initialize with defaults
+            $amenities = [
+                'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
+                'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
+                'tv'        => __('Smart TV', 'modern-hotel-booking'),
+                'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
+                'pool'      => __('Pool View', 'modern-hotel-booking')
+            ];
         }
+        $amenities = is_array($amenities) ? $amenities : []; // Ensure it's always an array
         ?>
             <h3><?php esc_html_e('Room Amenities', 'modern-hotel-booking'); ?></h3>
             <p><?php esc_html_e('Manage the list of amenities available for rooms. After adding here, you can translate them in the "Frontend Labels" tab.', 'modern-hotel-booking'); ?>
@@ -1478,21 +1002,24 @@ class Settings
         }
 
         if (!current_user_can('manage_options')) {
-            return;
+            wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
         }
 
-        check_admin_referer('mhbo_settings_group-options');
+        if (!check_admin_referer('mhbo_settings_nonce', 'mhbo_nonce')) {
+            wp_die('Security check failed');
+        }
 
         $amenities = get_option('mhbo_amenities_list');
-        if (empty($amenities) || !is_array($amenities)) {
+        if (false === $amenities) { // If option doesn't exist, initialize with defaults
             $amenities = [
-                'wifi' => __('Free WiFi', 'modern-hotel-booking'),
-                'ac' => __('Air Conditioning', 'modern-hotel-booking'),
-                'tv' => __('Smart TV', 'modern-hotel-booking'),
+                'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
+                'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
+                'tv'        => __('Smart TV', 'modern-hotel-booking'),
                 'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
-                'pool' => __('Pool View', 'modern-hotel-booking')
+                'pool'      => __('Pool View', 'modern-hotel-booking')
             ];
         }
+        $amenities = is_array($amenities) ? $amenities : []; // Ensure it's always an array
 
         // Add Amenity
         if (isset($_POST['mhbo_add_amenity']) && !empty($_POST['mhbo_new_amenity'])) {

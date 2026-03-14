@@ -8,7 +8,7 @@
  * - Theme selection
  * - Cache clear handler
  * 
- * @package MHB
+ * @package MHBO
  * @since 2.0.1
  */
 

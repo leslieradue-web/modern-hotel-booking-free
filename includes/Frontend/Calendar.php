@@ -207,7 +207,7 @@ class Calendar
         $show_pricing = ($room_id > 0);
         ?>
         <div class="mhbo-calendar-container mhbo-calendar-wrapper" data-room-id="<?php echo esc_attr((string) $room_id); ?>"
-            data-show-price="<?php echo $show_pricing ? '1' : '0'; ?>">
+            data-show-price="<?php echo esc_attr($show_pricing ? '1' : '0'); ?>">
             <div class="mhbo-calendar-guide">
                 <?php echo esc_html(I18n::get_label('label_select_check_in')); ?>
             </div>
@@ -226,7 +226,10 @@ class Calendar
 
             <div class="mhbo-calendar-inline"></div>
 
-            <div class="mhbo-selection-box" style="display:none;">
+            <!-- Inline error notification area (hidden until needed) -->
+            <div class="mhbo-calendar-errors mhbo-inline-errors" style="display:none !important;"></div>
+
+            <div class="mhbo-selection-box" style="display:none !important;">
                 <div class="mhbo-selection-header">
                     <h3><?php echo esc_html(I18n::get_label('label_your_selection')); ?></h3>
                 </div>

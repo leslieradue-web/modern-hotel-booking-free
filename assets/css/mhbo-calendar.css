@@ -301,6 +301,33 @@
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    display: none; /* Default hidden */
+}
+
+/* Visibility Utilities (2026 best practice) */
+.mhbo-hidden {
+    display: none !important;
+}
+
+.mhbo-visible {
+    display: block !important;
+}
+
+/* Hardened Error Box Styling */
+.mhbo-calendar-errors {
+    margin: 15px 0 !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    background: #fff5f5 !important;
+    border: 1px solid #feb2b2 !important;
+    color: #c53030 !important;
+    font-size: 0.9rem !important;
+    display: none; /* Managed by JS */
+}
+
+/* Prevent empty shell showing */
+.mhbo-calendar-errors:empty {
+    display: none !important;
 }
 
 .mhbo-selection-header h3 {

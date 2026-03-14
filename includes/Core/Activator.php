@@ -197,6 +197,18 @@ class Activator
 		// Cache Settings (optional/configurable)
 		add_option('mhbo_cache_enabled', 1);
 
+		// Default Amenities
+		if (false === get_option('mhbo_amenities_list')) {
+			$default_amenities = [
+				'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
+				'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
+				'tv'        => __('Smart TV', 'modern-hotel-booking'),
+				'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
+				'pool'      => __('Pool View', 'modern-hotel-booking')
+			];
+			update_option('mhbo_amenities_list', $default_amenities);
+		}
+
 		// License API Credentials — only seed when Pro classes are available
 		// Obfuscated to prevent casual source reading; server-side domain validation is the real security layer
 		if (class_exists('MHBO\Core\LicenseManager')) {
@@ -249,6 +261,18 @@ class Activator
 		add_option('mhbo_ical_notification_email', get_option('admin_email'));
 		add_option('mhbo_ical_sync_lock_timeout', 30);
 		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
+
+		// Default Amenities (for migration)
+		if (false === get_option('mhbo_amenities_list')) {
+			$default_amenities = [
+				'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
+				'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
+				'tv'        => __('Smart TV', 'modern-hotel-booking'),
+				'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
+				'pool'      => __('Pool View', 'modern-hotel-booking')
+			];
+			update_option('mhbo_amenities_list', $default_amenities);
+		}
 
 		// Add new indexes for performance (for existing installations)
 		self::add_performance_indexes();

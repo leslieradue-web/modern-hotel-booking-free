@@ -1,9 +1,9 @@
 === Modern Hotel Booking ===
-Contributors: leslieradue-web
+Contributors: leslierad
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.7.2
+Stable tag: 2.2.7.4
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,7 +43,7 @@ How to use the Modern Hotel Booking Plugin after installing
 3. (Optional) Go to **Hotel Booking > Pricing Rules** — Add seasonal pricing (fixed amount or percentage).
 4. Create or choose a page for bookings and add one of these:
    - Gutenberg block: **Modern Hotel Booking** (or **Hotel Booking Form Preview**)
-   - Shortcode: `[modern_hotel_booking]`
+   - Shortcode: `[mhbo_booking_form]` (recommended) or `[modern_hotel_booking]`
    - Or use the widget
 5. Go to **Hotel Booking > Settings** — **IMPORTANT**: Select your Booking Page from the dropdown and save. Configure any other options (emails, currency, etc.) and save again.
 6. (Optional) For individual room pages, use the **Room Availability Calendar** block or shortcode `[mhbo_room_calendar room_id="1"]` (replace 1 with the actual room ID).
@@ -106,6 +106,17 @@ Both services are optional and only active if configured in the Pro version.
 5. **Settings Panel:** Extensive configuration for emails, currencies, and rules.
 
 == Changelog ==
+
+= 2.2.7.4 =
+* Version update WP repo compliance checks and audit.
+
+= 2.2.7.3 =
+* Security: Comprehensive audit and enforcement of nonces on all administrative settings and AJAX actions.
+* Compliance: Completed full surgical separation of Pro-only logic from the Free distribution (trialware compliance).
+* Compliance: Standardized all internal prefixes to `mhbo_` for full WordPress.org directory compatibility.
+* Security: Added `index.php` protection to all subdirectories to prevent direct directory listing.
+* Hygiene: Removed all development debug logs and TODO/FIXME comments from the source.
+* Fix: Synchronized versioning across all plugin metadata and documentation.
 
 = 2.2.7.2 =
 * Rechecked issues - WP.org review fixes: Added sanitize_callbacks, removed Pro stubs, updated libs, added external services docs, fixed i18n.

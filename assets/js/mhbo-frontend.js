@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize all booking forms (Shortcodes and Widgets)
         initBookingForms();
@@ -37,7 +37,7 @@
 
         // Get room_id from form if available
         const form = pickerInput.closest('form');
-        const roomIdInput = form ? form.querySelector('[name="room_id"]') : null;
+        const roomIdInput = form ? form.querySelector('[name="mhbo_room_id"]') : null;
         const roomId = roomIdInput ? roomIdInput.value : null;
 
         // Initialize flatpickr with disabled dates

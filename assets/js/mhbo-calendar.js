@@ -4,16 +4,23 @@ jQuery(document).ready(function ($) {
     const debugLog = (function () {
         const isDebug = (typeof mhbo_calendar !== 'undefined' && mhbo_calendar.debug) ||
             (typeof localStorage !== 'undefined' && localStorage.getItem('mhbo_debug'));
-        return isDebug ? console.error.bind(console, '[MHB]') : function () { };
+        return isDebug ? console.error.bind(console, '[MHBO]') : function () { };
     })();
 
     function initAllCalendars() {
         $('.mhbo-calendar-container').each(function () {
             const $wrapper = $(this);
+            
+            // Double-initialization protection (2026 best practice)
+            if ($wrapper.data('mhbo-initialized')) return;
+            $wrapper.data('mhbo-initialized', true);
+            $wrapper.addClass('mhbo-initialized');
+
             const roomId = $wrapper.data('room-id');
             const $selectionBox = $wrapper.find('.mhbo-selection-box');
             const $guide = $wrapper.find('.mhbo-calendar-guide');
             const $inlineContainer = $wrapper.find('.mhbo-calendar-inline');
+            const $errorBox = $wrapper.find('.mhbo-calendar-errors');
             const showPrice = String($wrapper.data('show-price')) === '1';
 
             let picker = null;
@@ -22,7 +29,25 @@ jQuery(document).ready(function ($) {
             let bookingStatusData = {}; // Track booking status per date
             let changeoverData = {}; // Track changeover status (checkin/checkout/both)
 
+            function showInlineError(message) {
+                if ($errorBox.length) {
+                    $errorBox.text(message).addClass('mhbo-visible').fadeIn();
+                    // Auto-hide after 5s
+                    setTimeout(() => {
+                        $errorBox.fadeOut(() => {
+                            $errorBox.removeClass('mhbo-visible').text('');
+                        });
+                    }, 5000);
+                } else {
+                    console.error('[MHBO] Validation Error:', message);
+                }
+            }
+
             function initFlatpickr() {
+                // Explicitly ensure hidden states on init (defense-in-depth)
+                $selectionBox.removeClass('mhbo-visible').hide();
+                $errorBox.removeClass('mhbo-visible').hide();
+
                 $.ajax({
                     url: mhbo_calendar.rest_url,
                     method: 'GET',
@@ -91,6 +116,9 @@ jQuery(document).ready(function ($) {
                     showMonths: 1,
                     locale: locale,
                     onChange: function (selectedDates, dateStr, instance) {
+                        // Clear errors on change
+                        $errorBox.hide();
+
                         // dynamically allow the next booked date to be a checkout date
                         if (selectedDates.length === 1) {
                             const checkIn = selectedDates[0];
@@ -160,7 +188,7 @@ jQuery(document).ready(function ($) {
                             // length 0 or cleared
                             instance.set('maxDate', new Date().fp_incr(365));
                             instance.set('disable', disabledDates);
-                            $selectionBox.hide();
+                            $selectionBox.removeClass('mhbo-visible').hide();
                             $guide.text(mhbo_calendar.i18n.select_checkout || 'Now select your check-out date');
                         }
                     },
@@ -197,6 +225,9 @@ jQuery(document).ready(function ($) {
                         }
                     }
                 });
+
+                // ATTACH INSTANCE TO WRAPPER (CRITICAL FOR HARDENING)
+                $wrapper.data('mhbo-picker', picker);
             }
 
             function updateBookingForm(dates) {
@@ -209,6 +240,15 @@ jQuery(document).ready(function ($) {
                 $wrapper.find('.mhbo-cal-check-out').val(endStr);
                 $wrapper.find('.mhbo-display-check-in').text(startStr);
                 $wrapper.find('.mhbo-display-check-out').text(endStr);
+
+                // CROSS-SYNC: If we are on the booking form page already, find the main form inputs too
+                const $mainForm = $('#mhbo-booking-form');
+                if ($mainForm.length) {
+                    $mainForm.find('input[name="check_in"]').val(startStr);
+                    $mainForm.find('input[name="check_out"]').val(endStr);
+                    // Trigger change to update prices if mhbo-booking-form.js is active
+                    $mainForm.find('input[name="check_in"]').trigger('change');
+                }
 
                 // Update summary box labels if they have translation tags
                 if ($selectionBox.find('.mhbo-selection-header h3').length) {
@@ -233,7 +273,7 @@ jQuery(document).ready(function ($) {
                 }
 
                 $guide.text(mhbo_calendar.i18n.dates_selected || 'Dates selected. Complete the form below.');
-                $selectionBox.fadeIn();
+                $selectionBox.addClass('mhbo-visible').fadeIn();
             }
 
             function calculateTotalPrice(start, end) {
@@ -249,6 +289,12 @@ jQuery(document).ready(function ($) {
                 const formatted = formatCurrency(total);
                 $wrapper.find('.mhbo-display-price').text(formatted);
                 $wrapper.find('.mhbo-cal-total-price').val(total);
+                
+                // Also sync to main form total hidden field if it exists
+                const $mainTotal = $('#mhbo-booking-form').find('input[name="total_price"]');
+                if ($mainTotal.length) {
+                    $mainTotal.val(total);
+                }
             }
 
             function formatCurrency(amount) {
@@ -259,49 +305,73 @@ jQuery(document).ready(function ($) {
                 return pos === 'before' ? (symbol + formatted) : (formatted + symbol);
             }
 
+            // Expose error handler to wrapper
+            $wrapper.data('mhbo-error-handler', showInlineError);
+
             initFlatpickr();
         });
     }
 
     // Capture the button click globally for better resilience
-    $(document).on('click', '.mhbo-booking-btn-submit', function (e) {
-        e.preventDefault();
-        const $btn = $(this);
-        const $wrapper = $btn.closest('.mhbo-calendar-container');
-        const $form = $wrapper.find('.mhbo-selection-form');
-        const roomId = $wrapper.data('room-id');
+    // AND check for double-attachment
+    if (!$(document).data('mhbo-click-attached')) {
+        $(document).on('click', '.mhbo-booking-btn-submit', function (e) {
+            e.preventDefault();
+            const $btn = $(this);
+            const $wrapper = $btn.closest('.mhbo-calendar-container');
+            
+            // Safety check: if we somehow clicked a button without a wrapper, abort
+            if (!$wrapper.length) return;
 
-        const action = $form.attr('action');
-        const checkIn = $wrapper.find('.mhbo-cal-check-in').val();
-        const checkOut = $wrapper.find('.mhbo-cal-check-out').val();
-        const totalPrice = $wrapper.find('.mhbo-cal-total-price').val();
+            const $form = $wrapper.find('.mhbo-selection-form');
+            const roomId = $wrapper.data('room-id');
+            const action = $form.attr('action');
+            const showError = $wrapper.data('mhbo-error-handler') || alert;
+            
+            // HARDENING: Try Flatpickr instance FIRST (most reliable)
+            const picker = $wrapper.data('mhbo-picker');
+            let checkIn, checkOut, totalPrice;
 
-        if (!checkIn || !checkOut) {
-            alert(mhbo_calendar.i18n.select_dates_error || 'Please select check-in and check-out dates.');
-            return;
-        }
+            if (picker && picker.selectedDates.length === 2) {
+                checkIn = picker.formatDate(picker.selectedDates[0], "Y-m-d");
+                checkOut = picker.formatDate(picker.selectedDates[1], "Y-m-d");
+                // Get totalPrice from the internal hidden input as it's calculated in updateBookingForm
+                totalPrice = $wrapper.find('.mhbo-cal-total-price').val() || '0';
+            } else {
+                // FALLBACK: Try wrapper hidden inputs
+                checkIn = $wrapper.find('.mhbo-cal-check-in').val();
+                checkOut = $wrapper.find('.mhbo-cal-check-out').val();
+                totalPrice = $wrapper.find('.mhbo-cal-total-price').val() || '0';
+            }
 
-        let finalUrl;
-        try {
-            const base = window.location.origin;
-            const url = (action && action !== '#' && action !== '') ? new URL(action, base) : new URL(window.location.href);
+            if (!checkIn || !checkOut) {
+                showError(mhbo_calendar.i18n.select_dates_error || 'Please select check-in and check-out dates.');
+                return;
+            }
 
-            url.searchParams.set('room_id', roomId);
-            url.searchParams.set('check_in', checkIn);
-            url.searchParams.set('check_out', checkOut);
-            url.searchParams.set('total_price', totalPrice);
-            url.searchParams.set('mhbo_auto_book', '1');
+            let finalUrl;
+            try {
+                const base = window.location.origin;
+                const url = (action && action !== '#' && action !== '') ? new URL(action, base) : new URL(window.location.href);
 
-            finalUrl = url.toString();
-        } catch (err) {
-            debugLog('Redirect error:', err);
-            const sep = (action && action.indexOf('?') !== -1) ? '&' : '?';
-            const baseUrl = (action && action !== '#' && action !== '') ? action : window.location.href.split('?')[0];
-            finalUrl = baseUrl + sep + 'room_id=' + roomId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&total_price=' + totalPrice + '&mhbo_auto_book=1';
-        }
+                url.searchParams.set('room_id', roomId);
+                url.searchParams.set('check_in', checkIn);
+                url.searchParams.set('check_out', checkOut);
+                url.searchParams.set('total_price', totalPrice);
+                url.searchParams.set('mhbo_auto_book', '1');
 
-        window.location.href = finalUrl;
-    });
+                finalUrl = url.toString();
+            } catch (err) {
+                debugLog('Redirect error:', err);
+                const sep = (action && action.indexOf('?') !== -1) ? '&' : '?';
+                const baseUrl = (action && action !== '#' && action !== '') ? action : window.location.href.split('?')[0];
+                finalUrl = baseUrl + sep + 'room_id=' + roomId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&total_price=' + totalPrice + '&mhbo_auto_book=1';
+            }
+
+            window.location.href = finalUrl;
+        });
+        $(document).data('mhbo-click-attached', true);
+    }
 
     initAllCalendars();
 });
