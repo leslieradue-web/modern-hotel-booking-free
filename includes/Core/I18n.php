@@ -28,7 +28,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
 class I18n
 {
     /**

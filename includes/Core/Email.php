@@ -229,8 +229,7 @@ class Email
             $message .= $tax_breakdown_html;
         }
 
-
-        $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
+$admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $site_name = get_bloginfo('name');
 
         $headers = array(

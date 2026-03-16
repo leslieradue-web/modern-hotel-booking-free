@@ -39,7 +39,7 @@ class Tax
      * @return bool
      */
     public static function is_enabled(): bool {
-        return false; // Free version - tax disabled
+        return false;
     }
 
     /**
@@ -52,7 +52,7 @@ class Tax
      * @return string One of the MODE_* constants.
      */
     public static function get_mode(): string {
-        return self::MODE_DISABLED; // Free version
+        return self::MODE_DISABLED;
     }
 
     /**

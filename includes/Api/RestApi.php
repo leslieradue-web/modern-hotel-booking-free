@@ -19,7 +19,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
 
@@ -68,9 +67,7 @@ class RestApi
             ),
         ));
 
-        
-
-        register_rest_route($namespace, '/calendar-data', array(
+register_rest_route($namespace, '/calendar-data', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_calendar_data'),
             'permission_callback' => array($this, 'check_read_access'),
@@ -151,11 +148,7 @@ class RestApi
             ),
         ));
 
-        
-
-        
-
-    }
+}
 
     /**
      * Validate a date string (Y-m-d).
@@ -247,9 +240,7 @@ class RestApi
         return true;
     }
 
-    
-
-    /**
+/**
      * Verify webhook permission - check for valid webhook signature.
      * SECURITY: This prevents unauthorized webhook submissions.
      *
@@ -261,9 +252,7 @@ class RestApi
         $headers = $request->get_headers();
         $payload = $request->get_body();
 
-        
-
-        // SECURITY: Reject webhooks without proper signatures
+// SECURITY: Reject webhooks without proper signatures
         // The old behavior of accepting 'source' in body was a critical vulnerability
         return new \WP_Error(
             'mhbo_webhook_unauthorized',
@@ -272,9 +261,7 @@ class RestApi
         );
     }
 
-    
-
-    /**
+/**
      * GET /rooms — List all room types.
      *
      * @return \WP_REST_Response
@@ -388,13 +375,7 @@ class RestApi
         ));
     }
 
-    
-
-    
-
-    
-
-    /**
+/**
      * GET /calendar-data — Get availability data for calendar display.
      *
      * @param \WP_REST_Request $request Request object.
@@ -701,7 +682,4 @@ class RestApi
         ));
     }
 
-    
-
-    
 }

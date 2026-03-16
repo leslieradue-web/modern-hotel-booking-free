@@ -7,7 +7,6 @@
  * @package Modern_Hotel_Booking
  */
 
-
 if (!defined('ABSPATH')) {
     exit;
 }

@@ -26,13 +26,4 @@ class ICal
      */
     private static $timezone;
 
-    
-
-    
-
-    
-
-    
-
-    
 }

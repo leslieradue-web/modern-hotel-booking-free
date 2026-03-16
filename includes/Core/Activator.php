@@ -33,8 +33,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_room_types);
 
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
 		$sql_rooms = "CREATE TABLE {$wpdb->prefix}mhbo_rooms (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			type_id mediumint(9) NOT NULL,
@@ -46,8 +45,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_rooms);
 
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
 		$sql_bookings = "CREATE TABLE {$wpdb->prefix}mhbo_bookings (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
@@ -105,8 +103,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_bookings);
 
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
 		$sql_ical_connections = "CREATE TABLE {$wpdb->prefix}mhbo_ical_connections (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
@@ -141,8 +138,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_ical);
 
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
 		$sql_pricing = "CREATE TABLE {$wpdb->prefix}mhbo_pricing_rules (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL DEFAULT 0,
@@ -209,8 +205,7 @@ class Activator
 			update_option('mhbo_amenities_list', $default_amenities);
 		}
 
-
-	}
+}
 
 	/**
 	 * Migrate database schema for existing installations.
@@ -236,9 +231,7 @@ class Activator
 		add_option('mhbo_tax_decimal_places', 2);
 		add_option('mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
 
-
-
-		// Cache Settings (for existing installations)
+// Cache Settings (for existing installations)
 		add_option('mhbo_cache_enabled', 1);
 
 		// Migrate iCal feeds to new connections table

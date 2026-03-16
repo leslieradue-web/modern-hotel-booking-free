@@ -349,6 +349,9 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
+            // Get nonce from form hidden input (primary) or localized JS object (fallback)
+            var autoNonce = $form.find('input[name="mhbo_nonce"]').val() || (typeof mhbo_calendar !== 'undefined' && mhbo_calendar.auto_nonce) || '';
+
             let finalUrl;
             try {
                 const base = window.location.origin;
@@ -359,13 +362,16 @@ jQuery(document).ready(function ($) {
                 url.searchParams.set('check_out', checkOut);
                 url.searchParams.set('total_price', totalPrice);
                 url.searchParams.set('mhbo_auto_book', '1');
+                if (autoNonce) {
+                    url.searchParams.set('mhbo_nonce', autoNonce);
+                }
 
                 finalUrl = url.toString();
             } catch (err) {
                 debugLog('Redirect error:', err);
                 const sep = (action && action.indexOf('?') !== -1) ? '&' : '?';
                 const baseUrl = (action && action !== '#' && action !== '') ? action : window.location.href.split('?')[0];
-                finalUrl = baseUrl + sep + 'room_id=' + roomId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&total_price=' + totalPrice + '&mhbo_auto_book=1';
+                finalUrl = baseUrl + sep + 'room_id=' + roomId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&total_price=' + totalPrice + '&mhbo_auto_book=1' + (autoNonce ? '&mhbo_nonce=' + encodeURIComponent(autoNonce) : '');
             }
 
             window.location.href = finalUrl;

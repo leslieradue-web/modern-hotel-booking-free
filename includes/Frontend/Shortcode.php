@@ -246,9 +246,22 @@ class Shortcode
         // Show success message if redirected
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only boolean flag check, no state change; just shows a confirmation message
         if (isset($_GET['mhbo_success'])) { // sanitize_text_field applied or checked via nonce later
-            echo '<div class="mhbo-success-message">';
-            echo '<h3>' . esc_html(I18n::get_label('msg_booking_confirmed')) . '</h3>';
-            echo '<p>' . esc_html(I18n::get_label('msg_confirmation_sent')) . '</p>';
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $mhbo_status = isset($_GET['mhbo_status']) ? sanitize_key($_GET['mhbo_status']) : '';
+            
+            $msg_title = I18n::get_label('msg_booking_confirmed');
+            $msg_detail = I18n::get_label('msg_confirmation_sent');
+            $message_class = 'mhbo-success-message';
+            
+            if ('pending' === $mhbo_status) {
+                $msg_title = I18n::get_label('msg_booking_received');
+                $msg_detail = I18n::get_label('msg_booking_received_pending');
+                $message_class = 'mhbo-success-message mhbo-pending-booking';
+            }
+            
+            echo '<div class="' . esc_attr($message_class) . '">';
+            echo '<h3>' . esc_html($msg_title) . '</h3>';
+            echo '<p>' . esc_html($msg_detail) . '</p>';
             echo '</div>';
         } else {
             // Show any errors captured during handle_form_submissions redirect
@@ -257,7 +270,7 @@ class Shortcode
             $key = 'mhbo_err_' . ($user_id ? $user_id : md5($client_ip));
             $error = get_transient($key);
             if ($error) {
-                echo $error;  // esc_html applied in upstream method // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content already escaped in process_booking branches
+                echo $error;  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content already escaped in process_booking branches
                 delete_transient($key);
             }
 
@@ -528,16 +541,14 @@ class Shortcode
         $total = $calc ? (float) $calc['total'] : (!empty($total) ? $total : 0);
 
         // Check License Status
-        // Assignment removed for compliance
-        
+        $is_pro_active = false;
 
-        
+// Get On-site settings - On-site payment is always available in free version
+        // In PRO version, also check the option setting
 
-        $arrival_enabled = true; // Always enabled in free version
-        /* BUILD_PRO_END */
+$arrival_enabled = true;
         
-        $arrival_enabled = true;
-        
+        ?>
         <div class="mhbo-booking-wrapper">
             <h2><?php echo esc_html(I18n::get_label('label_complete_booking')); ?></h2>
             <div class="mhbo-booking-summary">
@@ -707,8 +718,7 @@ class Shortcode
                 // Note: Honeypot removed for compliance. Security is handled via nonces.
                 ?>
 
-
-                <?php
+<?php
                 // Render Custom Fields
                 $custom_fields = get_option('mhbo_custom_fields', []);
                 if (!empty($custom_fields)) {
@@ -786,9 +796,7 @@ class Shortcode
         $check_out = sanitize_text_field(wp_unslash($_POST['check_out'] ?? ''));
         $guests = absint($_POST['guests'] ?? 1);
 
-
-
-        // Input length validation
+// Input length validation
         if (mb_strlen($customer_name) > 100) {
             echo '<div class="mhbo-error">' . esc_html(I18n::get_label('label_name_too_long')) . '</div>';
             return;
@@ -830,12 +838,9 @@ class Shortcode
         $room_type = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mhbo_room_types WHERE id = %d", $room->type_id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
         $extras_input = [];
-        // Assignment removed for compliance
-        
+        $is_pro_active = false;
 
-        
-
-        // Validate Children
+// Validate Children
         $max_children = $room_type ? intval($room_type->max_children) : 0;
         $children = isset($_POST['children']) ? intval($_POST['children']) : 0;
         if ($children > $max_children) {
@@ -866,8 +871,7 @@ class Shortcode
         $nights = $calc['nights'];
         $tax_data = $calc['tax'] ?? null;
 
-
-        if (empty($customer_name) || empty($customer_email) || empty($customer_phone) || !$room_id) {
+if (empty($customer_name) || empty($customer_email) || empty($customer_phone) || !$room_id) {
             echo '<div class="mhbo-error">' . esc_html(I18n::get_label('label_fill_all_fields')) . '</div>';
             return;
         }
@@ -893,9 +897,7 @@ class Shortcode
             }
         }
 
-        
-
-        $status = 'pending';
+$status = 'pending';
 
         // Check Availability with Race Condition Protection (GET_LOCK)
         $lock_name = "mhbo_booking_lock_{$room_id}";
@@ -922,37 +924,27 @@ class Shortcode
             return;
         }
 
+// Validate Payment Method Requirement
+        $is_pro_active = false;
 
-        // Validate Payment Method Requirement
-        // Assignment removed for compliance
-        
+// Get On-site settings - On-site payment is always available in free version
+        // In PRO version, also check the option setting
 
-        
+$arrival_enabled = true;
 
-        $arrival_enabled = true; // Always enabled in free version
-        /* BUILD_PRO_END */
-        
-        $arrival_enabled = true;
-        
+$has_active_gateways = false;
 
-        $has_active_gateways = false;
-        
-
-        // If gateways are active, enforce payment or arrival selection
+// If gateways are active, enforce payment or arrival selection
         $payment_method = 'arrival';
         $payment_received = 0;
 
-        
-
-        // Initialize payment status fields
+// Initialize payment status fields
         $payment_status = 'pending';
         $payment_transaction_id = '';
         $payment_date = null;
         $payment_amount = null;
 
-        
-
-        // Set payment status for arrival payments - booking remains pending until admin approval
+// Set payment status for arrival payments - booking remains pending until admin approval
         if ('arrival' === $payment_method) {
             $payment_status = 'pending';
             // Status remains 'pending' - admin must approve deposit/payment to confirm booking
@@ -1016,7 +1008,7 @@ class Shortcode
 
         // Show success message or redirect (POST-Redirect-GET)
         if ($booking_id) {
-            $success_url = add_query_arg(['mhbo_success' => 1, 'booking_id' => $booking_id], remove_query_arg(['mhbo_confirm_booking', 'mhbo_confirm_nonce']));
+            $success_url = add_query_arg(['mhbo_success' => 1, 'booking_id' => $booking_id, 'mhbo_status' => $status], remove_query_arg(['mhbo_confirm_booking', 'mhbo_confirm_nonce']));
             wp_safe_redirect($success_url);
             exit;
         }
@@ -1091,8 +1083,7 @@ class Shortcode
             'lavender' => ['#4c1d95', '#a78bfa', '#8b5cf6'],
         ];
 
-        
-            if (isset($presets[$active_theme])) {
+if (isset($presets[$active_theme])) {
                 $primary = $presets[$active_theme][0];
                 $secondary = $presets[$active_theme][1];
                 $accent = $presets[$active_theme][2];
@@ -1112,9 +1103,7 @@ class Shortcode
             wp_add_inline_style('mhbo-calendar-style', wp_strip_all_tags($custom_css));
         }
 
-        
-
-        wp_add_inline_style('mhbo-frontend', '
+wp_add_inline_style('mhbo-frontend', '
             .mhbo-child-age-group { 
                 display: flex; 
                 align-items: center; 
@@ -1145,4 +1134,3 @@ class Shortcode
         return $d && $d->format('Y-m-d') === $date;
     }
 }
-

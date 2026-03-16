@@ -6,7 +6,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
 use MHBO\Core\Email;
 use MHBO\Core\I18n;
 
@@ -17,16 +16,12 @@ class Menu
         add_action('admin_menu', array($this, 'add_plugin_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widgets'));
-        
-        
 
-        $settings = new Settings();
+$settings = new Settings();
         $settings->init();
     }
 
-    
-
-    public function add_dashboard_widgets(): void
+public function add_dashboard_widgets(): void
     {
         wp_add_dashboard_widget('mhbo_dashboard_overview', __('Hotel Booking Overview', 'modern-hotel-booking'), array($this, 'render_dashboard_widget'));
     }
@@ -81,11 +76,7 @@ class Menu
         wp_enqueue_style('mhbo-admin-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-admin.css', array(), MHBO_VERSION);
         wp_enqueue_script('mhbo-admin-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-admin.js', array('jquery'), MHBO_VERSION, true);
 
-        
-
-        
-
-        if (false !== strpos($hook, 'mhbo-bookings')) {
+if (false !== strpos($hook, 'mhbo-bookings')) {
             wp_enqueue_script('fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.global.min.js', array(), '6.1.20', true);
 
             // Enqueue admin bookings script
@@ -104,10 +95,8 @@ class Menu
             );
             wp_add_inline_script('mhbo-admin-bookings', 'window.mhboAdminBookingsConfig = ' . wp_json_encode($config) . ';', 'before');
         }
-        
 
-        
-    }
+}
 
     public function add_plugin_admin_menu(): void
     {
@@ -118,8 +107,7 @@ class Menu
         add_submenu_page('mhbo-hotel-booking', __('Pricing Rules', 'modern-hotel-booking'), __('Pricing Rules', 'modern-hotel-booking'), 'manage_options', 'mhbo-pricing-rules', array($this, 'display_pricing_rules_page'));
         add_submenu_page('mhbo-hotel-booking', __('Settings', 'modern-hotel-booking'), __('Settings', 'modern-hotel-booking'), 'manage_options', 'mhbo-settings', array('MHBO\\Admin\\Settings', 'render'));
 
-        
-    }
+}
 
     public function display_dashboard_page(): void
     {
@@ -168,28 +156,22 @@ class Menu
         $recent_bookings = $wpdb->get_results("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id ORDER BY b.created_at DESC LIMIT 5"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, no WP API, static query
         $today_checkins = $wpdb->get_results($wpdb->prepare("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id WHERE b.status='confirmed' AND b.check_in = %s LIMIT 5", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
+$is_pro_active = false;
         
-        
-        // Assignment removed for compliance
-        
+        ?>
         <div class="wrap mhbo-dashboard">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Control Center', 'modern-hotel-booking'); ?>
             </h1>
 
-            
-
+<?php
             
             // Removed splash banner from free version to comply with repository trialware rules.
             // A subtle link to the Pro version is provided in the "Need Assistance?" section below.
             
+            ?>
 
-
-
-
-
-
-            <div class="mhbo-stats-grid">
+<div class="mhbo-stats-grid">
                 <div class="mhbo-stat-card">
                     <h3><?php esc_html_e('Stay Revenue', 'modern-hotel-booking'); ?></h3>
                     <p><?php echo esc_html(I18n::format_currency($earned_revenue)); ?></p>
@@ -293,9 +275,8 @@ class Menu
                         <h3><?php esc_html_e('System Status', 'modern-hotel-booking'); ?></h3>
                         <div style="font-size: 13px; line-height: 2;">
                             <div style="display: flex; justify-content: space-between;">
-                                
-                                
-                                <span><?php esc_html_e('Plugin Edition:', 'modern-hotel-booking'); ?></span>
+
+<span><?php esc_html_e('Plugin Edition:', 'modern-hotel-booking'); ?></span>
                                 <strong style="color: #2271b1;"><?php esc_html_e('Free Version', 'modern-hotel-booking'); ?></strong>
                                 
                             </div>
@@ -404,12 +385,9 @@ class Menu
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix
         $tt = $wpdb->prefix . 'mhbo_room_types';
 
-        
-        
-        // Assignment removed for compliance
-        
+$is_pro_active = false;
 
-        $edit_mode = false;
+$edit_mode = false;
         $add_mode = false;
         $edit_data = null;
 
@@ -500,7 +478,7 @@ class Menu
             if (!current_user_can('manage_options')) {
                 wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
             }
-            if (!check_admin_referer('mhbo_add_booking')) {
+            if (!check_admin_referer('mhbo_add_manual_booking')) {
                 wp_die(esc_html__('Security check failed', 'modern-hotel-booking'));
             }
             $booking_extras = [];
@@ -1149,7 +1127,7 @@ class Menu
                                         <td>
                                             <?php if ($defn['type'] === 'textarea'): ?>
                                                 <textarea name="mhbo_custom[<?php echo esc_attr($defn['id']); ?>]" rows="3"
-                                                    class="regular-text"><?php echo esc_textarea($val); ?></textarea> // esc_html applied in upstream method
+                                                    class="regular-text"><?php echo esc_textarea($val); ?></textarea>
                                             <?php else: ?>
                                                 <input type="<?php echo esc_attr($defn['type']); ?>"
                                                     name="mhbo_custom[<?php echo esc_attr($defn['id']); ?>]"
@@ -1379,7 +1357,7 @@ class Menu
                             <tr>
                                 <th><?php esc_html_e('Admin Notes', 'modern-hotel-booking'); ?></th>
                                 <td><textarea name="admin_notes" rows="3"
-                                        class="large-text"><?php echo esc_textarea($edit_data->admin_notes ?? ''); ?></textarea> // esc_html applied in upstream method
+                                        class="large-text"><?php echo esc_textarea($edit_data->admin_notes ?? ''); ?></textarea>
                                 </td>
                             </tr>
                         </table>
@@ -1620,9 +1598,7 @@ class Menu
             }
         }
 
-
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
         $types = $wpdb->get_results("SELECT * FROM `{$table}`");
         $current_amenities = ($edit_mode && !empty($edit_data->amenities)) ? json_decode($edit_data->amenities, true) : array();
         if (!is_array($current_amenities))
@@ -1662,7 +1638,7 @@ class Menu
                                         <div style="margin-bottom:10px;">
                                             <strong><?php echo esc_html(strtoupper($lang)); ?>:</strong><br>
                                             <textarea name="room_description[<?php echo esc_attr($lang); ?>]" rows="3"
-                                                class="large-text"><?php echo esc_textarea(I18n::decode($edit_data->description, $lang)); ?></textarea> // esc_html applied in upstream method
+                                                class="large-text"><?php echo esc_textarea(I18n::decode($edit_data->description, $lang)); ?></textarea>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -1803,12 +1779,9 @@ class Menu
             wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'modern-hotel-booking'));
         }
 
-        
-        
-        // Assignment removed for compliance
-        
+$is_pro_active = false;
 
-        global $wpdb;
+global $wpdb;
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
         $t_rooms = $wpdb->prefix . 'mhbo_rooms';
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
@@ -1840,9 +1813,8 @@ class Menu
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $room_id = absint($_GET['id']);
-            
 
-            $ical_mode = true;
+$ical_mode = true;
             if (isset($_POST['submit_ical_feed'])) { // sanitize_text_field applied or checked via nonce later
                 if (!current_user_can('manage_options')) {
                     wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
@@ -1924,9 +1896,7 @@ class Menu
             }
         }
 
-
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix, admin-only query
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix, admin-only query
         $rooms = $wpdb->get_results("SELECT r.*, t.name as type_name, t.base_price FROM `{$t_rooms}` r LEFT JOIN `{$t_types}` t ON r.type_id = t.id ORDER BY r.room_number ASC");
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
         $types = $wpdb->get_results("SELECT * FROM `{$t_types}`");
@@ -2320,11 +2290,10 @@ class Menu
                 <tr>
                     <th><?php esc_html_e('Description', 'modern-hotel-booking'); ?></th>
                     <td><textarea name="extras[<?php echo esc_attr($index); ?>][description]" rows="2"
-                            class="large-text"><?php echo esc_textarea($desc); ?></textarea></td> // esc_html applied in upstream method
+                            class="large-text"><?php echo esc_textarea($desc); ?></textarea></td>
                 </tr>
             </table>
         </div>
         <?php
     }
 }
-

@@ -108,7 +108,7 @@ Both services are optional and only active if configured in the Pro version.
 == Changelog ==
 
 = 2.2.7.5 =
-* Version update,WP repo compliance and performance enhancements.
+* Version update, WP repo compliance and performance enhancements.
 
 = 2.2.7.4 =
 * Version update WP repo compliance checks and audit.

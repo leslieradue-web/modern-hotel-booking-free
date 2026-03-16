@@ -33,18 +33,16 @@ class Plugin
         I18n::init();
 
         /* ---- iCal Export (public endpoint) ---- */
-        
 
-        /* ---- REST API ---- */
+/* ---- REST API ---- */
         add_action('rest_api_init', function () {
             $api = new RestApi();
             $api->register_routes();
         });
 
         /* ---- Webhook System (Pro-only) ---- */
-        
 
-        /* ---- GDPR / Privacy ---- */
+/* ---- GDPR / Privacy ---- */
         $privacy = new Privacy();
         $privacy->init();
 
@@ -63,9 +61,8 @@ class Plugin
         $calendar->init();
 
         // Initialize License Validator for periodic revalidation (Pro-only)
-        
 
-        // Register Widget (Must be global to show in Admin > Widgets)
+// Register Widget (Must be global to show in Admin > Widgets)
         add_action('widgets_init', function () {
             register_widget(BookingWidget::class);
         });
@@ -91,9 +88,7 @@ class Plugin
         $shortcode->init();
     }
 
-    
-
-    /**
+/**
      * Schedule daily maintenance cron job.
      */
     private function schedule_cron(): void

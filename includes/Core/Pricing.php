@@ -148,9 +148,7 @@ class Pricing
          */
         $base_price = apply_filters('mhbo_calculate_stay_price', $base_price, $room_id, $date);
 
-        
-
-        return (float) max(0, $base_price);
+return (float) max(0, $base_price);
     }
 
     /**
@@ -262,13 +260,9 @@ class Pricing
         $extras_total = 0;
         $extras_breakdown = [];
 
-        
+$grand_total = (float) max(0, $room_total + $extras_total);
 
-        $grand_total = (float) max(0, $room_total + $extras_total);
-
-        
-
-        return [
+return [
             'room_total' => $room_total,
             'children_total' => $child_cost_total,
             'extras_total' => $extras_total,
@@ -310,9 +304,6 @@ class Pricing
     {
         $formatted = I18n::format_currency($amount);
 
-        
-
-        return $formatted;
+return $formatted;
     }
 }
-

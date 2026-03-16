@@ -5,7 +5,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-
 use MHBO\Core\I18n;
 
 class Settings
@@ -19,8 +18,7 @@ class Settings
         add_action('admin_init', array($this, 'register_wpml_polylang_strings'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
-        
-    }
+}
 
     /**
      * Enqueue admin settings scripts.
@@ -103,21 +101,17 @@ class Settings
         register_setting('mhbo_settings_group', 'mhbo_booking_page', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
         register_setting('mhbo_settings_group', 'mhbo_booking_page_url', array('type' => 'string', 'sanitize_callback' => 'esc_url_raw', 'default' => ''));
 
-        
-
-        // Uninstall Settings
+// Uninstall Settings
         register_setting('mhbo_settings_group', 'mhbo_save_data_on_uninstall', array('default' => 1, 'sanitize_callback' => 'absint'));
 
         // Display Settings
         register_setting('mhbo_settings_group', 'mhbo_powered_by_link', array('default' => 0, 'sanitize_callback' => 'absint'));
 
         // Performance Settings
-        
 
-        // Theme Settings
-        
+// Theme Settings
 
-        // Amenities (Dynamic) - Handled manually with inline sanitization
+// Amenities (Dynamic) - Handled manually with inline sanitization
         // register_setting('mhbo_settings_group', 'mhbo_amenities_list');
 
         add_settings_section('mhbo_general_section', __('General Settings', 'modern-hotel-booking'), '__return_null', 'mhbo-settings');
@@ -298,19 +292,18 @@ class Settings
 
     private static function is_tab_license_gated(string $tab): bool
     {
-        
-        
-        return false;
+
+return false;
         
     }
 
     public static function render()
     {
         $active_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+$is_pro_active = false;
         
-        
-        // Assignment removed for compliance
-        
+        ?>
         <div class="wrap mhbo-admin-wrap">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Configuration', 'modern-hotel-booking'); ?>
@@ -328,14 +321,18 @@ class Settings
                 <a href="?page=mhbo-settings&tab=amenities"
                     class="nav-tab <?php echo 'amenities' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e('Amenities', 'modern-hotel-booking'); ?></a>
 
-                
-            </h2>
+</h2>
 
-            
-
-            <div class="mhbo-card" style="margin-top: 20px;">
+<div class="mhbo-card" style="margin-top: 20px;">
                 <?php
-                $manual_tabs = ['emails', 'labels', 'amenities', 'gdpr', 'tax', 'pricing', 'themes', 'general'];
+                $manual_tabs = [
+                    
+                    'emails',
+                    'labels',
+                    'amenities',
+                    
+                    'general'
+                ];
                 $action = in_array($active_tab, $manual_tabs, true) ? '' : 'options.php';
                 ?>
                 <form method="post" action="<?php echo esc_attr($action); ?>">
@@ -347,7 +344,9 @@ class Settings
                         wp_nonce_field('mhbo_settings_nonce', 'mhbo_nonce');
                     }
 
-                    if ('general' === $active_tab) {
+                    if ('license' === $active_tab) {
+                        
+                    } elseif ('general' === $active_tab) {
                         echo '<input type="hidden" name="mhbo_save_tab" value="general">';
                         do_settings_sections('mhbo-settings');
                     } elseif ('emails' === $active_tab) {
@@ -356,24 +355,30 @@ class Settings
                         self::render_labels_tab();
                     } elseif ('amenities' === $active_tab) {
                         self::render_amenities_tab();
-                    }     elseif ('performance' === $active_tab) {
+                    } elseif ('gdpr' === $active_tab) {
+                        
+                    } elseif ('tax' === $active_tab) {
+                        
+                    } elseif ('pricing' === $active_tab) {
+                        
+                    } elseif ('themes' === $active_tab) {
+                        
+                    } elseif ('performance' === $active_tab) {
                         
                     }
 
-                    
-                    
-                    // Free version always shows save button for accessible tabs
+// Free version always shows save button for accessible tabs
                     echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
                     submit_button();
-                    
+
+?>
                 </form>
             </div>
         </div>
         <?php
     }
 
-    
-    /**
+/**
      * Render Performance/Cache settings tab.
      */
     private static function render_performance_tab()
@@ -393,7 +398,7 @@ class Settings
         echo '<th scope="row"><label for="mhbo_cache_enabled">' . esc_html__('Enable Caching', 'modern-hotel-booking') . '</label></th>';
         echo '<td>';
         echo '<label>';
-        echo '<input type="checkbox" id="mhbo_cache_enabled" name="mhbo_cache_enabled" value="1" ' . checked($cache_enabled, 1, false) . '>'; // esc_html applied in upstream method
+        echo '<input type="checkbox" id="mhbo_cache_enabled" name="mhbo_cache_enabled" value="1" ' . checked($cache_enabled, 1, false) . '>';
         echo ' ' . esc_html__('Enable caching for room data and pricing', 'modern-hotel-booking');
         echo '</label>';
         echo '<p class="description">' . esc_html__('Cache room type data and pricing rules for faster calculations. Recommended for most sites.', 'modern-hotel-booking') . '</p>';
@@ -431,8 +436,7 @@ class Settings
     }
     /* BUILD_PRO_END */
 
-
-    private static function render_email_templates_tab()
+private static function render_email_templates_tab()
     {
         $langs = I18n::get_available_languages();
         $statuses = [
@@ -475,10 +479,7 @@ class Settings
 
     }
 
-    
-
-
-    private static function render_labels_tab()
+private static function render_labels_tab()
     {
         $langs = I18n::get_available_languages();
         $label_groups = [
@@ -848,8 +849,7 @@ class Settings
         
     }
 
-
-    public function save_general_settings(): void
+public function save_general_settings(): void
     {
         if (!isset($_POST['mhbo_save_tab']) || 'general' !== sanitize_key(wp_unslash($_POST['mhbo_save_tab']))) {
             return;
@@ -946,9 +946,8 @@ class Settings
         if (isset($_POST['mhbo_active_theme'])) { // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_active_theme', sanitize_key(wp_unslash($_POST['mhbo_active_theme'])));
         }
-        
 
-        add_settings_error('mhbo_settings', 'saved', __('Theme settings saved successfully.', 'modern-hotel-booking'), 'success');
+add_settings_error('mhbo_settings', 'saved', __('Theme settings saved successfully.', 'modern-hotel-booking'), 'success');
     }
     
     public static function render_pro_page()
@@ -1000,11 +999,91 @@ class Settings
         
     }
 
-    
+    private static function render_pricing_tab()
+    {
+        
+    }
+
     /**
      * Render Pro Themes settings tab.
      */
-    
+    private static function render_themes_tab()
+    {
+        $active_theme = get_option('mhbo_active_theme', 'midnight');
+        $custom_primary = get_option('mhbo_custom_primary_color', '#1a365d');
+        $custom_secondary = get_option('mhbo_custom_secondary_color', '#f2e2c4');
+        $custom_accent = get_option('mhbo_custom_accent_color', '#d4af37');
+
+$themes = [
+            'midnight' => [
+                'name' => __('Midnight Coast', 'modern-hotel-booking'),
+                'colors' => ['#1a365d', '#f2e2c4', '#d4af37'],
+                'desc' => __('Our signature classic luxury look.', 'modern-hotel-booking')
+            ],
+            'emerald' => [
+                'name' => __('Emerald Forest', 'modern-hotel-booking'),
+                'colors' => ['#064e3b', '#34d399', '#10b981'],
+                'desc' => __('Rich greens for nature-inspired properties.', 'modern-hotel-booking')
+            ],
+            'oceanic' => [
+                'name' => __('Oceanic Drift', 'modern-hotel-booking'),
+                'colors' => ['#1e3a8a', '#60a5fa', '#3b82f6'],
+                'desc' => __('Deep blues and bright highlights.', 'modern-hotel-booking')
+            ],
+            'ruby' => [
+                'name' => __('Ruby Sunset', 'modern-hotel-booking'),
+                'colors' => ['#7f1d1d', '#f87171', '#ef4444'],
+                'desc' => __('Warm tones for cozy boutiques.', 'modern-hotel-booking')
+            ],
+            'urban' => [
+                'name' => __('Urban Modern', 'modern-hotel-booking'),
+                'colors' => ['#1f2937', '#9ca3af', '#4b5563'],
+                'desc' => __('Minimalist grays for city lofts.', 'modern-hotel-booking')
+            ],
+            'lavender' => [
+                'name' => __('Lavender Breeze', 'modern-hotel-booking'),
+                'colors' => ['#4c1d95', '#a78bfa', '#8b5cf6'],
+                'desc' => __('Elegant purples for spa and wellness.', 'modern-hotel-booking')
+            ],
+        ];
+        ?>
+            <div class="mhbo-settings-section">
+                <h3 style="margin-top:0;"><?php esc_html_e('Theme Presets', 'modern-hotel-booking'); ?></h3>
+                <p class="description">
+                    <?php esc_html_e('Choose a professional color palette for your booking frontend.', 'modern-hotel-booking'); ?>
+                </p>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 25px 0;">
+                    <?php foreach ($themes as $slug => $theme): ?>
+                        <label class="mhbo-theme-card <?php echo esc_attr($active_theme === $slug ? 'active' : ''); ?>"
+                            style="cursor:pointer; border: 2px solid #ddd; border-radius: 12px; padding: 15px; display: block; background: #fff; transition: all 0.2s;">
+                            <input type="radio" name="mhbo_active_theme" value="<?php echo esc_attr($slug); ?>" <?php checked($active_theme, $slug); ?> style="display:none;">
+                            <div
+                                style="display: flex; gap: 5px; height: 40px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                                <div style="flex: 2; background: <?php echo esc_attr($theme['colors'][0]); ?>;"></div>
+                                <div style="flex: 1; background: <?php echo esc_attr($theme['colors'][1]); ?>;"></div>
+                                <div style="flex: 1; background: <?php echo esc_attr($theme['colors'][2]); ?>;"></div>
+                            </div>
+                            <h4 style="margin: 0 0 5px 0;"><?php echo esc_html($theme['name']); ?></h4>
+                            <p style="margin: 0; font-size: 13px; color: #646970;"><?php echo esc_html($theme['desc']); ?></p>
+                        </label>
+                    <?php endforeach; ?>
+
+</div>
+
+<div style="margin-top: 30px; display: flex; gap: 15px; align-items: center;">
+                    <?php $reset_nonce = wp_create_nonce('mhbo_reset_theme'); ?>
+                    <button type="button" class="button"
+                        onclick="if(confirm('<?php esc_attr_e('Reset all theme settings to default?', 'modern-hotel-booking'); ?>')) { window.location.href = window.location.href + '&reset_theme=1&_wpnonce=<?php echo esc_attr($reset_nonce); ?>'; }">
+                        <?php esc_html_e('Return to Default', 'modern-hotel-booking'); ?>
+                    </button>
+                    <?php // Note: Theme selection JavaScript logic has been moved to assets/js/mhbo-admin-settings.js ?>
+                </div>
+            </div>
+            <?php
+    }
+
     public function save_api_settings(): void
     {
         
@@ -1020,9 +1099,7 @@ class Settings
         
     }
 
-    
-
-    private static function render_amenities_tab()
+private static function render_amenities_tab()
     {
         $amenities = get_option('mhbo_amenities_list');
         if (false === $amenities) { // If option doesn't exist, initialize with defaults
@@ -1086,9 +1163,7 @@ class Settings
             <?php
     }
 
-
-
-    public function save_amenities_settings(): void
+public function save_amenities_settings(): void
     {
         if (!isset($_POST['mhbo_save_tab']) || 'amenities' !== sanitize_key(wp_unslash($_POST['mhbo_save_tab']))) {
             return;
@@ -1136,7 +1211,11 @@ class Settings
         }
     }
 
-    
+    private static function render_tax_tab()
+    {
+        
+    }
+
     public function save_license_settings(): void
     {
         
