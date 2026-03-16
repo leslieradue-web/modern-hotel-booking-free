@@ -3,7 +3,7 @@ Contributors: leslierad
 Tags: hotel booking, reservation system, booking calendar, bnb, property management
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.7.4
+Stable tag: 2.2.7.5
 Requires PHP: 7.4
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -106,6 +106,9 @@ Both services are optional and only active if configured in the Pro version.
 5. **Settings Panel:** Extensive configuration for emails, currencies, and rules.
 
 == Changelog ==
+
+= 2.2.7.5 =
+* Version update,WP repo compliance and performance enhancements.
 
 = 2.2.7.4 =
 * Version update WP repo compliance checks and audit.

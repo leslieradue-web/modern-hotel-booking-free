@@ -165,7 +165,7 @@ class Activator
 		add_option('mhbo_currency_code', 'USD');
 		add_option('mhbo_currency_symbol', '$');
 		add_option('mhbo_currency_position', 'before');
-		// License option removed for Free version
+
 		add_option('mhbo_gateway_stripe_enabled', 0);
 		add_option('mhbo_gateway_paypal_enabled', 0);
 		add_option('mhbo_gateway_onsite_enabled', 0);
@@ -209,12 +209,7 @@ class Activator
 			update_option('mhbo_amenities_list', $default_amenities);
 		}
 
-		// License API Credentials — only seed when Pro classes are available
-		// Obfuscated to prevent casual source reading; server-side domain validation is the real security layer
-		if (class_exists('MHBO\Core\LicenseManager')) {
-			// License option removed for Free version
-			// License option removed for Free version
-		}
+
 	}
 
 	/**
@@ -241,11 +236,7 @@ class Activator
 		add_option('mhbo_tax_decimal_places', 2);
 		add_option('mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
 
-		// License API Credentials (for existing installations)
-		if (class_exists('MHBO\Core\LicenseManager')) {
-			// License option removed for Free version
-			// License option removed for Free version
-		}
+
 
 		// Cache Settings (for existing installations)
 		add_option('mhbo_cache_enabled', 1);

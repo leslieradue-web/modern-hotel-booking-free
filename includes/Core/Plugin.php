@@ -27,18 +27,13 @@ class Plugin
     /**
      * Wire up all hooks and load subsystems.
      */
-    public function run()
+    public function run(): void
     {
         // Initialize I18n filters
         I18n::init();
 
         /* ---- iCal Export (public endpoint) ---- */
         
-
-        if (!wp_next_scheduled('mhbo_hourly_sync')) {
-            wp_schedule_event(time(), 'hourly', 'mhbo_hourly_sync');
-        }
-        /* BUILD_PRO_END */
 
         /* ---- REST API ---- */
         add_action('rest_api_init', function () {
@@ -84,22 +79,24 @@ class Plugin
         $this->schedule_cron();
     }
 
-    private function load_admin()
+    private function load_admin(): void
     {
         $menu = new Menu();
         $menu->init();
     }
 
-    private function load_frontend()
+    private function load_frontend(): void
     {
         $shortcode = new Shortcode();
         $shortcode->init();
     }
 
+    
+
     /**
      * Schedule daily maintenance cron job.
      */
-    private function schedule_cron()
+    private function schedule_cron(): void
     {
         if (!wp_next_scheduled('mhbo_daily_maintenance')) {
             wp_schedule_event(time(), 'daily', 'mhbo_daily_maintenance');

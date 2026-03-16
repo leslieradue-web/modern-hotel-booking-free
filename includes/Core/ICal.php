@@ -32,24 +32,7 @@ class ICal
 
     
 
-    /**
-     * Escape special characters for iCal text values.
-     *
-     * @param string $text Text to escape.
-     * @return string Escaped text.
-     */
-    private static function escape_ical_text($text)
-    {
-        $text = str_replace('\\', '\\\\', $text);
-        $text = str_replace('"', '\\"', $text);
-        $text = str_replace(',', '\\,', $text);
-        $text = str_replace(';', '\\;', $text);
-        $text = str_replace("\n", '\\n', $text);
-        $text = str_replace("\r", '', $text);
-
-        return $text;
-    }
-    /* BUILD_PRO_END */
+    
 
     
 }

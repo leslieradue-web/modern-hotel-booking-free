@@ -136,6 +136,7 @@ class Calendar
             wp_localize_script('mhbo-calendar-js', 'mhbo_calendar', [
                 'rest_url' => get_rest_url(null, 'mhbo/v1/calendar-data'),
                 'nonce' => wp_create_nonce('wp_rest'),
+                'auto_nonce' => wp_create_nonce('mhbo_auto_action'),
                 'settings' => [
                     'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
                     'currency_pos' => get_option('mhbo_currency_position', 'before'),
@@ -275,6 +276,7 @@ class Calendar
                 $btn_label = ($room_id > 0) ? I18n::get_label('btn_book_now') : I18n::get_label('btn_search_rooms');
                 ?>
                 <form action="<?php echo esc_url($action_url); ?>" method="get" class="mhbo-selection-form">
+                    <input type="hidden" name="mhbo_nonce" value="<?php echo esc_attr(wp_create_nonce('mhbo_auto_action')); ?>">
                     <input type="hidden" name="room_id" value="<?php echo esc_attr((string) $room_id); ?>">
                     <input type="hidden" name="check_in" class="mhbo-cal-check-in">
                     <input type="hidden" name="check_out" class="mhbo-cal-check-out">

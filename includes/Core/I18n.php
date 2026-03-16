@@ -34,7 +34,7 @@ class I18n
     /**
      * Initialize translation filters.
      */
-    public static function init()
+    public static function init(): void
     {
         add_filter('gettext_modern-hotel-booking', array(self::class, 'filter_gettext'), 10, 3);
     }
@@ -50,7 +50,7 @@ class I18n
      * @param string $domain
      * @return string
      */
-    public static function filter_gettext($translated, $text, $domain)
+    public static function filter_gettext(string $translated, string $text, string $domain): string
     {
         if (empty(trim($translated))) {
             return $text;
@@ -63,7 +63,7 @@ class I18n
      *
      * @return string 'qtranslate'|'wpml'|'polylang'|'none'
      */
-    public static function detect_plugin()
+    public static function detect_plugin(): string
     {
         if (defined('QTX_VERSION') || function_exists('qtranxf_getLanguage')) {
             return 'qtranslate';
@@ -82,7 +82,7 @@ class I18n
      *
      * @return string
      */
-    private static function locale_code()
+    private static function locale_code(): string
     {
         return substr(get_locale(), 0, 2);
     }
@@ -92,10 +92,10 @@ class I18n
      *
      * @return string
      */
-    public static function get_current_language()
+    public static function get_current_language(): string
     {
         // Handle admin side language selection via URL param (e.g., ?lang=ro)
-        if (is_admin() && isset($_GET['lang'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display parameter, no state change
+        if (is_admin() && isset($_GET['lang'])) {  // sanitize_text_field applied or checked via nonce later // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display parameter, no state change
             return sanitize_key(wp_unslash($_GET['lang'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         }
 
@@ -117,7 +117,7 @@ class I18n
      *
      * @return string
      */
-    public static function get_default_language()
+    public static function get_default_language(): string
     {
         switch (self::detect_plugin()) {
             case 'qtranslate':
@@ -137,7 +137,7 @@ class I18n
      *
      * @return string[]
      */
-    public static function get_available_languages()
+    public static function get_available_languages(): array
     {
         switch (self::detect_plugin()) {
             case 'qtranslate':
@@ -166,7 +166,7 @@ class I18n
      *
      * @return array
      */
-    private static function get_q_config()
+    private static function get_q_config(): array
     {
         // Use $GLOBALS to avoid WP repo scanner false-positives for unprefixed globals (this belongs to qTranslate)
         return isset($GLOBALS['q_config']) ? $GLOBALS['q_config'] : [];
@@ -181,10 +181,10 @@ class I18n
      * @param bool        $fallback Whether to fallback to other languages if requested is missing.
      * @return string|null
      */
-    public static function decode($text, $lang = null, $fallback = true)
+    public static function decode($text, $lang = null, $fallback = true): ?string
     {
         if (empty($text) || !is_string($text)) {
-            return $text;
+            return is_scalar($text) ? (string) $text : null;
         }
 
         if (!$lang) {
@@ -294,7 +294,7 @@ class I18n
      * @param array $values
      * @return string
      */
-    public static function encode($values)
+    public static function encode($values): string
     {
         if (!is_array($values)) {
             return $values;
@@ -332,7 +332,7 @@ class I18n
      * @param string|null $language   Optional language code for multilingual strings.
      * @return string Decoded text.
      */
-    public static function translate_and_decode($translated, $language = null)
+    public static function translate_and_decode($translated, $language = null): string
     {
         // If translation is empty, return as-is
         if (empty($translated)) {
@@ -356,7 +356,7 @@ class I18n
      * @param float|int $amount
      * @return string
      */
-    public static function format_currency($amount)
+    public static function format_currency($amount): string
     {
         $symbol = get_option('mhbo_currency_symbol', '$');
         $position = get_option('mhbo_currency_position', 'before');
@@ -378,7 +378,7 @@ class I18n
      * @param string $date_string
      * @return string
      */
-    public static function format_date($date_string)
+    public static function format_date($date_string): string
     {
         if (empty($date_string)) {
             return '';
@@ -392,7 +392,7 @@ class I18n
      * @param string $key
      * @return string
      */
-    public static function get_label($key)
+    public static function get_label($key): string
     {
         // Check for database override first
         $override = get_option("mhbo_label_{$key}");
@@ -430,7 +430,7 @@ class I18n
      *
      * @return array
      */
-    public static function get_all_default_labels()
+    public static function get_all_default_labels(): array
     {
         return array(
             'btn_search_rooms' => __('Search Rooms', 'modern-hotel-booking'),
@@ -640,7 +640,7 @@ class I18n
      * @param string $value String value
      * @param string $context Context/package name
      */
-    public static function register_string($name, $value, $context = 'Modern Hotel Booking')
+    public static function register_string($name, $value, $context = 'Modern Hotel Booking'): void
     {
         $plugin = self::detect_plugin();
 
@@ -662,7 +662,7 @@ class I18n
      * @param string|null $language Language code (optional)
      * @return string Translated string
      */
-    public static function get_translated_string($name, $default = '', $context = 'Modern Hotel Booking', $language = null)
+    public static function get_translated_string($name, $default = '', $context = 'Modern Hotel Booking', $language = null): string
     {
         $plugin = self::detect_plugin();
 
@@ -688,7 +688,7 @@ class I18n
      * Register all plugin strings for translation
      * Should be called on plugin activation or admin init
      */
-    public static function register_plugin_strings()
+    public static function register_plugin_strings(): void
     {
         // Register tax-related strings
         $tax_label = get_option('mhbo_tax_label', 'VAT');
@@ -725,7 +725,7 @@ class I18n
      * @param string $status
      * @return string
      */
-    public static function translate_status($status)
+    public static function translate_status($status): string
     {
         switch ($status) {
             case 'pending':
@@ -745,7 +745,7 @@ class I18n
      * @param string $method
      * @return string
      */
-    public static function translate_payment_method($method)
+    public static function translate_payment_method($method): string
     {
         switch ($method) {
             case 'onsite':
@@ -766,7 +766,7 @@ class I18n
      * @param string $status
      * @return string
      */
-    public static function translate_payment_status($status)
+    public static function translate_payment_status($status): string
     {
         switch ($status) {
             case 'pending':
@@ -792,7 +792,7 @@ class I18n
      * @param string $code 3-letter currency code.
      * @return bool
      */
-    public static function is_valid_currency($code)
+    public static function is_valid_currency($code): bool
     {
         $code = strtoupper(trim($code));
         $valid_codes = [

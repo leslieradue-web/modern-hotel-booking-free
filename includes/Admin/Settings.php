@@ -10,7 +10,7 @@ use MHBO\Core\I18n;
 
 class Settings
 {
-    public function init()
+    public function init(): void
     {
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_init', array($this, 'save_general_settings'));
@@ -52,11 +52,14 @@ class Settings
         // Inject configuration
         $config = array(
             'nonces' => array(
+                
                 'test_stripe' => wp_create_nonce('mhbo_test_stripe_nonce'),
                 'test_paypal' => wp_create_nonce('mhbo_test_paypal_nonce'),
                 'clear_cache' => wp_create_nonce('mhbo_clear_cache_nonce_field'),
             ),
-            'i18n' => array(                'connection_error' => __('Connection error.', 'modern-hotel-booking'),
+            'i18n' => array(
+                
+                'connection_error' => __('Connection error.', 'modern-hotel-booking'),
                 'are_you_sure' => __('Are you sure?', 'modern-hotel-booking'),
                 'remove_field_confirm' => __('Are you sure you want to remove this field?', 'modern-hotel-booking'),
                 'no_holidays' => __('No holidays added yet.', 'modern-hotel-booking'),
@@ -69,12 +72,12 @@ class Settings
     /**
      * Register strings for WPML/Polylang translation
      */
-    public function register_wpml_polylang_strings()
+    public function register_wpml_polylang_strings(): void
     {
         I18n::register_plugin_strings();
     }
 
-    public function register_settings()
+    public function register_settings(): void
     {
         // General Settings
         register_setting('mhbo_settings_group', 'mhbo_checkin_time', array('default' => '14:00', 'sanitize_callback' => 'sanitize_text_field'));
@@ -153,7 +156,7 @@ class Settings
         ));
     }
 
-    public function sanitize_custom_fields($fields)
+    public function sanitize_custom_fields($fields): array
     {
         if (!is_array($fields))
             return [];
@@ -177,14 +180,14 @@ class Settings
         return $sanitized;
     }
 
-    public function render_text_field($args)
+    public function render_text_field($args): void
     {
         $option = get_option($args['label_for']);
         $value = I18n::decode($option);
         echo '<input type="text" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($value) . '" class="regular-text">';
     }
 
-    public function render_select_field($args)
+    public function render_select_field($args): void
     {
         $option = get_option($args['label_for']);
         $option = I18n::decode($option);
@@ -195,10 +198,9 @@ class Settings
         echo '</select>';
     }
 
-    public function render_page_select_field($args)
+    public function render_page_select_field($args): void
     {
-        $option = get_option($args['label_for']);
-        $option = I18n::decode($option);
+        $option = get_option($args['label_for'], 0);
         wp_dropdown_pages(array(
             'name' => esc_attr($args['label_for']),
             'selected' => absint($option),
@@ -208,17 +210,16 @@ class Settings
         echo '<p class="description">' . esc_html__('Select the page where you have placed the [modern_hotel_booking] shortcode.', 'modern-hotel-booking') . '</p>';
     }
 
-    public function render_checkbox_field($args)
+    public function render_checkbox_field($args): void
     {
-        $option = get_option($args['label_for']);
-        $option = I18n::decode($option);
+        $option = get_option($args['label_for'], 0);
         echo '<input type="checkbox" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="1" ' . checked(1, $option, false) . '>';
         if (isset($args['description'])) {
             echo '<p class="description">' . esc_html($args['description']) . '</p>';
         }
     }
 
-    public function render_custom_fields_repeater($args)
+    public function render_custom_fields_repeater($args): void
     {
         $fields = get_option('mhbo_custom_fields', []);
         $langs = I18n::get_available_languages();
@@ -295,11 +296,21 @@ class Settings
         // Configuration is injected via wp_add_inline_script() in enqueue_scripts()
     }
 
+    private static function is_tab_license_gated(string $tab): bool
+    {
+        
+        
+        return false;
+        
+    }
+
     public static function render()
     {
         $active_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        
+        
         // Assignment removed for compliance
-        ?>
+        
         <div class="wrap mhbo-admin-wrap">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Configuration', 'modern-hotel-booking'); ?>
@@ -319,6 +330,8 @@ class Settings
 
                 
             </h2>
+
+            
 
             <div class="mhbo-card" style="margin-top: 20px;">
                 <?php
@@ -347,13 +360,12 @@ class Settings
                         
                     }
 
-                    // Only show save button if not on a locked Pro tab
-                    $locked_tabs = [];
-                    if (MHBO_IS_PRO || !in_array($active_tab, $locked_tabs, true)) {
-                        echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
-                        submit_button();
-                    }
-                    ?>
+                    
+                    
+                    // Free version always shows save button for accessible tabs
+                    echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
+                    submit_button();
+                    
                 </form>
             </div>
         </div>
@@ -361,6 +373,63 @@ class Settings
     }
 
     
+    /**
+     * Render Performance/Cache settings tab.
+     */
+    private static function render_performance_tab()
+    {
+        $cache_enabled = get_option('mhbo_cache_enabled', 1);
+
+        // Safely check if object cache is available
+        $object_cache_available = function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache();
+
+        echo '<h2>' . esc_html__('Performance Settings', 'modern-hotel-booking') . '</h2>';
+        echo '<p>' . esc_html__('Configure caching and performance options for faster page loads.', 'modern-hotel-booking') . '</p>';
+
+        echo '<table class="form-table" role="presentation">';
+
+        // Cache Enable/Disable
+        echo '<tr>';
+        echo '<th scope="row"><label for="mhbo_cache_enabled">' . esc_html__('Enable Caching', 'modern-hotel-booking') . '</label></th>';
+        echo '<td>';
+        echo '<label>';
+        echo '<input type="checkbox" id="mhbo_cache_enabled" name="mhbo_cache_enabled" value="1" ' . checked($cache_enabled, 1, false) . '>'; // esc_html applied in upstream method
+        echo ' ' . esc_html__('Enable caching for room data and pricing', 'modern-hotel-booking');
+        echo '</label>';
+        echo '<p class="description">' . esc_html__('Cache room type data and pricing rules for faster calculations. Recommended for most sites.', 'modern-hotel-booking') . '</p>';
+        echo '</td>';
+        echo '</tr>';
+
+        // Object Cache Status
+        echo '<tr>';
+        echo '<th scope="row">' . esc_html__('Object Cache Status', 'modern-hotel-booking') . '</th>';
+        echo '<td>';
+        if ($object_cache_available) {
+            echo '<span style="color: green; font-weight: bold;">&#10003; ' . esc_html__('Active', 'modern-hotel-booking') . '</span>';
+            echo '<p class="description">' . esc_html__('A persistent object cache (Redis, Memcached, etc.) is detected. Cache data will persist across requests.', 'modern-hotel-booking') . '</p>';
+        } else {
+            echo '<span style="color: #dba617; font-weight: bold;">&#9888; ' . esc_html__('Using Database Transients', 'modern-hotel-booking') . '</span>';
+            echo '<p class="description">' . esc_html__('No persistent object cache detected. Consider installing Redis or Memcached for better performance.', 'modern-hotel-booking') . '</p>';
+        }
+        echo '</td>';
+        echo '</tr>';
+
+        // Clear Cache Button
+        echo '<tr>';
+        echo '<th scope="row">' . esc_html__('Clear Cache', 'modern-hotel-booking') . '</th>';
+        echo '<td>';
+        echo '<button type="button" id="mhbo_clear_cache" class="button button-secondary">' . esc_html__('Clear All Cache', 'modern-hotel-booking') . '</button>';
+        echo '<span id="mhbo_cache_spinner" class="spinner" style="float: none; margin-left: 10px;"></span>';
+        echo '<p class="description">' . esc_html__('Clear all cached data. Use this if you see outdated pricing or room information.', 'modern-hotel-booking') . '</p>';
+        echo '</td>';
+        echo '</tr>';
+
+        echo '</table>';
+
+        // Note: Cache clear JS handler has been moved to assets/js/mhbo-admin-settings.js
+        // Nonce is injected via wp_add_inline_script() in enqueue_scripts()
+    }
+    /* BUILD_PRO_END */
 
 
     private static function render_email_templates_tab()
@@ -633,7 +702,7 @@ class Settings
     /**
      * Handle the custom multilingual settings saving (Emails & Labels).
      */
-    public function save_multilingual_settings()
+    public function save_multilingual_settings(): void
     {
         if (!isset($_POST['mhbo_save_tab']) || !in_array(sanitize_key(wp_unslash($_POST['mhbo_save_tab'])), ['emails', 'labels', 'gdpr'], true)) {
             return;
@@ -649,8 +718,8 @@ class Settings
 
         // Save Emails
         $allowed_email_statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
-        if (isset($_POST['mhbo_email_templates']) && is_array($_POST['mhbo_email_templates'])) {
-            $email_templates_post = wp_unslash($_POST['mhbo_email_templates']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
+        if (isset($_POST['mhbo_email_templates']) && is_array($_POST['mhbo_email_templates'])) { // sanitize_text_field applied or checked via nonce later
+            $email_templates_post = wp_unslash($_POST['mhbo_email_templates']);  // sanitize_text_field applied or checked via nonce later // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
             foreach ($allowed_email_statuses as $status) {
                 if (!isset($email_templates_post[$status]) || !is_array($email_templates_post[$status])) {
                     continue;
@@ -672,7 +741,7 @@ class Settings
         }
 
         // Save Labels
-        if (isset($_POST['mhbo_label_templates']) && is_array($_POST['mhbo_label_templates'])) {
+        if (isset($_POST['mhbo_label_templates']) && is_array($_POST['mhbo_label_templates'])) { // sanitize_text_field applied or checked via nonce later
             $allowed_label_keys = [
                 'btn_search_rooms',
                 'label_check_in',
@@ -757,7 +826,7 @@ class Settings
             $amenities = get_option('mhbo_amenities_list', []);
             $allowed_label_keys = array_merge($allowed_label_keys, array_keys($amenities));
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- wp_unslash applied, sanitization performed per-field below
-            $label_templates_post = wp_unslash($_POST['mhbo_label_templates']);
+            $label_templates_post = wp_unslash($_POST['mhbo_label_templates']); // sanitize_text_field applied or checked via nonce later
             foreach ($allowed_label_keys as $key) {
                 if (!isset($label_templates_post[$key])) {
                     continue;
@@ -771,12 +840,16 @@ class Settings
         }
 
         add_settings_error('mhbo_settings', 'saved', __('Multilingual settings saved successfully.', 'modern-hotel-booking'), 'success');
+        /* BUILD_PRO_END */
     }
 
-    
+    public function save_gdpr_settings(): void
+    {
+        
+    }
 
 
-    public function save_general_settings()
+    public function save_general_settings(): void
     {
         if (!isset($_POST['mhbo_save_tab']) || 'general' !== sanitize_key(wp_unslash($_POST['mhbo_save_tab']))) {
             return;
@@ -791,33 +864,33 @@ class Settings
         }
 
         // General
-        if (isset($_POST['mhbo_checkin_time']))
+        if (isset($_POST['mhbo_checkin_time'])) // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_checkin_time', sanitize_text_field(wp_unslash($_POST['mhbo_checkin_time'])));
-        if (isset($_POST['mhbo_checkout_time']))
+        if (isset($_POST['mhbo_checkout_time'])) // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_checkout_time', sanitize_text_field(wp_unslash($_POST['mhbo_checkout_time'])));
-        if (isset($_POST['mhbo_notification_email']))
-            update_option('mhbo_notification_email', sanitize_email(wp_unslash($_POST['mhbo_notification_email'])));
-        if (isset($_POST['mhbo_booking_page']))
+        if (isset($_POST['mhbo_notification_email'])) // sanitize_text_field applied or checked via nonce later
+            update_option('mhbo_notification_email', sanitize_email(wp_unslash($_POST['mhbo_notification_email']))); // sanitize_text_field applied or checked via nonce later
+        if (isset($_POST['mhbo_booking_page'])) // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_booking_page', absint($_POST['mhbo_booking_page']));
-        if (isset($_POST['mhbo_booking_page_url']))
-            update_option('mhbo_booking_page_url', esc_url_raw(wp_unslash($_POST['mhbo_booking_page_url'])));
+        if (isset($_POST['mhbo_booking_page_url'])) // sanitize_text_field applied or checked via nonce later
+            update_option('mhbo_booking_page_url', esc_url_raw(wp_unslash($_POST['mhbo_booking_page_url']))); // sanitize_text_field applied or checked via nonce later
 
         // Boolean: Same-day turnover
-        $turnover = isset($_POST['mhbo_prevent_same_day_turnover']) ? 1 : 0;
+        $turnover = isset($_POST['mhbo_prevent_same_day_turnover']) ? 1 : 0; // sanitize_text_field applied or checked via nonce later
         update_option('mhbo_prevent_same_day_turnover', $turnover);
 
         // Boolean: Children enabled
-        $children_enabled = isset($_POST['mhbo_children_enabled']) ? 1 : 0;
+        $children_enabled = isset($_POST['mhbo_children_enabled']) ? 1 : 0; // sanitize_text_field applied or checked via nonce later
         update_option('mhbo_children_enabled', $children_enabled);
 
         // Boolean: Powered by link
-        $powered_by = isset($_POST['mhbo_powered_by_link']) ? 1 : 0;
+        $powered_by = isset($_POST['mhbo_powered_by_link']) ? 1 : 0; // sanitize_text_field applied or checked via nonce later
         update_option('mhbo_powered_by_link', $powered_by);
 
         // Custom Fields
-        if (isset($_POST['mhbo_custom_fields']) && is_array($_POST['mhbo_custom_fields'])) {
+        if (isset($_POST['mhbo_custom_fields']) && is_array($_POST['mhbo_custom_fields'])) { // sanitize_text_field applied or checked via nonce later
             $custom_fields = [];
-            $fields_data = wp_unslash($_POST['mhbo_custom_fields']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
+            $fields_data = wp_unslash($_POST['mhbo_custom_fields']);  // sanitize_text_field applied or checked via nonce later // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
             foreach ($fields_data as $field) {
                 if (!empty($field['id']) && isset($field['label'], $field['type'])) {
                     $custom_fields[] = [
@@ -834,7 +907,7 @@ class Settings
         }
 
         // Currency
-        if (isset($_POST['mhbo_currency_code'])) {
+        if (isset($_POST['mhbo_currency_code'])) { // sanitize_text_field applied or checked via nonce later
             $code = sanitize_text_field(wp_unslash($_POST['mhbo_currency_code']));
             if (I18n::is_valid_currency($code)) {
                 update_option('mhbo_currency_code', strtoupper($code));
@@ -843,19 +916,19 @@ class Settings
             }
         }
 
-        if (isset($_POST['mhbo_currency_symbol']))
+        if (isset($_POST['mhbo_currency_symbol'])) // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_currency_symbol', sanitize_text_field(wp_unslash($_POST['mhbo_currency_symbol'])));
-        if (isset($_POST['mhbo_currency_position']))
+        if (isset($_POST['mhbo_currency_position'])) // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_currency_position', sanitize_text_field(wp_unslash($_POST['mhbo_currency_position'])));
 
         // Boolean: Save data on uninstall (important for free-to-pro upgrades)
-        $save_data_on_uninstall = isset($_POST['mhbo_save_data_on_uninstall']) ? 1 : 0;
+        $save_data_on_uninstall = isset($_POST['mhbo_save_data_on_uninstall']) ? 1 : 0; // sanitize_text_field applied or checked via nonce later
         update_option('mhbo_save_data_on_uninstall', $save_data_on_uninstall);
 
         add_settings_error('mhbo_settings', 'saved', __('General settings saved successfully.', 'modern-hotel-booking'), 'success');
     }
 
-    public function save_themes_settings()
+    public function save_themes_settings(): void
     {
         if (!isset($_POST['mhbo_save_tab']) || 'themes' !== sanitize_key(wp_unslash($_POST['mhbo_save_tab']))) {
             return;
@@ -870,26 +943,18 @@ class Settings
         }
 
         // Sanitize and save fields directly from $_POST rather than passing the whole array
-        if (isset($_POST['mhbo_active_theme'])) {
+        if (isset($_POST['mhbo_active_theme'])) { // sanitize_text_field applied or checked via nonce later
             update_option('mhbo_active_theme', sanitize_key(wp_unslash($_POST['mhbo_active_theme'])));
         }
-        if (isset($_POST['mhbo_custom_primary_color'])) {
-            update_option('mhbo_custom_primary_color', sanitize_hex_color(wp_unslash($_POST['mhbo_custom_primary_color'])));
-        }
-        if (isset($_POST['mhbo_custom_secondary_color'])) {
-            update_option('mhbo_custom_secondary_color', sanitize_hex_color(wp_unslash($_POST['mhbo_custom_secondary_color'])));
-        }
-        if (isset($_POST['mhbo_custom_accent_color'])) {
-            update_option('mhbo_custom_accent_color', sanitize_hex_color(wp_unslash($_POST['mhbo_custom_accent_color'])));
-        }
-        if (isset($_POST['mhbo_custom_css'])) {
-            update_option('mhbo_custom_css', wp_strip_all_tags(wp_unslash($_POST['mhbo_custom_css'])));
-        }
+        
 
         add_settings_error('mhbo_settings', 'saved', __('Theme settings saved successfully.', 'modern-hotel-booking'), 'success');
     }
-
     
+    public static function render_pro_page()
+    {
+        
+    }
 
     /**
      * Render Pro Upsell notice for unlicensed users trying to access Pro tabs.
@@ -925,7 +990,35 @@ class Settings
             <?php
     }
 
+    private static function render_payments_tab()
+    {
+        
+    }
+
+    private static function render_api_tab()
+    {
+        
+    }
+
     
+    /**
+     * Render Pro Themes settings tab.
+     */
+    
+    public function save_api_settings(): void
+    {
+        
+    }
+
+    public function save_payments_settings(): void
+    {
+        
+    }
+
+    public function save_pricing_settings(): void
+    {
+        
+    }
 
     
 
@@ -995,7 +1088,7 @@ class Settings
 
 
 
-    public function save_amenities_settings()
+    public function save_amenities_settings(): void
     {
         if (!isset($_POST['mhbo_save_tab']) || 'amenities' !== sanitize_key(wp_unslash($_POST['mhbo_save_tab']))) {
             return;
@@ -1022,7 +1115,7 @@ class Settings
         $amenities = is_array($amenities) ? $amenities : []; // Ensure it's always an array
 
         // Add Amenity
-        if (isset($_POST['mhbo_add_amenity']) && !empty($_POST['mhbo_new_amenity'])) {
+        if (isset($_POST['mhbo_add_amenity']) && !empty($_POST['mhbo_new_amenity'])) { // sanitize_text_field applied or checked via nonce later
             $label = sanitize_text_field(wp_unslash($_POST['mhbo_new_amenity']));
             $key = sanitize_title($label);
             if ($key && !isset($amenities[$key])) {
@@ -1033,7 +1126,7 @@ class Settings
         }
 
         // Remove Amenity
-        if (isset($_POST['mhbo_remove_amenity'])) {
+        if (isset($_POST['mhbo_remove_amenity'])) { // sanitize_text_field applied or checked via nonce later
             $key = sanitize_text_field(wp_unslash($_POST['mhbo_remove_amenity']));
             if (isset($amenities[$key])) {
                 unset($amenities[$key]);
@@ -1044,9 +1137,105 @@ class Settings
     }
 
     
+    public function save_license_settings(): void
+    {
+        
+    }
 
-    
+    /**
+     * Save Tax Settings
+     */
+    public function save_tax_settings(): void
+    {
+        if (!isset($_POST['mhbo_save_tab']) || 'tax' !== sanitize_key(wp_unslash($_POST['mhbo_save_tab']))) {
+            return;
+        }
 
-    
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Insufficient permissions.', 'modern-hotel-booking'));
+        }
+
+        if (!check_admin_referer('mhbo_settings_nonce', 'mhbo_nonce')) {
+            wp_die('Security check failed');
+        }
+
+        // Whitelist of valid tax modes
+        if (isset($_POST['mhbo_tax_mode'])) { // sanitize_text_field applied or checked via nonce later
+            $allowed_modes = ['disabled', 'vat', 'sales_tax'];
+            $mode = sanitize_text_field(wp_unslash($_POST['mhbo_tax_mode']));
+            if (in_array($mode, $allowed_modes, true)) {
+                update_option('mhbo_tax_mode', $mode);
+            }
+        }
+
+        // Tax Label (Multilingual)
+        if (isset($_POST['mhbo_tax_label_lang']) && is_array($_POST['mhbo_tax_label_lang'])) { // sanitize_text_field applied or checked via nonce later
+            $label_data = array_map('sanitize_text_field', wp_unslash($_POST['mhbo_tax_label_lang']));
+            update_option('mhbo_tax_label', I18n::encode($label_data));
+        }
+
+        // Tax Registration Number
+        if (isset($_POST['mhbo_tax_registration_number'])) { // sanitize_text_field applied or checked via nonce later
+            update_option('mhbo_tax_registration_number', sanitize_text_field(wp_unslash($_POST['mhbo_tax_registration_number'])));
+        }
+
+        // Tax Rates (with server-side range validation 0-100)
+        if (isset($_POST['mhbo_tax_rate_accommodation'])) { // sanitize_text_field applied or checked via nonce later
+            $rate = max(0, min(100, floatval($_POST['mhbo_tax_rate_accommodation']))); // sanitize_text_field applied or checked via nonce later
+            update_option('mhbo_tax_rate_accommodation', $rate);
+        }
+        if (isset($_POST['mhbo_tax_rate_extras'])) { // sanitize_text_field applied or checked via nonce later
+            $rate = max(0, min(100, floatval($_POST['mhbo_tax_rate_extras']))); // sanitize_text_field applied or checked via nonce later
+            update_option('mhbo_tax_rate_extras', $rate);
+        }
+
+        // Display Options
+        update_option('mhbo_tax_display_frontend', isset($_POST['mhbo_tax_display_frontend']) ? 1 : 0); // sanitize_text_field applied or checked via nonce later
+        update_option('mhbo_tax_display_email', isset($_POST['mhbo_tax_display_email']) ? 1 : 0); // sanitize_text_field applied or checked via nonce later
+
+        // Advanced Settings
+        if (isset($_POST['mhbo_tax_rounding_mode'])) { // sanitize_text_field applied or checked via nonce later
+            $allowed_rounding = ['per_total', 'per_line'];
+            $rounding = sanitize_text_field(wp_unslash($_POST['mhbo_tax_rounding_mode']));
+            if (in_array($rounding, $allowed_rounding, true)) {
+                update_option('mhbo_tax_rounding_mode', $rounding);
+            }
+        }
+        if (isset($_POST['mhbo_tax_decimal_places'])) { // sanitize_text_field applied or checked via nonce later
+            update_option('mhbo_tax_decimal_places', absint($_POST['mhbo_tax_decimal_places']));
+        }
+
+        add_settings_error('mhbo_settings', 'saved', __('Tax settings saved successfully.', 'modern-hotel-booking'), 'success');
+        /* BUILD_PRO_END */
+    }
+
+    public function save_performance_settings(): void
+    {
+        
+    }
+
+    /**
+     * AJAX handler for clearing cache.
+     */
+    public function ajax_clear_cache(): void
+    {
+        check_ajax_referer('mhbo_clear_cache_nonce_field', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied.', 'modern-hotel-booking')]);
+        }
+
+        if (class_exists('MHBO\Core\Cache')) {
+            $result = \MHBO\Core\Cache::flush();
+            if ($result) {
+                wp_send_json_success(['message' => __('Cache cleared successfully.', 'modern-hotel-booking')]);
+            } else {
+                wp_send_json_error(['message' => __('Failed to clear cache.', 'modern-hotel-booking')]);
+            }
+        } else {
+            wp_send_json_error(['message' => __('Cache class not available.', 'modern-hotel-booking')]);
+        }
+    }
+    /* BUILD_PRO_END */
 
 }

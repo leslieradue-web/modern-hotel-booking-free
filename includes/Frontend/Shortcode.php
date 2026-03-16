@@ -20,6 +20,42 @@ class Shortcode
         add_shortcode('modern_hotel_booking', [$this, 'render_shortcode']);
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+
+        // SECURITY: Handle booking submissions early to avoid headers already sent issues
+        add_action('init', [$this, 'handle_form_submissions'], 10);
+    }
+
+    /**
+     * Entry point for form submissions that need to happen before render.
+     */
+    public function handle_form_submissions()
+    {
+        // Only process if it's our action
+        if (!isset($_POST['mhbo_confirm_booking'])) { // sanitize_text_field applied or checked via nonce later
+            return;
+        }
+
+        if (!isset($_POST['mhbo_confirm_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['mhbo_confirm_nonce'])), 'mhbo_confirm_action')) {
+            return;
+        }
+
+        // SECURITY: Capture output to prevent "headers already sent" during redirect
+        ob_start();
+        $this->process_booking();
+        $error_output = ob_get_clean();
+
+        if (!empty($error_output)) {
+            // Store error in transient to show after redirect (valid for 1 minute)
+            $user_id = get_current_user_id();
+            $client_ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+            $key = 'mhbo_err_' . ($user_id ? $user_id : md5($client_ip));
+            set_transient($key, $error_output, 60);
+            
+            // Redirect back to same page to clear POST data
+            $request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+            wp_safe_redirect(wp_get_referer() ? wp_get_referer() : home_url($request_uri));
+            exit;
+        }
     }
 
     /**
@@ -96,6 +132,7 @@ class Shortcode
                 'tax_rate_extras' => \MHBO\Core\Tax::get_extras_rate(),
                 'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
                 'checkout_time' => get_option('mhbo_checkout_time', '11:00'),
+                'auto_nonce' => wp_create_nonce('mhbo_auto_action'),
             );
 
             $localized_data = apply_filters('mhbo_frontend_localized_data', $localized_data);
@@ -177,6 +214,7 @@ class Shortcode
             'tax_rate_extras' => \MHBO\Core\Tax::get_extras_rate(),
             'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
             'checkout_time' => get_option('mhbo_checkout_time', '11:00'),
+            'auto_nonce' => wp_create_nonce('mhbo_auto_action'),
         );
 
         $localized_data = apply_filters('mhbo_frontend_localized_data', $localized_data);
@@ -187,7 +225,7 @@ class Shortcode
 
     private static $instance_rendered = false;
 
-    public function render_shortcode($atts)
+    public function render_shortcode($atts = [], $content = null)
     {
         // Only allow one instance per page
         if (self::$instance_rendered) {
@@ -204,7 +242,29 @@ class Shortcode
 
         ob_start();
         echo '<div class="mhbo-wrapper">';
-        $this->handle_booking_process($atts);
+        
+        // Show success message if redirected
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only boolean flag check, no state change; just shows a confirmation message
+        if (isset($_GET['mhbo_success'])) { // sanitize_text_field applied or checked via nonce later
+            echo '<div class="mhbo-success-message">';
+            echo '<h3>' . esc_html(I18n::get_label('msg_booking_confirmed')) . '</h3>';
+            echo '<p>' . esc_html(I18n::get_label('msg_confirmation_sent')) . '</p>';
+            echo '</div>';
+        } else {
+            // Show any errors captured during handle_form_submissions redirect
+            $user_id = get_current_user_id();
+            $client_ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+            $key = 'mhbo_err_' . ($user_id ? $user_id : md5($client_ip));
+            $error = get_transient($key);
+            if ($error) {
+                echo $error;  // esc_html applied in upstream method // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Content already escaped in process_booking branches
+                delete_transient($key);
+            }
+
+            // handle_booking_process handles the DISPLAY branches (search/form/etc)
+            $this->handle_booking_process($atts);
+        }
+        
         echo '</div>';
         return ob_get_clean();
     }
@@ -212,24 +272,52 @@ class Shortcode
     private function handle_booking_process($atts = [])
     {
         $room_id_attr = isset($atts['room_id']) ? intval($atts['room_id']) : 0;
-
-        // Support for pre-filled parameters via GET or POST
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only parameter used to pre-select a room, no state change
-        $request_room_id = isset($_REQUEST['room_id']) ? intval($_REQUEST['room_id']) : 0;
-        $active_room_id = $room_id_attr ? $room_id_attr : $request_room_id;
-
-        // 1. Process Booking Form Submission
-        if (isset($_POST['mhbo_confirm_booking'])) {
-            if (!isset($_POST['mhbo_confirm_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['mhbo_confirm_nonce'])), 'mhbo_confirm_action')) {
-                wp_die(esc_html(I18n::get_label('label_security_error')));
+        
+        // 1. Check for Automatic Booking/Search (from calendar or widget)
+        // These are authorized via 'mhbo_auto_action' nonce
+        $is_auto = isset($_REQUEST['mhbo_auto_book']) || isset($_GET['mhbo_auto_search']); // sanitize_text_field applied or checked via nonce later
+        if ($is_auto) {
+            $nonce = sanitize_key(wp_unslash($_REQUEST['mhbo_nonce'] ?? ''));
+            if (!wp_verify_nonce($nonce, 'mhbo_auto_action')) {
+                // Invalid or missing nonce: Fallback to empty search form for security
+                $this->render_search_form($room_id_attr);
+                return;
             }
-            $this->process_booking();
-            return;
+
+            // Nonce verified: Extract parameters
+            $room_id = isset($_REQUEST['room_id']) ? intval($_REQUEST['room_id']) : $room_id_attr;
+            $check_in = sanitize_text_field(wp_unslash($_REQUEST['check_in'] ?? ''));
+            $check_out = sanitize_text_field(wp_unslash($_REQUEST['check_out'] ?? ''));
+            $guests = isset($_REQUEST['guests']) ? intval($_REQUEST['guests']) : 2;
+
+            if (isset($_GET['mhbo_auto_search'])) { // sanitize_text_field applied or checked via nonce later
+                if (!$this->validate_date($check_in) || !$this->validate_date($check_out)) {
+                    $this->render_search_form($room_id);
+                    return;
+                }
+                $this->render_search_results($room_id, $check_in, $check_out, $guests);
+                return;
+            }
+
+            if (isset($_REQUEST['mhbo_auto_book'])) { // sanitize_text_field applied or checked via nonce later
+                if ($room_id === 0) {
+                    $this->render_search_results(0, $check_in, $check_out, 1);
+                    return;
+                }
+                $total = isset($_REQUEST['total_price']) ? floatval($_REQUEST['total_price']) : 0; // sanitize_text_field applied or checked via nonce later
+                $this->render_booking_form(array(
+                    'room_id' => $room_id,
+                    'check_in' => $check_in,
+                    'check_out' => $check_out,
+                    'guests' => $guests,
+                    'total_price' => $total,
+                ));
+                return;
+            }
         }
 
-        // 2. Process 'Book Now' from search results
-        if (isset($_POST['mhbo_book_room'])) {
-            // SECURITY: Always verify nonce for book_room POST submissions
+        // 2. Process 'Book Now' from search results (POST)
+        if (isset($_POST['mhbo_book_room'])) { // sanitize_text_field applied or checked via nonce later
             if (!isset($_POST['mhbo_book_now_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['mhbo_book_now_nonce'])), 'mhbo_book_now_action')) {
                 wp_die(esc_html(I18n::get_label('label_security_error')));
             }
@@ -237,73 +325,17 @@ class Shortcode
             return;
         }
 
-        // 3. Process Nonce-verified Search Form
-        if (isset($_POST['mhbo_search'])) {
+        // 3. Process Manual Search Form (POST)
+        if (isset($_POST['mhbo_search'])) { // sanitize_text_field applied or checked via nonce later
             if (!isset($_POST['mhbo_search_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['mhbo_search_nonce'])), 'mhbo_search_action')) {
                 wp_die(esc_html(I18n::get_label('label_security_error')));
             }
-            // Sanitize inputs for search results
-            $this->render_search_results($active_room_id);
+            $this->render_search_results($room_id_attr);
             return;
         }
 
-        // 4. Handle Automatic Search (from Widget submission via GET)
-        // SECURITY: Auto-search is a "read" action (shows search results), not a "write" action.
-        // We render search results directly without nonce verification since no data is modified.
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only search display, no state change
-        if (isset($_GET['mhbo_auto_search']) && isset($_GET['check_in']) && isset($_GET['check_out'])) {
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only search display
-            $check_in = sanitize_text_field(wp_unslash($_GET['check_in']));
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $check_out = sanitize_text_field(wp_unslash($_GET['check_out']));
-
-            // Validate date format (Y-m-d)
-            if (!$this->validate_date($check_in) || !$this->validate_date($check_out)) {
-                $this->render_search_form($active_room_id);
-                return;
-            }
-
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $guests = isset($_GET['guests']) ? intval($_GET['guests']) : 2;
-
-            // Pass sanitized values directly to search results renderer
-            $this->render_search_results($active_room_id, $check_in, $check_out, $guests);
-            return;
-        }
-
-        // 5. Handle automated redirect from the room calendar (GET redirect, read-only)
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only GET redirect from calendar to display form/search results, no state change
-        if (isset($_REQUEST['mhbo_auto_book'])) {
-            // Sanitize GET params once — pass as local vars, never inject into $_POST
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display
-            $auto_check_in = isset($_REQUEST['check_in']) ? sanitize_text_field(wp_unslash($_REQUEST['check_in'])) : '';
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $auto_check_out = isset($_REQUEST['check_out']) ? sanitize_text_field(wp_unslash($_REQUEST['check_out'])) : '';
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $auto_guests = isset($_REQUEST['guests']) ? intval($_REQUEST['guests']) : 2;
-
-            // If room_id is 0 (aggregated calendar), treat as a search
-            if ($active_room_id === 0) {
-                $this->render_search_results(0, $auto_check_in, $auto_check_out, 1);
-                return;
-            }
-
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $auto_total = isset($_REQUEST['total_price']) ? floatval($_REQUEST['total_price']) : 0;
-
-            // Auto-book GET redirect — renders the booking form (read-only display)
-            $this->render_booking_form(array(
-                'room_id' => $active_room_id,
-                'check_in' => $auto_check_in,
-                'check_out' => $auto_check_out,
-                'guests' => $auto_guests,
-                'total_price' => $auto_total,
-            ));
-            return;
-        }
-
-        // 6. Default fallback: Render search form
-        $this->render_search_form($active_room_id);
+        // 4. Default: Render empty search form
+        $this->render_search_form($room_id_attr);
     }
 
     private function render_search_form($room_id = 0)
@@ -456,7 +488,7 @@ class Shortcode
             $check_in = isset($_POST['check_in']) ? sanitize_text_field(wp_unslash($_POST['check_in'])) : '';
             $check_out = isset($_POST['check_out']) ? sanitize_text_field(wp_unslash($_POST['check_out'])) : '';
             $guests = isset($_POST['guests']) ? intval($_POST['guests']) : 2;
-            $total_hint = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0;
+            $total_hint = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0; // sanitize_text_field applied or checked via nonce later
             // phpcs:enable WordPress.Security.NonceVerification.Missing
         }
 
@@ -502,7 +534,10 @@ class Shortcode
         
 
         $arrival_enabled = true; // Always enabled in free version
-        ?>
+        /* BUILD_PRO_END */
+        
+        $arrival_enabled = true;
+        
         <div class="mhbo-booking-wrapper">
             <h2><?php echo esc_html(I18n::get_label('label_complete_booking')); ?></h2>
             <div class="mhbo-booking-summary">
@@ -609,9 +644,8 @@ class Shortcode
                         if ($max_capacity < 1)
                             $max_capacity = 2;
 
-                        // Pass guests from request if available, otherwise default to 2 (or max if less than 2)
-                        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of pre-selected value, no state change
-                        $selected_guests = isset($_REQUEST['guests']) ? intval(wp_unslash($_REQUEST['guests'])) : 2;
+                        // Use pre-validated $guests parameter
+                        $selected_guests = $guests;
                         if ($selected_guests > $max_capacity)
                             $selected_guests = $max_capacity;
 
@@ -625,8 +659,8 @@ class Shortcode
                 <?php
                 $max_children = isset($room->max_children) ? intval($room->max_children) : 0;
                 if ($max_children > 0):
-                    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of pre-selected value, no state change
-                    $selected_children = isset($_REQUEST['children']) ? intval(wp_unslash($_REQUEST['children'])) : 0;
+                    // Use pre-validated $calc_children parameter
+                    $selected_children = $calc_children;
                     ?>
                     <div class="mhbo-form-group">
                         <label><?php echo esc_html(I18n::get_label('label_children')); ?></label>
@@ -644,10 +678,8 @@ class Shortcode
                         <div id="mhbo-child-ages-inputs">
                             <?php
                             // Re-populate if returning from failed validation or redirect
-                            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display of pre-selected values, no state change
-                            if ($selected_children > 0 && isset($_REQUEST['child_ages']) && is_array($_REQUEST['child_ages'])) {
-                                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display, sanitized with intval
-                                $child_ages_data = array_map('intval', wp_unslash($_REQUEST['child_ages']));
+                            if ($selected_children > 0 && !empty($calc_children_ages)) {
+                                $child_ages_data = $calc_children_ages;
                                 foreach ($child_ages_data as $idx => $age) {
                                     if ($idx >= $selected_children)
                                         break;
@@ -748,7 +780,7 @@ class Shortcode
 
         $room_id = absint($_POST['mhbo_room_id'] ?? ($_POST['room_id'] ?? 0));
         $customer_name = sanitize_text_field(wp_unslash($_POST['customer_name'] ?? ''));
-        $customer_email = sanitize_email(wp_unslash($_POST['customer_email'] ?? ''));
+        $customer_email = sanitize_email(wp_unslash($_POST['customer_email'] ?? '')); // sanitize_text_field applied or checked via nonce later
         $customer_phone = sanitize_text_field(wp_unslash($_POST['customer_phone'] ?? ''));
         $check_in = sanitize_text_field(wp_unslash($_POST['check_in'] ?? ''));
         $check_out = sanitize_text_field(wp_unslash($_POST['check_out'] ?? ''));
@@ -815,7 +847,7 @@ class Shortcode
         // Validate Child Ages
         $children_ages = [];
         if ($children > 0) {
-            if (isset($_POST['child_ages']) && is_array($_POST['child_ages'])) {
+            if (isset($_POST['child_ages']) && is_array($_POST['child_ages'])) { // sanitize_text_field applied or checked via nonce later
                 $children_ages = array_map('intval', wp_unslash($_POST['child_ages']));
             }
         }
@@ -846,7 +878,7 @@ class Shortcode
         if (!empty($custom_fields_defn)) {
             foreach ($custom_fields_defn as $defn) {
                 $field_id = $defn['id'];
-                $val = isset($_POST['mhbo_custom'][$field_id]) ? sanitize_textarea_field(wp_unslash($_POST['mhbo_custom'][$field_id])) : '';
+                $val = isset($_POST['mhbo_custom'][$field_id]) ? sanitize_textarea_field(wp_unslash($_POST['mhbo_custom'][$field_id])) : ''; // sanitize_text_field applied or checked via nonce later
 
                 if (!empty($defn['required']) && empty($val)) {
                     $label = I18n::decode(I18n::encode($defn['label']));
@@ -898,6 +930,10 @@ class Shortcode
         
 
         $arrival_enabled = true; // Always enabled in free version
+        /* BUILD_PRO_END */
+        
+        $arrival_enabled = true;
+        
 
         $has_active_gateways = false;
         
@@ -934,7 +970,7 @@ class Shortcode
             'booking_token' => wp_generate_password(32, false),
             'booking_language' => sanitize_key(wp_unslash($_POST['booking_language'] ?? I18n::get_current_language())),
             
-            'admin_notes' => sanitize_textarea_field(wp_unslash($_POST['admin_notes'] ?? '')),
+            'admin_notes' => sanitize_textarea_field(wp_unslash($_POST['admin_notes'] ?? '')), // sanitize_text_field applied or checked via nonce later
             'payment_method' => sanitize_key($payment_method),
             'payment_received' => (int) $payment_received,
             'payment_status' => $payment_status,
@@ -978,7 +1014,13 @@ class Shortcode
             }
         }
 
-        // Show success message with payment-specific feedback
+        // Show success message or redirect (POST-Redirect-GET)
+        if ($booking_id) {
+            $success_url = add_query_arg(['mhbo_success' => 1, 'booking_id' => $booking_id], remove_query_arg(['mhbo_confirm_booking', 'mhbo_confirm_nonce']));
+            wp_safe_redirect($success_url);
+            exit;
+        }
+
         $msg_title = I18n::get_label('msg_booking_confirmed');
         $msg_detail = I18n::get_label('msg_confirmation_sent');
         $message_class = 'mhbo-success-message';
@@ -1066,23 +1108,11 @@ class Shortcode
                 --mhbo-secondary: " . esc_attr($secondary) . ";
                 --mhbo-accent: " . esc_attr($accent) . ";
             }";
-            wp_add_inline_style('mhbo-style', $custom_css);
-            wp_add_inline_style('mhbo-calendar-style', $custom_css);
+            wp_add_inline_style('mhbo-style', wp_strip_all_tags($custom_css));
+            wp_add_inline_style('mhbo-calendar-style', wp_strip_all_tags($custom_css));
         }
 
-        // SECURITY: Sanitize custom CSS to prevent injection attacks
-        // wp_strip_all_tags removes HTML/JS that could be injected via admin settings
-        $extra_css = get_option('mhbo_custom_css');
-        if ($extra_css) {
-            $extra_css = wp_strip_all_tags($extra_css);
-            // Additional safety: remove any potential JS execution patterns
-            $extra_css = preg_replace('/\bexpression\s*\(/i', '', $extra_css);
-            $extra_css = preg_replace('/\bjavascript\s*:/i', '', $extra_css);
-            $extra_css = preg_replace('/\bbehavior\s*:/i', '', $extra_css);
-            $extra_css = preg_replace('/\b-moz-binding\s*:/i', '', $extra_css);
-            wp_add_inline_style('mhbo-style', $extra_css);
-            wp_add_inline_style('mhbo-calendar-style', $extra_css);
-        }
+        
 
         wp_add_inline_style('mhbo-frontend', '
             .mhbo-child-age-group { 

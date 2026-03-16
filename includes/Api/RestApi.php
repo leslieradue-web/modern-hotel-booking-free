@@ -34,7 +34,7 @@ class RestApi
     /**
      * Register REST routes.
      */
-    public function register_routes()
+    public function register_routes(): void
     {
         $namespace = 'mhbo/v1';
 
