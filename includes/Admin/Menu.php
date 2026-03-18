@@ -157,8 +157,8 @@ if (false !== strpos($hook, 'mhbo-bookings')) {
         $today_checkins = $wpdb->get_results($wpdb->prepare("SELECT b.*, r.room_number as room_name FROM {$wpdb->prefix}mhbo_bookings b LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id WHERE b.status='confirmed' AND b.check_in = %s LIMIT 5", $today_date)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 
 $is_pro_active = false;
-        
-        ?>
+
+?>
         <div class="wrap mhbo-dashboard">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
                 <?php esc_html_e('Hotel Control Center', 'modern-hotel-booking'); ?>
@@ -276,8 +276,8 @@ $is_pro_active = false;
                         <div style="font-size: 13px; line-height: 2;">
                             <div style="display: flex; justify-content: space-between;">
 
-<span><?php esc_html_e('Plugin Edition:', 'modern-hotel-booking'); ?></span>
-                                <strong style="color: #2271b1;"><?php esc_html_e('Free Version', 'modern-hotel-booking'); ?></strong>
+<span class="mhbo-free-edition-row"><?php esc_html_e('Plugin Edition:', 'modern-hotel-booking'); ?></span>
+                                <strong class="mhbo-free-edition-row" style="color: #2271b1;"><?php esc_html_e('Free Version', 'modern-hotel-booking'); ?></strong>
                                 
                             </div>
                             <div style="display: flex; justify-content: space-between;">
@@ -2131,9 +2131,8 @@ $ical_mode = true;
                 wp_die(esc_html__('Security check failed', 'modern-hotel-booking'));
             }
             $new_extras = [];
-            if (isset($_POST['extras']) && is_array($_POST['extras'])) { // sanitize_text_field applied or checked via nonce later
-                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
-                $extras_data = wp_unslash($_POST['extras']); // sanitize_text_field applied or checked via nonce later
+            if (isset($_POST['extras']) && is_array($_POST['extras'])) {
+                $extras_data = map_deep(wp_unslash($_POST['extras']), 'sanitize_text_field');
                 foreach ($extras_data as $ex) {
                     // Skip if required fields are missing
                     if (!isset($ex['name'], $ex['price'], $ex['pricing_type'], $ex['control_type'])) {

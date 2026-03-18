@@ -33,9 +33,6 @@ class Tax
     /**
      * Check if tax is enabled.
      *
-     * Returns false for Free users (no active Pro license) regardless of
-     * the stored mhbo_tax_mode option.
-     *
      * @return bool
      */
     public static function is_enabled(): bool {
@@ -44,10 +41,6 @@ class Tax
 
     /**
      * Get current tax mode.
-     *
-     * Returns MODE_DISABLED for Free users (no active Pro license) regardless
-     * of the stored mhbo_tax_mode option, ensuring all downstream callers
-     * (calculate_booking_tax, get_settings, etc.) receive a neutral value.
      *
      * @return string One of the MODE_* constants.
      */

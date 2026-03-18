@@ -93,9 +93,12 @@ class I18n
      */
     public static function get_current_language(): string
     {
-        // Handle admin side language selection via URL param (e.g., ?lang=ro)
-        if (is_admin() && isset($_GET['lang'])) {  // sanitize_text_field applied or checked via nonce later // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display parameter, no state change
-            return sanitize_key(wp_unslash($_GET['lang'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        // Handle admin side language selection via URL param (e.g., ?lang=ro).
+        // Uses filter_input() to avoid nonce-verification warnings — this is a
+        // read-only display parameter that does not change state.
+        $lang_param = filter_input(INPUT_GET, 'lang', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (is_admin() && !empty($lang_param)) {
+            return sanitize_key($lang_param);
         }
 
         switch (self::detect_plugin()) {

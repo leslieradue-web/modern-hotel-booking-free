@@ -14,7 +14,6 @@ use MHBO\Frontend\BookingWidget;
 use MHBO\Frontend\Block;
 use MHBO\Api\RestApi;
 use MHBO\Core\Privacy;
-// Note: Webhook and LicenseValidator are Pro-only and conditionally loaded below
 
 class Plugin
 {
@@ -59,8 +58,6 @@ class Plugin
         // Always register AJAX handlers (needed because is_admin() is true for AJAX)
         $calendar = new Calendar();
         $calendar->init();
-
-        // Initialize License Validator for periodic revalidation (Pro-only)
 
 // Register Widget (Must be global to show in Admin > Widgets)
         add_action('widgets_init', function () {

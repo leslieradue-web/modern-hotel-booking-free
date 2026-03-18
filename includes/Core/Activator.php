@@ -103,7 +103,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_bookings);
 
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin tables
 		$sql_ical_connections = "CREATE TABLE {$wpdb->prefix}mhbo_ical_connections (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
@@ -138,7 +138,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_ical);
 
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for pro features
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin tables
 		$sql_pricing = "CREATE TABLE {$wpdb->prefix}mhbo_pricing_rules (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL DEFAULT 0,

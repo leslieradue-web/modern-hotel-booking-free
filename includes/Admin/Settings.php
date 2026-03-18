@@ -300,9 +300,7 @@ return false;
     public static function render()
     {
         $active_tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-$is_pro_active = false;
-        
+        $is_pro_active = defined('MHBO_IS_PRO') && MHBO_IS_PRO;
         ?>
         <div class="wrap mhbo-admin-wrap">
             <h1 style="margin-bottom: 25px; font-weight: 800; color: #1a3b5d;">
@@ -367,11 +365,16 @@ $is_pro_active = false;
                         
                     }
 
-// Free version always shows save button for accessible tabs
-                    echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
-                    submit_button();
+                    // Show save button — Pro version gates locked tabs, Free always shows
+                    
+                    $show_save = true;
 
-?>
+if ($show_save) {
+                        echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
+                        submit_button();
+                    }
+
+                    ?>
                 </form>
             </div>
         </div>
@@ -434,8 +437,6 @@ $is_pro_active = false;
         // Note: Cache clear JS handler has been moved to assets/js/mhbo-admin-settings.js
         // Nonce is injected via wp_add_inline_script() in enqueue_scripts()
     }
-    /* BUILD_PRO_END */
-
 private static function render_email_templates_tab()
     {
         $langs = I18n::get_available_languages();
@@ -719,23 +720,24 @@ private static function render_labels_tab()
 
         // Save Emails
         $allowed_email_statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
-        if (isset($_POST['mhbo_email_templates']) && is_array($_POST['mhbo_email_templates'])) { // sanitize_text_field applied or checked via nonce later
-            $email_templates_post = wp_unslash($_POST['mhbo_email_templates']);  // sanitize_text_field applied or checked via nonce later // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
+        if (isset($_POST['mhbo_email_templates']) && is_array($_POST['mhbo_email_templates'])) {
+            // Sanitize with wp_kses_post (preserves safe HTML for email message bodies).
+            $email_templates_post = map_deep(wp_unslash($_POST['mhbo_email_templates']), 'wp_kses_post');
             foreach ($allowed_email_statuses as $status) {
                 if (!isset($email_templates_post[$status]) || !is_array($email_templates_post[$status])) {
                     continue;
                 }
                 $data = $email_templates_post[$status];
                 if (isset($data['subject'])) {
+                    // Subjects should be plain text — tighten with sanitize_text_field.
                     $subject_data = is_array($data['subject'])
                         ? array_map('sanitize_text_field', $data['subject'])
                         : sanitize_text_field($data['subject']);
                     update_option("mhbo_email_{$status}_subject", I18n::encode($subject_data));
                 }
                 if (isset($data['message'])) {
-                    $message_data = is_array($data['message'])
-                        ? array_map('wp_kses_post', $data['message'])
-                        : wp_kses_post($data['message']);
+                    // Messages are already safe from map_deep(... 'wp_kses_post').
+                    $message_data = $data['message'];
                     update_option("mhbo_email_{$status}_message", I18n::encode($message_data));
                 }
             }
@@ -826,8 +828,7 @@ private static function render_labels_tab()
             ];
             $amenities = get_option('mhbo_amenities_list', []);
             $allowed_label_keys = array_merge($allowed_label_keys, array_keys($amenities));
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- wp_unslash applied, sanitization performed per-field below
-            $label_templates_post = wp_unslash($_POST['mhbo_label_templates']); // sanitize_text_field applied or checked via nonce later
+            $label_templates_post = map_deep(wp_unslash($_POST['mhbo_label_templates']), 'sanitize_text_field');
             foreach ($allowed_label_keys as $key) {
                 if (!isset($label_templates_post[$key])) {
                     continue;
@@ -841,8 +842,7 @@ private static function render_labels_tab()
         }
 
         add_settings_error('mhbo_settings', 'saved', __('Multilingual settings saved successfully.', 'modern-hotel-booking'), 'success');
-        /* BUILD_PRO_END */
-    }
+}
 
     public function save_gdpr_settings(): void
     {
@@ -888,9 +888,9 @@ public function save_general_settings(): void
         update_option('mhbo_powered_by_link', $powered_by);
 
         // Custom Fields
-        if (isset($_POST['mhbo_custom_fields']) && is_array($_POST['mhbo_custom_fields'])) { // sanitize_text_field applied or checked via nonce later
+        if (isset($_POST['mhbo_custom_fields']) && is_array($_POST['mhbo_custom_fields'])) {
             $custom_fields = [];
-            $fields_data = wp_unslash($_POST['mhbo_custom_fields']);  // sanitize_text_field applied or checked via nonce later // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitization performed per-field below
+            $fields_data = map_deep(wp_unslash($_POST['mhbo_custom_fields']), 'sanitize_text_field');
             foreach ($fields_data as $field) {
                 if (!empty($field['id']) && isset($field['label'], $field['type'])) {
                     $custom_fields[] = [
@@ -1285,8 +1285,7 @@ public function save_amenities_settings(): void
         }
 
         add_settings_error('mhbo_settings', 'saved', __('Tax settings saved successfully.', 'modern-hotel-booking'), 'success');
-        /* BUILD_PRO_END */
-    }
+}
 
     public function save_performance_settings(): void
     {
@@ -1315,6 +1314,4 @@ public function save_amenities_settings(): void
             wp_send_json_error(['message' => __('Cache class not available.', 'modern-hotel-booking')]);
         }
     }
-    /* BUILD_PRO_END */
-
 }

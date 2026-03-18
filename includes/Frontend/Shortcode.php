@@ -243,10 +243,13 @@ class Shortcode
         ob_start();
         echo '<div class="mhbo-wrapper">';
         
-        // Show success message if redirected
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only boolean flag check, no state change; just shows a confirmation message
-        if (isset($_GET['mhbo_success'])) { // sanitize_text_field applied or checked via nonce later
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        // Show success message if redirected (nonce-secured)
+        $success_nonce = isset($_GET['mhbo_success_nonce']) 
+            ? sanitize_key(wp_unslash($_GET['mhbo_success_nonce'])) 
+            : '';
+
+        if (isset($_GET['mhbo_success']) && wp_verify_nonce($success_nonce, 'mhbo_success_display')) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified above
             $mhbo_status = isset($_GET['mhbo_status']) ? sanitize_key($_GET['mhbo_status']) : '';
             
             $msg_title = I18n::get_label('msg_booking_confirmed');
@@ -540,7 +543,7 @@ class Shortcode
         $calc = \MHBO\Core\Pricing::calculate_booking_total($room_id, $check_in, $check_out, $calc_guests, $calc_extras, $calc_children, $calc_children_ages);
         $total = $calc ? (float) $calc['total'] : (!empty($total) ? $total : 0);
 
-        // Check License Status
+        // Pro features flag (always false in free version)
         $is_pro_active = false;
 
 // Get On-site settings - On-site payment is always available in free version
@@ -930,7 +933,10 @@ $status = 'pending';
 // Get On-site settings - On-site payment is always available in free version
         // In PRO version, also check the option setting
 
-$arrival_enabled = true;
+// Free version: on-site payment is always available
+        if (!isset($arrival_enabled)) {
+            $arrival_enabled = true;
+        }
 
 $has_active_gateways = false;
 
@@ -1008,7 +1014,12 @@ $has_active_gateways = false;
 
         // Show success message or redirect (POST-Redirect-GET)
         if ($booking_id) {
-            $success_url = add_query_arg(['mhbo_success' => 1, 'booking_id' => $booking_id, 'mhbo_status' => $status], remove_query_arg(['mhbo_confirm_booking', 'mhbo_confirm_nonce']));
+            $success_nonce = wp_create_nonce('mhbo_success_display');
+            $success_url = add_query_arg([
+                'mhbo_success'       => 1,
+                'mhbo_success_nonce' => $success_nonce,
+                'mhbo_status'        => $status,
+            ], remove_query_arg(['mhbo_confirm_booking', 'mhbo_confirm_nonce']));
             wp_safe_redirect($success_url);
             exit;
         }
