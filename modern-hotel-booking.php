@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Modern Hotel Booking PRO
+ * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
  * Version:           2.2.7.6
