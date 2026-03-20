@@ -237,7 +237,13 @@
                 success: function (response) {
                     btn.prop('disabled', false);
                     if (response.success) {
-                        $stripeResult.html('<span style="color: green; font-weight: bold;">✓ ' + response.data.message + '</span>');
+                        let html = '<span style="color: green; font-weight: bold;">✓ ' + response.data.message + '</span>';
+                        if (response.data.currency_mismatch) {
+                            html = '<div style="margin-top: 10px; padding: 10px; border-left: 4px solid #ffb900; background: #fff8e5; color: #444;">' +
+                                   '<span style="color: #d63638; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ ' + (config.i18n?.currency_mismatch_title || 'Currency Mismatch Detected') + '</span>' +
+                                   response.data.message + '</div>';
+                        }
+                        $stripeResult.html(html);
                     } else {
                         $stripeResult.html('<span style="color: red; font-weight: bold;">✗ ' + (response.data ? response.data.message : 'Unknown error') + '</span>');
                     }

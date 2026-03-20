@@ -1,42 +1,65 @@
 === Modern Hotel Booking ===
 Contributors: leslierad
-Tags: hotel booking, reservation system, booking calendar, bnb, property management
-Requires at least: 5.6
+Tags: hotel booking, reservation system, vacation rental, availability calendar, booking calendar
+Requires at least: 6.2
 Tested up to: 6.9
 Stable tag: 2.2.7.6
 Requires PHP: 7.4
-License: GPL v2 or later
+License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The ultimate Hotel Booking & Reservation System for managing rooms, availability, and direct guest reservations.
+Free hotel booking & reservation system for WordPress. Availability calendar, direct bookings, vacation rentals. Zero commissions.
 
 == Description ==
 
-Modern Hotel Booking is a high-performance Property Management System (PMS) designed for Hotels, Bed & Breakfasts, and Vacation Rentals. Manage room types, set pricing, and take direct bookings with zero commissions.
+**Modern Hotel Booking** is a powerful free **WordPress hotel booking plugin** and complete **reservation system** built for independent properties.
 
-This plugin provides a robust booking engine that operates entirely within your WordPress environment.
+Stop paying 15%+ commissions to OTAs. Take **direct bookings** on your own website — commission-free, forever.
 
-=== Features (Included in this version) ===
-* Complete Room Management: Create unlimited room types with capacity controls.
-* Real-Time Availability Calendar: Interactive visual status for all rooms.
-* Smart Booking Form: AJAX-powered form with instant price calculation.
-* Native Gutenberg Blocks: Seamlessly add booking forms to any page.
-* Automated Notifications: Customizable email confirmations for guests and admins.
-* Multilingual Support: Ready for WPML, Polylang, and qTranslate-X.
-* GDPR Compliant: Built-in tools for data privacy.
-* Developer API: REST API endpoints for custom integrations.
+This **hotel booking plugin** is perfect for:
 
-== Pro Version Availability ==
-Modern Hotel Booking Pro is available for users requiring advanced business automation, including Stripe/PayPal payment gateway integration, iCal channel management (Airbnb, Booking.com), and detailed revenue analytics. Please visit our website for details on the Pro edition.
+* **Small Hotels & Hostels** — manage unlimited rooms and reservations
+* **Vacation Rentals** — ideal for beach house booking, cabins, and apartments
+* **B&Bs & Guesthouses** — simple per-night booking logic
+* **Single Properties** — works as a standalone vacation rental plugin
+
+### Key Features (Free — No Limits)
+
+* **Unlimited Room Types** with capacity controls and pricing
+* **Real-Time Availability Calendar** — interactive visual status for all rooms
+* **Smart Booking Form** — AJAX-powered with instant price calculation
+* **Automated Email Notifications** — customizable confirmations for guests and admins
+* **Native Gutenberg Blocks** — add booking forms to any page seamlessly
+* **Mobile-First Design** — fully responsive forms and calendars
+* **Multilingual Ready** — WPML, Polylang and qTranslate-X compatible
+
+
+== Pro Version ==
+Need more power for your direct booking business? Upgrade to Pro and get:
+
+* Online Payments (Stripe, PayPal)
+* iCal Two-Way Sync with Airbnb, Booking.com and VRBO
+* Seasonal & Dynamic Pricing
+* Advanced Email Templates
+* Revenue Analytics Dashboard
+* GDPR Compliant tools
+* Developer REST API
+
+**Pricing** (simple & transparent):
+- First year (introductory): Personal $89 | Business (5 Licenses) $249 | Agency (25 Licenses) $749
+- Renewal every year after (same low price for all tiers): **just $49/year**
+
+All plans include updates and priority support during the active license period. Cancel anytime — no forced auto-renewal.
+
+Visit the [Pro Version page](https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/) to purchase.
 
 == Installation ==
+
 1. Go to Plugins > Add New in your WordPress admin.
 2. Search for "Modern Hotel Booking".
 3. Click Install Now and then Activate.
 
 == Quick Start Guide ==
-
-How to use the Modern Hotel Booking Plugin after installing
 
 1. Go to **Hotel Booking > Room Types** — Create your room types (e.g., Double Room, Triple Room). Set capacity, base price, and all other options.
 2. Go to **Hotel Booking > Rooms** — Add the actual rooms and assign them to a room type. You can set custom prices or availability status here.
@@ -48,8 +71,41 @@ How to use the Modern Hotel Booking Plugin after installing
 5. Go to **Hotel Booking > Settings** — **IMPORTANT**: Select your Booking Page from the dropdown and save. Configure any other options (emails, currency, etc.) and save again.
 6. (Optional) For individual room pages, use the **Room Availability Calendar** block or shortcode `[mhbo_room_calendar room_id="1"]` (replace 1 with the actual room ID).
 
-How it works  
 Once set up, guests can search and create bookings from your dedicated booking page or from individual room pages. The system shows real-time availability and calculates prices instantly.
+
+== Frequently Asked Questions ==
+
+= Is this hotel booking plugin really free? =
+Yes! The core reservation system, availability calendar, room types, and email notifications are 100% free with no limits on bookings or rooms.
+
+= Can I use it for a beach house or vacation rental? =
+Absolutely. Modern Hotel Booking works perfectly as a vacation rental plugin for single properties, beach houses, cabins, guesthouses, and small hotels.
+
+= Does it sync with Airbnb or Booking.com? =
+The free version allows manual date blocking. The Pro version adds full two-way iCal synchronization with all major OTAs.
+
+= Is it mobile friendly? =
+Yes — the entire booking calendar and reservation forms are fully responsive and mobile-optimized.
+
+= Does it support multiple properties? =
+Yes. Create unlimited "Room Types" that can act as separate properties (e.g., "Seaside Villa" and "Mountain Cabin").
+
+= Where can I get the Pro version? =
+Visit [https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/](https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/).
+
+Pricing is simple:
+• First year introductory price: $89 (1 site), $249 (5 sites) or $749 (25 sites)
+• After year 1: renew at just **$49/year** (same price for all tiers) for continued updates, features and support.
+
+You can keep using the version you purchased indefinitely without renewing, but you will stop receiving updates and new features.
+
+== Screenshots ==
+
+1. **Responsive Booking Form** — Clean interface with date selection and real-time availability.
+2. **Admin Dashboard** — Overview of upcoming bookings and revenue.
+3. **Room Management** — Easy setup for room types, capacity, and base pricing.
+4. **Availability Calendar** — Interactive visual booking calendar for checking room status.
+5. **Settings Panel** — Extensive configuration for emails, currencies, and rules.
 
 == Credits ==
 
@@ -97,152 +153,15 @@ The **Pro version** (available separately) integrates with the following externa
 
 Both services are optional and only active if configured in the Pro version.
 
-== Screenshots ==
-
-1. **Responsive Booking Form:** Clean interface with date selection and real-time availability.
-2. **Admin Dashboard:** Overview of upcoming bookings and revenue.
-3. **Room Management:** Easy setup for room types, capacity, and base pricing.
-4. **Availability Calendar:** Interactive visual calendar for checking room status.
-5. **Settings Panel:** Extensive configuration for emails, currencies, and rules.
-
 == Changelog ==
 
 = 2.2.7.6 =
 * Compliance: Updated WP-release build process, strict separation of Pro/Free markers.
 * Fixed: Resolved NonceVerification, DirectDatabaseQuery, and PreparedSQL warnings.
-* Fixed: System Status widget to strictly meet WordPress.org repository rules (2026).
+* Fixed: System Status widget to strictly meet WordPress.org repository rules.
 * Built: Free version verified clean against all repository compliance tests.
-
-= 2.2.7.5 =
-* Version update, WP repo compliance and performance enhancements.
-
-= 2.2.7.4 =
-* Version update WP repo compliance checks and audit.
-
-= 2.2.7.3 =
-* Security: Comprehensive audit and enforcement of nonces on all administrative settings and AJAX actions.
-* Compliance: Completed full surgical separation of Pro-only logic from the Free distribution (trialware compliance).
-* Compliance: Standardized all internal prefixes to `mhbo_` for full WordPress.org directory compatibility.
-* Security: Added `index.php` protection to all subdirectories to prevent direct directory listing.
-* Hygiene: Removed all development debug logs and TODO/FIXME comments from the source.
-* Fix: Synchronized versioning across all plugin metadata and documentation.
-
-= 2.2.7.2 =
-* Rechecked issues - WP.org review fixes: Added sanitize_callbacks, removed Pro stubs, updated libs, added external services docs, fixed i18n.
-
-= 2.2.7.1 =
-* Updated: Version bump for release
-
-= 2.2.7.0 =
-* Fixed: Performance tab removed from Free version (was causing fatal error)
-* Fixed: Removed Pro-only settings hooks from Free build
-* Fixed: WordPress.DB PHPCS warnings - added NoCaching ignores for database queries using transients
-* Fixed: WordPress.DB.PreparedSQLPlaceholders.UnnecessaryPrepare warnings
-* Security: Full input sanitization and output escaping review completed
-
-= 2.2.6.9 =
-* Major release: Compliance audit completed to ensure full functionality and removal of restricted features per WordPress.org guidelines.
-* Fixed: WordPress.org i18n linting errors - added translators comments for placeholder strings
-* Fixed: Ordered placeholders in translation strings (%1$s, %2$s format)
-* Fixed: WPML hooks with phpcs:ignore comments (third-party integration)
-* Fixed: Output escaping in admin dashboard widget
-* Fixed: Global variable prefixes in uninstall.php (WordPress security standards)
-* Security: Enhanced escaping for all frontend and admin outputs
-
-= 2.2.6.8 =
-* Fixed: WordPress.org Guideline 5 (Trialware) compliance - completely removed all Pro-gated code from FREE version
-* Fixed: Removed all $is_pro_active conditional checks from FREE build
-* Fixed: Replaced Pro feature blocks with upsell notices
-* Fixed: Various undefined variable warnings
-
-= 2.2.6.7 =
-* Fixed: Admin bookings calendar not loading (FullCalendar missing plugins)
-* Updated: FullCalendar library to bundle version including dayGrid, timeGrid, interaction plugins
-* Added: Credits section documenting third-party libraries
-
-= 2.2.6.6 =
-* Updates and improvements as per recent changes.
-
-= 2.2.6.5 =
-* Changes as per recent updates.
-
-= 2.2.6.3 =
-* Security: Full prefix refactoring from MHB to MHBO (4-character prefix per WP.org guidelines).
-* Compliance: Changed powered_by_link default to OFF (requires user opt-in).
-* Compliance: Enhanced External Services documentation per WP.org requirements.
-* Compliance: Fully removed Stripe/PayPal API code from Free version (trialware compliance).
-* Improvement: Added automated refactoring script for prefix changes.
-* Improvement: Updated vendor libraries (Chart.js, FullCalendar).
-
-= 2.2.6.2 =
-* Fixes per WP.org review implemented.
-
-= 2.2.6.1 =
-* Fixed: Version consistency across all plugin files including block metadata.
-* Fixed: Synchronized version numbers in block.json and block.asset.php files.
-* Improved: Build process stability and version verification.
-
-= 2.2.6.0 =
-* Improved: Build process to exclude PHPStan baseline from public repository.
-* Optimized: Clean distribution of development artifacts.
-
-= 2.2.5.9 =
-* Fixed: Automation error in release workflow related to deleted CI configuration.
-* Optimized: Version consistency across all plugin components and documentation.
-
-= 2.2.5.8 =
-* Added: Automated PHPStan analysis for local development.
-* Improved: Build process to preserve metadata files (.gitignore, .gitattributes) in public repository.
-* Improved: CI/CD release workflow with explicit free version sync logic.
-* Fixed: Strict type compliance for Level 10 static analysis.
-* Optimized: Distignore list to exclude all development artifacts from official ZIP.
-
-= 2.2.5.7 =
-* Added: Fallback to English for empty translations in backend.
-* Improved: Robustness of multi-language decoding for international locales.
-* Improved: PHP 7.4-8.5 compatibility audit and fixes (explicit nullables, switch vs match).
-* Verified: Full compatibility with WordPress 7.0 (beta).
-* Security: Comprehensive audit of output escaping in Shortcode and Tax systems.
-* Updated: Repository and Author links for consistency.
-* Feature: Powered By link can now be disabled by all users.
-
-= 2.2.5.5 =
-* Updated: Author information.
-* Fixed: Plugin header placement for strict_types compatibility.
-* Improved: SEO metadata for directory ranking.
-
-= 2.2.5.1 =
-* Fixed: Critical "strict_types declaration" error by removing UTF-8 Byte Order Marks (BOM).
-* Improved: Pro Dashboard refreshed for performance.
-* Verified: Full PHP 8.x compatibility.
-
-= 2.2.5.0 =
-* Improved: Performance optimization with targeted object caching.
-* Improved: Security hardening with input sanitization audits.
-* Fixed: Repository standard compliance (index.php files, line endings).
-
-= 2.2.4.9 =
-* Fixed: License grace period logic.
-* Verified: Pricing and tax logic accuracy.
-* Improved: Frontend UI responsiveness.
-
-= 2.2.4.8 =
-* Fixed: Calendar cache invalidation issues.
-* Fixed: Real-time price updates for children count.
-* Fixed: Email placeholder replacements.
-
-= 2.2.4.6 =
-* Fixed: Pending booking status styling.
-* Fixed: Mobile responsiveness for search button and date picker.
-
-= 2.2.4.5 =
-* Verified: Zero errors on WordPress Plugin Checker.
-* Security: Comprehensive audit of sanitization and escaping.
-* Added: Race condition protection via MySQL advisory locks.
-
 
 == Upgrade Notice ==
 
-= 2.2.6.0 =
-Maintenance update to clean up development artifacts from the public repository and distribution packages.
-
+= 2.2.7.6 =
+Compliance and performance update. Recommended for all users on WordPress 6.9.

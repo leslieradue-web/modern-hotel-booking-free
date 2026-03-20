@@ -1,0 +1,5 @@
+{
+    "title": "Minimal Composer Schema",
+    "type": "object",
+    "properties": {}
+}

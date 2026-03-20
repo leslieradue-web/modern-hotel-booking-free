@@ -23,9 +23,10 @@ class Shortcode
 
         // SECURITY: Handle booking submissions early to avoid headers already sent issues
         add_action('init', [$this, 'handle_form_submissions'], 10);
+        
     }
 
-    /**
+/**
      * Entry point for form submissions that need to happen before render.
      */
     public function handle_form_submissions()
@@ -244,9 +245,8 @@ class Shortcode
         echo '<div class="mhbo-wrapper">';
         
         // Show success message if redirected (nonce-secured)
-        $success_nonce = isset($_GET['mhbo_success_nonce']) 
-            ? sanitize_key(wp_unslash($_GET['mhbo_success_nonce'])) 
-            : '';
+        $nonce_val = filter_input(INPUT_GET, 'mhbo_success_nonce');
+        $success_nonce = $nonce_val ? sanitize_key(wp_unslash($nonce_val)) : '';
 
         if (isset($_GET['mhbo_success']) && wp_verify_nonce($success_nonce, 'mhbo_success_display')) {
             // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nonce verified above
@@ -288,25 +288,47 @@ class Shortcode
     private function handle_booking_process($atts = [])
     {
         $room_id_attr = isset($atts['room_id']) ? intval($atts['room_id']) : 0;
-        
-        // 1. Check for Automatic Booking/Search (from calendar or widget)
-        // These are authorized via 'mhbo_auto_action' nonce
-        $is_auto = isset($_REQUEST['mhbo_auto_book']) || isset($_GET['mhbo_auto_search']); // sanitize_text_field applied or checked via nonce later
-        if ($is_auto) {
-            $nonce = sanitize_key(wp_unslash($_REQUEST['mhbo_nonce'] ?? ''));
+
+        // 1. Process 'Book Now' from search results (POST) - Priority 1
+        if (isset($_POST['mhbo_book_room'])) {
+            $nonce = isset($_POST['mhbo_book_now_nonce']) ? sanitize_key(wp_unslash($_POST['mhbo_book_now_nonce'])) : '';
+            if (!wp_verify_nonce($nonce, 'mhbo_book_now_action')) {
+                wp_die(esc_html(I18n::get_label('label_security_error')));
+            }
+            $this->render_booking_form();
+            return;
+        }
+
+        // 2. Process Manual Search Form (POST) - Priority 2
+        if (isset($_POST['mhbo_search'])) {
+            $nonce = isset($_POST['mhbo_search_nonce']) ? sanitize_key(wp_unslash($_POST['mhbo_search_nonce'])) : '';
+            if (!wp_verify_nonce($nonce, 'mhbo_search_action')) {
+                wp_die(esc_html(I18n::get_label('label_security_error')));
+            }
+            $this->render_search_results($room_id_attr);
+            return;
+        }
+
+        // 3. Check for Automatic Booking/Search (GET) - Priority 3
+        $is_auto_book = isset($_GET['mhbo_auto_book']);
+        $is_auto_search = isset($_GET['mhbo_auto_search']);
+
+        if ($is_auto_book || $is_auto_search) {
+            $nonce = isset($_GET['mhbo_nonce']) ? sanitize_key(wp_unslash($_GET['mhbo_nonce'])) : '';
             if (!wp_verify_nonce($nonce, 'mhbo_auto_action')) {
-                // Invalid or missing nonce: Fallback to empty search form for security
+                // Invalid or missing nonce: Fallback to empty search form
                 $this->render_search_form($room_id_attr);
                 return;
             }
 
-            // Nonce verified: Extract parameters
-            $room_id = isset($_REQUEST['room_id']) ? intval($_REQUEST['room_id']) : $room_id_attr;
-            $check_in = sanitize_text_field(wp_unslash($_REQUEST['check_in'] ?? ''));
-            $check_out = sanitize_text_field(wp_unslash($_REQUEST['check_out'] ?? ''));
-            $guests = isset($_REQUEST['guests']) ? intval($_REQUEST['guests']) : 2;
+            // Nonce verified: Extract parameters with strict sanitization
+            // 2026/WP Repo Compliance: Always unslash followed by sanitize
+            $room_id = isset($_GET['room_id']) ? intval(wp_unslash($_GET['room_id'])) : $room_id_attr;
+            $check_in = isset($_GET['check_in']) ? sanitize_text_field(wp_unslash($_GET['check_in'])) : '';
+            $check_out = isset($_GET['check_out']) ? sanitize_text_field(wp_unslash($_GET['check_out'])) : '';
+            $guests = isset($_GET['guests']) ? intval(wp_unslash($_GET['guests'])) : 2;
 
-            if (isset($_GET['mhbo_auto_search'])) { // sanitize_text_field applied or checked via nonce later
+            if ($is_auto_search) {
                 if (!$this->validate_date($check_in) || !$this->validate_date($check_out)) {
                     $this->render_search_form($room_id);
                     return;
@@ -315,12 +337,12 @@ class Shortcode
                 return;
             }
 
-            if (isset($_REQUEST['mhbo_auto_book'])) { // sanitize_text_field applied or checked via nonce later
+            if ($is_auto_book) {
                 if ($room_id === 0) {
                     $this->render_search_results(0, $check_in, $check_out, 1);
                     return;
                 }
-                $total = isset($_REQUEST['total_price']) ? floatval($_REQUEST['total_price']) : 0; // sanitize_text_field applied or checked via nonce later
+                $total = isset($_GET['total_price']) ? floatval(wp_unslash($_GET['total_price'])) : 0;
                 $this->render_booking_form(array(
                     'room_id' => $room_id,
                     'check_in' => $check_in,
@@ -332,25 +354,7 @@ class Shortcode
             }
         }
 
-        // 2. Process 'Book Now' from search results (POST)
-        if (isset($_POST['mhbo_book_room'])) { // sanitize_text_field applied or checked via nonce later
-            if (!isset($_POST['mhbo_book_now_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['mhbo_book_now_nonce'])), 'mhbo_book_now_action')) {
-                wp_die(esc_html(I18n::get_label('label_security_error')));
-            }
-            $this->render_booking_form();
-            return;
-        }
-
-        // 3. Process Manual Search Form (POST)
-        if (isset($_POST['mhbo_search'])) { // sanitize_text_field applied or checked via nonce later
-            if (!isset($_POST['mhbo_search_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['mhbo_search_nonce'])), 'mhbo_search_action')) {
-                wp_die(esc_html(I18n::get_label('label_security_error')));
-            }
-            $this->render_search_results($room_id_attr);
-            return;
-        }
-
-        // 4. Default: Render empty search form
+        // 4. Default: Render empty search form or unified view
         $this->render_search_form($room_id_attr);
     }
 
@@ -392,7 +396,7 @@ class Shortcode
         }
 
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in calling function
-        $room_id_filter = isset($_POST['room_id_filter']) ? intval($_POST['room_id_filter']) : $room_id_filter;
+        $room_id_filter = isset($_POST['room_id_filter']) ? intval(wp_unslash($_POST['room_id_filter'])) : $room_id_filter;
 
         $sql = "SELECT r.*, t.name as type_name, t.description, t.base_price, t.max_adults, t.amenities, t.image_url 
                 FROM {$wpdb->prefix}mhbo_rooms r 
@@ -500,11 +504,11 @@ class Shortcode
             $total_hint = isset($params['total_price']) ? floatval($params['total_price']) : 0;
         } else {
             // phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in calling function (mhbo_book_now_action)
-            $room_id = isset($_POST['room_id']) ? intval($_POST['room_id']) : 0;
+            $room_id = isset($_POST['room_id']) ? intval(wp_unslash($_POST['room_id'])) : 0;
             $check_in = isset($_POST['check_in']) ? sanitize_text_field(wp_unslash($_POST['check_in'])) : '';
             $check_out = isset($_POST['check_out']) ? sanitize_text_field(wp_unslash($_POST['check_out'])) : '';
-            $guests = isset($_POST['guests']) ? intval($_POST['guests']) : 2;
-            $total_hint = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0; // sanitize_text_field applied or checked via nonce later
+            $guests = isset($_POST['guests']) ? intval(wp_unslash($_POST['guests'])) : 2;
+            $total_hint = isset($_POST['total_price']) ? floatval(wp_unslash($_POST['total_price'])) : 0;
             // phpcs:enable WordPress.Security.NonceVerification.Missing
         }
 
@@ -973,6 +977,7 @@ $has_active_gateways = false;
             'payment_received' => (int) $payment_received,
             'payment_status' => $payment_status,
             'payment_transaction_id' => !empty($payment_transaction_id) ? $payment_transaction_id : null,
+            'payment_capture_id' => !empty($payment_capture_id) ? $payment_capture_id : null,
             'payment_date' => $payment_date,
             'payment_amount' => $payment_amount,
             'guests' => $guests,
@@ -1105,13 +1110,16 @@ if (isset($presets[$active_theme])) {
             $primary = sanitize_hex_color($primary) ?: '#1a365d';
             $secondary = sanitize_hex_color($secondary) ?: '#f2e2c4';
             $accent = sanitize_hex_color($accent) ?: '#d4af37';
-            $custom_css = ":root {
-                --mhbo-primary: " . esc_attr($primary) . ";
-                --mhbo-secondary: " . esc_attr($secondary) . ";
-                --mhbo-accent: " . esc_attr($accent) . ";
-            }";
-            wp_add_inline_style('mhbo-style', wp_strip_all_tags($custom_css));
-            wp_add_inline_style('mhbo-calendar-style', wp_strip_all_tags($custom_css));
+            
+            // SECURITY: Using printf for clean CSS variable construction with pre-sanitized values
+            $custom_css = sprintf(
+                ":root { --mhbo-primary: %s; --mhbo-secondary: %s; --mhbo-accent: %s; }",
+                $primary,
+                $secondary,
+                $accent
+            );
+            wp_add_inline_style('mhbo-style', $custom_css);
+            wp_add_inline_style('mhbo-calendar-style', $custom_css);
         }
 
 wp_add_inline_style('mhbo-frontend', '
