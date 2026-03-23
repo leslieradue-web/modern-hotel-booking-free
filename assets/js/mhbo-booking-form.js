@@ -98,7 +98,7 @@
                         check_out: checkOut,
                         guests: guests,
                         children: children,
-                        children_ages: childrenAges,
+                        child_ages: childrenAges,
                         extras: extras
                     })
                 })
@@ -113,6 +113,9 @@
                             if (taxContainer && typeof data.tax_breakdown_html !== 'undefined') {
                                 taxContainer.innerHTML = data.tax_breakdown_html;
                             }
+
+                            // Trigger Stripe info refresh
+                            window.dispatchEvent(new CustomEvent('mhbo_price_updated', { detail: data }));
                         }
                     })
                     .finally(function () {

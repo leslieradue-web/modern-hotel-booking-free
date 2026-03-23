@@ -119,8 +119,8 @@ class Email
             if (!empty($booking->payment_amount)) {
                 $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_amount_paid')) . '</strong> ' . I18n::format_currency($booking->payment_amount) . '</p>';
             }
-            if (!empty($booking->transaction_id)) {
-                $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_transaction_id')) . '</strong> ' . esc_html($booking->transaction_id) . '</p>';
+            if (!empty($booking->payment_transaction_id)) {
+                $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_transaction_id')) . '</strong> ' . esc_html($booking->payment_transaction_id) . '</p>';
             }
             if (!empty($booking->payment_date)) {
                 $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_payment_date')) . '</strong> ' . date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($booking->payment_date)) . '</p>';
@@ -147,8 +147,12 @@ class Email
             $tax_data = json_decode($booking->tax_breakdown, true);
             if ($tax_data && ($tax_data['enabled'] ?? false)) {
                 // Use the new consolidated rendering methods
-                $tax_breakdown_html = Tax::render_breakdown_html($tax_data, $lang, true);
-                $tax_breakdown_text = Tax::render_breakdown_text($tax_data, $lang);
+                $meta = [
+                    'guests' => $booking->guests,
+                    'children' => $booking->children,
+                ];
+                $tax_breakdown_html = Tax::render_breakdown_html($tax_data, $lang, true, $meta);
+                $tax_breakdown_text = Tax::render_breakdown_text($tax_data, $lang, $meta);
 
                 // Set individual placeholders for backward compatibility or custom templates
                 $totals = $tax_data['totals'] ?? [];
@@ -202,8 +206,12 @@ class Email
             '{booking_id}' => $booking_id ?? '',
             '{booking_token}' => $booking->booking_token ?? '',
             '{status}' => I18n::translate_status($status),
-            '{check_in}' => I18n::format_date($booking->check_in),
-            '{check_out}' => I18n::format_date($booking->check_out),
+            '{check_in}'        => '<strong>' . I18n::format_date($booking->check_in) . '</strong>',
+            '{check_out}'       => '<strong>' . I18n::format_date($booking->check_out) . '</strong>',
+            '{check_in_time}'   => '<strong>' . get_option('mhbo_checkin_time', '14:00') . '</strong>',
+            '{check_out_time}'  => '<strong>' . get_option('mhbo_checkout_time', '11:00') . '</strong>',
+            '{nights}'          => '<strong>' . (isset($booking->check_in, $booking->check_out) ? (new \DateTime($booking->check_in))->diff(new \DateTime($booking->check_out))->days : 0) . '</strong>',
+            '{amount}'          => I18n::format_currency($booking->total_price ?? 0),
             '{total_price}' => I18n::format_currency($booking->total_price ?? 0),
             '{guests}' => $booking->guests ?? 0,
             '{children}' => $booking->children ?? 0,
@@ -338,8 +346,12 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         if (!empty($booking->tax_breakdown)) {
             $tax_data = json_decode($booking->tax_breakdown, true);
             if ($tax_data && ($tax_data['enabled'] ?? false)) {
-                $tax_breakdown_html = Tax::render_breakdown_html($tax_data, $lang, true);
-                $tax_breakdown_text = Tax::render_breakdown_text($tax_data, $lang);
+                $meta = [
+                    'guests' => $booking->guests,
+                    'children' => $booking->children,
+                ];
+                $tax_breakdown_html = Tax::render_breakdown_html($tax_data, $lang, true, $meta);
+                $tax_breakdown_text = Tax::render_breakdown_text($tax_data, $lang, $meta);
                 $totals = $tax_data['totals'] ?? [];
                 $tax_total = I18n::format_currency($totals['total_tax'] ?? 0);
                 $tax_registration_number = $tax_data['registration_number'] ?? Tax::get_registration_number();
@@ -390,8 +402,11 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             '{booking_id}' => $booking_id,
             '{booking_token}' => $booking->booking_token ?? '',
             '{status}' => I18n::translate_payment_status('completed'),
-            '{check_in}' => I18n::format_date($booking->check_in),
-            '{check_out}' => I18n::format_date($booking->check_out),
+            '{check_in}' => '<strong>' . I18n::format_date($booking->check_in) . '</strong>',
+            '{check_in_time}' => '<strong>' . get_option('mhbo_checkin_time', '14:00') . '</strong>',
+            '{check_out}' => '<strong>' . I18n::format_date($booking->check_out) . '</strong>',
+            '{check_out_time}' => '<strong>' . get_option('mhbo_checkout_time', '11:00') . '</strong>',
+            '{nights}' => '<strong>' . (new \DateTime($booking->check_in))->diff(new \DateTime($booking->check_out))->days . '</strong>',
             '{total_price}' => I18n::format_currency($booking->total_price),
             '{guests}' => $booking->guests,
             '{children}' => $booking->children,

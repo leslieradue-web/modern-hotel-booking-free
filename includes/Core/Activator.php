@@ -67,6 +67,7 @@ class Activator
 			payment_received tinyint(1) DEFAULT 0,
 			payment_status varchar(20) DEFAULT 'pending',
 			payment_transaction_id varchar(255) DEFAULT NULL,
+			payment_capture_id varchar(255) DEFAULT NULL,
 			payment_date datetime DEFAULT NULL,
 			payment_error text DEFAULT NULL,
 			payment_amount decimal(10,2) DEFAULT NULL,

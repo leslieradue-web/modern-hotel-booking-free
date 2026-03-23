@@ -447,6 +447,14 @@ class I18n
             'label_child_ages' => __('Child Ages', 'modern-hotel-booking'),
             // translators: %d: child number
             'label_child_n_age' => __('Child %d Age', 'modern-hotel-booking'),
+            // translators: %d: number of guests
+            'label_guests_count' => __('Guests x %d', 'modern-hotel-booking'),
+            // translators: %d: number of children
+            'label_children_count' => __('Children x %d', 'modern-hotel-booking'),
+            // translators: %d: number of nights
+            'label_nights_count' => __('%d nights', 'modern-hotel-booking'),
+            'label_nights_count_single' => __('1 night', 'modern-hotel-booking'),
+            'label_stay_details' => __('Stay Details', 'modern-hotel-booking'),
             'label_guest' => __('Guest', 'modern-hotel-booking'),
             // translators: 1: check-in date, 2: check-out date
             'label_available_rooms' => __('Available Rooms from %1$s to %2$s', 'modern-hotel-booking'),
@@ -466,6 +474,9 @@ class I18n
             'btn_pay_confirm' => __('Pay & Confirm', 'modern-hotel-booking'),
             'msg_booking_confirmed' => __('Booking Confirmed!', 'modern-hotel-booking'),
             'msg_confirmation_sent' => __('A confirmation email has been sent to you.', 'modern-hotel-booking'),
+            /* translators: %s: Customer email address */
+            'msg_confirmation_sent_to' => __('A confirmation email has been sent to %s.', 'modern-hotel-booking'),
+            'label_reservation' => __('RESERVATION', 'modern-hotel-booking'),
             'msg_booking_received' => __('Booking Pending', 'modern-hotel-booking'),
             'msg_booking_received_detail' => __('We have received your request and will contact you shortly.', 'modern-hotel-booking'),
             // translators: %s: total amount
@@ -476,6 +487,8 @@ class I18n
             'label_select_check_in' => __('Select your check-in date', 'modern-hotel-booking'),
             'label_select_check_out' => __('Now select your check-out date', 'modern-hotel-booking'),
             'label_stay_dates' => __('Stay Dates', 'modern-hotel-booking'),
+            'label_check_in_time' => __('Check-in Time', 'modern-hotel-booking'),
+            'label_check_out_time' => __('Check-out Time', 'modern-hotel-booking'),
             'label_select_dates' => __('Select Dates', 'modern-hotel-booking'),
             'label_your_selection' => __('Your Selection', 'modern-hotel-booking'),
             'label_continue_booking' => __('Continue to Booking', 'modern-hotel-booking'),
@@ -484,7 +497,7 @@ class I18n
             'label_paypal' => __('PayPal', 'modern-hotel-booking'),
             'label_confirm_request' => __('Click below to confirm your booking request.', 'modern-hotel-booking'),
             // translators: %s: tax name (e.g., VAT)
-            'label_tax_breakdown' => __('%s Breakdown', 'modern-hotel-booking'),
+            'label_tax_breakdown' => __('Reservation Summary', 'modern-hotel-booking'),
             // translators: %1$s: tax name, %2$s: tax amount
             'label_tax_total' => __('Total %1$s: %2$s', 'modern-hotel-booking'),
             // translators: %s: tax registration number

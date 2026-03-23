@@ -119,7 +119,7 @@ register_rest_route($namespace, '/calendar-data', array(
                     'sanitize_callback' => 'absint',
                     'default' => 0
                 ),
-                'children_ages' => array(
+                'child_ages' => array(
                     'required' => false,
                     'validate_callback' => function ($value) {
                         return is_array($value);
@@ -253,7 +253,6 @@ register_rest_route($namespace, '/calendar-data', array(
         $payload = $request->get_body();
 
 // SECURITY: Reject webhooks without proper signatures
-        // The old behavior of accepting 'source' in body was a critical vulnerability
         return new \WP_Error(
             'mhbo_webhook_unauthorized',
             esc_html(I18n::get_label('label_webhook_sig_required')),
@@ -627,10 +626,10 @@ register_rest_route($namespace, '/calendar-data', array(
         $check_out = $request->get_param('check_out');
         $guests = $request->get_param('guests') ?: 1;
         $children = $request->get_param('children') ?: 0;
-        $children_ages = $request->get_param('children_ages') ?: array();
+        $child_ages = $request->get_param('child_ages') ?: array();
         $extras = $request->get_param('extras') ?: array();
 
-        $calc = Pricing::calculate_booking_total($room_id, $check_in, $check_out, $guests, $extras, (int) $children, $children_ages);
+        $calc = Pricing::calculate_booking_total($room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages);
 
         if (!$calc) {
             return new \WP_Error(
@@ -640,6 +639,16 @@ register_rest_route($namespace, '/calendar-data', array(
             );
         }
 
+        $tax_data = $calc['tax'] ?? array(
+            'enabled' => false,
+            'mode' => 'disabled',
+            'totals' => array(
+                'subtotal_net' => $calc['total'],
+                'total_tax' => 0,
+                'total_gross' => $calc['total']
+            )
+        );
+
         return rest_ensure_response(array(
             'success' => true,
             'total' => (float) $calc['total'],
@@ -648,16 +657,8 @@ register_rest_route($namespace, '/calendar-data', array(
             'children_total' => (float) ($calc['children_total'] ?? 0),
             'extras_total' => (float) $calc['extras_total'],
             'breakdown' => $calc,
-            'tax' => $calc['tax'] ?? array(
-                'enabled' => false,
-                'mode' => 'disabled',
-                'totals' => array(
-                    'subtotal_net' => $calc['total'],
-                    'total_tax' => 0,
-                    'total_gross' => $calc['total']
-                )
-            ),
-            'tax_breakdown_html' => (!\MHBO\Core\Tax::is_enabled() || get_option('mhbo_tax_display_frontend', 1)) ? \MHBO\Core\Tax::render_breakdown_html($calc['tax'] ?? array()) : '',
+            'tax' => $tax_data,
+            'tax_breakdown_html' => (!\MHBO\Core\Tax::is_enabled() || get_option('mhbo_tax_display_frontend', 1)) ? \MHBO\Core\Tax::render_breakdown_html($tax_data) : '',
         ));
     }
 

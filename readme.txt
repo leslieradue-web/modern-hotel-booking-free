@@ -1,38 +1,36 @@
 === Modern Hotel Booking ===
 Contributors: leslierad
-Tags: hotel booking, reservation system, vacation rental, availability calendar, booking calendar
+Tags: vacation rental, booking engine, room booking, direct booking, reservation system
 Requires at least: 6.2
 Tested up to: 6.9
-Stable tag: 2.2.7.6
+Stable tag: 2.2.7.7
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Free hotel booking & reservation system for WordPress. Availability calendar, direct bookings, vacation rentals. Zero commissions.
+Free WordPress hotel and accommodation booking system. Take direct bookings for your guesthouse or small hotel, 100% commission-free.
 
 == Description ==
 
-**Modern Hotel Booking** is a powerful free **WordPress hotel booking plugin** and complete **reservation system** built for independent properties.
+**Modern Hotel Booking** is a powerful free **reservation system** and **booking engine** built specifically for independent properties. Whether you are managing a single **vacation rental** or a multi-room boutique hotel, our plugin gives you full control.
 
-Stop paying 15%+ commissions to OTAs. Take **direct bookings** on your own website — commission-free, forever.
+Stop paying 15%+ commissions to OTAs like Airbnb or Booking.com. Secure **direct bookings** on your own WordPress website using our flexible, commission-free **room booking** platform.
 
-This **hotel booking plugin** is perfect for:
+This versatile **booking engine** is perfectly designed for:
 
-* **Small Hotels & Hostels** — manage unlimited rooms and reservations
-* **Vacation Rentals** — ideal for beach house booking, cabins, and apartments
-* **B&Bs & Guesthouses** — simple per-night booking logic
-* **Single Properties** — works as a standalone vacation rental plugin
+* **Vacation Rentals & Cabins** — works seamlessly as a standalone property manager for your **vacation rental**.
+* **Guesthouses & B&Bs** — simple, reliable per-night **room booking** logic.
+* **Boutique Hotels & Hostels** — interactive front-desk **reservation system** to manage unlimited properties effortlessly.
 
 ### Key Features (Free — No Limits)
 
-* **Unlimited Room Types** with capacity controls and pricing
-* **Real-Time Availability Calendar** — interactive visual status for all rooms
-* **Smart Booking Form** — AJAX-powered with instant price calculation
-* **Automated Email Notifications** — customizable confirmations for guests and admins
-* **Native Gutenberg Blocks** — add booking forms to any page seamlessly
-* **Mobile-First Design** — fully responsive forms and calendars
-* **Multilingual Ready** — WPML, Polylang and qTranslate-X compatible
-
+* **Unlimited Room Types** with capacity controls and pricing.
+* **Real-Time Availability Calendar** — interactive visual status for all rooms in your **reservation system**.
+* **Smart Booking Engine Form** — AJAX-powered with instant price calculation for seamless **direct bookings**.
+* **Automated Email Notifications** — customizable confirmations for guests and admins.
+* **Native Gutenberg Blocks** — add **room booking** forms to any page seamlessly.
+* **Mobile-First Design** — fully responsive forms and calendars.
+* **Multilingual Ready** — WPML, Polylang and qTranslate-X compatible.
 
 == Pro Version ==
 Need more power for your direct booking business? Upgrade to Pro and get:
@@ -75,17 +73,17 @@ Once set up, guests can search and create bookings from your dedicated booking p
 
 == Frequently Asked Questions ==
 
-= Is this hotel booking plugin really free? =
-Yes! The core reservation system, availability calendar, room types, and email notifications are 100% free with no limits on bookings or rooms.
+= Is this room booking plugin really free? =
+Yes! The core reservation system, availability calendar, room types, and email notifications are 100% free with no limits on direct bookings or rooms.
 
-= Can I use it for a beach house or vacation rental? =
-Absolutely. Modern Hotel Booking works perfectly as a vacation rental plugin for single properties, beach houses, cabins, guesthouses, and small hotels.
+= Can I use it for a guesthouse or beach house? =
+Absolutely. Modern Hotel Booking works perfectly for single properties, vacation rentals, beach houses, cabins, guesthouses, and small boutique hotels.
 
 = Does it sync with Airbnb or Booking.com? =
 The free version allows manual date blocking. The Pro version adds full two-way iCal synchronization with all major OTAs.
 
 = Is it mobile friendly? =
-Yes — the entire booking calendar and reservation forms are fully responsive and mobile-optimized.
+Yes — the entire booking engine and reservation forms are fully responsive and mobile-optimized.
 
 = Does it support multiple properties? =
 Yes. Create unlimited "Room Types" that can act as separate properties (e.g., "Seaside Villa" and "Mountain Cabin").
@@ -146,14 +144,25 @@ This plugin (Free version) works entirely offline within your WordPress installa
 
 The **Pro version** (available separately) integrates with the following external services:
 
-* **Stripe** (Payment Processing) - Used for processing credit card payments for bookings.
+* **Stripe** (Payment Processing) - Used for processing credit card payments for direct bookings.
   * [Terms of Service](https://stripe.com/terms)
   * [Privacy Policy](https://stripe.com/privacy)
+* **PayPal** (Payment Processing) - Used for processing PayPal and credit card payments for direct bookings.
+  * [Terms of Service](https://www.paypal.com/webapps/mpp/ua/useragreement-full)
+  * [Privacy Policy](https://www.paypal.com/webapps/mpp/ua/privacy-full)
 * **iCal Synchronisation** - Connects to external calendars like Airbnb, Booking.com, and Google Calendar via their public iCal feeds. No data is sent to our servers.
 
 Both services are optional and only active if configured in the Pro version.
 
 == Changelog ==
+
+= 2.2.7.7 =
+* Localization: Comprehensive multi-language update across all 15+ supported languages (FR, DE, ES, IT, CS, NL, PL, PT, RU, SV).
+* Localization: Added 140+ critical hospitality and guest-facing translations (Batch 5).
+* Improved: Unified room availability logic using core Pricing methods for improved reliability.
+* Improved: Payment processing reliability issues when extras are added to bookings.
+* Improved: Guest checkout workflow and order creation workflow.
+* Enhanced: Improved build process cleanup (excluded composer.json and development scripts).
 
 = 2.2.7.6 =
 * Compliance: Updated WP-release build process, strict separation of Pro/Free markers.

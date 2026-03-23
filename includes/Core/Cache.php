@@ -176,7 +176,7 @@ class Cache
 
         // Clear transaction lookup cache if it looks like a TX ID
         if (is_string($booking_id) && strlen($booking_id) > 10) {
-            wp_cache_delete('mhbo_booking_tx_' . md5($booking_id), 'mhbo_bookings');
+            wp_cache_delete('mhbo_booking_tx_' . md5((string)$booking_id), 'mhbo_bookings');
         }
 
         // Clear all bookings list

@@ -1,4 +1,4 @@
-﻿/* Modern Hotel Booking Styles */
+/* Modern Hotel Booking Styles */
 
 :root {
     --mhbo-primary: #1a365d;
@@ -709,53 +709,145 @@
 
 .mhbo-success-message {
     text-align: center;
-    padding: 40px;
+    padding: 60px 40px;
     background: #fff;
-    border-radius: 12px;
-    box-shadow: var(--mhbo-shadow);
-    border-top: 5px solid #28a745;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border-top: 6px solid #10b981;
+    max-width: 700px;
+    margin: 40px auto;
+}
+
+.mhbo-success-icon {
+    width: 80px;
+    height: 80px;
+    background: #d1fae5;
+    color: #10b981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 30px;
+    animation: mhbo-scale-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mhbo-success-icon svg {
+    width: 40px;
+    height: 40px;
+}
+
+@keyframes mhbo-scale-in {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
 .mhbo-success-message h3 {
-    color: #28a745;
-    font-size: 1.8rem;
+    color: var(--mhbo-primary);
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.mhbo-success-message p {
+    font-size: 1.2rem;
+    color: #4a5568;
+    line-height: 1.7;
     margin-bottom: 15px;
+}
+
+.mhbo-reservation-id {
+    background: #f8fafc;
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin: 20px 0;
+    font-family: monospace;
+    font-size: 1.1rem !important;
+    color: var(--mhbo-primary) !important;
 }
 
 /* Pending booking - Orange/Yellow styling */
 .mhbo-success-message.mhbo-pending-booking {
-    border-top: 5px solid #dd6b20;
-    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-top: 6px solid #f59e0b;
+    background: linear-gradient(to bottom, #fffcf0, #ffffff);
+}
+
+.mhbo-success-message.mhbo-pending-booking .mhbo-success-icon {
+    background: #fef3c7;
+    color: #f59e0b;
 }
 
 .mhbo-success-message.mhbo-pending-booking h3 {
-    color: #e65100;
+    color: #92400e;
 }
 
-.mhbo-success-message.mhbo-pending-booking p {
-    color: #bf360c;
+.mhbo-stay-details {
+    margin: 30px auto;
+    max-width: 500px;
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+    text-align: left;
 }
 
-.mhbo-success-message p {
-    font-size: 1.1rem;
+.mhbo-stay-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.mhbo-stay-col {
+    flex: 1;
+    font-size: 0.95rem;
     color: #4a5568;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
-.mhbo-payment-received {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px dashed var(--mhbo-border);
+.mhbo-stay-col strong {
+    color: var(--mhbo-primary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.mhbo-stay-duration {
+    padding-top: 15px;
+    border-top: 1px dashed #cbd5e1;
+    text-align: center;
+    color: var(--mhbo-primary);
+    font-size: 1.1rem;
+}
+
+.mhbo-transaction-details {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #f1f5f9;
+    text-align: left;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mhbo-transaction-details p {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem !important;
+    margin-bottom: 12px !important;
 }
 
 .mhbo-badge-success {
     display: inline-block;
     background: #d1fae5;
     color: #065f46;
-    padding: 4px 12px;
+    padding: 4px 14px;
     border-radius: 20px;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -764,21 +856,131 @@
     display: inline-block;
     background: #fef3c7;
     color: #92400e;
-    padding: 4px 12px;
+    padding: 4px 14px;
     border-radius: 20px;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.mhbo-error {
-    background: #f8d7da;
-    color: #721c24;
-    padding: 15px;
-    border-radius: 8px;
+.mhbo-badge-failed {
+    display: inline-block;
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Tax Breakdown Receipt Style */
+.mhbo-tax-breakdown {
+    margin-top: 40px;
+    text-align: left;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    background: #fff;
+    padding: 0;
+}
+
+.mhbo-tax-breakdown-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--mhbo-primary);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+.mhbo-tax-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
     margin-bottom: 20px;
-    border: 1px solid #f5c6cb;
+}
+
+.mhbo-tax-breakdown-th {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+}
+
+.mhbo-tax-breakdown-td {
+    padding: 12px 0;
+    font-size: 1rem;
+    color: #334155;
+    border-bottom: 1px dashed #f1f5f9;
+}
+
+.mhbo-tax-breakdown-td-right {
+    text-align: right;
+    font-weight: 600;
+}
+
+.mhbo-tax-breakdown-grand-total {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid var(--mhbo-primary);
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--mhbo-primary);
+}
+
+.mhbo-tax-registration {
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-style: italic;
+    text-align: center;
+}
+
+.mhbo-error {
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 1.5px solid #fecaca;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mhbo-success-message {
+        padding: 40px 20px;
+        margin: 20px 10px;
+    }
+    
+    .mhbo-success-message h3 {
+        font-size: 1.8rem;
+    }
+    
+    .mhbo-transaction-details,
+    .mhbo-tax-breakdown {
+        max-width: 100%;
+    }
+    
+    .mhbo-tax-breakdown-th {
+        font-size: 0.75rem;
+    }
+    
+    .mhbo-tax-breakdown-td {
+        font-size: 0.9rem;
+    }
 }
 
 /* Inline Error Notifications (Payment/Booking) */

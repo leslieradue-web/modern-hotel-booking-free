@@ -237,15 +237,23 @@
                 success: function (response) {
                     btn.prop('disabled', false);
                     if (response.success) {
-                        let html = '<span style="color: green; font-weight: bold;">✓ ' + response.data.message + '</span>';
                         if (response.data.currency_mismatch) {
-                            html = '<div style="margin-top: 10px; padding: 10px; border-left: 4px solid #ffb900; background: #fff8e5; color: #444;">' +
-                                   '<span style="color: #d63638; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ ' + (config.i18n?.currency_mismatch_title || 'Currency Mismatch Detected') + '</span>' +
-                                   response.data.message + '</div>';
+                            const $warning = $('<div style="margin-top: 10px; padding: 10px; border-left: 4px solid #ffb900; background: #fff8e5; color: #444;"></div>');
+                            const $title = $('<span style="color: #d63638; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ </span>');
+                            $title.append($('<span/>').text(config.i18n?.currency_mismatch_title || 'Currency Mismatch Detected'));
+                            $warning.append($title, $('<span/>').text(response.data.message));
+                            $stripeResult.empty().append($warning);
+                        } else {
+                            $stripeResult.empty().append(
+                                $('<span style="color: green; font-weight: bold;">✓ </span>'),
+                                $('<span/>').text(response.data.message)
+                            );
                         }
-                        $stripeResult.html(html);
                     } else {
-                        $stripeResult.html('<span style="color: red; font-weight: bold;">✗ ' + (response.data ? response.data.message : 'Unknown error') + '</span>');
+                        $stripeResult.empty().append(
+                            $('<span style="color: red; font-weight: bold;">✗ </span>'),
+                            $('<span/>').text(response.data ? response.data.message : 'Unknown error')
+                        );
                     }
                 },
                 error: function () {
@@ -281,9 +289,15 @@
                     $paypalSpinner.removeClass('is-active');
                     btn.prop('disabled', false);
                     if (response.success) {
-                        $paypalResult.html('<span style="color: green; font-weight: bold;">✓ ' + response.data.message + '</span>');
+                        $paypalResult.empty().append(
+                            $('<span style="color: green; font-weight: bold;">✓ </span>'),
+                            $('<span/>').text(response.data.message)
+                        );
                     } else {
-                        $paypalResult.html('<span style="color: red; font-weight: bold;">✗ ' + (response.data ? response.data.message : 'Unknown error') + '</span>');
+                        $paypalResult.empty().append(
+                            $('<span style="color: red; font-weight: bold;">✗ </span>'),
+                            $('<span/>').text(response.data ? response.data.message : 'Unknown error')
+                        );
                     }
                 },
                 error: function () {
@@ -293,6 +307,7 @@
                 }
             });
         });
+
     }
 
     /**

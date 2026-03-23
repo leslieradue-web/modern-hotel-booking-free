@@ -521,9 +521,10 @@ class Tax
      *
      * @param array $breakdown Tax breakdown array
      * @param string $language Language code (optional)
+     * @param array $meta Optional metadata (guests, children)
      * @return array Formatted breakdown for display
      */
-    public static function format_tax_breakdown($breakdown, $language = null)
+    public static function format_tax_breakdown($breakdown, $language = null, $meta = array())
     {
         if (null === $language) {
             $language = I18n::get_current_language();
@@ -544,9 +545,13 @@ class Tax
         // Room
         if (isset($breakdown['breakdown']['room']) && !empty($breakdown['breakdown']['room'])) {
             $room = $breakdown['breakdown']['room'];
+            $room_label = I18n::get_label('label_room') ?? __('Room', 'modern-hotel-booking');
+            if (!empty($meta['guests'])) {
+                $room_label .= sprintf(' (%s)', sprintf(I18n::get_label('label_guests_count'), (int) $meta['guests']));
+            }
             $formatted['items'][] = [
                 'type' => 'room',
-                'label' => I18n::get_label('label_room') ?? __('Room', 'modern-hotel-booking'),
+                'label' => $room_label,
                 'net' => $room['net'] ?? 0,
                 'tax_rate' => $room['tax_rate'] ?? 0,
                 'tax' => $room['tax'] ?? 0,
@@ -561,9 +566,13 @@ class Tax
         if (isset($breakdown['breakdown']['children']) && !empty($breakdown['breakdown']['children'])) {
             $children = $breakdown['breakdown']['children'];
             if (($children['gross'] ?? $children['gross_amount'] ?? 0) > 0) {
+                $children_label = I18n::get_label('label_children') ?? __('Children', 'modern-hotel-booking');
+                if (!empty($meta['children'])) {
+                    $children_label .= sprintf(' (%s)', sprintf(I18n::get_label('label_children_count'), (int) $meta['children']));
+                }
                 $formatted['items'][] = [
                     'type' => 'children',
-                    'label' => I18n::get_label('label_children') ?? __('Children', 'modern-hotel-booking'),
+                    'label' => $children_label,
                     'net' => $children['net'] ?? 0,
                     'tax_rate' => $children['tax_rate'] ?? 0,
                     'tax' => $children['tax'] ?? 0,
@@ -622,26 +631,23 @@ class Tax
      * @param array $breakdown Tax breakdown
      * @param string $language Language code (optional)
      * @param bool $is_email Whether to use email-friendly inline styles
+     * @param array $meta Optional metadata (guests, children)
      * @return string HTML
      */
-    public static function render_breakdown_html($breakdown, $language = null, $is_email = false)
+    public static function render_breakdown_html($breakdown, $language = null, $is_email = false, $meta = array())
     {
         $tax_enabled = self::is_enabled() || ($breakdown['enabled'] ?? false) === true;
 
-        $formatted = self::format_tax_breakdown($breakdown, $language);
-        if (empty($formatted['items'])) {
-            return '';
-        }
+        $formatted = self::format_tax_breakdown($breakdown, $language, $meta);
 
         $styles = [
-            'container' => $is_email ? 'margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px; font-family: Arial, sans-serif;' : 'mhbo-tax-breakdown',
-            'title' => $is_email ? 'margin: 0 0 15px 0; font-size: 16px; color: #333;' : '',
-            'table' => $is_email ? 'width: 100%; border-collapse: collapse; font-size: 14px;' : 'mhbo-tax-table',
-            'th' => $is_email ? 'text-align: left; padding: 8px 0; border-bottom: 1px solid #ddd; color: #666;' : '',
-            'td' => $is_email ? 'padding: 8px 0; border-bottom: 1px solid #eee;' : '',
-            'td_right' => $is_email ? 'padding: 8px 0; border-bottom: 1px solid #eee; text-align: right;' : '',
-            'total_row' => $is_email ? 'font-weight: bold; background: #eee;' : 'mhbo-tax-total',
-            'grand_total' => $is_email ? 'font-weight: bold; font-size: 16px; border-top: 2px solid #333;' : 'mhbo-tax-grand-total',
+            'container' => $is_email ? 'font-family: Arial, sans-serif; font-size: 14px; color: #333; border: 1px solid #eee; padding: 15px; margin-bottom: 20px;' : 'mhbo-tax-breakdown',
+            'title' => $is_email ? 'font-size: 16px; margin-top: 0; margin-bottom: 15px; color: #333;' : 'mhbo-tax-breakdown-title',
+            'table' => $is_email ? 'width: 100%; border-collapse: collapse; margin-bottom: 15px;' : 'mhbo-tax-breakdown-table',
+            'th' => $is_email ? 'padding: 8px; border-bottom: 1px solid #eee; text-align: left; font-weight: bold; background-color: #f9f9f9;' : 'mhbo-tax-breakdown-th',
+            'td' => $is_email ? 'padding: 8px; border-bottom: 1px solid #eee; text-align: left;' : 'mhbo-tax-breakdown-td',
+            'td_right' => $is_email ? 'padding: 8px; border-bottom: 1px solid #eee; text-align: right;' : 'mhbo-tax-breakdown-td-right',
+            'grand_total' => $is_email ? 'font-weight: bold; border-top: 2px solid #333; padding-top: 10px;' : 'mhbo-tax-breakdown-grand-total',
             'reg_number' => $is_email ? 'margin-top: 15px; font-size: 12px; color: #999;' : 'mhbo-tax-registration'
         ];
 
@@ -776,15 +782,16 @@ class Tax
      *
      * @param array $breakdown Tax breakdown
      * @param string $language Language code (optional)
+     * @param array $meta Optional metadata (guests, children)
      * @return string Plain text
      */
-    public static function render_breakdown_text($breakdown, $language = null)
+    public static function render_breakdown_text($breakdown, $language = null, $meta = array())
     {
         if (!self::is_enabled() && ($breakdown['enabled'] ?? false) === false) {
             return '';
         }
 
-        $formatted = self::format_tax_breakdown($breakdown, $language);
+        $formatted = self::format_tax_breakdown($breakdown, $language, $meta);
         $lines = [];
         $lines[] = sprintf(I18n::decode(I18n::get_label('label_tax_breakdown'), $language), $formatted['label']);
         $lines[] = str_repeat('-', 40);

@@ -141,6 +141,10 @@ msgid "Advanced Pricing"
 msgstr "Erweiterte Preise"
 
 #: includes\Admin\Menu.php
+msgid "Licensing"
+msgstr "Lizenzierung"
+
+#: includes\Admin\Menu.php
 msgid "You do not have sufficient permissions to access this page."
 msgstr "Sie haben keine ausreichenden Berechtigungen, um auf diese Seite zuzugreifen."
 
@@ -179,11 +183,11 @@ msgstr "Aufmerksamkeit erforderlich"
 
 #: includes\Admin\Menu.php
 msgid "Recent Activity"
-msgstr ""
+msgstr "Neueste Aktivitäten"
 
 #: includes\Admin\Menu.php
 msgid "No recent bookings found."
-msgstr ""
+msgstr "Keine aktuellen Buchungen gefunden."
 
 #: includes\Admin\Menu.php
 #: includes\Core\I18n.php
@@ -237,8 +241,16 @@ msgid "License Status:"
 msgstr "Lizenzstatus:"
 
 #: includes\Admin\Menu.php
-msgid "PRO Active"
-msgstr "PRO Aktiv"
+msgid "Licensed (Active)"
+msgstr "Lizenziert (Aktiv)"
+
+#: includes\Admin\Menu.php
+msgid "Unlicensed"
+msgstr "Nicht lizenziert"
+
+#: includes\Admin\Menu.php
+msgid "Plugin Edition:"
+msgstr "Plugin-Edition:"
 
 #: includes\Admin\Menu.php
 msgid "Free Version"
@@ -284,10 +296,11 @@ msgid "Report Issues →"
 msgstr ""
 
 #: includes\Admin\Menu.php
-msgid "Upgrade to Pro Version →"
+msgid "Get Pro Version →"
 msgstr ""
 
 #: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
 #: includes\Pro\PaymentGateways.php
 msgid "Security check failed."
 msgstr "Sicherheitsüberprüfung fehlgeschlagen."
@@ -303,6 +316,15 @@ msgstr "Buchung storniert."
 #: includes\Admin\Menu.php
 msgid "Booking Deleted."
 msgstr "Buchung gelöscht."
+
+#: includes\Admin\Menu.php
+#: includes\Admin\Settings.php
+msgid "Insufficient permissions."
+msgstr ""
+
+#: includes\Admin\Menu.php
+msgid "Security check failed"
+msgstr ""
 
 #: includes\Admin\Menu.php
 msgid "Manual booking added by admin."
@@ -558,7 +580,6 @@ msgid "Error message from failed payment."
 msgstr "Fehlermeldung der fehlgeschlagenen Zahlung."
 
 #: includes\Admin\Menu.php
-#: includes\Core\I18n.php
 #: includes\Core\Tax.php
 msgid "%s Breakdown"
 msgstr "%s Aufschlüsselung"
@@ -698,28 +719,33 @@ msgstr "Ausstattung"
 
 #: includes\Admin\Menu.php
 #: includes\Admin\Settings.php
+#: includes\Core\Activator.php
 msgid "Free WiFi"
-msgstr ""
+msgstr "Kostenloses WLAN"
 
 #: includes\Admin\Menu.php
 #: includes\Admin\Settings.php
+#: includes\Core\Activator.php
 msgid "Air Conditioning"
-msgstr ""
+msgstr "Klimaanlage"
 
 #: includes\Admin\Menu.php
 #: includes\Admin\Settings.php
+#: includes\Core\Activator.php
 msgid "Smart TV"
-msgstr ""
+msgstr "Smart-TV"
 
 #: includes\Admin\Menu.php
 #: includes\Admin\Settings.php
+#: includes\Core\Activator.php
 msgid "Breakfast Included"
-msgstr ""
+msgstr "Frühstück inbegriffen"
 
 #: includes\Admin\Menu.php
 #: includes\Admin\Settings.php
+#: includes\Core\Activator.php
 msgid "Pool View"
-msgstr ""
+msgstr "Poolblick"
 
 #: includes\Admin\Menu.php
 msgid "Update Room Type"
@@ -757,11 +783,6 @@ msgstr "Zimmer gelöscht."
 #: includes\Admin\Menu.php
 msgid "Manage Rooms"
 msgstr "Zimmer verwalten"
-
-#: includes\Admin\Menu.php
-#: includes\Admin\Settings.php
-msgid "iCal Synchronization"
-msgstr "iCal-Synchronisation"
 
 #: includes\Admin\Menu.php
 msgid "Back to Rooms"
@@ -1005,8 +1026,8 @@ msgid "Same-day Turnover"
 msgstr "Wechsel am selben Tag"
 
 #: includes\Admin\Settings.php
-msgid "If enabled, rooms cannot be checked-in on the same day someone else checks out."
-msgstr "Wenn aktiviert, können Zimmer nicht am selben Tag bezogen werden, an dem jemand anderes abreist."
+msgid "If enabled, rooms can be checked-in on the same day someone else checks out. If disabled, a gap day is required."
+msgstr ""
 
 #: includes\Admin\Settings.php
 msgid "Enable Children Management"
@@ -1022,7 +1043,7 @@ msgstr "Benutzerdefinierte Gästefelder"
 
 #: includes\Admin\Settings.php
 msgid "Save Data on Uninstall"
-msgstr ""
+msgstr "Daten bei Deinstallation speichern"
 
 #: includes\Admin\Settings.php
 msgid "If enabled, your data and database tables will be preserved when uninstalling the plugin. This is important for free to pro upgrades."
@@ -1030,7 +1051,7 @@ msgstr ""
 
 #: includes\Admin\Settings.php
 msgid "Show Powered By Link"
-msgstr ""
+msgstr "\"Powered by\"-Link anzeigen"
 
 #: includes\Admin\Settings.php
 msgid "Display a small \"Powered by MHB\" link below the calendar."
@@ -1939,7 +1960,7 @@ msgid "GDPR settings saved successfully."
 msgstr "DSGVO-Einstellungen erfolgreich gespeichert."
 
 #: includes\Admin\Settings.php
-msgid "Invalid currency code. Please use a valid ISO-4217 3-letter code."
+msgid "Invalid currency code."
 msgstr ""
 
 #: includes\Admin\Settings.php
@@ -1953,6 +1974,10 @@ msgstr "Design-Einstellungen erfolgreich gespeichert."
 #: includes\Admin\Settings.php
 msgid "Theme reset to default successfully."
 msgstr "Design erfolgreich auf Standard zurückgesetzt."
+
+#: includes\Admin\Settings.php
+msgid "Pro Feature Restricted"
+msgstr ""
 
 #: includes\Admin\Settings.php
 msgid "Pro Experience"
@@ -2115,6 +2140,10 @@ msgid "Offer guided tours, airport transfers, breakfast packages, and local expe
 msgstr "Bieten Sie geführte Touren, Flughafentransfers, Frühstückspakete und lokale Erlebnisse an."
 
 #: includes\Admin\Settings.php
+msgid "iCal Synchronization"
+msgstr "iCal-Synchronisation"
+
+#: includes\Admin\Settings.php
 msgid "Bi-directional sync with Airbnb, Booking.com, and Google Calendar."
 msgstr "Bidirektionale Synchronisation mit Airbnb, Booking.com und Google Kalender."
 
@@ -2199,7 +2228,15 @@ msgid "Save Payment Settings"
 msgstr "Zahlungseinstellungen speichern"
 
 #: includes\Admin\Settings.php
+msgid "Save Webhook Settings"
+msgstr ""
+
+#: includes\Admin\Settings.php
 msgid "Save Theme Settings"
+msgstr ""
+
+#: includes\Admin\Settings.php
+msgid "Save Pricing Settings"
 msgstr ""
 
 #: includes\Admin\Settings.php
@@ -2459,6 +2496,18 @@ msgid "Return to Default"
 msgstr "Zurück zum Standard"
 
 #: includes\Admin\Settings.php
+msgid "API settings saved successfully."
+msgstr "API-Einstellungen erfolgreich gespeichert."
+
+#: includes\Admin\Settings.php
+msgid "Payment settings saved successfully."
+msgstr "Zahlungseinstellungen erfolgreich gespeichert."
+
+#: includes\Admin\Settings.php
+msgid "Pricing settings saved successfully."
+msgstr "Preiseinstellungen erfolgreich gespeichert."
+
+#: includes\Admin\Settings.php
 #: includes\Core\I18n.php
 msgid "Permission denied."
 msgstr "Zugriff verweigert."
@@ -2486,18 +2535,6 @@ msgstr "Schlüssel (Intern)"
 #: includes\Admin\Settings.php
 msgid "No amenities found."
 msgstr "Keine Ausstattungsmerkmale gefunden."
-
-#: includes\Admin\Settings.php
-msgid "API settings saved successfully."
-msgstr "API-Einstellungen erfolgreich gespeichert."
-
-#: includes\Admin\Settings.php
-msgid "Payment settings saved successfully."
-msgstr "Zahlungseinstellungen erfolgreich gespeichert."
-
-#: includes\Admin\Settings.php
-msgid "Pricing settings saved successfully."
-msgstr "Preiseinstellungen erfolgreich gespeichert."
 
 #: includes\Admin\Settings.php
 msgid "Amenity added successfully."
@@ -2596,7 +2633,7 @@ msgid "Per Line Item"
 msgstr "Pro Einzelposten"
 
 #: includes\Admin\Settings.php
-msgid "Per Total: Round tax on final total. Per Line: Round each item\"
+msgid "Per Total: Round tax on final total. Per Line: Round each item's tax separately."
 msgstr ""
 
 #: includes\Admin\Settings.php
@@ -2630,6 +2667,14 @@ msgstr "Steuername"
 #: includes\Admin\Settings.php
 msgid "Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities."
 msgstr "Hinweis: Hotel-/Unterkunftspreise können in einigen Ländern ermäßigt sein."
+
+#: includes\Admin\Settings.php
+msgid "License key updated. Please re-activate if necessary."
+msgstr ""
+
+#: includes\Admin\Settings.php
+msgid "License settings saved."
+msgstr ""
 
 #: includes\Admin\Settings.php
 msgid "Tax settings saved successfully."
@@ -2712,8 +2757,8 @@ msgid "Check-out:"
 msgstr "Abreise:"
 
 #: includes\Core\Email.php
-msgid "If you have any questions, please don\"
-msgstr ""
+msgid "If you have any questions, please don't hesitate to contact us."
+msgstr "Falls Sie Fragen haben, zögern Sie bitte nicht, uns zu kontaktieren."
 
 #: includes\Core\Email.php
 msgid "Best regards,"
@@ -2743,11 +2788,11 @@ msgstr "Zahlungsdatum:"
 
 #: includes\Core\I18n.php
 msgid "Hello"
-msgstr ""
+msgstr "Hallo"
 
 #: includes\Core\I18n.php
 msgid "Hello %s"
-msgstr ""
+msgstr "Hallo %s"
 
 #: includes\Core\I18n.php
 msgid "Search Rooms"
@@ -2755,15 +2800,35 @@ msgstr "Zimmer suchen"
 
 #: includes\Core\I18n.php
 msgid "from %s"
-msgstr ""
+msgstr "ab %s"
 
 #: includes\Core\I18n.php
 msgid "by %s"
-msgstr ""
+msgstr "von %s"
 
 #: includes\Core\I18n.php
 msgid "Child %d Age"
-msgstr ""
+msgstr "Alter von Kind %d"
+
+#: includes\Core\I18n.php
+msgid "Guests x %d"
+msgstr "Gäste x %d"
+
+#: includes\Core\I18n.php
+msgid "Children x %d"
+msgstr "Kinder x %d"
+
+#: includes\Core\I18n.php
+msgid "%d nights"
+msgstr "%d Nächte"
+
+#: includes\Core\I18n.php
+msgid "1 night"
+msgstr "1 Nacht"
+
+#: includes\Core\I18n.php
+msgid "Stay Details"
+msgstr "Aufenthaltsdetails"
 
 #: includes\Core\I18n.php
 msgid "Available Rooms from %1$s to %2$s"
@@ -2775,11 +2840,11 @@ msgstr "Keine Zimmer für diese Daten verfügbar."
 
 #: includes\Core\I18n.php
 msgid "per night"
-msgstr ""
+msgstr "pro Nacht"
 
 #: includes\Core\I18n.php
 msgid "%1$d nights: %2$s"
-msgstr ""
+msgstr "%1$d Nächte: %2$s"
 
 #: includes\Core\I18n.php
 msgid "Max guests: %d"
@@ -2824,6 +2889,14 @@ msgid "A confirmation email has been sent to you."
 msgstr ""
 
 #: includes\Core\I18n.php
+msgid "A confirmation email has been sent to %s."
+msgstr ""
+
+#: includes\Core\I18n.php
+msgid "RESERVATION"
+msgstr ""
+
+#: includes\Core\I18n.php
 msgid "Booking Pending"
 msgstr ""
 
@@ -2856,6 +2929,14 @@ msgid "Stay Dates"
 msgstr ""
 
 #: includes\Core\I18n.php
+msgid "Check-in Time"
+msgstr ""
+
+#: includes\Core\I18n.php
+msgid "Check-out Time"
+msgstr ""
+
+#: includes\Core\I18n.php
 msgid "Select Dates"
 msgstr ""
 
@@ -2877,6 +2958,10 @@ msgstr ""
 
 #: includes\Core\I18n.php
 msgid "Click below to confirm your booking request."
+msgstr ""
+
+#: includes\Core\I18n.php
+msgid "Reservation Summary"
 msgstr ""
 
 #: includes\Core\I18n.php
@@ -3401,8 +3486,20 @@ msgid "License key cannot be empty."
 msgstr "Lizenzschlüssel darf nicht leer sein."
 
 #: includes\Core\LicenseManager.php
+msgid "Invalid license key format."
+msgstr ""
+
+#: includes\Core\LicenseManager.php
 msgid "License system not configured. Please contact support."
 msgstr "Lizenzsystem nicht konfiguriert."
+
+#: includes\Core\LicenseManager.php
+msgid "Server returned error code %d. Please try again later."
+msgstr ""
+
+#: includes\Core\LicenseManager.php
+msgid "Unexpected response format from server. Please contact support."
+msgstr ""
 
 #: includes\Core\LicenseManager.php
 msgid "Invalid license key or server error."
@@ -3411,6 +3508,10 @@ msgstr "Ungültiger Lizenzschlüssel oder Serverfehler."
 #: includes\Core\LicenseManager.php
 msgid "License limit reached. No activations remaining."
 msgstr "Lizenzlimit erreicht."
+
+#: includes\Core\LicenseManager.php
+msgid "License status is %d. Please check your account."
+msgstr ""
 
 #: includes\Core\LicenseManager.php
 msgid "License activated successfully."
@@ -3435,6 +3536,10 @@ msgstr "Lizenz ist gültig."
 #: includes\Core\LicenseManager.php
 msgid "License is not valid."
 msgstr "Lizenz ist ungültig."
+
+#: includes\Core\LicenseManager.php
+msgid "Licensing API credentials not found."
+msgstr ""
 
 #: includes\Core\LicenseStub.php
 msgid "%s is a Pro feature."
@@ -3475,6 +3580,10 @@ msgstr "Ihre Pro-Lizenz ist abgelaufen."
 #: includes\Core\Plugin.php
 msgid "Pro license required for iCal export."
 msgstr "Pro-Lizenz für iCal-Export erforderlich."
+
+#: includes\Core\Plugin.php
+msgid "Security check failed. Invalid token."
+msgstr ""
 
 #: includes\Core\Privacy.php
 msgid "Modern Hotel Booking"
@@ -3894,8 +4003,8 @@ msgid "Every 6 Hours"
 msgstr "Alle 6 Stunden"
 
 #: includes\Pro\ICalManager.php
-msgid "Pro license required to sync calendars."
-msgstr "Pro-Lizenz erforderlich für Kalendersynchronisation."
+msgid "Pro build required to sync calendars."
+msgstr ""
 
 #: includes\Pro\ICalManager.php
 msgid "%s Booking"
@@ -4082,7 +4191,7 @@ msgid "Copy the iCal URL and add it as a new connection above"
 msgstr "Kopieren Sie die iCal-URL und fügen Sie sie oben hinzu"
 
 #: includes\Pro\ICalManager.php
-msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb\"
+msgid "To import YOUR calendar into Airbnb, use the Export URL above in Airbnb's import field"
 msgstr ""
 
 #: includes\Pro\ICalManager.php
@@ -4098,7 +4207,7 @@ msgid "Copy the export URL from Booking.com and add it as a new connection above
 msgstr "Kopieren Sie die Export-URL von Booking.com und fügen Sie sie oben hinzu"
 
 #: includes\Pro\ICalManager.php
-msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com\"
+msgid "To export YOUR calendar to Booking.com, use the Export URL above in Booking.com's import field"
 msgstr ""
 
 #: includes\Pro\ICalManager.php
@@ -4126,7 +4235,27 @@ msgid "Verified & Paid via PayPal. Order:"
 msgstr ""
 
 #: includes\Pro\PaymentGateways.php
+msgid "Booking at %1$s for %2$s to %3$s"
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
+msgid "Booking at %1$s: %2$s to %3$s"
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
 msgid "Unknown error"
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
+msgid "Invalid order ID format."
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
+msgid "Stripe Account Default Currency: %s."
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
+msgid "Warning: Plugin currency (%1$s) does not match your Stripe account currency (%2$s)."
 msgstr ""
 
 #: includes\Pro\PaymentGateways.php
@@ -4178,8 +4307,24 @@ msgid "Live Secret Key"
 msgstr "Live Secret Key"
 
 #: includes\Pro\PaymentGateways.php
+msgid "Test Webhook Secret"
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
+msgid "Live Webhook Secret"
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
 msgid "Test Stripe Credentials"
 msgstr "Stripe-Zugangsdaten testen"
+
+#: includes\Pro\PaymentGateways.php
+msgid "Webhook URL for PayPal Dashboard:"
+msgstr ""
+
+#: includes\Pro\PaymentGateways.php
+msgid "Copy this URL to your PayPal App settings. For local testing, use a service like ngrok or Local by Flywheel \"Live Links\" to provide an HTTPS tunnel."
+msgstr ""
 
 #: includes\Pro\PaymentGateways.php
 msgid "Accept payments via PayPal"
@@ -4226,8 +4371,8 @@ msgid "Test Connection"
 msgstr "Verbindung testen"
 
 #: includes\Pro\PaymentGateways.php
-msgid "Test PayPal Credentials"
-msgstr "PayPal-Zugangsdaten testen"
+msgid "Verifies your Client ID, Secret, and Sandbox/Live mode connectivity."
+msgstr ""
 
 #: includes\Pro\PaymentGateways.php
 msgid "Pay On-site"
@@ -4244,6 +4389,38 @@ msgstr "Anweisungen"
 #: includes\Pro\PaymentGateways.php
 msgid "Instructions shown to guests who select pay on-site. Supports multilingual format [:en]..[:ro].."
 msgstr "Anweisungen für Gäste bei Zahlung vor Ort. Unterstützt mehrsprachiges Format."
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "View details"
+msgstr ""
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "More information about %s"
+msgstr ""
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "Check for updates"
+msgstr "Auf Updates prüfen"
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "The %s plugin is up to date."
+msgstr "Das Plugin %s ist auf dem neuesten Stand."
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "A new version of the %s plugin is available."
+msgstr ""
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "Could not determine if updates are available for %s."
+msgstr ""
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Plugin\Ui.php
+msgid "Unknown update checker status \"%s\""
+msgstr ""
+
+#: includes\Pro\Update\puc-lib\Puc\v5p6\Vcs\PluginUpdateChecker.php
+msgid "There is no changelog available."
+msgstr ""
 
 #: modern-hotel-booking.php
 msgid "Modern Hotel Booking Error"

@@ -50,27 +50,82 @@ class Pricing
         // This is correct because checkout time (e.g. 11:00) precedes check-in time (e.g. 14:00).
         // Formula: existing.check_in < new.check_out AND existing.check_out > new.check_in
 
-        if ($exclude_id > 0) {
-            $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings 
-                    WHERE room_id = %d 
-                    AND status != 'cancelled'
-                    AND NOT (status = 'pending' AND created_at < %s)
-                    AND check_in < %s AND check_out > %s
-                    AND id != %d";
-            $params = [$room_id, $expiry_time, $check_out, $check_in, $exclude_id];
+        // Read the user setting. Despite the name "prevent_same_day_turnover", 
+        // the user specifically wants the checkbox logic inverted:
+        // Checked (1) = ALLOW same day turnover
+        // Unchecked (0) = DISALLOW same day turnover
+        $allow_same_day = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
+
+        if ($allow_same_day) {
+            // Exclusive bounds: allows existing check_out to equal new check_in
+            if ($exclude_id > 0) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                $conflict = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in < %s AND check_out > %s AND id != %d",
+                    $room_id, $expiry_time, $check_out, $check_in, $exclude_id
+                ));
+            } else {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                $conflict = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in < %s AND check_out > %s",
+                    $room_id, $expiry_time, $check_out, $check_in
+                ));
+            }
         } else {
-            $sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings 
-                    WHERE room_id = %d 
-                    AND status != 'cancelled'
-                    AND NOT (status = 'pending' AND created_at < %s)
-                    AND check_in < %s AND check_out > %s";
-            $params = [$room_id, $expiry_time, $check_out, $check_in];
+            // Inclusive bounds: prevents same-day overlap entirely
+            if ($exclude_id > 0) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                $conflict = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in <= %s AND check_out >= %s AND id != %d",
+                    $room_id, $expiry_time, $check_out, $check_in, $exclude_id
+                ));
+            } else {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                $conflict = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in <= %s AND check_out >= %s",
+                    $room_id, $expiry_time, $check_out, $check_in
+                ));
+            }
         }
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, SQL structure is hardcoded per-branch for security
-        $conflict = $wpdb->get_var($wpdb->prepare($sql, ...$params));
-
         return ((int) $conflict > 0) ? 'label_already_booked' : true;
+    }
+
+    /**
+     * Find the first available room of a specific type for a date range.
+     *
+     * @param int    $type_id   Room Type ID.
+     * @param string $check_in   Check-in date (Y-m-d).
+     * @param string $check_out  Check-out date (Y-m-d).
+     * @return int|false Room ID if found, false otherwise.
+     */
+    public static function find_available_room($type_id, $check_in, $check_out)
+    {
+        global $wpdb;
+        $type_id = absint($type_id);
+
+        if (0 === $type_id) {
+            return false;
+        }
+
+        // Get all rooms of this type
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rooms = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE type_id = %d AND status = 'available' ORDER BY id ASC",
+            $type_id
+        ));
+
+        if (empty($rooms)) {
+            return false;
+        }
+
+        foreach ($rooms as $room_id) {
+            if (true === self::is_room_available($room_id, $check_in, $check_out)) {
+                return (int) $room_id;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -160,10 +215,10 @@ return (float) max(0, $base_price);
      * @param int    $guests   Number of guests (Adults).
      * @param array  $extras   Extras array (id => value).
      * @param int    $children Number of children.
-     * @param array  $children_ages Array of child ages.
+     * @param array  $child_ages Array of child ages.
      * @return array|false     Array with totals and breakdown, or false on error.
      */
-    public static function calculate_booking_total($room_id, $check_in, $check_out, $guests = 1, $extras = [], $children = 0, $children_ages = [])
+    public static function calculate_booking_total($room_id, $check_in, $check_out, $guests = 1, $extras = [], $children = 0, $child_ages = [])
     {
         global $wpdb;
 
@@ -214,14 +269,14 @@ return (float) max(0, $base_price);
             $free_children = 0;
             $chargeable_children = 0;
 
-            // Ensure children_ages is an array
-            $children_ages = is_array($children_ages) ? $children_ages : [];
+            // Ensure child_ages is an array
+            $child_ages = is_array($child_ages) ? $child_ages : [];
 
             // If ages provided, use them. If not (legacy/error), treat all as chargeable? 
             // Better: if ages missing, assume chargeable to be safe, or 0 if we want to be nice.
             // Given the form requires ages, we trust the array.
             // However, ensuring we have entry for each child:
-            foreach ($children_ages as $age) {
+            foreach ($child_ages as $age) {
                 if ($age <= $child_limit) {
                     $free_children++;
                 } else {
@@ -230,7 +285,7 @@ return (float) max(0, $base_price);
             }
 
             // Handle any missing ages (e.g. if children=2 but ages=[])
-            $missing_ages = $children - count($children_ages);
+            $missing_ages = $children - count($child_ages);
             if (0 < $missing_ages) {
                 // Default missing ages to chargeable? Or free? 
                 // Let's assume chargeable to avoid revenue loss, or maybe 0 if usually babies?

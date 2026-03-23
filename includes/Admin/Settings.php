@@ -122,7 +122,7 @@ class Settings
         add_settings_field('mhbo_booking_page_url', __('Booking Page URL (Override)', 'modern-hotel-booking'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_booking_page_url'));
         add_settings_field('mhbo_prevent_same_day_turnover', __('Same-day Turnover', 'modern-hotel-booking'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
             'label_for' => 'mhbo_prevent_same_day_turnover',
-            'description' => __('If enabled, rooms cannot be checked-in on the same day someone else checks out.', 'modern-hotel-booking')
+            'description' => __('If enabled, rooms can be checked-in on the same day someone else checks out. If disabled, a gap day is required.', 'modern-hotel-booking')
         ));
         add_settings_field('mhbo_children_enabled', __('Enable Children Management', 'modern-hotel-booking'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
             'label_for' => 'mhbo_children_enabled',
@@ -297,10 +297,10 @@ class Settings
 
     private static function is_tab_license_gated(string $tab): bool
     {
-
-return false;
         
-    }
+        return false;
+
+}
 
     public static function render()
     {
@@ -952,8 +952,11 @@ add_settings_error('mhbo_settings', 'saved', __('Theme settings saved successful
     
     public static function render_pro_page()
     {
-        
-    }
+
+$license_key = '';
+        $is_active = false;
+
+}
 
     /**
      * Render Pro Upsell notice for unlicensed users trying to access Pro tabs.
