@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "it_IT",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Hotel Booking Form": [
+                "Modulo Prenotazione Hotel"
+            ],
+            "Hotel Booking Form Preview": [
+                "Anteprima Modulo Prenotazione"
+            ],
+            "Booking Settings": [
+                "Impostazioni Prenotazione"
+            ],
+            "Room ID (optional)": [
+                "ID Camera (opzionale)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Lascia 0 per mostrare il modulo di ricerca generale."
+            ]
+        }
+    }
+}

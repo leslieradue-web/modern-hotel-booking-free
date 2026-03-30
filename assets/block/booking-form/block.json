@@ -1,8 +1,8 @@
 {
-    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "$schema": "../../../.dev/schemas/wp-block.json",
     "apiVersion": 3,
     "name": "modern-hotel-booking/booking-form",
-    "version": "2.2.7.7",
+    "version": "2.2.8.0",
     "title": "Hotel Booking Form",
     "category": "theme",
     "icon": "building",

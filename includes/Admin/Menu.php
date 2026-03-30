@@ -319,7 +319,7 @@ $is_pro_active = false;
                     <div class="mhbo-card" style="margin-top: 20px; border-left: 4px solid #10b981;">
                         <h3 style="color: #10b981; margin-top: 0; margin-bottom: 10px; font-size: 15px;">
                             <?php
-                            // translators: %s: Plugin version number
+                            // translators: %s: current plugin version
                             echo esc_html(sprintf(__('Version %s Updates', 'modern-hotel-booking'), $latest_version));
                             ?>
                         </h3>
@@ -391,18 +391,14 @@ $edit_mode = false;
         $add_mode = false;
         $edit_data = null;
 
-        // Actions
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only action and id for displaying booking details
-        if (isset($_GET['action'])) { // sanitize_text_field applied or checked via nonce later
-            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $act = sanitize_key($_GET['action']);
+        // Actions - Nonce verified inside each action block
+        $act = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : '';
+        $id  = isset($_GET['id'])     ? absint($_GET['id'])                      : 0;
 
+        if ($act) {
             if ('add' === $act) {
                 $add_mode = true;
-                // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            } elseif (isset($_GET['id'])) { // sanitize_text_field applied or checked via nonce later
-                // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-                $id = absint($_GET['id']);
+            } elseif ($id > 0) {
                 if ('edit' === $act) {
                     if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_edit_booking_' . $id)) {
                         wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
@@ -417,15 +413,7 @@ $edit_mode = false;
                     $wpdb->update($tb, array('status' => 'confirmed'), array('id' => $id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
                     \MHBO\Core\Cache::invalidate_booking($id);
 
-                    // Invalidate dashboard statistics transients
-                    $today_date = wp_date('Y-m-d');
-                    delete_transient('mhbo_widget_total_bookings');
-                    delete_transient('mhbo_widget_pending_bookings');
-                    delete_transient('mhbo_widget_today_bookings_' . $today_date);
-                    delete_transient('mhbo_dashboard_total_bookings');
-                    delete_transient('mhbo_dashboard_pending_bookings');
-                    delete_transient('mhbo_dashboard_earned_revenue_' . $today_date);
-                    delete_transient('mhbo_dashboard_future_revenue_' . $today_date);
+                    // Invalidate dashboard statistics transients handled via Cache::invalidate_booking()
 
                     Email::send_email($id, 'confirmed');
                     do_action('mhbo_booking_confirmed', $id);
@@ -438,15 +426,7 @@ $edit_mode = false;
                     $wpdb->update($tb, array('status' => 'cancelled'), array('id' => $id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
                     \MHBO\Core\Cache::invalidate_booking($id);
 
-                    // Invalidate dashboard statistics transients
-                    $today_date = wp_date('Y-m-d');
-                    delete_transient('mhbo_widget_total_bookings');
-                    delete_transient('mhbo_widget_pending_bookings');
-                    delete_transient('mhbo_widget_today_bookings_' . $today_date);
-                    delete_transient('mhbo_dashboard_total_bookings');
-                    delete_transient('mhbo_dashboard_pending_bookings');
-                    delete_transient('mhbo_dashboard_earned_revenue_' . $today_date);
-                    delete_transient('mhbo_dashboard_future_revenue_' . $today_date);
+                    // Invalidate dashboard statistics transients handled via Cache::invalidate_booking()
 
                     Email::send_email($id, 'cancelled');
                     do_action('mhbo_booking_cancelled', $id);
@@ -459,15 +439,7 @@ $edit_mode = false;
                     $wpdb->delete($tb, array('id' => $id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
                     \MHBO\Core\Cache::invalidate_booking($id);
 
-                    // Invalidate dashboard statistics transients
-                    $today_date = wp_date('Y-m-d');
-                    delete_transient('mhbo_widget_total_bookings');
-                    delete_transient('mhbo_widget_pending_bookings');
-                    delete_transient('mhbo_widget_today_bookings_' . $today_date);
-                    delete_transient('mhbo_dashboard_total_bookings');
-                    delete_transient('mhbo_dashboard_pending_bookings');
-                    delete_transient('mhbo_dashboard_earned_revenue_' . $today_date);
-                    delete_transient('mhbo_dashboard_future_revenue_' . $today_date);
+                    // Invalidate dashboard statistics transients handled via Cache::invalidate_booking()
                     echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Booking Deleted.', 'modern-hotel-booking') . '</p></div>';
                 }
             }
@@ -514,10 +486,10 @@ $edit_mode = false;
             $children_ages_raw = isset($_POST['child_ages']) && is_array($_POST['child_ages']) ? array_map('intval', wp_unslash($_POST['child_ages'])) : [];
 
             // Calculate tax breakdown for the manual booking
-            $room_id = isset($_POST['room_id']) ? absint($_POST['room_id']) : 0;
+            $room_id = isset($_POST['room_id']) ? absint(wp_unslash($_POST['room_id'])) : 0;
             $check_in = isset($_POST['check_in']) ? sanitize_text_field(wp_unslash($_POST['check_in'])) : '';
             $check_out = isset($_POST['check_out']) ? sanitize_text_field(wp_unslash($_POST['check_out'])) : '';
-            $guests = absint($_POST['guests'] ?? 1);
+            $guests = absint(wp_unslash($_POST['guests'] ?? 1));
 
             // Format extras for Pricing::calculate_booking_total
             $post_extras = [];
@@ -536,10 +508,10 @@ $edit_mode = false;
             $customer_name = isset($_POST['customer_name']) ? sanitize_text_field(wp_unslash($_POST['customer_name'])) : '';
             $customer_email = isset($_POST['customer_email']) ? sanitize_email(wp_unslash($_POST['customer_email'])) : ''; // sanitize_text_field applied or checked via nonce later
             $customer_phone = isset($_POST['customer_phone']) ? sanitize_text_field(wp_unslash($_POST['customer_phone'])) : '';
-            $total_price = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0; // sanitize_text_field applied or checked via nonce later
+            $total_price = isset($_POST['total_price']) ? floatval(wp_unslash($_POST['total_price'])) : 0; // sanitize_text_field applied or checked via nonce later
             $payment_received = isset($_POST['payment_received']) && !empty(sanitize_text_field(wp_unslash($_POST['payment_received'])));
             $status = isset($_POST['status']) ? sanitize_key(wp_unslash($_POST['status'])) : 'pending';
-            $admin_notes = isset($_POST['admin_notes']) ? sanitize_textarea_field(wp_unslash($_POST['admin_notes'])) : ''; // sanitize_text_field applied or checked via nonce later
+            $admin_notes = isset($_POST['admin_notes']) ? sanitize_textarea_field(wp_unslash($_POST['admin_notes'] ?? '')) : ''; // sanitize_text_field applied or checked via nonce later
             $mhbo_custom = isset($_POST['mhbo_custom']) && is_array($_POST['mhbo_custom']) ? array_map('sanitize_text_field', wp_unslash($_POST['mhbo_custom'])) : [];
 
             // Availability Check
@@ -556,10 +528,10 @@ $edit_mode = false;
                     'check_in' => $check_in,
                     'check_out' => $check_out,
                     'total_price' => $total_price,
-                    'discount_amount' => floatval($_POST['discount_amount'] ?? 0), // sanitize_text_field applied or checked via nonce later
-                    'deposit_amount' => floatval($_POST['deposit_amount'] ?? 0), // sanitize_text_field applied or checked via nonce later
+                    'discount_amount' => floatval(wp_unslash($_POST['discount_amount'] ?? 0)), // sanitize_text_field applied or checked via nonce later
+                    'deposit_amount' => floatval(wp_unslash($_POST['deposit_amount'] ?? 0)), // sanitize_text_field applied or checked via nonce later
                     'deposit_received' => isset($_POST['deposit_received']) ? 1 : 0, // sanitize_text_field applied or checked via nonce later
-                    'payment_method' => sanitize_key($_POST['payment_method'] ?? 'onsite'),
+                    'payment_method' => sanitize_key(wp_unslash($_POST['payment_method'] ?? 'onsite')),
                     'payment_status' => $payment_received ? 'completed' : 'pending',
                     'payment_received' => $payment_received ? 1 : 0,
                     'payment_amount' => $payment_received ? $total_price : null,
@@ -567,7 +539,7 @@ $edit_mode = false;
                     'status' => $status,
                     'admin_notes' => $admin_notes . "\n" . __('Manual booking added by admin.', 'modern-hotel-booking'),
                     'booking_extras' => !empty($booking_extras) ? wp_json_encode($booking_extras) : null,
-                    'booking_language' => sanitize_key($_POST['booking_language'] ?? 'en'),
+                    'booking_language' => sanitize_key(wp_unslash($_POST['booking_language'] ?? 'en')),
                     'guests' => $guests,
                     'children' => $children_count,
                     'children_ages' => !empty($children_ages_raw) ? wp_json_encode($children_ages_raw) : null,
@@ -593,9 +565,11 @@ $edit_mode = false;
                 if ($new_id) {
                     // Invalidate booking and calendar cache to ensure availability and lists are updated
                     \MHBO\Core\Cache::invalidate_booking($new_id, $room_id);
+
+                    // Invalidate dashboard statistics transients handled via Cache::invalidate_booking()
+
                     do_action('mhbo_booking_created', $new_id);
                     if ('confirmed' === $status) {
-                        Email::send_email($new_id, 'confirmed');
                         do_action('mhbo_booking_confirmed', $new_id);
                     }
                 }
@@ -737,12 +711,6 @@ $edit_mode = false;
 
                 if ($old_status !== $new_status) {
                     // Send email notification when status changes
-                    if ('confirmed' === $new_status) {
-                        Email::send_email($booking_id, 'confirmed');
-                    } elseif ('cancelled' === $new_status) {
-                        Email::send_email($booking_id, 'cancelled');
-                    }
-
                     do_action('mhbo_booking_status_changed', $booking_id, $new_status);
                     if ('confirmed' === $new_status) {
                         do_action('mhbo_booking_confirmed', $booking_id);
@@ -750,6 +718,18 @@ $edit_mode = false;
                         do_action('mhbo_booking_cancelled', $booking_id);
                     }
                 }
+
+                \MHBO\Core\Cache::invalidate_booking($booking_id, $room_id);
+
+                // Invalidate dashboard statistics transients
+                $today_date = wp_date('Y-m-d');
+                delete_transient('mhbo_widget_total_bookings');
+                delete_transient('mhbo_widget_pending_bookings');
+                delete_transient('mhbo_widget_today_bookings_' . $today_date);
+                delete_transient('mhbo_dashboard_total_bookings');
+                delete_transient('mhbo_dashboard_pending_bookings');
+                delete_transient('mhbo_dashboard_earned_revenue_' . $today_date);
+                delete_transient('mhbo_dashboard_future_revenue_' . $today_date);
 
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Booking Updated!', 'modern-hotel-booking') . '</p></div>';
                 $edit_mode = false;
@@ -815,7 +795,7 @@ $edit_mode = false;
                         <?php
                         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only filter state
                         $status_filter = sanitize_key(wp_unslash($_GET['status']));
-                        // translators: %s: booking status label (e.g., Pending, Confirmed)
+                        // translators: %s: booking status being filtered (e.g., Pending, Confirmed)
                         echo esc_html(sprintf(__('Filtering by status: %s', 'modern-hotel-booking'), ucfirst($status_filter))); ?>
                         <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings')); ?>" class="button button-small"
                             style="margin-left:10px;"><?php esc_html_e('Clear Filter', 'modern-hotel-booking'); ?></a>
@@ -1040,7 +1020,7 @@ $edit_mode = false;
             <?php if ($edit_mode && $edit_data): ?>
                 <div class="mhbo-card">
                     <h2><?php
-                    // translators: %d: booking ID number
+                    // translators: %d: booking ID
                     echo esc_html(sprintf(__('Edit Booking #%d', 'modern-hotel-booking'), (int) $edit_data->id)); ?>
                     </h2>
                     <form method="post"><?php wp_nonce_field('mhbo_update_booking'); ?>
@@ -1208,12 +1188,12 @@ $edit_mode = false;
                                 </td>
                             </tr>
 
-                            <!-- 4. Payment Info -->
                             <tr class="mhbo-form-section-header">
                                 <th colspan="2">
                                     <h3><?php esc_html_e('Payment Info', 'modern-hotel-booking'); ?></h3>
                                 </th>
                             </tr>
+                            
                             <tr>
                                 <th><?php esc_html_e('Total Price', 'modern-hotel-booking'); ?></th>
                                 <td><input type="number" step="1" name="total_price" id="mhbo_edit_total_price"
@@ -1418,62 +1398,58 @@ $edit_mode = false;
                                     <?php echo esc_html($bk->check_in . ' → ' . $bk->check_out); ?>
                                 </td>
                                 <td data-colname="<?php esc_attr_e('Total', 'modern-hotel-booking'); ?>"><?php
-                                   echo esc_html(I18n::format_currency($bk->total_price));
-                                   // Check if full payment received first
-                                   if ($bk->payment_received ?? 0) {
-                                       // Full payment received - no outstanding balance
-                                       echo '<br><small style="color:#00a32a;">' . esc_html__('Paid in full', 'modern-hotel-booking') . '</small>';
-                                   } elseif (($bk->deposit_received ?? 0) && ($bk->deposit_amount ?? 0) > 0) {
-                                       // Deposit only - show remaining balance
-                                       $outstanding = $bk->total_price - $bk->deposit_amount;
-                                       if (($bk->payment_amount ?? 0) > 0) {
-                                           $outstanding = $outstanding - $bk->payment_amount;
-                                       }
-                                       // translators: %s: outstanding balance amount (formatted currency)
-                                       echo '<br><small style="color:#d63638;">' . esc_html(sprintf(__('Outstanding: %s', 'modern-hotel-booking'), I18n::format_currency($outstanding))) . '</small>';
-                                   } elseif (!($bk->deposit_received ?? 0) && ($bk->total_price > 0)) {
-                                       // No deposit - check for partial payment amount
-                                       $outstanding = $bk->total_price;
-                                       if (($bk->payment_amount ?? 0) > 0) {
-                                           $outstanding = $outstanding - $bk->payment_amount;
-                                       }
-                                       // translators: %s: outstanding balance amount (formatted currency)
-                                       echo '<br><small style="color:#d63638;">' . esc_html(sprintf(__('Outstanding: %s', 'modern-hotel-booking'), I18n::format_currency($outstanding))) . '</small>';
-                                   }
-                                   ?></td>
+                                    echo esc_html(I18n::format_currency($bk->total_price));
+
+// Standard Free fallback logic
+                                        if ($bk->payment_received ?? 0) {
+                                            echo '<br><small style="color:#00a32a;">' . esc_html__('Paid in full', 'modern-hotel-booking') . '</small>';
+                                        } elseif (($bk->deposit_received ?? 0) && ($bk->deposit_amount ?? 0) > 0) {
+                                            $outstanding = $bk->total_price - $bk->deposit_amount;
+                                            // translators: %s: outstanding amount
+                                            echo '<br><small style="color:#d63638;">' . esc_html(sprintf(__('Outstanding: %s', 'modern-hotel-booking'), I18n::format_currency($outstanding))) . '</small>';
+                                        }
+                                    
+                                    ?></td>
                                 <td data-colname="<?php esc_attr_e('Status', 'modern-hotel-booking'); ?>"><span
                                         class="mhbo-status-badge mhbo-status-<?php echo esc_attr($bk->status); ?>">
                                         <?php echo esc_html(I18n::translate_status($bk->status)); ?></span>
                                 </td>
                                 <td data-colname="<?php esc_attr_e('Payment', 'modern-hotel-booking'); ?>">
-                                    <small><?php
-                                    $method_label = '';
-                                    switch ($bk->payment_method ?? 'onsite') {
-                                        case 'onsite':
-                                            $method_label = __('Onsite / Manual', 'modern-hotel-booking');
-                                            break;
-                                        case 'stripe':
-                                            $method_label = __('Stripe', 'modern-hotel-booking');
-                                            break;
-                                        case 'paypal':
-                                            $method_label = __('PayPal', 'modern-hotel-booking');
-                                            break;
-                                        default:
-                                            $method_label = ucfirst($bk->payment_method ?? 'onsite');
-                                    }
-                                    echo esc_html($method_label); ?></small>
-                                    <?php
-                                    // Display payment status badge
-                                    $payment_status = $bk->payment_status ?? 'pending';
-                                    $payment_status_colors = array(
-                                        'pending' => '#f0ad4e',
-                                        'processing' => '#5bc0de',
-                                        'completed' => '#28a745',
-                                        'failed' => '#d63638',
-                                        'refunded' => '#6c757d',
-                                    );
-                                    $payment_color = $payment_status_colors[$payment_status] ?? '#f0ad4e';
-                                    ?>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <small><?php
+                                        $method_label = '';
+                                        switch ($bk->payment_method ?? 'onsite') {
+                                            case 'onsite':
+                                                $method_label = __('Onsite / Manual', 'modern-hotel-booking');
+                                                break;
+                                            case 'stripe':
+                                                $method_label = __('Stripe', 'modern-hotel-booking');
+                                                break;
+                                            case 'paypal':
+                                                $method_label = __('PayPal', 'modern-hotel-booking');
+                                                break;
+                                            default:
+                                                $method_label = ucfirst($bk->payment_method ?? 'onsite');
+                                        }
+                                        echo esc_html($method_label); ?></small>
+
+                                        <?php
+                                        // Display payment status badge
+                                        $payment_status = $bk->payment_status ?? 'pending';
+                                        $payment_status_colors = array(
+                                            'pending' => '#f0ad4e',
+                                            'processing' => '#5bc0de',
+                                            'completed' => '#28a745',
+                                            'failed' => '#d63638',
+                                            'refunded' => '#6c757d',
+                                        );
+                                        $payment_color = $payment_status_colors[$payment_status] ?? '#f0ad4e';
+                                        ?>
+                                        <span class="mhbo-payment-badge" style="display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; color:<?php echo esc_attr($payment_color); ?>;">
+                                                • <?php echo esc_html($payment_status); ?>
+                                        </span>
+
+</div>
                                     <br><small class="mhbo-payment-status-badge"
                                         style="color:<?php echo esc_attr($payment_color); ?>; font-weight:bold; text-transform:uppercase;">
                                         <?php
@@ -1550,6 +1526,7 @@ $edit_mode = false;
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $wpdb->delete($table, array('id' => absint($_GET['id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+            \MHBO\Core\Cache::invalidate_rooms();
             echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Room Type Deleted.', 'modern-hotel-booking') . '</p></div>';
         }
 
@@ -1574,26 +1551,28 @@ $edit_mode = false;
             $amenities = isset($_POST['amenities']) && is_array($_POST['amenities']) ? wp_json_encode(array_map('sanitize_text_field', wp_unslash($_POST['amenities']))) : '';
             $room_name = isset($_POST['room_name']) ? (is_array($_POST['room_name']) ? I18n::encode(array_map('sanitize_text_field', wp_unslash($_POST['room_name']))) : sanitize_text_field(wp_unslash($_POST['room_name']))) : '';
             $room_desc = isset($_POST['room_description']) ? (is_array($_POST['room_description']) ? I18n::encode(array_map('sanitize_textarea_field', wp_unslash($_POST['room_description']))) : sanitize_textarea_field(wp_unslash($_POST['room_description']))) : ''; // sanitize_text_field applied or checked via nonce later
-            $base_price = isset($_POST['base_price']) ? floatval($_POST['base_price']) : 0; // sanitize_text_field applied or checked via nonce later
-            $max_adults = isset($_POST['max_adults']) ? absint($_POST['max_adults']) : 1;
+            $base_price = isset($_POST['base_price']) ? floatval(wp_unslash($_POST['base_price'])) : 0; // sanitize_text_field applied or checked via nonce later
+            $max_adults = isset($_POST['max_adults']) ? absint(wp_unslash($_POST['max_adults'])) : 1;
             $image_url = isset($_POST['image_url']) ? esc_url_raw(wp_unslash($_POST['image_url'])) : ''; // sanitize_text_field applied or checked via nonce later
             $data = array(
                 'name' => $room_name,
                 'description' => $room_desc,
                 'base_price' => $base_price,
                 'max_adults' => $max_adults,
-                'max_children' => absint($_POST['max_children'] ?? 0),
-                'child_age_free_limit' => absint($_POST['child_age_free_limit'] ?? 0),
-                'child_rate' => floatval($_POST['child_rate'] ?? 0), // sanitize_text_field applied or checked via nonce later
+                'max_children' => absint(wp_unslash($_POST['max_children'] ?? 0)),
+                'child_age_free_limit' => absint(wp_unslash($_POST['child_age_free_limit'] ?? 0)),
+                'child_rate' => floatval(wp_unslash($_POST['child_rate'] ?? 0)), // sanitize_text_field applied or checked via nonce later
                 'amenities' => $amenities,
                 'image_url' => $image_url,
             );
             if (!empty($_POST['room_type_id'])) { // sanitize_text_field applied or checked via nonce later
-                $wpdb->update($table, $data, array('id' => absint($_POST['room_type_id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                $wpdb->update($table, $data, array('id' => absint(wp_unslash($_POST['room_type_id'])))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                \MHBO\Core\Cache::invalidate_rooms();
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Room Type Updated!', 'modern-hotel-booking') . '</p></div>';
                 $edit_mode = false;
             } else {
                 $wpdb->insert($table, $data); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
+                \MHBO\Core\Cache::invalidate_rooms();
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Room Type Added!', 'modern-hotel-booking') . '</p></div>';
             }
         }
@@ -1800,19 +1779,38 @@ global $wpdb;
         $ical_feeds = array();
 
         // Delete Action
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only UI triage.
         if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id']) && !isset($_GET['sub_action'])) { // sanitize_text_field applied or checked via nonce later
             if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_room_' . absint($_GET['id']))) {
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $wpdb->delete($t_rooms, array('id' => absint($_GET['id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+            \MHBO\Core\Cache::invalidate_rooms();
             echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Room Deleted.', 'modern-hotel-booking') . '</p></div>';
         }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only UI triage.
         if (isset($_GET['action']) && 'ical' === $_GET['action'] && isset($_GET['id'])) { // sanitize_text_field applied or checked via nonce later
             if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_ical_room_' . absint($_GET['id']))) {
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
             $room_id = absint($_GET['id']);
+            
+            if (!MHBO_IS_PRO) {
+                ?>
+                <div class="wrap">
+                    <h1><?php esc_html_e('Manage Rooms', 'modern-hotel-booking'); ?></h1>
+                    <?php if (class_exists('MHBO\Admin\Settings')) {
+                        \MHBO\Admin\Settings::render_pro_upsell();
+                    } ?>
+                    <p style="margin-top: 20px;">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-rooms')); ?>" class="button">&larr;
+                            <?php esc_html_e('Back to Rooms', 'modern-hotel-booking'); ?></a>
+                    </p>
+                </div>
+                <?php
+                return;
+            }
 
 $ical_mode = true;
             if (isset($_POST['submit_ical_feed'])) { // sanitize_text_field applied or checked via nonce later
@@ -1836,12 +1834,14 @@ $ical_mode = true;
                         'sync_status' => 'pending',
                         'created_at' => current_time('mysql'),
                     ));
+                    \MHBO\Core\Cache::invalidate_rooms();
                 } else {
                     $wpdb->insert($t_ical, array( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
                         'room_id' => $room_id,
                         'feed_name' => $feed_name,
                         'feed_url' => $feed_url,
                     ));
+                    \MHBO\Core\Cache::invalidate_rooms();
                 }
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Feed Added!', 'modern-hotel-booking') . '</p></div>';
             }
@@ -1888,10 +1888,12 @@ $ical_mode = true;
             );
             if (!empty($_POST['room_id'])) { // sanitize_text_field applied or checked via nonce later
                 $wpdb->update($t_rooms, $data, array('id' => absint($_POST['room_id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                \MHBO\Core\Cache::invalidate_rooms();
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Room Updated!', 'modern-hotel-booking') . '</p></div>';
                 $edit_mode = false;
             } else {
                 $wpdb->insert($t_rooms, $data); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
+                \MHBO\Core\Cache::invalidate_rooms();
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Room Added!', 'modern-hotel-booking') . '</p></div>';
             }
         }
@@ -1907,7 +1909,7 @@ $ical_mode = true;
             <?php if ($ical_mode && isset($room_info)): ?>
                 <div class="card mhbo-ical-card" style="padding:20px;margin-bottom:20px;">
                     <h2><?php
-                    // translators: %s: room number
+                    // translators: %s: room number or identifier for iCal synchronization
                     echo esc_html(sprintf(__('iCal Sync — Room %s', 'modern-hotel-booking'), $room_info->room_number)); ?>
                     </h2>
                     <h3><?php esc_html_e('Export URL', 'modern-hotel-booking'); ?></h3>
@@ -2056,17 +2058,22 @@ $ical_mode = true;
                 'operation' => $modifier_type,
                 'type_id' => $type_id,
             ));
+            \MHBO\Core\Cache::invalidate_pricing();
         }
 
         if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id'])) { // sanitize_text_field applied or checked via nonce later
             if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_pricing_' . absint($_GET['id']))) {
                 wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
             }
+            // RATIONALE: Required to delete a pricing rule by ID. Admin-only, nonce-verified above.
             $wpdb->delete($table, array('id' => absint($_GET['id']))); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+            \MHBO\Core\Cache::invalidate_pricing();
         }
 
+        // RATIONALE: Required to list all pricing rules for admin display. Admin-only page.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
         $rules = $wpdb->get_results("SELECT * FROM `{$table}`");
+        // RATIONALE: Required to list room types for pricing rule dropdown. Admin-only page.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
         $types = $wpdb->get_results("SELECT * FROM `{$wpdb->prefix}mhbo_room_types`");
         ?>
@@ -2154,6 +2161,7 @@ $ical_mode = true;
                 }
             }
             update_option('mhbo_pro_extras', $new_extras);
+            \MHBO\Core\Cache::invalidate_pricing();
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Extras Saved!', 'modern-hotel-booking') . '</p></div>';
         }
 
@@ -2192,7 +2200,7 @@ $ical_mode = true;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 </tr>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <tr>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <th><?php esc_html_e('Price', 'modern-hotel-booking'); ?></th>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td><input type="number" step="0.01" name="extras[{{index}}][price]" value="{{price}}" class="small-text" required></td>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <td><input type="number" step="any" name="extras[{{index}}][price]" value="{{price}}" class="small-text" required></td>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 </tr>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <tr>
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <th><?php esc_html_e('Pricing Model', 'modern-hotel-booking'); ?></th>

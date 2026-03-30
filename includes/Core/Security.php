@@ -128,38 +128,59 @@ class Security
     /**
      * Get the client's IP address with proxy support.
      *
-     * Checks multiple headers for proxied requests while validating
-     * to prevent IP spoofing.
+     * SECURITY: Only trusts proxy headers if the REMOTE_ADDR is in the 
+     * 'mhbo_trusted_proxies' whitelist. Prevents IP spoofing.
      *
      * @return string The client IP address.
      */
     public static function get_client_ip(): string
     {
-        $ip = '';
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Explicitly unslashed and filtered via filter_var.
+        $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? wp_unslash($_SERVER['REMOTE_ADDR']) : '';
+        $remote_addr = filter_var($remote_addr, FILTER_VALIDATE_IP) ? $remote_addr : '0.0.0.0';
+        $ip = $remote_addr;
 
-        // Check for proxied IP in order of preference
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',     // Cloudflare
-            'HTTP_X_FORWARDED_FOR',      // Standard proxy header
-            'HTTP_X_REAL_IP',            // Nginx
-            'HTTP_CLIENT_IP',            // General proxy
-        ];
+        // Check if we should trust proxy headers
+        $trusted_proxies_raw = get_option('mhbo_trusted_proxies', '');
+        $is_trusted = false;
 
-        foreach ($headers as $header) {
-            if (!empty($_SERVER[$header])) {
-                $header_value = sanitize_text_field(wp_unslash($_SERVER[$header]));
-                $ips = explode(',', $header_value);
-                $ip = trim($ips[0]);
-                break;
+        if (!empty($trusted_proxies_raw)) {
+            $trusted_proxies = array_map('trim', explode(',', $trusted_proxies_raw));
+            foreach ($trusted_proxies as $proxy) {
+                if (empty($proxy)) continue;
+                if ($remote_addr === $proxy || self::ip_in_range($remote_addr, $proxy)) {
+                    $is_trusted = true;
+                    break;
+                }
             }
         }
 
-        // Fallback to direct connection
-        if (empty($ip) && !empty($_SERVER['REMOTE_ADDR'])) {
-            $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']));
+        // Only process proxy headers if the direct connecting IP is trusted
+        if ($is_trusted) {
+            $headers = [
+                'HTTP_CF_CONNECTING_IP',     // Cloudflare
+                'HTTP_X_FORWARDED_FOR',      // Standard proxy header
+                'HTTP_X_REAL_IP',            // Nginx
+                'HTTP_CLIENT_IP',            // General proxy
+            ];
+
+            foreach ($headers as $header) {
+                // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Explicitly unslashed and filtered via filter_var.
+                if (!empty($_SERVER[$header])) {
+                    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+                    $header_value = wp_unslash($_SERVER[$header]);
+                    $ips = explode(',', $header_value);
+                    $first_ip = trim($ips[0]);
+
+                    if (filter_var($first_ip, FILTER_VALIDATE_IP)) {
+                        $ip = $first_ip;
+                        break;
+                    }
+                }
+            }
         }
 
-        // Validate the IP
+        // Final validation
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
             return sanitize_text_field($ip);
         }

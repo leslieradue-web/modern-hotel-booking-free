@@ -98,14 +98,22 @@ class Block
         }
 
         // Register Booking Form using metadata
-        register_block_type(MHBO_PLUGIN_DIR . 'assets/block/booking-form', [
+        $booking_form_block = register_block_type(MHBO_PLUGIN_DIR . 'assets/block/booking-form', [
             'render_callback' => [$this, 'render_booking_block'],
         ]);
 
+        if ($booking_form_block && !empty($booking_form_block->editor_script)) {
+            wp_set_script_translations($booking_form_block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
+        }
+
         // Register Room Calendar using metadata
-        register_block_type(MHBO_PLUGIN_DIR . 'assets/block/room-calendar', [
+        $room_calendar_block = register_block_type(MHBO_PLUGIN_DIR . 'assets/block/room-calendar', [
             'render_callback' => [$this, 'render_calendar_block'],
         ]);
+
+        if ($room_calendar_block && !empty($room_calendar_block->editor_script)) {
+            wp_set_script_translations($room_calendar_block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
+        }
     }
 
     /**

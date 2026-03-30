@@ -1,0 +1,36 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/room-calendar\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nb_NO",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Room Availability Calendar": [
+                "Tilgjengelighetskalender for rom"
+            ],
+            "Calendar Settings": [
+                "Kalenderinnstillinger"
+            ],
+            "Room ID": [
+                "Rom-ID"
+            ],
+            "Enter the ID of the room to display the calendar for.": [
+                "Skriv inn ID-en til rommet du vil vise kalenderen for."
+            ],
+            "Room ID: ": [
+                "Rom-ID: "
+            ],
+            "Please select a Room ID in the sidebar.": [
+                "Vennligst velg en Rom-ID i sidefeltet."
+            ],
+            "(Preview only - real calendar shows on frontend)": [
+                "(Kun forhåndsvisning - ekte kalender vises på nettsiden)"
+            ]
+        }
+    }
+}

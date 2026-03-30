@@ -60,8 +60,8 @@ class Deactivator
     {
         global $wpdb;
 
-        // Delete all MHBO transients (rate limits, cache, locks, etc.)
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Deactivation cleanup, patterns are hardcoded
+        // Rule 13 rationale: Bulk cleanup of temporary transients during deactivation.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk cleanup during deactivation
         $wpdb->query(
             "DELETE FROM {$wpdb->options} 
              WHERE option_name LIKE '_transient_mhbo_%' 

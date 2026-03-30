@@ -295,28 +295,7 @@ class Tax
             'calculated_at' => current_time('mysql')
         ];
 
-        if (!self::is_enabled()) {
-            // Tax disabled - just pass through amounts
-            $room_total = floatval($booking_data['room_total'] ?? 0);
-            $children_total = floatval($booking_data['children_total'] ?? 0);
-            $extras_total = floatval($booking_data['extras_total'] ?? 0);
-            $total = $room_total + $children_total + $extras_total;
-
-            $result['totals'] = [
-                'room_net' => round($room_total, $decimal_places),
-                'room_tax' => 0.00,
-                'children_net' => round($children_total, $decimal_places),
-                'children_tax' => 0.00,
-                'extras_net' => round($extras_total, $decimal_places),
-                'extras_tax' => 0.00,
-                'subtotal_net' => round($total, $decimal_places),
-                'total_tax' => 0.00,
-                'total_gross' => round($total, $decimal_places)
-            ];
-            return $result;
-        }
-
-        // Calculate room tax
+// Calculate room tax
         $room_total = floatval($booking_data['room_total'] ?? 0);
         if (0 < $room_total) {
             $room_calc = self::calculate_tax($room_total, $accommodation_rate, $mode, $should_round_individual);
@@ -467,15 +446,23 @@ class Tax
     public static function get_tax_breakdown($booking_id)
     {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom table, admin-only internal reconstruction
-        $booking = $wpdb->get_row($wpdb->prepare(
-            "SELECT tax_breakdown, tax_mode, tax_rate_accommodation, tax_rate_extras,
-                    room_total_net, children_total_net, extras_total_net,
-                    room_tax, children_tax, extras_tax,
-                    subtotal_net, total_tax, total_gross
-             FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
-            $booking_id
-        ), ARRAY_A);
+
+        $cache_key = 'mhbo_tax_breakdown_' . $booking_id;
+        $booking = wp_cache_get($cache_key, 'mhbo_bookings');
+
+        if (false === $booking) {
+            // Rule 13 rationale: Fetching detailed tax breakdown for financial reporting and display.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table query with caching
+            $booking = $wpdb->get_row($wpdb->prepare(
+                "SELECT tax_breakdown, tax_mode, tax_rate_accommodation, tax_rate_extras,
+                        room_total_net, children_total_net, extras_total_net,
+                        room_tax, children_tax, extras_tax,
+                        subtotal_net, total_tax, total_gross
+                 FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
+                $booking_id
+            ), ARRAY_A);
+            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 300);
+        }
 
         if (!$booking) {
             return null;
@@ -497,15 +484,21 @@ class Tax
             'breakdown' => [
                 'room' => [
                     'net' => floatval($booking['room_total_net']),
-                    'tax' => floatval($booking['room_tax'])
+                    'tax' => floatval($booking['room_tax']),
+                    'gross' => floatval($booking['room_total_net']) + floatval($booking['room_tax'])
                 ],
                 'children' => [
                     'net' => floatval($booking['children_total_net']),
-                    'tax' => floatval($booking['children_tax'])
+                    'tax' => floatval($booking['children_tax']),
+                    'gross' => floatval($booking['children_total_net']) + floatval($booking['children_tax'])
                 ],
                 'extras' => [
-                    'net' => floatval($booking['extras_total_net']),
-                    'tax' => floatval($booking['extras_tax'])
+                    [
+                        'name' => I18n::get_label('label_extras') ?? __('Extras', 'modern-hotel-booking'),
+                        'net' => floatval($booking['extras_total_net']),
+                        'tax' => floatval($booking['extras_tax']),
+                        'gross' => floatval($booking['extras_total_net']) + floatval($booking['extras_tax'])
+                    ]
                 ]
             ],
             'totals' => [
@@ -618,7 +611,7 @@ class Tax
             'total_tax_formatted' => I18n::format_currency($totals['total_tax'] ?? 0),
             'total_gross_formatted' => I18n::format_currency($totals['total_gross'] ?? 0),
             'tax_included_note' => self::MODE_VAT === $mode
-                ? sprintf(I18n::get_label('label_includes_tax'), $label)
+                ? sprintf(I18n::get_label('label_includes_tax'), $label . ' ' . self::get_accommodation_rate() . '%')
                 : ''
         ];
 
@@ -626,19 +619,23 @@ class Tax
     }
 
     /**
-     * Generate HTML for tax breakdown display
+     * Render HTML for tax breakdown
      *
-     * @param array $breakdown Tax breakdown
+     * @param array $breakdown Tax breakdown (from calculate_booking_tax or storage)
      * @param string $language Language code (optional)
      * @param bool $is_email Whether to use email-friendly inline styles
      * @param array $meta Optional metadata (guests, children)
+     * @param bool $show_note Whether to show the tax included note (VAT mode only)
      * @return string HTML
      */
-    public static function render_breakdown_html($breakdown, $language = null, $is_email = false, $meta = array())
+    public static function render_breakdown_html($breakdown, $language = null, $is_email = false, $meta = array(), $show_note = true)
     {
-        $tax_enabled = self::is_enabled() || ($breakdown['enabled'] ?? false) === true;
+        if (!self::is_enabled() && ($breakdown['enabled'] ?? false) === false) {
+            return '';
+        }
 
         $formatted = self::format_tax_breakdown($breakdown, $language, $meta);
+        $tax_enabled = $formatted['enabled'] ?? false;
 
         $styles = [
             'container' => $is_email ? 'font-family: Arial, sans-serif; font-size: 14px; color: #333; border: 1px solid #eee; padding: 15px; margin-bottom: 20px;' : 'mhbo-tax-breakdown',
@@ -654,8 +651,8 @@ class Tax
         // Get tax rates and amounts for separate display
         $rates = $breakdown['rates'] ?? [];
         $totals = $breakdown['totals'] ?? [];
-        $accommodation_rate = floatval($rates['accommodation'] ?? 0);
-        $extras_rate = floatval($rates['extras'] ?? 0);
+        $accommodation_rate = floatval($rates['accommodation'] ?? self::get_accommodation_rate());
+        $extras_rate = floatval($rates['extras'] ?? self::get_extras_rate());
         $room_tax = floatval($totals['room_tax'] ?? 0);
         $children_tax = floatval($totals['children_tax'] ?? 0);
         $extras_tax = floatval($totals['extras_tax'] ?? 0);
@@ -679,7 +676,9 @@ class Tax
                 <?php echo esc_html($title); ?>
             </h4>
             <table class="<?php echo $is_email ? '' : esc_attr($styles['table']); ?>"
-                style="<?php echo $is_email ? esc_attr($styles['table']) : ''; ?>">
+                style="<?php echo $is_email ? esc_attr($styles['table']) : ''; ?>"
+                id="mhbo-tax-breakdown-table"
+                data-total-gross="<?php echo esc_attr((string) ($formatted['total_gross'] ?? 0)); ?>">
                 <thead>
                     <tr>
                         <th style="<?php echo esc_attr($styles['th']); ?>">
@@ -717,7 +716,8 @@ class Tax
                                 <tr class="mhbo-tax-item">
                                     <td style="<?php echo esc_attr($styles['td']); ?>">
                                         <?php
-                                        echo esc_html(sprintf(I18n::get_label('label_tax_accommodation') ?? /* translators: %1$s: Tax label, %2$s: Tax rate percentage */ __('%1$s - Accommodation (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $accommodation_rate)); ?>
+                                        // translators: 1: Tax label, 2: Tax rate percentage
+                                        echo esc_html(sprintf(I18n::get_label('label_tax_accommodation') ?? __('%1$s - Accommodation (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $accommodation_rate)); ?>
                                     </td>
                                     <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                         <?php echo esc_html(I18n::format_currency($accommodation_tax_total)); ?>
@@ -728,7 +728,8 @@ class Tax
                                 <tr class="mhbo-tax-item">
                                     <td style="<?php echo esc_attr($styles['td']); ?>">
                                         <?php
-                                        echo esc_html(sprintf(I18n::get_label('label_tax_extras') ?? /* translators: %1$s: Tax label, %2$s: Tax rate percentage */ __('%1$s - Extras (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $extras_rate)); ?>
+                                        // translators: 1: Tax label, 2: Tax rate percentage
+                                        echo esc_html(sprintf(I18n::get_label('label_tax_extras') ?? __('%1$s - Extras (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $extras_rate)); ?>
                                     </td>
                                     <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                         <?php echo esc_html(I18n::format_currency($extras_tax)); ?>
@@ -739,7 +740,8 @@ class Tax
                             <tr class="mhbo-tax-item">
                                 <td style="<?php echo esc_attr($styles['td']); ?>">
                                     <?php
-                                    echo esc_html(sprintf(I18n::get_label('label_tax_rate') ?? /* translators: %1$s: Tax label, %2$s: Tax rate percentage */ __('%1$s (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $accommodation_rate)); ?>
+                                    // translators: 1: Tax label, 2: Tax rate percentage
+                                    echo esc_html(sprintf(I18n::get_label('label_tax_rate') ?? __('%1$s (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $accommodation_rate)); ?>
                                 </td>
                                 <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                     <?php echo esc_html($formatted['totals']['total_tax_formatted']); ?>
@@ -759,7 +761,8 @@ class Tax
                     </tr>
                 </tfoot>
             </table>
-            <?php if ($tax_enabled && self::MODE_VAT === $formatted['mode']): ?>
+            
+            <?php if ($show_note && $tax_enabled && self::MODE_VAT === $formatted['mode']): ?>
                 <p style="font-size: 12px; color: #666; margin-top: 5px;">
                     <?php echo esc_html($formatted['totals']['tax_included_note']); ?>
                 </p>
@@ -908,7 +911,15 @@ class Tax
             '%s'  // tax_breakdown
         ];
 
-        return $wpdb->update($table, $data, ['id' => $booking_id], $format, ['%d']) !== false; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+        // RATIONALE: Required to store calculated tax breakdown columns in the custom mhbo_bookings table.
+        // Uses $wpdb->update with typed format arrays; booking_id is validated as int.
+        $result = $wpdb->update($table, $data, ['id' => $booking_id], $format, ['%d']) !== false; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+
+        if ($result) {
+            Cache::invalidate_booking($booking_id);
+        }
+
+        return $result;
     }
 
     /**
@@ -920,9 +931,10 @@ class Tax
     public static function get_booking_tax_summary($booking_id)
     {
         global $wpdb;
-        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix
         $table = $wpdb->prefix . 'mhbo_bookings';
 
+        // RATIONALE: Required to fetch a single booking's tax summary for admin display.
+        // Uses $wpdb->prepare with %d placeholder; read-only, no caching needed for admin context.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, admin-only query
         $booking = $wpdb->get_row($wpdb->prepare(
             "SELECT tax_enabled, tax_mode, total_tax, total_gross, total_price

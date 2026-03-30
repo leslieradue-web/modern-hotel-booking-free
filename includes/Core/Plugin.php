@@ -30,6 +30,7 @@ class Plugin
     {
         // Initialize I18n filters
         I18n::init();
+        Email::init();
 
         /* ---- iCal Export (public endpoint) ---- */
 
@@ -64,6 +65,9 @@ class Plugin
             register_widget(BookingWidget::class);
         });
 
+        /* ---- Business Info Module ---- */
+        $this->load_business();
+
         add_filter('plugin_action_links_' . MHBO_PLUGIN_BASENAME, function ($links) {
             $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=mhbo-settings')) . '">' . esc_html__('Settings', 'modern-hotel-booking') . '</a>';
             array_unshift($links, $settings_link);
@@ -86,6 +90,16 @@ class Plugin
     }
 
 /**
+     * Load Business Information module.
+     */
+    private function load_business(): void
+    {
+        \MHBO\Business\Info::get_instance();
+        \MHBO\Business\Shortcodes::get_instance();
+        \MHBO\Business\Blocks::get_instance();
+    }
+
+    /**
      * Schedule daily maintenance cron job.
      */
     private function schedule_cron(): void

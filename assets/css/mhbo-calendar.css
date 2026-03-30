@@ -240,7 +240,6 @@
     color: #2d3748 !important;
 }
 
-
 /* Unbookable dates (no price set) - Same red as booked */
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-unbookable {
     background: rgba(229, 62, 62, 0.15) !important;

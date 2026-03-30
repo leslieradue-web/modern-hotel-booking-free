@@ -1,233 +1,247 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace MHBO\Core;
 
 if (!defined('ABSPATH')) {
-    exit;
+	exit;
 }
 
 /**
- * Modern Hotel Booking Cache Handler.
- *
- * Provides a unified interface for WP Object Cache and Transients.
+ * Cache Management Utility
+ * 
+ * Implements Rule 13: Row-level caching with separate version tracking 
+ * for each data table to ensure maximum performance and data integrity.
  */
 class Cache
 {
-    /** @var string Cache group for MHBO */
-    private const GROUP = 'mhbo';
+	/**
+	 * Cache group for all MHBO data.
+	 */
+	const GROUP = 'mhbo_cache';
 
-    /** @var int Default expiration in seconds (1 hour) */
-    private const DEFAULT_EXPIRY = 3600;
+	/**
+	 * Last changed salt for Rule 13.
+	 */
+	const LAST_CHANGED_KEY = 'bookings_last_changed';
 
-    /**
-     * Check if object cache is available.
-     *
-     * @return bool True if object cache is active.
-     */
-    public static function is_object_cache_available(): bool
-    {
-        return (bool) wp_using_ext_object_cache();
-    }
+	/**
+	 * Available tables for versioning.
+	 */
+	const TABLE_BOOKINGS = 'bookings';
+	const TABLE_ROOM_TYPES = 'room_types';
+	const TABLE_ROOMS = 'rooms';
+	const TABLE_PRICING_RULES = 'pricing_rules';
+	const TABLE_ICAL_CONNECTIONS = 'ical_connections';
+	const TABLE_SETTINGS = 'settings';
 
-    /**
-     * Set a cache value.
-     *
-     * @param string $key Cache key.
-     * @param mixed  $value Value to cache.
-     * @param int    $expiry Expiration in seconds.
-     * @return bool True on success.
-     */
-    public static function set(string $key, $value, int $expiry = self::DEFAULT_EXPIRY): bool
-    {
-        $prefixed_key = self::get_cache_key($key);
+	/**
+	 * Get the current version of a data table.
+	 *
+	 * @param string $table The table identifier (use class constants).
+	 * @return int The current version number.
+	 */
+	public static function get_version(string $table): int
+	{
+		$version = (int) get_option("mhbo_v_{$table}", 1);
+		if ($version < 1) {
+			$version = 1;
+			update_option("mhbo_v_{$table}", 1);
+		}
+		return $version;
+	}
 
-        // Always try object cache first
-        $result = wp_cache_set($prefixed_key, $value, self::GROUP, $expiry);
+	/**
+	 * Increment the version of a data table.
+	 * This effectively invalidates all cached queries related to this table.
+	 *
+	 * @param string $table The table identifier (use class constants).
+	 */
+	public static function bump(string $table): void
+	{
+		$version = self::get_version($table) + 1;
+		update_option("mhbo_v_{$table}", $version);
+		
+		// Optional: Clear non-persistent local cache for this process
+		wp_cache_delete("mhbo_v_{$table}", self::GROUP);
+	}
 
-        // Fallback to transients if object cache is not available
-        if (!self::is_object_cache_available()) {
-            set_transient(self::get_transient_key($key), $value, $expiry);
-        }
+	/**
+	 * Bump all table versions at once.
+	 * Useful for troubleshooting or major updates.
+	 * 
+	 * @return bool Always true on completion.
+	 */
+	public static function flush_all(): bool
+	{
+		$tables = [
+			self::TABLE_BOOKINGS,
+			self::TABLE_ROOM_TYPES,
+			self::TABLE_ROOMS,
+			self::TABLE_PRICING_RULES,
+			self::TABLE_ICAL_CONNECTIONS,
+			self::TABLE_SETTINGS,
+		];
 
-        return $result;
-    }
+		foreach ($tables as $table) {
+			self::bump($table);
+		}
 
-    /**
-     * Get a cache value.
-     *
-     * @param string $key Cache key.
-     * @return mixed Cached value or false on failure.
-     */
-    public static function get(string $key)
-    {
-        $prefixed_key = self::get_cache_key($key);
+		return true;
+	}
 
-        $value = wp_cache_get($prefixed_key, self::GROUP);
+	/**
+	 * Alias for flush_all() to support legacy calls.
+	 * 
+	 * @return bool Always true on completion.
+	 */
+	public static function flush(): bool
+	{
+		return self::flush_all();
+	}
 
-        if (false === $value && !self::is_object_cache_available()) {
-            $value = get_transient(self::get_transient_key($key));
-        }
+	/**
+	 * Get a cached query result.
+	 *
+	 * @param string $key Unique query key (e.g. sql hash).
+	 * @param string $table Table to track version against.
+	 * @return mixed|false Cached data or false on miss.
+	 */
+	public static function get_query(string $key, string $table)
+	{
+		$version = self::get_version($table);
+		return wp_cache_get("q_{$key}_v{$version}", self::GROUP);
+	}
 
-        return $value;
-    }
+	/**
+	 * Cache a query result.
+	 *
+	 * @param string $key Unique query key.
+	 * @param mixed $data Data to cache.
+	 * @param string $table Table to track version against.
+	 * @param int $expire Expiration in seconds (default 1 hour).
+	 * @return bool True on success, false on failure.
+	 */
+	public static function set_query(string $key, $data, string $table, int $expire = 3600): bool
+	{
+		$version = self::get_version($table);
+		return wp_cache_set("q_{$key}_v{$version}", $data, self::GROUP, $expire);
+	}
 
-    /**
-     * Delete a cache value.
-     *
-     * @param string $key Cache key.
-     * @return bool True on success.
-     */
-    public static function delete(string $key): bool
-    {
-        $prefixed_key = self::get_cache_key($key);
+	/**
+	 * Get a cached single row (row-level caching).
+	 *
+	 * @param string|int $id Unique identifier for the row.
+	 * @param string $table Table to track version against.
+	 * @return mixed|false Cached data or false on miss.
+	 */
+	public static function get_row($id, string $table)
+	{
+		$version = self::get_version($table);
+		return wp_cache_get("r_{$table}_{$id}_v{$version}", self::GROUP);
+	}
 
-        wp_cache_delete($prefixed_key, self::GROUP);
+	/**
+	 * Cache a single row (row-level caching).
+	 *
+	 * @param string|int $id Unique identifier for the row.
+	 * @param mixed $data Data to cache.
+	 * @param string $table Table to track version against.
+	 * @param int $expire Expiration in seconds (default 1 hour).
+	 * @return bool True on success, false on failure.
+	 */
+	public static function set_row($id, $data, string $table, int $expire = 3600): bool
+	{
+		$version = self::get_version($table);
+		return wp_cache_set("r_{$table}_{$id}_v{$version}", $data, self::GROUP, $expire);
+	}
 
-        if (!self::is_object_cache_available()) {
-            delete_transient(self::get_transient_key($key));
-        }
+	/**
+	 * Invalidate a specific row cache without bumping the whole table.
+	 * Not recommended for queries involving multiple rows, but useful for 
+	 * precise row updates if the versioning pattern is strictly row-id based.
+	 *
+	 * NOTE: In Rule 13 implementation, we prefer bumping the entire table 
+	 * version to ensure all dependent complex queries (like availability) are cleared.
+	 */
+	public static function delete_row($id, string $table): void
+	{
+		$version = self::get_version($table);
+		wp_cache_delete("r_{$table}_{$id}_v{$version}", self::GROUP);
+	}
 
-        return true;
-    }
+	/**
+	 * Rule 13: Invalidate all booking-related caches.
+	 * Bumps bookings version and rooms version (as bookings affect room availability).
+	 */
+	public static function invalidate_booking(int $booking_id = 0, int $room_id = 0): void
+	{
+		self::bump(self::TABLE_BOOKINGS);
+		self::bump(self::TABLE_ROOMS); // Availability changes
 
-    /**
-     * Flush all MHBO-related cache and transients.
-     *
-     * @return bool True on success.
-     */
-    public static function flush(): bool
-    {
-        global $wpdb;
+		// Clear dashboard/widget transients
+		$today = wp_date('Y-m-d');
+		delete_transient('mhbo_widget_total_bookings');
+		delete_transient('mhbo_widget_pending_bookings');
+		delete_transient('mhbo_widget_today_bookings_' . $today);
+		delete_transient('mhbo_dashboard_total_bookings');
+		delete_transient('mhbo_dashboard_pending_bookings');
+		delete_transient('mhbo_dashboard_earned_revenue_' . $today);
+		delete_transient('mhbo_dashboard_future_revenue_' . $today);
+	}
 
-        // Delete all MHBO transients
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cache flush operation, patterns are hardcoded
-        $deleted = $wpdb->query(
-            "DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_mhbo_cache_%' 
-             OR option_name LIKE '_site_transient_mhbo_cache_%'"
-        );
+	/**
+	 * Rule 13: Invalidate room-related caches.
+	 */
+	public static function invalidate_rooms(): void
+	{
+		self::bump(self::TABLE_ROOMS);
+		self::bump(self::TABLE_ROOM_TYPES);
+		wp_cache_delete('mhbo_all_rooms', 'mhbo_rooms');
+		wp_cache_delete('mhbo_room_types_all', 'mhbo');
+	}
 
-        // Flush object cache group if available
-        if (self::is_object_cache_available() && function_exists('wp_cache_flush_group')) {
-            wp_cache_flush_group(self::GROUP);
-        }
+	/**
+	 * Rule 13: Invalidate pricing-related caches.
+	 */
+	public static function invalidate_pricing(): void
+	{
+		self::bump(self::TABLE_PRICING_RULES);
+		wp_cache_delete('mhbo_pricing_rules_all', 'mhbo');
+	}
 
-        return false !== $deleted;
-    }
+	/**
+	 * COMPATIBILITY: Legacy calendar cache invalidation.
+	 */
+	/**
+	 * COMPATIBILITY: Legacy pricing version retrieval.
+	 */
+	public static function get_prices_version(): int
+	{
+		return self::get_version(self::TABLE_PRICING_RULES);
+	}
 
-    /**
-     * IMPORTANT: Room availability should NEVER be cached.
-     * 
-     * Availability must always be checked in real-time to prevent double bookings.
-     */
+	/**
+	 * COMPATIBILITY: Legacy rooms version retrieval.
+	 */
+	public static function get_availability_version(): int
+	{
+		return self::get_version(self::TABLE_ROOMS);
+	}
 
-    /**
-     * Get pricing rules with caching.
-     */
-    public static function get_pricing_rules(int $room_id, string $date)
-    {
-        $key = sprintf('pricing_rules_%d_%s', $room_id, $date);
-        return self::get($key);
-    }
+	/**
+	 * COMPATIBILITY: Legacy settings version retrieval.
+	 */
+	public static function get_settings_version(): int
+	{
+		return self::get_version(self::TABLE_SETTINGS);
+	}
 
-    /**
-     * Set pricing rules cache.
-     */
-    public static function set_pricing_rules(int $room_id, string $date, array $rules, int $expiry = 3600): bool
-    {
-        $key = sprintf('pricing_rules_%d_%s', $room_id, $date);
-        return self::set($key, $rules, $expiry);
-    }
-
-    /**
-     * Invalidate room-related caches.
-     *
-     * @param int $room_id Room ID.
-     */
-    public static function invalidate_room(int $room_id): void
-    {
-        global $wpdb;
-
-        // Delete pricing rules for this room
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Transient cleanup
-        $wpdb->query($wpdb->prepare(
-            "DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE %s 
-             OR option_name LIKE %s",
-            '_transient_mhbo_cache_pricing_rules_' . $room_id . '_%',
-            '_site_transient_mhbo_cache_pricing_rules_' . $room_id . '_%'
-        ));
-
-        self::invalidate_calendar_cache($room_id);
-    }
-
-    /**
-     * Invalidate all cached data related to a specific booking.
-     *
-     * @param int|string $booking_id Booking ID or transaction ID.
-     * @param int|null   $room_id    Optional Room ID to also clear relevant room/calendar caches.
-     */
-    public static function invalidate_booking($booking_id, ?int $room_id = null): void
-    {
-        // Clear direct ID cache
-        wp_cache_delete('mhbo_booking_' . $booking_id, 'mhbo_bookings');
-
-        // Clear transaction lookup cache if it looks like a TX ID
-        if (is_string($booking_id) && strlen($booking_id) > 10) {
-            wp_cache_delete('mhbo_booking_tx_' . md5((string)$booking_id), 'mhbo_bookings');
-        }
-
-        // Clear all bookings list
-        self::invalidate_all_bookings();
-
-        // Clear related room availability
-        if ($room_id) {
-            self::invalidate_calendar_cache((int) $room_id);
-        }
-    }
-
-    /**
-     * Invalidate all booking lists.
-     */
-    public static function invalidate_all_bookings(): void
-    {
-        if (self::is_object_cache_available() && function_exists('wp_cache_flush_group')) {
-            wp_cache_flush_group('mhbo_bookings');
-        }
-    }
-
-    /**
-     * Invalidate calendar booking cache for a room.
-     *
-     * @param int $room_id Room ID.
-     */
-    public static function invalidate_calendar_cache(int $room_id): void
-    {
-        wp_cache_delete('mhbo_calendar_bookings_' . $room_id, self::GROUP);
-
-        // Also clear room status/availability cache from Pricing.php
-        $today = gmdate('Y-m-d');
-        wp_cache_delete('room_status_' . $room_id . '_' . $today, 'mhbo_rooms');
-
-        // Clear general room cache
-        wp_cache_delete('mhbo_all_rooms', 'mhbo_rooms');
-    }
-
-    /**
-     * Generate cache key with prefix.
-     */
-    private static function get_cache_key(string $key): string
-    {
-        return 'mhbo_' . $key;
-    }
-
-    /**
-     * Generate transient key with prefix.
-     */
-    private static function get_transient_key(string $key): string
-    {
-        return 'mhbo_cache_' . $key;
-    }
+	/**
+	 * COMPATIBILITY: Legacy availability retrieval used by RestApi.php.
+	 * Redirects to Rule 13 versioning for 'bookings' table.
+	 */
+	public static function get_bookings_last_changed(): int
+	{
+		return self::get_version(self::TABLE_BOOKINGS);
+	}
 }

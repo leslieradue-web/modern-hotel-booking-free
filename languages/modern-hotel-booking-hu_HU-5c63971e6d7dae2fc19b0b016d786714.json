@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "hu_HU",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Hotel Booking Form": [
+                "Szállodai foglalási űrlap"
+            ],
+            "Hotel Booking Form Preview": [
+                "Foglalási űrlap előnézet"
+            ],
+            "Booking Settings": [
+                "Foglalási beállítások"
+            ],
+            "Room ID (optional)": [
+                "Szoba azonosító (opcionális)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Hagyja 0-n az általános keresőűrlap megjelenítéséhez."
+            ]
+        }
+    }
+}

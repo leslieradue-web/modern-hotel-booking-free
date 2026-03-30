@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "sv_SE",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Hotel Booking Form": [
+                "Hotellbokningsformulär"
+            ],
+            "Hotel Booking Form Preview": [
+                "Förhandsgranskning av hotellbokningsformulär"
+            ],
+            "Booking Settings": [
+                "Bokningsinställningar"
+            ],
+            "Room ID (optional)": [
+                "Rums-ID (valfritt)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Lämna som 0 för att visa det allmänna sökformuläret."
+            ]
+        }
+    }
+}

@@ -230,51 +230,24 @@ class Calendar
             <!-- Inline error notification area (hidden until needed) -->
             <div class="mhbo-calendar-errors mhbo-inline-errors" style="display:none !important;"></div>
 
+            <?php
+            // Build the action URL for the booking form submission
+            $action_url = I18n::decode(get_option('mhbo_booking_page_url'), null, false);
+            if (!$action_url) {
+                $b_page_id = get_option('mhbo_booking_page');
+                if ($b_page_id) {
+                    $action_url = get_permalink($b_page_id);
+                }
+            }
+            if (!$action_url) {
+                $action_url = home_url('/');
+            }
+
+            // Button label depends on context
+            $btn_label = ($room_id > 0) ? I18n::get_label('btn_book_now') : I18n::get_label('btn_search_rooms');
+            ?>
+
             <div class="mhbo-selection-box" style="display:none !important;">
-                <div class="mhbo-selection-header">
-                    <h3><?php echo esc_html(I18n::get_label('label_your_selection')); ?></h3>
-                </div>
-
-                <div class="mhbo-selection-details">
-                    <div class="mhbo-selection-dates">
-                        <div class="mhbo-selection-item">
-                            <span class="mhbo-label"><?php echo esc_html(I18n::get_label('label_check_in')); ?></span>
-                            <span class="mhbo-value mhbo-display-check-in">-</span>
-                            <span
-                                class="mhbo-time-info mhbo-check-in-time"><?php echo esc_html(sprintf(I18n::get_label('label_check_in_from'), esc_html(get_option('mhbo_checkin_time', '14:00')))); ?></span>
-                        </div>
-                        <div class="mhbo-selection-item">
-                            <span class="mhbo-label"><?php echo esc_html(I18n::get_label('label_check_out')); ?></span>
-                            <span class="mhbo-value mhbo-display-check-out">-</span>
-                            <span
-                                class="mhbo-time-info mhbo-check-out-time"><?php echo esc_html(sprintf(I18n::get_label('label_check_out_by'), esc_html(get_option('mhbo_checkout_time', '11:00')))); ?></span>
-                        </div>
-                    </div>
-
-                    <?php if ($show_pricing): ?>
-                        <div class="mhbo-selection-price">
-                            <span class="mhbo-label"><?php echo esc_html(I18n::get_label('label_total_starting_from')); ?></span>
-                            <span class="mhbo-price-value mhbo-display-price">-</span>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <?php
-                // Build the action URL for the booking form submission
-                $action_url = I18n::decode(get_option('mhbo_booking_page_url'), null, false);
-                if (!$action_url) {
-                    $b_page_id = get_option('mhbo_booking_page');
-                    if ($b_page_id) {
-                        $action_url = get_permalink($b_page_id);
-                    }
-                }
-                if (!$action_url) {
-                    $action_url = home_url('/');
-                }
-
-                // Button label depends on context
-                $btn_label = ($room_id > 0) ? I18n::get_label('btn_book_now') : I18n::get_label('btn_search_rooms');
-                ?>
                 <form action="<?php echo esc_url($action_url); ?>" method="get" class="mhbo-selection-form">
                     <input type="hidden" name="mhbo_nonce" value="<?php echo esc_attr(wp_create_nonce('mhbo_auto_action')); ?>">
                     <input type="hidden" name="room_id" value="<?php echo esc_attr((string) $room_id); ?>">
@@ -283,9 +256,43 @@ class Calendar
                     <!-- For aggregated view, total price is just an estimate/starting from -->
                     <input type="hidden" name="total_price" class="mhbo-cal-total-price">
                     <input type="hidden" name="mhbo_auto_book" value="1">
-                    <button type="button" style="position:relative; z-index:10;"
+
+                    <div class="mhbo-selection-header">
+                        <h3><?php echo esc_html(I18n::get_label('label_your_selection')); ?></h3>
+                    </div>
+
+                    <div class="mhbo-selection-details">
+                        <div class="mhbo-selection-dates">
+                            <div class="mhbo-selection-item">
+                                <span class="mhbo-label"><?php echo esc_html(I18n::get_label('label_check_in')); ?></span>
+                                <span class="mhbo-value mhbo-display-check-in">-</span>
+                                <span
+                                    class="mhbo-time-info mhbo-check-in-time"><?php echo esc_html(sprintf(I18n::get_label('label_check_in_from'), esc_html(get_option('mhbo_checkin_time', '14:00')))); ?></span>
+                            </div>
+                            <div class="mhbo-selection-item">
+                                <span class="mhbo-label"><?php echo esc_html(I18n::get_label('label_check_out')); ?></span>
+                                <span class="mhbo-value mhbo-display-check-out">-</span>
+                                <span
+                                    class="mhbo-time-info mhbo-check-out-time"><?php echo esc_html(sprintf(I18n::get_label('label_check_out_by'), esc_html(get_option('mhbo_checkout_time', '11:00')))); ?></span>
+                            </div>
+                        </div>
+
+                        <?php if ($show_pricing): ?>
+                            <div class="mhbo-selection-price">
+                                <span class="mhbo-label"><?php echo esc_html(I18n::get_label('label_total_starting_from')); ?></span>
+                                <span class="mhbo-price-value mhbo-display-price">-</span>
+                            </div>
+                        <?php else: ?>
+                            <!-- Room Type and Guests selections are deliberately deferred to the subsequent pages -->
+                            <input type="hidden" name="type_id" class="mhbo-cal-type-id" value="0">
+                            <input type="hidden" name="guests" class="mhbo-cal-guests" value="2">
+                        <?php endif; ?>
+                    </div>
+
+                    <button type="submit" style="position:relative; z-index:10; width: 100%;"
                         class="mhbo-btn-primary mhbo-booking-btn-submit"><?php echo esc_html($btn_label); ?></button>
                 </form>
+            </div>
             </div>
 
             <?php if (get_option('mhbo_powered_by_link', 0)): ?>

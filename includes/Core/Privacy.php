@@ -20,14 +20,15 @@ class Privacy
         add_action('admin_init', function () {
             if (function_exists('wp_add_privacy_policy_content')) {
                 $content = '<h2>' . __('Modern Hotel Booking', 'modern-hotel-booking') . '</h2>';
-                $content .= '<p>' . __('This plugin collects the following personal data from guests during the booking process:', 'modern-hotel-booking') . '</p>';
+                $content .= '<p>' . __('This plugin collects and displays the following information:', 'modern-hotel-booking') . '</p>';
+                $content .= '<h3>' . __('Guest Data', 'modern-hotel-booking') . '</h3>';
                 $content .= '<ul>';
-                $content .= '<li>' . __('Name', 'modern-hotel-booking') . '</li>';
-                $content .= '<li>' . __('Email Address', 'modern-hotel-booking') . '</li>';
-                $content .= '<li>' . __('Phone Number', 'modern-hotel-booking') . '</li>';
-                $content .= '<li>' . __('Booking Dates and Details', 'modern-hotel-booking') . '</li>';
+                $content .= '<li>' . __('Name, Email, and Phone Number', 'modern-hotel-booking') . '</li>';
+                $content .= '<li>' . __('Booking Dates and Room Preferences', 'modern-hotel-booking') . '</li>';
                 $content .= '</ul>';
-                $content .= '<p>' . __('This data is stored in the database for the purpose of managing reservations and contacting guests regarding their stay.', 'modern-hotel-booking') . '</p>';
+                $content .= '<h3>' . __('Business Information', 'modern-hotel-booking') . '</h3>';
+                $content .= '<p>' . __('The site administrator may configure business details (Company Name, Address, Tax ID) and payment information (Bank Transfer IBAN, Revolut Tag) to be displayed on the frontend and in booking emails.', 'modern-hotel-booking') . '</p>';
+                $content .= '<p>' . __('This data is stored in the WordPress options table and is used solely for facilitation of the booking process.', 'modern-hotel-booking') . '</p>';
 
                 wp_add_privacy_policy_content('Modern Hotel Booking', $content);
             }
@@ -122,6 +123,22 @@ class Privacy
                     'name' => __('Customer Phone', 'modern-hotel-booking'),
                     'value' => $booking->customer_phone,
                 ),
+                array(
+                    'name' => __('Admin Notes', 'modern-hotel-booking'),
+                    'value' => $booking->admin_notes,
+                ),
+                array(
+                    'name' => __('Custom Fields', 'modern-hotel-booking'),
+                    'value' => $booking->custom_fields,
+                ),
+                array(
+                    'name' => __('Booking Extras', 'modern-hotel-booking'),
+                    'value' => $booking->booking_extras,
+                ),
+                array(
+                    'name' => __('Payment Error Logs', 'modern-hotel-booking'),
+                    'value' => $booking->payment_error,
+                ),
             );
 
             $export_items[] = array(
@@ -174,12 +191,17 @@ class Privacy
             $updated = $wpdb->update(
                 $wpdb->prefix . 'mhbo_bookings',
                 array(
-                    'customer_name' => '[Deleted]',
+                    'customer_name'  => '[Deleted]',
                     'customer_email' => 'deleted@site.invalid',
                     'customer_phone' => '[Deleted]',
+                    'booking_token'  => wp_generate_password(64, false), // Revoke access link
+                    'admin_notes'    => null,
+                    'custom_fields'  => null,
+                    'booking_extras' => null,
+                    'payment_error'  => null,
                 ),
                 array('id' => $booking->id),
-                array('%s', '%s', '%s'),
+                array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
                 array('%d')
             );
 
@@ -214,13 +236,17 @@ class Privacy
         $result = (bool) $wpdb->update(
             $wpdb->prefix . 'mhbo_bookings',
             array(
-                'customer_name' => '[Anonymized]',
+                'customer_name'  => '[Anonymized]',
                 'customer_email' => 'deleted@site.invalid',
                 'customer_phone' => '[Anonymized]',
+                'booking_token'  => wp_generate_password(64, false), // Revoke access link
+                'admin_notes'    => null,
+                'custom_fields'  => null,
                 'booking_extras' => null, // Clear Pro extras too for GDPR
+                'payment_error'  => null,
             ),
             array('id' => $booking_id),
-            array('%s', '%s', '%s', '%s'),
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
             array('%d')
         );
 

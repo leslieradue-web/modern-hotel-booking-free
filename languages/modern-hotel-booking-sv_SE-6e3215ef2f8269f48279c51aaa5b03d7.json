@@ -1,0 +1,36 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/room-calendar\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "sv_SE",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Room Availability Calendar": [
+                "Kalender för rumstillgänglighet"
+            ],
+            "Calendar Settings": [
+                "Kalenderinställningar"
+            ],
+            "Room ID": [
+                "Rums-ID"
+            ],
+            "Enter the ID of the room to display the calendar for.": [
+                "Ange ID för rummet som kalendern ska visas för."
+            ],
+            "Room ID: ": [
+                "Rums-ID: "
+            ],
+            "Please select a Room ID in the sidebar.": [
+                "Vänligen välj ett Rums-ID i sidofältet."
+            ],
+            "(Preview only - real calendar shows on frontend)": [
+                "(Endast förhandsgranskning - den riktiga kalendern visas på webbplatsen)"
+            ]
+        }
+    }
+}

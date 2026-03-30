@@ -3,7 +3,7 @@ Contributors: leslierad
 Tags: vacation rental, booking engine, room booking, direct booking, reservation system
 Requires at least: 6.2
 Tested up to: 6.9
-Stable tag: 2.2.7.7
+Stable tag: 2.2.8.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -12,7 +12,11 @@ Free WordPress hotel and accommodation booking system. Take direct bookings for 
 
 == Description ==
 
-**Modern Hotel Booking** is a powerful free **reservation system** and **booking engine** built specifically for independent properties. Whether you are managing a single **vacation rental** or a multi-room boutique hotel, our plugin gives you full control.
+**Modern Hotel Booking** is a powerful free **reservation system** and **booking engine** built specifically for independent properties.
+
+[Privacy Policy](https://startmysuccess.com/privacy-policy/) | [Pro Version](https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/) | [GitHub](https://github.com/leslieradue-web/modern-hotel-booking-free)
+
+Whether you are managing a single **vacation rental** or a multi-room boutique hotel, our plugin gives you full control.
 
 Stop paying 15%+ commissions to OTAs like Airbnb or Booking.com. Secure **direct bookings** on your own WordPress website using our flexible, commission-free **room booking** platform.
 
@@ -27,6 +31,8 @@ This versatile **booking engine** is perfectly designed for:
 * **Unlimited Room Types** with capacity controls and pricing.
 * **Real-Time Availability Calendar** — interactive visual status for all rooms in your **reservation system**.
 * **Smart Booking Engine Form** — AJAX-powered with instant price calculation for seamless **direct bookings**.
+* **Business Info & Communication** — Integrated WhatsApp chat, Company profiles, and professional business card displays.
+* **Offline Payment Support** — Built-in support for Bank Transfers (IBAN/SWIFT) and Revolut.me payments with QR codes.
 * **Automated Email Notifications** — customizable confirmations for guests and admins.
 * **Native Gutenberg Blocks** — add **room booking** forms to any page seamlessly.
 * **Mobile-First Design** — fully responsive forms and calendars.
@@ -41,6 +47,7 @@ Need more power for your direct booking business? Upgrade to Pro and get:
 * Advanced Email Templates
 * Revenue Analytics Dashboard
 * GDPR Compliant tools
+* Deposits & Partial Payments
 * Developer REST API
 
 **Pricing** (simple & transparent):
@@ -68,6 +75,7 @@ Visit the [Pro Version page](https://startmysuccess.com/shop/wordpress-plugins/h
    - Or use the widget
 5. Go to **Hotel Booking > Settings** — **IMPORTANT**: Select your Booking Page from the dropdown and save. Configure any other options (emails, currency, etc.) and save again.
 6. (Optional) For individual room pages, use the **Room Availability Calendar** block or shortcode `[mhbo_room_calendar room_id="1"]` (replace 1 with the actual room ID).
+7. (New) Use the **Business Info** tab in settings to configure WhatsApp, Bank Details, and Revolut. Display them anywhere using blocks or shortcodes like `[mhbo_whatsapp]` or `[mhbo_business_card]`.
 
 Once set up, guests can search and create bookings from your dedicated booking page or from individual room pages. The system shows real-time availability and calculates prices instantly.
 
@@ -140,23 +148,35 @@ For more information, please see our [Privacy Policy](https://startmysuccess.com
 
 == External Services ==
 
-This plugin (Free version) works entirely offline within your WordPress installation.
+This plugin integrates with the following external services to enhance your direct booking experience. All connections are optional and only active if configured by the site administrator:
 
-The **Pro version** (available separately) integrates with the following external services:
+* **WhatsApp (Communication)** - Facilitates direct communication between guests and owners via WhatsApp links (no automated data collection).
+  * [Privacy Policy](https://www.whatsapp.com/legal/privacy-policy-eea)
+* **Revolut (Payments)** - Facilitates peer-to-peer payments via Revolut.me links and QR codes.
+  * [Privacy Policy](https://www.revolut.com/legal/privacy-policy/)
 
-* **Stripe** (Payment Processing) - Used for processing credit card payments for direct bookings.
-  * [Terms of Service](https://stripe.com/terms)
-  * [Privacy Policy](https://stripe.com/privacy)
-* **PayPal** (Payment Processing) - Used for processing PayPal and credit card payments for direct bookings.
-  * [Terms of Service](https://www.paypal.com/webapps/mpp/ua/useragreement-full)
-  * [Privacy Policy](https://www.paypal.com/webapps/mpp/ua/privacy-full)
-* **iCal Synchronisation** - Connects to external calendars like Airbnb, Booking.com, and Google Calendar via their public iCal feeds. No data is sent to our servers.
+The **Pro version** (available separately) adds connections to:
 
-Both services are optional and only active if configured in the Pro version.
+* **Stripe & PayPal** (Payment Processing) - Securely processes credit card and account payments.
+  * [Stripe Privacy](https://stripe.com/privacy) | [PayPal Privacy](https://www.paypal.com/webapps/mpp/ua/privacy-full)
+* **iCal Synchronisation** - Connects to external calendars (Airbnb, Booking.com, Google) via public feeds. No data is sent to our servers.
+* **StartMySuccess (Maintenance)** - Used for license verification and update checks in the Pro version.
+  * [Developer Privacy](https://startmysuccess.com/privacy-policy/)
+
 
 == Changelog ==
 
-= 2.2.7.7 =
+= 2.2.8.0 =
+* New: Added shortcodes and blocks for Business Info, WhatsApp, banking details, and Revolut.
+* New: Enhanced email placeholder engine with 30+ smart tags (Company, WhatsApp, etc.).
+* Localization: Updated internationalization for 15+ community locales (2026 Standard).
+* Improved: Synchronized metadata and documentation across 40+ files.
+
+= 2.2.7.8 =
+* New (Pro): Deposits & Partial Payments feature.
+* New (Pro): Three deposit types: Percentage, Fixed, and First Night's Rate.
+* New (Pro): Refund deadline and non-refundable deposit options.
+* New (Pro): Administrative balance tracking and "Mark Balance Collected" tools.
 * Localization: Comprehensive multi-language update across all 15+ supported languages (FR, DE, ES, IT, CS, NL, PL, PT, RU, SV).
 * Localization: Added 140+ critical hospitality and guest-facing translations (Batch 5).
 * Improved: Unified room availability logic using core Pricing methods for improved reliability.

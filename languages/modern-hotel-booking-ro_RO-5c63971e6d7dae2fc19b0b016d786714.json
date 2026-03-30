@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ro_RO",
+                "plural-forms": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2);"
+            },
+            "Hotel Booking Form": [
+                "Formular Rezervare Hotel"
+            ],
+            "Hotel Booking Form Preview": [
+                "Previzualizare Formular Rezervare"
+            ],
+            "Booking Settings": [
+                "Setări rezervare"
+            ],
+            "Room ID (optional)": [
+                "ID Cameră (opțional)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Lăsați 0 pentru a afișa formularul general de căutare."
+            ]
+        }
+    }
+}

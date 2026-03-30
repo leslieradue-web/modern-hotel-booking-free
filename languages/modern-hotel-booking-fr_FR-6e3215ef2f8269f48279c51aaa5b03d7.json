@@ -1,0 +1,36 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/room-calendar\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "fr_FR",
+                "plural-forms": "nplurals=2; plural=(n > 1);"
+            },
+            "Room Availability Calendar": [
+                "Calendrier de disponibilité des chambres"
+            ],
+            "Calendar Settings": [
+                "Réglages du calendrier"
+            ],
+            "Room ID": [
+                "ID de la chambre"
+            ],
+            "Enter the ID of the room to display the calendar for.": [
+                "Entrez l'ID de la chambre pour laquelle afficher le calendrier."
+            ],
+            "Room ID: ": [
+                "ID de la chambre : "
+            ],
+            "Please select a Room ID in the sidebar.": [
+                "Veuillez sélectionner un ID de chambre dans la barre latérale."
+            ],
+            "(Preview only - real calendar shows on frontend)": [
+                "(Aperçu uniquement - le calendrier réel s'affiche sur le site)"
+            ]
+        }
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ru_RU",
+                "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+            },
+            "Hotel Booking Form": [
+                "Форма бронирования отеля"
+            ],
+            "Hotel Booking Form Preview": [
+                "Предпросмотр формы бронирования"
+            ],
+            "Booking Settings": [
+                "Настройки бронирования"
+            ],
+            "Room ID (optional)": [
+                "ID номера (необязательно)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Оставьте 0, чтобы показать общую форму поиска."
+            ]
+        }
+    }
+}

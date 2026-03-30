@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "pt_BR",
+                "plural-forms": "nplurals=2; plural=(n > 1);"
+            },
+            "Hotel Booking Form": [
+                "Formulário de Reserva de Hotel"
+            ],
+            "Hotel Booking Form Preview": [
+                "Prévia do Formulário de Reserva"
+            ],
+            "Booking Settings": [
+                "Configurações de Reserva"
+            ],
+            "Room ID (optional)": [
+                "ID do Quarto (opcional)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Deixe como 0 para mostrar o formulário de busca geral."
+            ]
+        }
+    }
+}

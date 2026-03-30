@@ -1,0 +1,36 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/room-calendar\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "ru_RU",
+                "plural-forms": "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
+            },
+            "Room Availability Calendar": [
+                "Календарь доступности номеров"
+            ],
+            "Calendar Settings": [
+                "Настройки календаря"
+            ],
+            "Room ID": [
+                "ID номера"
+            ],
+            "Enter the ID of the room to display the calendar for.": [
+                "Введите ID номера для отображения календаря."
+            ],
+            "Room ID: ": [
+                "ID номера: "
+            ],
+            "Please select a Room ID in the sidebar.": [
+                "Пожалуйста, выберите ID номера на боковой панели."
+            ],
+            "(Preview only - real calendar shows on frontend)": [
+                "(Только предпросмотр — реальный календарь отображается на сайте)"
+            ]
+        }
+    }
+}

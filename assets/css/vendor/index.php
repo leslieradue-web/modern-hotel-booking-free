@@ -1,5 +1,1 @@
-<?php
-// Silence is golden.
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
+<?php if ( ! defined( 'ABSPATH' ) ) exit;

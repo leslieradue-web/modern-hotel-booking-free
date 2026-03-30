@@ -1,0 +1,30 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/booking-form\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "nl_NL",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Hotel Booking Form": [
+                "Hotelboekingsformulier"
+            ],
+            "Hotel Booking Form Preview": [
+                "Voorbeeld hotelboekingsformulier"
+            ],
+            "Booking Settings": [
+                "Boekingsinstellingen"
+            ],
+            "Room ID (optional)": [
+                "Kamer ID (optioneel)"
+            ],
+            "Leave as 0 to show the general search form.": [
+                "Laat op 0 staan om het algemene zoekformulier te tonen."
+            ]
+        }
+    }
+}

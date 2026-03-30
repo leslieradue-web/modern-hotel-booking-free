@@ -21,17 +21,18 @@ class Pricing
     {
         global $wpdb;
 
-        // 1. Check Room Global Status (Cached)
-        $room_status_cache_key = 'mhbo_room_status_' . $room_id;
-        $room_status = wp_cache_get($room_status_cache_key, 'mhbo_rooms');
+        // 1. Check Room Global Status (Cached with versioning)
+        // Rule 13 rationale: Direct status check is cached using versioned row access
+        // to ensure instant global updates when room status changes.
+        $room_status = Cache::get_row($room_id, Cache::TABLE_ROOMS);
 
         if (false === $room_status) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- 2026 BP: Row-level status check for high-concurrency availability engine. Value is cached with table-versioning via MHBO\Core\Cache.
             $room_status = $wpdb->get_var($wpdb->prepare(
                 "SELECT status FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d",
                 $room_id
-            ));
-            wp_cache_set($room_status_cache_key, $room_status, 'mhbo_rooms', HOUR_IN_SECONDS);
+            )) ?: 'available';
+            Cache::set_row($room_id, $room_status, Cache::TABLE_ROOMS, 86400); // 24h as it's versioned
         }
 
         if (!$room_status || 'available' !== $room_status) {
@@ -39,9 +40,6 @@ class Pricing
         }
 
         // 2. Check for Overlapping Bookings
-        // Treat pending bookings older than 60 minutes as expired/non-blocking
-        $expiry_time = wp_date('Y-m-d H:i:s', strtotime('-60 minutes'));
-
         // NOTE: Availability is NEVER cached to prevent race conditions and overbooking.
         // We only cache the room's global status above.
 
@@ -50,45 +48,63 @@ class Pricing
         // This is correct because checkout time (e.g. 11:00) precedes check-in time (e.g. 14:00).
         // Formula: existing.check_in < new.check_out AND existing.check_out > new.check_in
 
-        // Read the user setting. Despite the name "prevent_same_day_turnover", 
-        // the user specifically wants the checkbox logic inverted:
-        // Checked (1) = ALLOW same day turnover
-        // Unchecked (0) = DISALLOW same day turnover
-        $allow_same_day = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
+        // Same-day Turnover Setting:
+        // Checked (1) = PREVENT same-day overlap (Gap day required).
+        // Unchecked (0) = ALLOW same-day turnover (Industry Standard).
+        $prevent_same_day = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
 
-        if ($allow_same_day) {
-            // Exclusive bounds: allows existing check_out to equal new check_in
+        if ($prevent_same_day) {
+            // Inclusive bounds: prevents same-day overlap entirely (Gap day required)
             if ($exclude_id > 0) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for prevent-same-day turnover. Bypasses persistent cache to ensure zero-overbooking.
                 $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in < %s AND check_out > %s AND id != %d",
-                    $room_id, $expiry_time, $check_out, $check_in, $exclude_id
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in <= %s AND check_out >= %s) AND id != %d",
+                    $room_id, $check_out, $check_in, $exclude_id
                 ));
             } else {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for prevent-same-day turnover. Bypasses persistent cache to ensure zero-overbooking.
                 $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in < %s AND check_out > %s",
-                    $room_id, $expiry_time, $check_out, $check_in
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in <= %s AND check_out >= %s)",
+                    $room_id, $check_out, $check_in
                 ));
             }
         } else {
-            // Inclusive bounds: prevents same-day overlap entirely
+            // Exclusive bounds: allows existing check_out to equal new check_in (Industry Standard)
             if ($exclude_id > 0) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for standard turnover (same-day). Bypasses persistent cache to ensure zero-overbooking.
                 $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in <= %s AND check_out >= %s AND id != %d",
-                    $room_id, $expiry_time, $check_out, $check_in, $exclude_id
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in < %s AND check_out > %s) AND id != %d",
+                    $room_id, $check_out, $check_in, $exclude_id
                 ));
             } else {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for standard turnover (same-day). Bypasses persistent cache to ensure zero-overbooking.
                 $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND NOT (status = 'pending' AND created_at < %s) AND check_in <= %s AND check_out >= %s",
-                    $room_id, $expiry_time, $check_out, $check_in
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in < %s AND check_out > %s)",
+                    $room_id, $check_out, $check_in
                 ));
             }
         }
 
         return ((int) $conflict > 0) ? 'label_already_booked' : true;
+    }
+
+    /**
+     * Get the SQL condition for room availability based on turnover settings.
+     * 
+     * @param string $check_in_placeholder  SQL placeholder for check-in.
+     * @param string $check_out_placeholder SQL placeholder for check-out.
+     * @param bool   $prevent_same_day     Whether to prevent same-day turnover.
+     * @return string The SQL condition fragment.
+     */
+    public static function get_overlap_sql_condition(string $check_in_placeholder, string $check_out_placeholder, bool $prevent_same_day = false): string
+    {
+        if ($prevent_same_day) {
+            // Inclusive bounds: prevents same-day overlap entirely (Gap day required)
+            return "(check_in <= {$check_in_placeholder} AND check_out >= {$check_out_placeholder})";
+        }
+
+        // Exclusive bounds: allows existing check_out to equal new check_in (Industry Standard)
+        return "(check_in < {$check_in_placeholder} AND check_out > {$check_out_placeholder})";
     }
 
     /**
@@ -99,10 +115,11 @@ class Pricing
      * @param string $check_out  Check-out date (Y-m-d).
      * @return int|false Room ID if found, false otherwise.
      */
-    public static function find_available_room($type_id, $check_in, $check_out)
+    public static function find_available_room($type_id, $check_in, $check_out, $guests = 1)
     {
         global $wpdb;
         $type_id = absint($type_id);
+        $guests  = absint($guests);
 
         if (0 === $type_id) {
             return false;
@@ -111,7 +128,7 @@ class Pricing
         // Get all rooms of this type
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $rooms = $wpdb->get_col($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE type_id = %d AND status = 'available' ORDER BY id ASC",
+            "SELECT r.id FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.type_id = %d AND r.status = 'available' ORDER BY r.id ASC",
             $type_id
         ));
 
@@ -145,12 +162,14 @@ class Pricing
             return 0.00;
         }
 
-        // Get room type data from database with caching
-        $room_cache_key = 'mhbo_room_data_' . $room_id;
-        $room_data = wp_cache_get($room_cache_key, 'mhbo');
+        // Get room type data from database with versioned caching
+        // Rule 13 rationale: Room pricing data is versioned to allow instant
+        // global updates when base prices or types are modified.
+        $room_cache_key = 'room_data_' . $room_id;
+        $room_data = Cache::get_query($room_cache_key, Cache::TABLE_ROOMS);
 
         if (false === $room_data) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
             $room_data = $wpdb->get_row($wpdb->prepare(
                 "SELECT r.custom_price, t.base_price, r.type_id
                  FROM {$wpdb->prefix}mhbo_rooms r 
@@ -158,7 +177,7 @@ class Pricing
                  WHERE r.id = %d",
                 $room_id
             ));
-            wp_cache_set($room_cache_key, $room_data, 'mhbo', HOUR_IN_SECONDS);
+            Cache::set_query($room_cache_key, $room_data, Cache::TABLE_ROOMS, 86400);
         }
 
         if (!$room_data || !isset($room_data->base_price)) {
@@ -168,12 +187,14 @@ class Pricing
         // Prefer room-specific custom price, fallback to type base price
         $base_price = (float) (0 < $room_data->custom_price ? $room_data->custom_price : $room_data->base_price);
 
-        // Get pricing rules from database with caching
-        $rule_cache_key = 'mhbo_pricing_rule_' . $room_data->type_id . '_' . $date;
-        $rule = wp_cache_get($rule_cache_key, 'mhbo');
+        // Get pricing rules from database with versioned caching
+        // Rule 13 rationale: Pricing rules are mission-critical and must be
+        // invalidated site-wide the moment settings are updated.
+        $rule_cache_key = 'pricing_rule_' . ($room_data->type_id ?? 0) . '_' . $date;
+        $rule = Cache::get_query($rule_cache_key, Cache::TABLE_PRICING_RULES);
 
         if (false === $rule) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $rule = $wpdb->get_row($wpdb->prepare(
                 "SELECT amount, operation 
                  FROM {$wpdb->prefix}mhbo_pricing_rules 
@@ -183,7 +204,7 @@ class Pricing
                 $room_data->type_id ?? 0,
                 $date
             ));
-            wp_cache_set($rule_cache_key, $rule, 'mhbo', HOUR_IN_SECONDS);
+            Cache::set_query($rule_cache_key, $rule, Cache::TABLE_PRICING_RULES, 86400);
         }
 
         if ($rule && isset($rule->operation) && isset($rule->amount)) {
@@ -222,14 +243,17 @@ return (float) max(0, $base_price);
     {
         global $wpdb;
 
-        // Validate room exists and get policy - with caching
-        $room_cache_key = 'mhbo_room_policy_' . $room_id;
+        // Validate room exists and get policy - with versioned caching
+        // Rule 13 rationale: Direct policy lookup is cached via prices_version
+        // to ensure immediate consistency for checkout totals.
+        $version = Cache::get_prices_version();
+        $room_cache_key = 'mhbo_room_policy_' . $room_id . '_' . $version;
         $room = wp_cache_get($room_cache_key, 'mhbo');
 
         if (false === $room) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $room = $wpdb->get_row($wpdb->prepare("SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.id = %d", $room_id));
-            wp_cache_set($room_cache_key, $room, 'mhbo', HOUR_IN_SECONDS);
+            wp_cache_set($room_cache_key, $room, 'mhbo', 86400);
         }
 
         if (!$room) {
@@ -252,10 +276,12 @@ return (float) max(0, $base_price);
         $period = new \DatePeriod($start_date, $interval, $end_date);
         $nights = iterator_count($period);
 
-        // Calculate room total
         $room_total = 0;
+        $room_daily_prices = [];
         foreach ($period as $dt) {
-            $room_total += self::calculate_daily_price($room_id, $dt->format('Y-m-d'));
+            $price = self::calculate_daily_price($room_id, $dt->format('Y-m-d'));
+            $room_total += $price;
+            $room_daily_prices[] = $price;
         }
 
         // Calculate Child Costs (Smart Allocation)
@@ -273,9 +299,6 @@ return (float) max(0, $base_price);
             $child_ages = is_array($child_ages) ? $child_ages : [];
 
             // If ages provided, use them. If not (legacy/error), treat all as chargeable? 
-            // Better: if ages missing, assume chargeable to be safe, or 0 if we want to be nice.
-            // Given the form requires ages, we trust the array.
-            // However, ensuring we have entry for each child:
             foreach ($child_ages as $age) {
                 if ($age <= $child_limit) {
                     $free_children++;
@@ -284,15 +307,9 @@ return (float) max(0, $base_price);
                 }
             }
 
-            // Handle any missing ages (e.g. if children=2 but ages=[])
+            // Handle any missing ages
             $missing_ages = $children - count($child_ages);
             if (0 < $missing_ages) {
-                // Default missing ages to chargeable? Or free? 
-                // Let's assume chargeable to avoid revenue loss, or maybe 0 if usually babies?
-                // Let's assume free for safety/UX? No, better to assume chargeable if not specified.
-                // But wait, the form validates. Let's assume user input is correct.
-                // For simplicity, treat missing as 'chargeable' (worst case) or 'free' (best case).
-                // Let's add them to chargeable to match "Standard" behavior unless specified.
                 $chargeable_children += $missing_ages;
             }
 
@@ -303,11 +320,9 @@ return (float) max(0, $base_price);
             $children_in_adult_slots = min($chargeable_children, $empty_adult_slots);
             $billed_children = $chargeable_children - $children_in_adult_slots;
 
-            // Calculate cost
-            $child_cost_total = $billed_children * $child_rate * $nights;
+            // Calculate cost (round to 2 decimals for monetary consistency)
+            $child_cost_total = round($billed_children * $child_rate * $nights, 2);
 
-            // Add to room total or keep separate? 
-            // Let's add to room_total but maybe track it?
             $room_total += $child_cost_total;
         }
 
@@ -315,15 +330,16 @@ return (float) max(0, $base_price);
         $extras_total = 0;
         $extras_breakdown = [];
 
-$grand_total = (float) max(0, $room_total + $extras_total);
+$grand_total = (float) round(max(0, $room_total + $extras_total), 2);
 
 return [
-            'room_total' => $room_total,
-            'children_total' => $child_cost_total,
-            'extras_total' => $extras_total,
-            'total' => $grand_total,
+            'room_total' => round($room_total, 2),
+            'children_total' => round($child_cost_total, 2),
+            'extras_total' => round($extras_total, 2),
+            'total' => round($grand_total, 2),
             'extras_breakdown' => $extras_breakdown,
             'nights' => $nights,
+            'daily_prices' => $room_daily_prices, // Added for deposit calculation
             
         ];
     }
@@ -361,4 +377,5 @@ return [
 
 return $formatted;
     }
+
 }

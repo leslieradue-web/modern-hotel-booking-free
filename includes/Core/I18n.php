@@ -203,7 +203,7 @@ class I18n
 
         // Handle plain strings on multilingual sites
         if ($is_plain && 'none' !== self::detect_plugin() && !$fallback) {
-            return null;
+            return trim($text);
         }
 
         // Manual parsing fallback for single-language strings or when fallback is allowed
@@ -474,7 +474,7 @@ class I18n
             'btn_pay_confirm' => __('Pay & Confirm', 'modern-hotel-booking'),
             'msg_booking_confirmed' => __('Booking Confirmed!', 'modern-hotel-booking'),
             'msg_confirmation_sent' => __('A confirmation email has been sent to you.', 'modern-hotel-booking'),
-            /* translators: %s: Customer email address */
+            // translators: %s: Customer email address
             'msg_confirmation_sent_to' => __('A confirmation email has been sent to %s.', 'modern-hotel-booking'),
             'label_reservation' => __('RESERVATION', 'modern-hotel-booking'),
             'msg_booking_received' => __('Booking Pending', 'modern-hotel-booking'),
@@ -539,18 +539,21 @@ class I18n
             'label_enhance_stay' => __('Enhance Your Stay', 'modern-hotel-booking'),
             'label_per_person' => __('per person', 'modern-hotel-booking'),
             'label_per_person_per_night' => __('per person / night', 'modern-hotel-booking'),
-            /* translators: %s: Tax rate percentage */
+            // translators: %s: Tax rate percentage
             'label_tax_note_includes' => __('Price includes %s', 'modern-hotel-booking'),
-            /* translators: %s: Tax rate percentage */
+            // translators: %s: Tax rate percentage
             'label_tax_note_plus' => __('Price plus %s', 'modern-hotel-booking'),
-            /* translators: %1$s: Tax label, %2$s: Tax rate percentage */
+            // translators: %1$s: Tax label, %2$s: Tax rate percentage
             'label_tax_note_includes_multi' => __('Price includes %1$s (%2$s%%)', 'modern-hotel-booking'),
-            /* translators: %1$s: Tax label, %2$s: Tax rate percentage */
+            // translators: %1$s: Tax label, %2$s: Tax rate percentage
             'label_tax_note_plus_multi' => __('Price plus %1$s (%2$s%%)', 'modern-hotel-booking'),
             'label_select_dates_error' => __('Please select check-in and check-out dates.', 'modern-hotel-booking'),
             'label_legend_confirmed' => __('Booked', 'modern-hotel-booking'),
             'label_legend_pending' => __('Pending', 'modern-hotel-booking'),
             'label_legend_available' => __('Available', 'modern-hotel-booking'),
+            'label_room_type' => __('Room Type', 'modern-hotel-booking'),
+            'label_all_types' => __('All Types', 'modern-hotel-booking'),
+            'label_total_starting_from' => __('Total (Starting from)', 'modern-hotel-booking'),
             'label_block_no_room' => __('Please select a Room ID in block settings.', 'modern-hotel-booking'),
             'label_check_in_past' => __('Check-in date cannot be in the past.', 'modern-hotel-booking'),
             'label_check_out_after' => __('Check-out date must be after check-in date.', 'modern-hotel-booking'),
@@ -558,16 +561,16 @@ class I18n
             'label_check_out_future' => __('Check-out date cannot be more than 2 years in the future.', 'modern-hotel-booking'),
             'label_name_too_long' => __('Name is too long (maximum 100 characters).', 'modern-hotel-booking'),
             'label_phone_too_long' => __('Phone number is too long (maximum 30 characters).', 'modern-hotel-booking'),
-            /* translators: %d: Maximum number of children */
+            // translators: %d: Maximum number of children
             'label_max_children_error' => __('Error: Maximum children for this room is %d.', 'modern-hotel-booking'),
             'label_price_calc_error' => __('Error calculating price. Please check dates.', 'modern-hotel-booking'),
             'label_fill_all_fields' => __('Please fill in all required fields.', 'modern-hotel-booking'),
             'label_invalid_email' => __('Please provide a valid email address.', 'modern-hotel-booking'),
-            /* translators: %s: Field name */
+            // translators: %s: Field name
             'label_field_required' => __('The field "%s" is required.', 'modern-hotel-booking'),
             'label_spam_detected' => __('Spam detected.', 'modern-hotel-booking'),
             'label_already_booked' => __('Sorry, this room was just booked by someone else or is unavailable for these dates.', 'modern-hotel-booking'),
-            /* translators: %d: Maximum number of adults */
+            // translators: %d: Maximum number of adults
             'label_max_adults_error' => __('Error: Maximum adults for this room is %d.', 'modern-hotel-booking'),
             'label_rest_pro_error' => __('REST API access is a Pro feature.', 'modern-hotel-booking'),
             'label_invalid_nonce' => __('Invalid nonce.', 'modern-hotel-booking'),
@@ -589,29 +592,39 @@ class I18n
             'label_paypal_connection_error' => __('Unable to connect to PayPal. Please try again later.', 'modern-hotel-booking'),
             'label_paypal_auth_failed' => __('Failed to authenticate with PayPal. Please check your PayPal credentials.', 'modern-hotel-booking'),
             'label_paypal_order_create_error' => __('Unable to create PayPal order. Please try again later.', 'modern-hotel-booking'),
-            /* translators: %s: Currency code */
+            // translators: %s: Currency code
             'label_paypal_currency_unsupported' => __('Currency %s is not supported by your PayPal account.', 'modern-hotel-booking'),
-            /* translators: %s: Error message */
+            // translators: %s: Error message
             'label_paypal_generic_error' => __('PayPal error: %s', 'modern-hotel-booking'),
             'label_missing_order_id' => __('Missing order ID.', 'modern-hotel-booking'),
             'label_paypal_capture_error' => __('Unable to capture payment. Please try again later.', 'modern-hotel-booking'),
             'label_payment_already_processed' => __('This payment has already been processed.', 'modern-hotel-booking'),
             'label_payment_declined_paypal' => __('The payment was declined by PayPal. Please try a different payment method.', 'modern-hotel-booking'),
+            'label_setup_failed' => __('Payment setup failed.', 'modern-hotel-booking'),
+            'label_payment_already_confirmed' => __('Payment already confirmed. Finalizing your booking...', 'modern-hotel-booking'),
+            'label_finalizing' => __('Finalizing...', 'modern-hotel-booking'),
+            'label_gateway_not_ready' => __('Credit card payment system is not ready. Please refresh the page or choose another method.', 'modern-hotel-booking'),
+            'label_payment_success_form_fail' => __('Payment successful but form submission failed. Please contact support.', 'modern-hotel-booking'),
+            'label_payment_cancelled' => __('Payment cancelled.', 'modern-hotel-booking'),
+            'label_redirecting' => __('Redirecting...', 'modern-hotel-booking'),
+            'label_loading_payment' => __('Loading secure payment form...', 'modern-hotel-booking'),
+            'label_payment_capture_failed' => __('Payment capture failed: ', 'modern-hotel-booking'),
             'label_payment_confirmation' => __('Payment Confirmation', 'modern-hotel-booking'),
             'label_privacy_policy' => __('privacy policy', 'modern-hotel-booking'),
             'label_terms_conditions' => __('Terms & Conditions', 'modern-hotel-booking'),
             'label_payment_info' => __('Payment Information', 'modern-hotel-booking'),
+            
             'msg_pay_on_arrival_email' => __('Payment will be collected upon arrival at the property.', 'modern-hotel-booking'),
             'label_amount_due' => __('Amount Due', 'modern-hotel-booking'),
             'label_payment_date' => __('Payment Date', 'modern-hotel-booking'),
             'label_paypal_order_failed' => __('Failed to create PayPal order.', 'modern-hotel-booking'),
             'label_security_verification_failed' => __('Security verification failed. Please refresh the page and try again.', 'modern-hotel-booking'),
-            /* translators: %s: Environment (Sandbox/Live) */
+            // translators: %s: Environment (Sandbox/Live)
             'label_paypal_client_id_missing' => __('PayPal %s Client ID is not configured.', 'modern-hotel-booking'),
-            /* translators: %s: Environment (Sandbox/Live) */
+            // translators: %s: Environment (Sandbox/Live)
             'label_paypal_secret_missing' => __('PayPal %s Secret is not configured.', 'modern-hotel-booking'),
             'label_stripe_intent_missing' => __('Stripe payment failed: Payment intent missing.', 'modern-hotel-booking'),
-            /* translators: %s: Error message */
+            // translators: %s: Error message
             'label_stripe_generic_error' => __('Stripe API error: %s', 'modern-hotel-booking'),
             'label_paypal_id_missing' => __('PayPal payment failed: Order ID missing.', 'modern-hotel-booking'),
             'label_payment_required' => __('Payment is required.', 'modern-hotel-booking'),
@@ -626,23 +639,24 @@ class I18n
             'label_invalid_customer' => __('Valid customer name and email are required.', 'modern-hotel-booking'),
             'label_invalid_dates' => __('Invalid booking dates.', 'modern-hotel-booking'),
             'label_booking_failed' => __('Failed to create the booking.', 'modern-hotel-booking'),
+            'label_booking_error' => __('An error occurred while processing your booking. Please try again.', 'modern-hotel-booking'),
             'label_permission_denied' => __('Permission denied.', 'modern-hotel-booking'),
-            /* translators: %s: Environment (Sandbox/Live) */
+            // translators: %s: Environment (Sandbox/Live)
             'label_stripe_pk_missing' => __('Stripe %s Publishable Key is not configured.', 'modern-hotel-booking'),
-            /* translators: %s: Environment (Sandbox/Live) */
+            // translators: %s: Environment (Sandbox/Live)
             'label_stripe_sk_missing' => __('Stripe %s Secret Key is not configured.', 'modern-hotel-booking'),
-            /* translators: %1$s: Expected key prefix, %2$s: Environment mode */
+            // translators: %1$s: Expected key prefix, %2$s: Environment mode
             'label_stripe_invalid_pk_format' => __('Invalid publishable key format. Expected key starting with "%1$s" for %2$s mode.', 'modern-hotel-booking'),
             'label_credentials_spaces' => __('Credentials contain extra spaces', 'modern-hotel-booking'),
             'label_mode_mismatch' => __('Using Sandbox credentials in Live mode (or vice versa)', 'modern-hotel-booking'),
             'label_credentials_expired' => __('Credentials have expired or been rotated', 'modern-hotel-booking'),
-            /* translators: %s: Environment (Sandbox/Live) */
+            // translators: %s: Environment (Sandbox/Live)
             'label_creds_valid_env' => __('PayPal %s credentials are valid!', 'modern-hotel-booking'),
-            /* translators: %s: Environment (Sandbox/Live) */
+            // translators: %s: Environment (Sandbox/Live)
             'label_stripe_creds_valid' => __('Stripe %s credentials are valid!', 'modern-hotel-booking'),
-            /* translators: %s: Error message */
+            // translators: %s: Error message
             'label_connection_failed' => __('Connection failed: %s', 'modern-hotel-booking'),
-            /* translators: %s: Error message */
+            // translators: %s: Error message
             'label_auth_failed_env' => __('Authentication failed: %s', 'modern-hotel-booking'),
             'label_common_causes' => __('Common causes:', 'modern-hotel-booking'),
         );

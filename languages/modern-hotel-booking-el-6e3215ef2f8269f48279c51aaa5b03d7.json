@@ -1,0 +1,36 @@
+{
+    "translation-revision-date": "2026-03-24 16:13:04+0000",
+    "generator": "MHBO-I18n-Tool",
+    "source": "assets\/block\/room-calendar\/block.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "el",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "Room Availability Calendar": [
+                "Ημερολόγιο Διαθεσιμότητας Δωματίου"
+            ],
+            "Calendar Settings": [
+                "Ρυθμίσεις Ημερολογίου"
+            ],
+            "Room ID": [
+                "ID Δωματίου"
+            ],
+            "Enter the ID of the room to display the calendar for.": [
+                "Εισάγετε το ID του δωματίου για να εμφανιστεί το ημερολόγιο."
+            ],
+            "Room ID: ": [
+                "ID Δωματίου: "
+            ],
+            "Please select a Room ID in the sidebar.": [
+                "Παρακαλώ επιλέξτε ID δωματίου από την πλευρική στήλη."
+            ],
+            "(Preview only - real calendar shows on frontend)": [
+                "(Μόνο προεπισκόπηση - το πραγματικό ημερολόγιο εμφανίζεται στην ιστοσελίδα)"
+            ]
+        }
+    }
+}

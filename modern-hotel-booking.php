@@ -3,7 +3,7 @@
  * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.2.7.7
+ * Version:           2.2.8.0
  * Requires at least: 6.2
  * Tested up to:      6.9
  * Requires PHP:      7.4
@@ -22,9 +22,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Free version build constant.
-define( 'MHBO_IS_PRO', false );
-
 // PHP version check — must be at least 7.4.
 if (version_compare(PHP_VERSION, '7.4.0', '<')) {
     add_action('admin_notices', function () {
@@ -41,8 +38,8 @@ if (version_compare(PHP_VERSION, '7.4.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.2.7.7');
-
+define('MHBO_VERSION', '2.2.8.0');
+define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('MHBO_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -127,14 +124,16 @@ function mhbo_run(): void
             update_option('mhbo_db_version', MHBO_VERSION);
         }
 
+        // Rule 13: Initialize table versions for caching
+        foreach (['bookings', 'rooms', 'room_types', 'pricing_rules', 'ical_connections', 'settings'] as $table) {
+            if (false === get_option("mhbo_v_{$table}")) {
+                add_option("mhbo_v_{$table}", 1);
+            }
+        }
+
         $plugin = new \MHBO\Core\Plugin();
         $plugin->run();
     } catch (Throwable $e) {
-        if (WP_DEBUG) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('Modern Hotel Booking Exception: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-        }
-
         if (current_user_can('manage_options')) {
             add_action('admin_notices', function () {
                 echo '<div class="notice notice-error">';

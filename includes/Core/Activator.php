@@ -15,8 +15,7 @@ class Activator
 
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
-		// Custom tables are necessary for booking logic and historical data integrity.
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
+		// Rule 13 rationale: Creating room types table for category-level management.
 		$sql_room_types = "CREATE TABLE {$wpdb->prefix}mhbo_room_types (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			name varchar(255) NOT NULL,
@@ -33,7 +32,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_room_types);
 
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
+// Rule 13 rationale: Creating individual rooms table for specific availability tracking.
 		$sql_rooms = "CREATE TABLE {$wpdb->prefix}mhbo_rooms (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			type_id mediumint(9) NOT NULL,
@@ -45,7 +44,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_rooms);
 
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin install
+// Rule 13 rationale: Primary bookings table. Essential for multi-channel revenue management.
 		$sql_bookings = "CREATE TABLE {$wpdb->prefix}mhbo_bookings (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
@@ -61,8 +60,13 @@ class Activator
 			admin_notes text DEFAULT NULL,
 			booking_extras text DEFAULT NULL,
 			discount_amount decimal(10,2) DEFAULT '0.00',
-			deposit_amount decimal(10,2) DEFAULT '0.00',
+			deposit_amount decimal(10,2) DEFAULT NULL,
 			deposit_received tinyint(1) DEFAULT 0,
+			payment_type varchar(20) DEFAULT 'full',
+			remaining_balance decimal(10,2) DEFAULT NULL,
+			balance_status varchar(20) DEFAULT 'collected',
+			refund_deadline_date date DEFAULT NULL,
+			deposit_is_non_refundable tinyint(1) DEFAULT 0,
 			payment_method varchar(50) DEFAULT 'onsite',
 			payment_received tinyint(1) DEFAULT 0,
 			payment_status varchar(20) DEFAULT 'pending',
@@ -71,6 +75,7 @@ class Activator
 			payment_date datetime DEFAULT NULL,
 			payment_error text DEFAULT NULL,
 			payment_amount decimal(10,2) DEFAULT NULL,
+			email_sent tinyint(1) DEFAULT 0,
 			source varchar(50) DEFAULT 'direct',
 			guests tinyint(4) DEFAULT 1,
 			children int(11) DEFAULT 0,
@@ -104,7 +109,7 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_bookings);
 
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin tables
+// Rule 13 rationale: Multi-platform iCal sync connections table.
 		$sql_ical_connections = "CREATE TABLE {$wpdb->prefix}mhbo_ical_connections (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			room_id mediumint(9) NOT NULL,
@@ -170,6 +175,13 @@ class Activator
 		add_option('mhbo_paypal_mode', 'sandbox');
 		add_option('mhbo_ical_token', wp_generate_password(32, false));
 		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
+
+		// Rule 13: Initialize versions for caching
+		foreach (['bookings', 'rooms', 'room_types', 'pricing_rules', 'ical_connections', 'settings'] as $table) {
+			if (false === get_option("mhbo_v_{$table}")) {
+				add_option("mhbo_v_{$table}", 1);
+			}
+		}
 
 		// Tax System Options
 		add_option('mhbo_tax_mode', 'disabled');

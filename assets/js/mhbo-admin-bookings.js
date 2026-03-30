@@ -284,6 +284,40 @@
     // Initialize jQuery-dependent features
     $(document).ready(function () {
         initExtrasManagement();
+
+        // Mark Balance Collected (Pro)
+        $(document).on('click', '.mhbo-mark-collected', function (e) {
+            e.preventDefault();
+            const $btn = $(this);
+            const id = $btn.data('id');
+            const nonce = $btn.data('nonce');
+
+            if (!confirm('Are you sure you want to mark this balance as collected?')) return;
+
+            $btn.prop('disabled', true).text('Updating...');
+
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'mhbo_mark_balance_collected',
+                    booking_id: id,
+                    _wpnonce: nonce
+                },
+                success: function (response) {
+                    if (response.success) {
+                        location.reload(); // Simplest way to update all UI bits
+                    } else {
+                        alert(response.data || 'Error updating balance.');
+                        $btn.prop('disabled', false).text('Mark Balance as Collected');
+                    }
+                },
+                error: function () {
+                    alert('Server error. Please try again.');
+                    $btn.prop('disabled', false).text('Mark Balance as Collected');
+                }
+            });
+        });
     });
 
     /**

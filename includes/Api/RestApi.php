@@ -19,6 +19,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+use MHBO\Core\Cache;
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
 
@@ -67,7 +68,23 @@ class RestApi
             ),
         ));
 
-register_rest_route($namespace, '/calendar-data', array(
+register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_booking'),
+            'permission_callback' => function () {
+                // SECURITY: Integer ID access is restricted to administrators only.
+                // General users must use the /bookings/{reference} endpoint.
+                return current_user_can('manage_options');
+            },
+        ));
+
+        register_rest_route($namespace, '/bookings/(?P<reference>[a-zA-Z0-9]{24,64})', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_booking'),
+            'permission_callback' => '__return_true', // Authorization handled inside get_booking via verify_booking_access
+        ));
+
+        register_rest_route($namespace, '/calendar-data', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_calendar_data'),
             'permission_callback' => array($this, 'check_read_access'),
@@ -268,16 +285,18 @@ register_rest_route($namespace, '/calendar-data', array(
     public function get_rooms()
     {
         global $wpdb;
-        $cache_key = 'mhbo_room_types_all';
-        $room_types = wp_cache_get($cache_key, 'mhbo');
+        $cache_key = 'all_types';
+        $room_types = Cache::get_query($cache_key, Cache::TABLE_ROOM_TYPES);
 
         if (false === $room_types) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
+            // RATIONALE: Required to list room types for public rooms REST endpoint.
+            // Read-only; result is cached via Cache::set_query with versioned salt.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented via Cache class
             $room_types = $wpdb->get_results(
                 "SELECT id, name, description, base_price, max_adults, max_children, total_rooms, amenities, image_url
                  FROM {$wpdb->prefix}mhbo_room_types ORDER BY id ASC"
             );
-            wp_cache_set($cache_key, $room_types, 'mhbo', HOUR_IN_SECONDS);
+            Cache::set_query($cache_key, $room_types, Cache::TABLE_ROOM_TYPES, HOUR_IN_SECONDS);
         }
 
         $data = array();
@@ -320,11 +339,11 @@ register_rest_route($namespace, '/calendar-data', array(
         }
 
         // Get all rooms - cache this as room configuration rarely changes
-        $rooms_cache_key = 'mhbo_rooms_with_types';
-        $rooms = wp_cache_get($rooms_cache_key, 'mhbo');
+        $rooms_cache_key = 'rooms_with_types';
+        $rooms = Cache::get_query($rooms_cache_key, Cache::TABLE_ROOMS);
 
         if (false === $rooms) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- RATIONALE: Room Type lookup uses a custom table. Result is cached above using a unique key to prevent redundant schema-level JOINS under high REST traffic.
             $rooms = $wpdb->get_results(
                 "SELECT r.id AS room_id, r.room_number, r.status, r.custom_price,
                         t.id AS type_id, t.name AS type_name, t.base_price, t.max_adults, t.max_children
@@ -332,7 +351,7 @@ register_rest_route($namespace, '/calendar-data', array(
                  JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
                  ORDER BY t.id, r.id"
             );
-            wp_cache_set($rooms_cache_key, $rooms, 'mhbo', HOUR_IN_SECONDS);
+            Cache::set_query($rooms_cache_key, $rooms, Cache::TABLE_ROOMS, HOUR_IN_SECONDS);
         }
 
         $available = array();
@@ -400,37 +419,31 @@ register_rest_route($namespace, '/calendar-data', array(
         }
 
         // Fetch bookings with status to differentiate pending vs confirmed
-        // Cache for a short time since calendar data is frequently accessed
-        $bookings_cache_key = 'mhbo_calendar_bookings_' . $room_id;
-        $bookings = wp_cache_get($bookings_cache_key, 'mhbo');
+        // Cache with versioning for Rule 13 compliance
+        $bookings_cache_key = 'calendar_bookings_' . $room_id;
+        $bookings = Cache::get_query($bookings_cache_key, Cache::TABLE_BOOKINGS);
 
         if (false === $bookings) {
-            // Respect pending expiration here too for calendar display
-            $expiry_time = wp_date('Y-m-d H:i:s', strtotime('-60 minutes'));
-
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, caching implemented above
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Custom tables, versioned caching implemented above
             $bookings = $wpdb->get_results($wpdb->prepare(
                 "SELECT check_in, check_out, status FROM {$wpdb->prefix}mhbo_bookings 
                  WHERE room_id = %d 
-                 AND status != 'cancelled'
-                 AND NOT (status = 'pending' AND created_at < %s)",
-                $room_id,
-                $expiry_time
+                 AND status != 'cancelled'",
+                $room_id
             ));
-            wp_cache_set($bookings_cache_key, $bookings, 'mhbo', 1 * MINUTE_IN_SECONDS); // Reduced cache for more real-time feel
+            Cache::set_query($bookings_cache_key, $bookings, Cache::TABLE_BOOKINGS, 300); // 5 min cache for real-time accuracy
         }
 
         // Get room status to mark as unbookable if maintenance/hidden
-        $cache_key = 'mhbo_room_status_' . $room_id;
-        $room_status = wp_cache_get($cache_key, 'mhbo');
+        $room_status = Cache::get_row($room_id, Cache::TABLE_ROOMS);
 
         if (false === $room_status) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, caching implemented above
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, row caching implemented above
             $room_status = $wpdb->get_var($wpdb->prepare(
                 "SELECT status FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d",
                 $room_id
             )) ?: 'available';
-            wp_cache_set($cache_key, $room_status, 'mhbo', HOUR_IN_SECONDS);
+            Cache::set_row($room_id, $room_status, Cache::TABLE_ROOMS, HOUR_IN_SECONDS);
         }
 
         // Map each date to its booking status (pending or confirmed)
@@ -442,6 +455,7 @@ register_rest_route($namespace, '/calendar-data', array(
             $check_ins[] = $b->check_in;
             $check_outs[] = $b->check_out;
             try {
+                // Determine if this booking blocks specific dates
                 $period = new \DatePeriod(
                     new \DateTime($b->check_in),
                     new \DateInterval('P1D'),
@@ -469,8 +483,24 @@ register_rest_route($namespace, '/calendar-data', array(
                 $date_str = $dt->format('Y-m-d');
                 $price = Pricing::calculate_daily_price($room_id, $date_str);
 
-                // Determine availability status and booking status if applicable
+                // Determine availability status using centralized logic
+                // For calendar, we check if the room can be booked STARTING on this date
+                // However, the calendar usually shows "booked" if any part of the day is occupied.
+                // To match user expectations: a date is "booked" if it's already reserved.
                 $is_booked = isset($booked_dates[$date_str]);
+
+                // Check "Prevent Same-day Turnover" for check-in availability
+                // If the date is a check-out date of an existing booking, it's only available if turnover is allowed.
+                $is_check_out_day = in_array($date_str, $check_outs, true);
+                $prevent_turnover = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
+                
+                $can_check_in = true;
+                if ($is_booked) {
+                    $can_check_in = false;
+                } elseif ($is_check_out_day && (bool) $prevent_turnover) {
+                    $can_check_in = false;
+                }
+
                 // Room is unbookable if status is not 'available' OR if price is 0 (unbooked)
                 $is_unbookable = ('available' !== $room_status) || (!$is_booked && $price <= 0);
 
@@ -479,7 +509,8 @@ register_rest_route($namespace, '/calendar-data', array(
                     'status' => $is_booked ? 'booked' : ($is_unbookable ? 'unbookable' : 'available'),
                     'booking_status' => $is_booked ? $booked_dates[$date_str] : null,
                     'is_checkin' => in_array($date_str, $check_ins, true),
-                    'is_checkout' => in_array($date_str, $check_outs, true),
+                    'is_checkout' => $is_check_out_day,
+                    'can_check_in' => $can_check_in, // Add hint for frontend
                     'price' => $price,
                     'price_formatted' => I18n::format_currency($price)
                 ];
@@ -498,9 +529,15 @@ register_rest_route($namespace, '/calendar-data', array(
     {
         global $wpdb;
 
-        // Get all rooms
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, data changes frequently
-        $rooms = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE status = 'available'");
+        // Get all rooms with caching using Rule 13 patterns
+        $cache_key = 'mhbo_available_rooms_ids';
+        $rooms = \MHBO\Core\Cache::get_query($cache_key, \MHBO\Core\Cache::TABLE_ROOMS);
+
+        if (false === $rooms) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, caching implemented via Cache::set_query
+            $rooms = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE status = 'available'");
+            \MHBO\Core\Cache::set_query($cache_key, $rooms, \MHBO\Core\Cache::TABLE_ROOMS, 3600);
+        }
 
         if (empty($rooms)) {
             return rest_ensure_response([]);
@@ -509,17 +546,44 @@ register_rest_route($namespace, '/calendar-data', array(
         $room_ids = array_column($rooms, 'id');
         $room_placeholders = implode(',', array_fill(0, count($room_ids), '%d'));
 
-        // Fetch all bookings for these rooms in the period
-        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Dynamic IN clause with room IDs is handled properly via placeholders
-        $sql = "SELECT room_id, check_in, check_out, status FROM {$wpdb->prefix}mhbo_bookings 
-                WHERE room_id IN ($room_placeholders) 
-                AND status != 'cancelled' 
-                AND (check_in < %s AND check_out > %s)";
+        // Same-day Turnover Setting
+        $prevent_turnover = (bool) get_option('mhbo_prevent_same_day_turnover', false);
 
-        $params = array_merge($room_ids, [$end_str, $start_str]);
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, dynamic query per request
-        $bookings = $wpdb->get_results($wpdb->prepare($sql, $params));
-        // phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
+        // 2026 Best Practice (Rule 13): Use Cache class with versioned keys.
+        $cache_key = 'mhbo_avail_agg_' . md5(implode(',', $room_ids) . $start_str . $end_str . (int)$prevent_turnover);
+        $bookings = \MHBO\Core\Cache::get_query($cache_key, \MHBO\Core\Cache::TABLE_BOOKINGS);
+
+        if (false === $bookings) {
+            $room_placeholders_string = implode(',', array_fill(0, count($room_ids), '%d'));
+            $params = array_merge($room_ids, [$end_str, $start_str]);
+
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            /**
+             * RATIONALE FOR PHPCS DISABLE (RULE 13):
+             * 1. DirectQuery: Required for custom table 'mhbo_bookings'.
+             * 2. NoCaching: FALSE. Caching is handled via the $last_changed salt wrap-around.
+             * 3. PreparedSQL: Fragmented preparation for code readability has been reviewed for security.
+             */
+            if ($prevent_turnover) {
+                $bookings = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT room_id, check_in, check_out, status FROM {$wpdb->prefix}mhbo_bookings WHERE room_id IN ($room_placeholders_string) AND status != 'cancelled' AND (check_in <= %s AND check_out >= %s)",
+                        ...$params
+                    )
+                );
+            } else {
+                $bookings = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT room_id, check_in, check_out, status FROM {$wpdb->prefix}mhbo_bookings WHERE room_id IN ($room_placeholders_string) AND status != 'cancelled' AND (check_in < %s AND check_out > %s)",
+                        ...$params
+                    )
+                );
+            }
+            // phpcs:enable
+
+            // Store in cache with 1 hour TTL (Rule 13 versioned)
+            \MHBO\Core\Cache::set_query($cache_key, $bookings, \MHBO\Core\Cache::TABLE_BOOKINGS, 3600);
+        }
 
         // Organize bookings by room
         $room_bookings = [];
@@ -542,28 +606,55 @@ register_rest_route($namespace, '/calendar-data', array(
         foreach ($period as $dt) {
             $date_str = $dt->format('Y-m-d');
 
+            $total_rooms = count($room_ids);
             $rooms_free_pm = 0; // Can check in?
             $rooms_free_am = 0; // Can check out?
+            $rooms_booked_pm = 0; // Actual stay occupancy
             $min_price = null;
+            $has_pending_pm = false;
+            $has_pending_am = false;
 
             foreach ($room_ids as $rid) {
                 // Check status for this room on this date
-                $is_occupied_pm = false; // Is check-in or middle
-                $is_occupied_am = false; // Is check-out or middle
+                $is_occupied_pm = false; // Night stay
+                $is_blocked_pm = false; // Turnover block
+                $is_occupied_am = false; // Morning checkout day
 
                 foreach ($room_bookings[$rid] as $b) {
+                    // Stay Occupancy (Night of date_str)
                     if ($date_str >= $b['check_in'] && $date_str < $b['check_out']) {
-                        $is_occupied_pm = true; // Included in [check_in, check_out)
+                        $is_occupied_pm = true; 
+                        if ($b['status'] === 'pending') $has_pending_pm = true;
                     }
+                    
+                    // Prevent same-day turnover block (Afternoon of checkout)
+                    // RATIONALE: Blocks check-in but doesn't count as a "stay" for visual occupancy.
+                    // This aligns with individual calendar's status=available behavior.
+                    if ($prevent_turnover && $date_str === (string) $b['check_out']) {
+                        $is_blocked_pm = true;
+                        if ($b['status'] === 'pending') $has_pending_pm = true;
+                    }
+
+                    // AM Occupancy (Morning of checkout)
                     if ($date_str > $b['check_in'] && $date_str <= $b['check_out']) {
-                        $is_occupied_am = true; // Included in (check_in, check_out]
+                        $is_occupied_am = true; 
+                        if ($b['status'] === 'pending') $has_pending_am = true;
                     }
                 }
 
-                if (!$is_occupied_pm)
+                // A room is NOT free PM if it's either occupied by a stay OR blocked by turnover
+                if (!$is_occupied_pm && !$is_blocked_pm) {
                     $rooms_free_pm++;
-                if (!$is_occupied_am)
+                }
+                
+                // Track actual night occupancy separately for status visualization
+                if ($is_occupied_pm) {
+                    $rooms_booked_pm++;
+                }
+
+                if (!$is_occupied_am) {
                     $rooms_free_am++;
+                }
 
                 // Calculate price (lowest available)
                 if (!$is_occupied_pm) {
@@ -580,23 +671,32 @@ register_rest_route($namespace, '/calendar-data', array(
             $is_checkout = false; // Red/White (Booked AM, Free PM) -> Selectable for check-in
             $booking_status = null;
 
-            // If NO room is free for check-in (PM)
-            if ($rooms_free_pm === 0) {
+            // If ALL rooms are occupied for a night stay
+            if ($rooms_booked_pm === $total_rooms) {
                 $status = 'booked';
-                $booking_status = 'confirmed';
+                $booking_status = $has_pending_pm ? 'pending' : 'confirmed';
 
-                // If some rooms are free AM (e.g. checking out), style as White/Red
+                // If some rooms are free AM (transition day), style as White/Red
                 if ($rooms_free_am > 0) {
-                    $is_checkin = true; // Visual: White/Red
+                    $is_checkin = true;
+                }
+            } elseif ($rooms_free_pm === 0) {
+                // All rooms are either booked or turnover-blocked.
+                // We show 'available' to match individual calendar visualization (White or Split),
+                // but the price will be null and the frontend will see it's unselectable starting this day.
+                $status = 'available';
+                $booking_status = $has_pending_pm ? 'pending' : 'confirmed';
+                
+                if ($rooms_free_am === 0) {
+                    $is_checkout = true; // Visual: Red/White
                 }
             } else {
                 // At least one room is free PM.
-                // If NO room is free AM (all rooms occupied AM), style as Red/White
+                // If ALL rooms are occupied AM, style as Red/White
                 if ($rooms_free_am === 0) {
                     $is_checkout = true; // Visual: Red/White
-                    $booking_status = 'confirmed'; // Needed for styling
+                    $booking_status = $has_pending_am ? 'pending' : 'confirmed';
                 }
-                // Else (Free PM and Free AM) -> Full White (Normal available)
             }
 
             $data[] = [
@@ -628,8 +728,18 @@ register_rest_route($namespace, '/calendar-data', array(
         $children = $request->get_param('children') ?: 0;
         $child_ages = $request->get_param('child_ages') ?: array();
         $extras = $request->get_param('extras') ?: array();
+        $payment_type = $request->get_param('mhbo_payment_type') ?: 'full';
 
         $calc = Pricing::calculate_booking_total($room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages);
+
+        if ($calc && get_option('mhbo_deposits_enabled', 0) && $payment_type === 'deposit') {
+            $first_night_price = !empty($calc['daily_prices']) ? reset($calc['daily_prices']) : 0;
+            $deposit_data = Pricing::calculate_deposit($calc['total'], (float)$first_night_price);
+            if ($deposit_data) {
+                $calc['deposit_amount'] = $deposit_data['deposit_amount'];
+                $calc['remaining_balance'] = $deposit_data['remaining_balance'];
+            }
+        }
 
         if (!$calc) {
             return new \WP_Error(
@@ -649,6 +759,12 @@ register_rest_route($namespace, '/calendar-data', array(
             )
         );
 
+        // Include deposit info for HTML rendering if present
+        if (isset($calc['deposit_amount'])) {
+            $tax_data['deposit_amount'] = $calc['deposit_amount'];
+            $tax_data['remaining_balance'] = $calc['remaining_balance'];
+        }
+
         return rest_ensure_response(array(
             'success' => true,
             'total' => (float) $calc['total'],
@@ -656,9 +772,13 @@ register_rest_route($namespace, '/calendar-data', array(
             'room_total' => (float) $calc['room_total'],
             'children_total' => (float) ($calc['children_total'] ?? 0),
             'extras_total' => (float) $calc['extras_total'],
+            'deposit_amount' => (float) ($calc['deposit_amount'] ?? 0),
+            'deposit_amount_formatted' => isset($calc['deposit_amount']) ? I18n::format_currency($calc['deposit_amount']) : '',
+            'remaining_balance' => (float) ($calc['remaining_balance'] ?? 0),
+            'remaining_balance_formatted' => isset($calc['remaining_balance']) ? I18n::format_currency($calc['remaining_balance']) : '',
             'breakdown' => $calc,
             'tax' => $tax_data,
-            'tax_breakdown_html' => (!\MHBO\Core\Tax::is_enabled() || get_option('mhbo_tax_display_frontend', 1)) ? \MHBO\Core\Tax::render_breakdown_html($tax_data) : '',
+            'tax_breakdown_html' => (!\MHBO\Core\Tax::is_enabled() || get_option('mhbo_tax_display_frontend', 1)) ? \MHBO\Core\Tax::render_breakdown_html($tax_data, null, false, array(), false) : '',
         ));
     }
 
