@@ -14,6 +14,12 @@ if (!defined('ABSPATH')) {
  */
 class Cache
 {
+    /**
+     * Runtime static cache for single-request performance.
+     * @var array<string, mixed>
+     */
+    private static array $runtime_cache = [];
+
 	/**
 	 * Cache group for all MHBO data.
 	 */
@@ -42,11 +48,18 @@ class Cache
 	 */
 	public static function get_version(string $table): int
 	{
+        // 2026 BP: Request-level static caching to avoid redundant get_option calls.
+        if (isset(self::$runtime_cache['v_' . $table])) {
+            return (int) self::$runtime_cache['v_' . $table];
+        }
+
 		$version = (int) get_option("mhbo_v_{$table}", 1);
 		if ($version < 1) {
 			$version = 1;
 			update_option("mhbo_v_{$table}", 1);
 		}
+
+        self::$runtime_cache['v_' . $table] = $version;
 		return $version;
 	}
 
@@ -61,8 +74,12 @@ class Cache
 		$version = self::get_version($table) + 1;
 		update_option("mhbo_v_{$table}", $version);
 		
-		// Optional: Clear non-persistent local cache for this process
+		// Clear non-persistent local and runtime cache for this process
 		wp_cache_delete("mhbo_v_{$table}", self::GROUP);
+        unset(self::$runtime_cache['v_' . $table]);
+        
+        // Ensure all versioned transients are effectively "cleared" by the new version number
+        // for any process checking them subsequently.
 	}
 
 	/**
@@ -104,9 +121,9 @@ class Cache
 	 *
 	 * @param string $key Unique query key (e.g. sql hash).
 	 * @param string $table Table to track version against.
-	 * @return mixed|false Cached data or false on miss.
+	 * @return mixed Cached data or false on miss.
 	 */
-	public static function get_query(string $key, string $table)
+	public static function get_query(string $key, string $table): mixed
 	{
 		$version = self::get_version($table);
 		return wp_cache_get("q_{$key}_v{$version}", self::GROUP);
@@ -121,7 +138,7 @@ class Cache
 	 * @param int $expire Expiration in seconds (default 1 hour).
 	 * @return bool True on success, false on failure.
 	 */
-	public static function set_query(string $key, $data, string $table, int $expire = 3600): bool
+	public static function set_query(string $key, mixed $data, string $table, int $expire = 3600): bool
 	{
 		$version = self::get_version($table);
 		return wp_cache_set("q_{$key}_v{$version}", $data, self::GROUP, $expire);
@@ -132,9 +149,9 @@ class Cache
 	 *
 	 * @param string|int $id Unique identifier for the row.
 	 * @param string $table Table to track version against.
-	 * @return mixed|false Cached data or false on miss.
+	 * @return mixed Cached data or false on miss.
 	 */
-	public static function get_row($id, string $table)
+	public static function get_row(string|int $id, string $table): mixed
 	{
 		$version = self::get_version($table);
 		return wp_cache_get("r_{$table}_{$id}_v{$version}", self::GROUP);
@@ -149,11 +166,40 @@ class Cache
 	 * @param int $expire Expiration in seconds (default 1 hour).
 	 * @return bool True on success, false on failure.
 	 */
-	public static function set_row($id, $data, string $table, int $expire = 3600): bool
+	public static function set_row(string|int $id, mixed $data, string $table, int $expire = 3600): bool
 	{
 		$version = self::get_version($table);
 		return wp_cache_set("r_{$table}_{$id}_v{$version}", $data, self::GROUP, $expire);
 	}
+
+    /**
+     * Get a versioned transient. 
+     * RATIONALE: Persistent caching even without object cache (Redis/Memcached).
+     *
+     * @param string $key   Unique cache key.
+     * @param string $table Controlling table version.
+     * @return mixed Data or false.
+     */
+    public static function get_transient_versioned(string $key, string $table): mixed
+    {
+        $version = self::get_version($table);
+        return get_transient("mhbo_{$key}_v{$version}");
+    }
+
+    /**
+     * Set a versioned transient.
+     *
+     * @param string $key    Unique cache key.
+     * @param mixed  $data   Value to cache.
+     * @param string $table  Controlling table version.
+     * @param int    $expire Expiration (default 12 hours for persistent cache).
+     * @return bool
+     */
+    public static function set_transient_versioned(string $key, mixed $data, string $table, int $expire = 43200): bool
+    {
+        $version = self::get_version($table);
+        return set_transient("mhbo_{$key}_v{$version}", $data, $expire);
+    }
 
 	/**
 	 * Invalidate a specific row cache without bumping the whole table.
@@ -163,7 +209,7 @@ class Cache
 	 * NOTE: In Rule 13 implementation, we prefer bumping the entire table 
 	 * version to ensure all dependent complex queries (like availability) are cleared.
 	 */
-	public static function delete_row($id, string $table): void
+	public static function delete_row(string|int $id, string $table): void
 	{
 		$version = self::get_version($table);
 		wp_cache_delete("r_{$table}_{$id}_v{$version}", self::GROUP);

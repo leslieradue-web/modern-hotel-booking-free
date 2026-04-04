@@ -6,376 +6,553 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Class Pricing
+ * Handles pricing calculations, seasonal rules, and caching.
+ */
 class Pricing
 {
     /**
-     * Centralized availability check with room status and pending expiration.
+     * Legacy float-based price getter. Kept for backward-compatibility only.
+     * New code must use calculate_booking_money().
+     *
+     * NOTE: $children and $child_ages are intentionally unused in the Free version
+     * (children pricing is a Pro feature). They exist only to preserve the public API.
      *
      * @param int    $room_id   Room ID.
-     * @param string $check_in   Check-in date (Y-m-d).
-     * @param string $check_out  Check-out date (Y-m-d).
-     * @param int    $exclude_id Optional booking ID to exclude (for editing).
-     * @return bool|string True if available, or error label slug if not.
-     */
-    public static function is_room_available($room_id, $check_in, $check_out, $exclude_id = 0)
-    {
-        global $wpdb;
-
-        // 1. Check Room Global Status (Cached with versioning)
-        // Rule 13 rationale: Direct status check is cached using versioned row access
-        // to ensure instant global updates when room status changes.
-        $room_status = Cache::get_row($room_id, Cache::TABLE_ROOMS);
-
-        if (false === $room_status) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- 2026 BP: Row-level status check for high-concurrency availability engine. Value is cached with table-versioning via MHBO\Core\Cache.
-            $room_status = $wpdb->get_var($wpdb->prepare(
-                "SELECT status FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d",
-                $room_id
-            )) ?: 'available';
-            Cache::set_row($room_id, $room_status, Cache::TABLE_ROOMS, 86400); // 24h as it's versioned
-        }
-
-        if (!$room_status || 'available' !== $room_status) {
-            return 'label_room_unavailable';
-        }
-
-        // 2. Check for Overlapping Bookings
-        // NOTE: Availability is NEVER cached to prevent race conditions and overbooking.
-        // We only cache the room's global status above.
-
-        // Industry-standard overlap check (matches Airbnb, Booking.com, all major PMS):
-        // Uses strict inequality so checkout day is always available for new check-ins.
-        // This is correct because checkout time (e.g. 11:00) precedes check-in time (e.g. 14:00).
-        // Formula: existing.check_in < new.check_out AND existing.check_out > new.check_in
-
-        // Same-day Turnover Setting:
-        // Checked (1) = PREVENT same-day overlap (Gap day required).
-        // Unchecked (0) = ALLOW same-day turnover (Industry Standard).
-        $prevent_same_day = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
-
-        if ($prevent_same_day) {
-            // Inclusive bounds: prevents same-day overlap entirely (Gap day required)
-            if ($exclude_id > 0) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for prevent-same-day turnover. Bypasses persistent cache to ensure zero-overbooking.
-                $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in <= %s AND check_out >= %s) AND id != %d",
-                    $room_id, $check_out, $check_in, $exclude_id
-                ));
-            } else {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for prevent-same-day turnover. Bypasses persistent cache to ensure zero-overbooking.
-                $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in <= %s AND check_out >= %s)",
-                    $room_id, $check_out, $check_in
-                ));
-            }
-        } else {
-            // Exclusive bounds: allows existing check_out to equal new check_in (Industry Standard)
-            if ($exclude_id > 0) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for standard turnover (same-day). Bypasses persistent cache to ensure zero-overbooking.
-                $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in < %s AND check_out > %s) AND id != %d",
-                    $room_id, $check_out, $check_in, $exclude_id
-                ));
-            } else {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Real-time conflict check for standard turnover (same-day). Bypasses persistent cache to ensure zero-overbooking.
-                $conflict = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (check_in < %s AND check_out > %s)",
-                    $room_id, $check_out, $check_in
-                ));
-            }
-        }
-
-        return ((int) $conflict > 0) ? 'label_already_booked' : true;
-    }
-
-    /**
-     * Get the SQL condition for room availability based on turnover settings.
-     * 
-     * @param string $check_in_placeholder  SQL placeholder for check-in.
-     * @param string $check_out_placeholder SQL placeholder for check-out.
-     * @param bool   $prevent_same_day     Whether to prevent same-day turnover.
-     * @return string The SQL condition fragment.
-     */
-    public static function get_overlap_sql_condition(string $check_in_placeholder, string $check_out_placeholder, bool $prevent_same_day = false): string
-    {
-        if ($prevent_same_day) {
-            // Inclusive bounds: prevents same-day overlap entirely (Gap day required)
-            return "(check_in <= {$check_in_placeholder} AND check_out >= {$check_out_placeholder})";
-        }
-
-        // Exclusive bounds: allows existing check_out to equal new check_in (Industry Standard)
-        return "(check_in < {$check_in_placeholder} AND check_out > {$check_out_placeholder})";
-    }
-
-    /**
-     * Find the first available room of a specific type for a date range.
+     * @param string $check_in  Check-in date (YYYY-MM-DD).
+     * @param string $check_out Check-out date (YYYY-MM-DD).
+     * @param int    $adults    Number of adults.
+     * @param int    $children  Number of children (Pro — unused in Free).
+     * @param int[]  $child_ages Array of child ages (Pro — unused in Free).
+     * @return array{total: float, breakdown: array<string, float>, subtotal: float, tax_total: float, is_pro: bool}
      *
-     * @param int    $type_id   Room Type ID.
-     * @param string $check_in   Check-in date (Y-m-d).
-     * @param string $check_out  Check-out date (Y-m-d).
-     * @return int|false Room ID if found, false otherwise.
+     * @deprecated 2.1.0 Use calculate_booking_money() for all new code.
      */
-    public static function find_available_room($type_id, $check_in, $check_out, $guests = 1)
+    public static function get_booking_price(int $room_id, string $check_in, string $check_out, int $adults = 2, int $children = 0, array $child_ages = []): array // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
     {
-        global $wpdb;
-        $type_id = absint($type_id);
-        $guests  = absint($guests);
-
-        if (0 === $type_id) {
-            return false;
+        $days = (int) round((strtotime($check_out) - strtotime($check_in)) / 86400);
+        if ($days <= 0) {
+            return ['total' => 0.0, 'breakdown' => [], 'subtotal' => 0.0, 'tax_total' => 0.0, 'is_pro' => false];
         }
 
-        // Get all rooms of this type
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $rooms = $wpdb->get_col($wpdb->prepare(
-            "SELECT r.id FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.type_id = %d AND r.status = 'available' ORDER BY r.id ASC",
-            $type_id
-        ));
-
-        if (empty($rooms)) {
-            return false;
-        }
-
-        foreach ($rooms as $room_id) {
-            if (true === self::is_room_available($room_id, $check_in, $check_out)) {
-                return (int) $room_id;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Calculate the price for a specific room on a specific date.
-     *
-     * @param int    $room_id Room ID.
-     * @param string $date    Date in Y-m-d format.
-     * @return float Calculated price.
-     */
-    public static function calculate_daily_price($room_id, $date)
-    {
-        global $wpdb;
-
-        // Validate inputs
-        $room_id = absint($room_id);
-        if (0 === $room_id) {
-            return 0.00;
-        }
-
-        // Get room type data from database with versioned caching
-        // Rule 13 rationale: Room pricing data is versioned to allow instant
-        // global updates when base prices or types are modified.
-        $room_cache_key = 'room_data_' . $room_id;
-        $room_data = Cache::get_query($room_cache_key, Cache::TABLE_ROOMS);
-
-        if (false === $room_data) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
-            $room_data = $wpdb->get_row($wpdb->prepare(
-                "SELECT r.custom_price, t.base_price, r.type_id
-                 FROM {$wpdb->prefix}mhbo_rooms r 
-                 JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id 
-                 WHERE r.id = %d",
-                $room_id
-            ));
-            Cache::set_query($room_cache_key, $room_data, Cache::TABLE_ROOMS, 86400);
-        }
-
-        if (!$room_data || !isset($room_data->base_price)) {
-            return 0.00;
-        }
-
-        // Prefer room-specific custom price, fallback to type base price
-        $base_price = (float) (0 < $room_data->custom_price ? $room_data->custom_price : $room_data->base_price);
-
-        // Get pricing rules from database with versioned caching
-        // Rule 13 rationale: Pricing rules are mission-critical and must be
-        // invalidated site-wide the moment settings are updated.
-        $rule_cache_key = 'pricing_rule_' . ($room_data->type_id ?? 0) . '_' . $date;
-        $rule = Cache::get_query($rule_cache_key, Cache::TABLE_PRICING_RULES);
-
-        if (false === $rule) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $rule = $wpdb->get_row($wpdb->prepare(
-                "SELECT amount, operation 
-                 FROM {$wpdb->prefix}mhbo_pricing_rules 
-                 WHERE (type_id = %d OR type_id = 0)
-                 AND %s BETWEEN start_date AND end_date 
-                 ORDER BY type_id DESC, priority DESC LIMIT 1",
-                $room_data->type_id ?? 0,
-                $date
-            ));
-            Cache::set_query($rule_cache_key, $rule, Cache::TABLE_PRICING_RULES, 86400);
-        }
-
-        if ($rule && isset($rule->operation) && isset($rule->amount)) {
-            if ('percent' === $rule->operation) {
-                $base_price += ($base_price * ((float) $rule->amount / 100));
-            } else {
-                $base_price += (float) $rule->amount;
-            }
-        }
-
-        /**
-         * Filter the calculated stay price for seasonal/advanced pricing rules.
-         *
-         * @param float  $base_price The calculated base price.
-         * @param int    $room_id    The room ID.
-         * @param string $date       The date string (Y-m-d).
-         */
-        $base_price = apply_filters('mhbo_calculate_stay_price', $base_price, $room_id, $date);
-
-return (float) max(0, $base_price);
-    }
-
-    /**
-     * Calculate full booking total including extras.
-     * 
-     * @param int    $room_id  Room ID.
-     * @param string $check_in Check-in date (Y-m-d).
-     * @param string $check_out Check-out date (Y-m-d).
-     * @param int    $guests   Number of guests (Adults).
-     * @param array  $extras   Extras array (id => value).
-     * @param int    $children Number of children.
-     * @param array  $child_ages Array of child ages.
-     * @return array|false     Array with totals and breakdown, or false on error.
-     */
-    public static function calculate_booking_total($room_id, $check_in, $check_out, $guests = 1, $extras = [], $children = 0, $child_ages = [])
-    {
-        global $wpdb;
-
-        // Validate room exists and get policy - with versioned caching
-        // Rule 13 rationale: Direct policy lookup is cached via prices_version
-        // to ensure immediate consistency for checkout totals.
-        $version = Cache::get_prices_version();
-        $room_cache_key = 'mhbo_room_policy_' . $room_id . '_' . $version;
-        $room = wp_cache_get($room_cache_key, 'mhbo');
-
-        if (false === $room) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $room = $wpdb->get_row($wpdb->prepare("SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.id = %d", $room_id));
-            wp_cache_set($room_cache_key, $room, 'mhbo', 86400);
-        }
-
+        $room = self::get_room_pricing_data($room_id);
         if (!$room) {
-            return false;
+            return ['total' => 0.0, 'breakdown' => [], 'subtotal' => 0.0, 'tax_total' => 0.0, 'is_pro' => false];
         }
 
-        // Validate dates
-        try {
-            $start_date = new \DateTime($check_in);
-            $end_date = new \DateTime($check_out);
-        } catch (\Exception $e) {
-            return false;
-        }
+        $base_price = (float) $room->base_price;
+        $total = 0.0;
+        $breakdown = [];
 
-        if ($end_date <= $start_date) {
-            return false;
-        }
-
-        $interval = new \DateInterval('P1D');
-        $period = new \DatePeriod($start_date, $interval, $end_date);
-        $nights = iterator_count($period);
-
-        $room_total = 0;
-        $room_daily_prices = [];
-        foreach ($period as $dt) {
-            $price = self::calculate_daily_price($room_id, $dt->format('Y-m-d'));
-            $room_total += $price;
-            $room_daily_prices[] = $price;
-        }
-
-        // Calculate Child Costs (Smart Allocation)
-        $child_cost_total = 0;
-        if (0 < $children) {
-            $max_adults = intval($room->max_adults);
-            $child_limit = intval($room->child_age_free_limit);
-            $child_rate = floatval($room->child_rate);
-
-            // Separate children
-            $free_children = 0;
-            $chargeable_children = 0;
-
-            // Ensure child_ages is an array
-            $child_ages = is_array($child_ages) ? $child_ages : [];
-
-            // If ages provided, use them. If not (legacy/error), treat all as chargeable? 
-            foreach ($child_ages as $age) {
-                if ($age <= $child_limit) {
-                    $free_children++;
-                } else {
-                    $chargeable_children++;
-                }
-            }
-
-            // Handle any missing ages
-            $missing_ages = $children - count($child_ages);
-            if (0 < $missing_ages) {
-                $chargeable_children += $missing_ages;
-            }
-
-            // Smart Allocation: Fill empty adult slots with chargeable children
-            $adults = $guests;
-            $empty_adult_slots = max(0, $max_adults - $adults);
-
-            $children_in_adult_slots = min($chargeable_children, $empty_adult_slots);
-            $billed_children = $chargeable_children - $children_in_adult_slots;
-
-            // Calculate cost (round to 2 decimals for monetary consistency)
-            $child_cost_total = round($billed_children * $child_rate * $nights, 2);
-
-            $room_total += $child_cost_total;
-        }
-
-        // Calculate extras total
-        $extras_total = 0;
-        $extras_breakdown = [];
-
-$grand_total = (float) round(max(0, $room_total + $extras_total), 2);
-
-return [
-            'room_total' => round($room_total, 2),
-            'children_total' => round($child_cost_total, 2),
-            'extras_total' => round($extras_total, 2),
-            'total' => round($grand_total, 2),
-            'extras_breakdown' => $extras_breakdown,
-            'nights' => $nights,
-            'daily_prices' => $room_daily_prices, // Added for deposit calculation
+        // Simple calculation for Free version
+        for ($i = 0; $i < $days; $i++) {
+            $date = gmdate('Y-m-d', strtotime($check_in . " + $i days"));
+            $daily_price = $base_price;
             
+            // Adult Surcharge logic (Free simple version)
+            if ($adults > (int)$room->max_adults) {
+                // Should not happen if validation works, but safety net
+            }
+
+            $total += $daily_price;
+            $breakdown[$date] = $daily_price;
+        }
+
+        // 2026 BP: Correctly check if rate is set before casting.
+        $tax_rate = isset($room->accommodation_tax_rate) ? (float) $room->accommodation_tax_rate : Tax::get_accommodation_rate();
+        $tax_data = Tax::calculate_tax($total, $tax_rate, Tax::get_mode());
+        
+        return [
+            'total' => (float)$tax_data['total'],
+            'subtotal' => $total,
+            'tax_total' => (float)$tax_data['tax_amount'],
+            'breakdown' => $breakdown,
+            'is_pro' => false
         ];
     }
 
     /**
-     * Get currency symbol
+     * Get room pricing data with caching.
      *
-     * @return string
+     * @param int $room_id Room ID.
+     * @return object|null Room data object.
      */
-    public static function get_currency_symbol()
+    public static function get_room_pricing_data(int $room_id): ?object
+    {
+        $version = Cache::get_prices_version();
+        $cache_key = 'mhbo_room_policy_' . $room_id . '_' . $version;
+        $cached = wp_cache_get($cache_key, 'mhbo');
+
+        if (false !== $cached) {
+            return is_object($cached) ? $cached : null;
+        }
+
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- result is cached above via wp_cache_get/set
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate
+             FROM {$wpdb->prefix}mhbo_rooms r
+             JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
+             WHERE r.id = %d",
+            $room_id
+        ));
+
+        if ($row) {
+            wp_cache_set($cache_key, $row, 'mhbo', 86400);
+        }
+
+        return $row;
+    }
+
+    /**
+     * Format price with currency symbol and position.
+     *
+     * @param float    $amount            The amount to format.
+     * @param bool     $include_tax_note  Whether to append tax notes if applicable.
+     * @param int|null $decimals_override Optional override for decimal places.
+     * @return string Formatted price string.
+     */
+    public static function format_price(float $amount, bool $include_tax_note = false, ?int $decimals_override = null): string
+    {
+        $currency_symbol = get_option('mhbo_currency_symbol', '$');
+        $position = get_option('mhbo_currency_position', 'before');
+        
+        $decimals = $decimals_override ?? (int)get_option('mhbo_calendar_show_decimals', 0);
+
+        $formatted = number_format($amount, $decimals, '.', ',');
+        
+        if ($include_tax_note) {
+            $tax_note = get_option('mhbo_tax_note', '');
+            if (!empty($tax_note)) {
+                $formatted .= ' ' . $tax_note;
+            }
+        }
+
+        if ('before' === $position) {
+            return $currency_symbol . $formatted;
+        }
+
+        return $formatted . $currency_symbol;
+    }
+
+    /**
+     * Get currency position.
+     *
+     * @return string 'before' or 'after'.
+     */
+    public static function get_currency_position(): string
+    {
+        return get_option('mhbo_currency_position', 'before');
+    }
+
+    /**
+     * Get currency symbol.
+     *
+     * @return string Currency symbol.
+     */
+    public static function get_currency_symbol(): string
     {
         return get_option('mhbo_currency_symbol', '$');
     }
 
     /**
-     * Get currency code
-     *
-     * @return string
+     * Clear pricing cache.
      */
-    public static function get_currency_code()
+    public static function clear_cache(): void
     {
-        return get_option('mhbo_currency_code', 'USD');
+        Cache::bump(Cache::TABLE_PRICING_RULES);
     }
 
     /**
-     * Format price with currency
+     * Bulk prime the room cache for a list of IDs.
      *
-     * @param float $amount Amount to format
-     * @param bool $include_tax_note Include tax note if applicable
-     * @return string Formatted price
+     * @param array<int> $room_ids Array of room IDs.
      */
-    public static function format_price($amount, $include_tax_note = false)
+    public static function prime_room_cache(array $room_ids): void
     {
-        $formatted = I18n::format_currency($amount);
+        global $wpdb;
+        if (empty($room_ids)) return;
 
-return $formatted;
+        $room_ids = array_map('absint', $room_ids);
+        $version = Cache::get_prices_version();
+
+        // 2026 BP: Rule 13 - No dynamic SQL templates. Use placeholders for the IN clause.
+        $placeholders = implode(',', array_fill(0, count($room_ids), '%d'));
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is a safe string of %d tokens built from array_fill; values spread via ...$room_ids
+        $query = $wpdb->prepare("SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.id IN ($placeholders)", ...$room_ids);
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        $results = $wpdb->get_results($query);
+
+        foreach ($results as $room) {
+            $key = 'mhbo_room_policy_' . $room->id . '_' . $version;
+            wp_cache_set($key, $room, 'mhbo', 86400);
+        }
     }
 
+    /**
+     * Get currency code.
+     *
+     * @return string Currency code.
+     */
+    public static function get_currency_code(): string
+    {
+        return (string) get_option('mhbo_currency_code', 'USD');
+    }
+
+    /**
+     * Get a single day's price for a room as a Money object.
+     * Prefers room-level custom_price over type base_price.
+     * Applies the 'mhbo_calculate_stay_price_money' filter so Pro seasonal rules
+     * (SeasonalRates) can modify the price without touching this Core class.
+     *
+     * @param int    $room_id Room ID.
+     * @param string $date    Date (YYYY-MM-DD).
+     * @return Money Money object.
+     */
+    public static function calculate_daily_price_money(int $room_id, string $date): Money
+    {
+        $room = self::get_room_pricing_data($room_id);
+        if (!$room) {
+            return Money::fromCents(0, self::get_currency_code());
+        }
+
+        // Prefer room-level custom price when set (> 0)
+        $raw = (isset($room->custom_price) && (float) $room->custom_price > 0)
+            ? (string) $room->custom_price
+            : (string) $room->base_price;
+
+        $price = Money::fromDecimal($raw, self::get_currency_code());
+
+        // Allow Pro seasonal/weekend rules to hook in without touching Core
+        /** @var Money $price */
+        $filtered = apply_filters('mhbo_calculate_stay_price_money', $price, $room_id, $date);
+
+        return ($filtered instanceof Money) ? $filtered : $price;
+    }
+
+    // -------------------------------------------------------------------------
+    // Availability & Concurrency
+    // -------------------------------------------------------------------------
+
+    /**
+     * Check if a room is available for a date range.
+     * Must bypass object cache — live read only (prevents double-booking).
+     *
+     * @param int    $room_id            Room ID.
+     * @param string $check_in           Check-in date (YYYY-MM-DD).
+     * @param string $check_out          Check-out date (YYYY-MM-DD).
+     * @param int    $exclude_booking_id Booking ID to exclude (for edit flows).
+     * @return true|string True if available; I18n label key on conflict.
+     */
+    public static function is_room_available(int $room_id, string $check_in, string $check_out, int $exclude_booking_id = 0): true|string
+    {
+        global $wpdb;
+
+        if ($exclude_booking_id > 0) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Availability MUST be a live read; cache would create double-booking risk.
+            $conflict = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND check_in < %s AND check_out > %s AND id != %d",
+                $room_id, $check_out, $check_in, $exclude_booking_id
+            ));
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Availability MUST be a live read; cache would create double-booking risk.
+            $conflict = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND check_in < %s AND check_out > %s",
+                $room_id, $check_out, $check_in
+            ));
+        }
+
+        return $conflict ? 'label_room_not_available' : true;
+    }
+
+    /**
+     * Acquire a MySQL advisory lock for atomic booking.
+     *
+     * @param int $room_id Room ID.
+     * @param int $timeout Timeout in seconds.
+     * @return bool True if lock acquired.
+     */
+    public static function acquire_booking_lock(int $room_id, int $timeout = 10): bool
+    {
+        global $wpdb;
+        $lock_name = 'mhbo_booking_lock_' . $room_id;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock, not a data query.
+        $result = $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, %d)', $lock_name, $timeout));
+        return '1' === (string) $result;
+    }
+
+    /**
+     * Release a MySQL advisory lock.
+     *
+     * @param int $room_id Room ID.
+     */
+    public static function release_booking_lock(int $room_id): void
+    {
+        global $wpdb;
+        $lock_name = 'mhbo_booking_lock_' . $room_id;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release.
+        $wpdb->query($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $lock_name));
+    }
+
+    // -------------------------------------------------------------------------
+    // Core Pricing Engine (Money-Native, 2026 BP)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Calculate full booking price using Money precision.
+     *
+     * Children and extras pricing are Pro features wrapped in build markers.
+     * Core Free version returns room-nights + tax only.
+     *
+     * Return shape (all Money objects):
+     *   total, subtotal, room_total, children_total, extras_total,
+     *   daily_prices (Money[]), nights (int),
+     *   extras_breakdown (assoc map, Rule 10), tax (array), is_pro (bool).
+     *
+     * @param int    $room_id    Room ID.
+     * @param string $check_in   Check-in date (YYYY-MM-DD).
+     * @param string $check_out  Check-out date (YYYY-MM-DD).
+     * @param int    $adults     Number of adults.
+     * @param array<string, string> $extras     Extras map (id => quantity_or_'1').
+     * @param int                   $children   Number of children.
+     * @param array<int, int>       $child_ages Child ages.
+     * @return array{total: Money, subtotal: Money, room_total: Money, children_total: Money, extras_total: Money, daily_prices: Money[], nights: int, extras_breakdown: array<mixed>, tax: array<string, mixed>, is_pro: bool}|false
+     */
+    public static function calculate_booking_money(
+        int $room_id,
+        string $check_in,
+        string $check_out,
+        int $adults,
+        array $extras,
+        int $children,
+        array $child_ages
+    ): array|false {
+        $room = self::get_room_pricing_data($room_id);
+        if (!$room) {
+            return false;
+        }
+
+        $currency = self::get_currency_code();
+        $ts_in    = strtotime($check_in);
+        $ts_out   = strtotime($check_out);
+
+        if (!$ts_in || !$ts_out || $ts_out <= $ts_in) {
+            return false;
+        }
+
+        $nights = (int) round(($ts_out - $ts_in) / 86400);
+
+        // --- Per-night room pricing ---
+        $room_total_money = Money::fromCents(0, $currency);
+        $daily_prices     = [];
+
+        for ($i = 0; $i < $nights; $i++) {
+            $date             = gmdate('Y-m-d', strtotime($check_in . " +{$i} days"));
+            $day_price        = self::calculate_daily_price_money($room_id, $date);
+            $daily_prices[]   = $day_price;
+            $room_total_money = $room_total_money->add($day_price);
+        }
+
+        // --- Children pricing (Pro) ---
+        $children_total_money = Money::fromCents(0, $currency);
+
+// --- Extras pricing (Pro) ---
+        $extras_total_money = Money::fromCents(0, $currency);
+        $extras_breakdown   = [];
+
+// --- Subtotal (pre-tax) ---
+        $subtotal_money = $room_total_money->add($children_total_money)->add($extras_total_money);
+
+        // Build extras list for tax engine (Tax expects indexed array with id/name/total)
+        $extras_for_tax = array_values(array_map(
+            static fn(string $id, array $item): array => [
+                'id'    => $id,
+                'name'  => $item['name'],
+                'total' => $item['total']->toDecimal(),
+            ],
+            array_keys($extras_breakdown),
+            $extras_breakdown
+        ));
+
+        // --- Tax ---
+        $tax_data = Tax::calculate_booking_tax([
+            'room_total'     => $room_total_money->toDecimal(),
+            'children_total' => $children_total_money->toDecimal(),
+            'extras_total'   => $extras_total_money->toDecimal(),
+            'extras'         => $extras_for_tax,
+        ]);
+
+        // Final total: gross when Sales Tax is active; gross equals subtotal under VAT/disabled
+        $total_money = ($tax_data['totals']['total_gross'] instanceof Money)
+            ? $tax_data['totals']['total_gross']
+            : $subtotal_money;
+
+        return [
+            'total'            => $total_money,
+            'subtotal'         => $subtotal_money,
+            'room_total'       => $room_total_money,
+            'children_total'   => $children_total_money,
+            'extras_total'     => $extras_total_money,
+            'daily_prices'     => $daily_prices,
+            'nights'           => $nights,
+            'extras_breakdown' => $extras_breakdown,
+            'tax'              => $tax_data,
+            'is_pro'           => !empty($extras_breakdown) || $children_total_money->isPositive(),
+        ];
+    }
+
+    /**
+     * Calculate deposit from a booking total.
+     *
+     * Deposit Tax Lag fix (DREAM_STATE fault #3): deposit is computed on the
+     * post-tax $total, so Sales Tax is already baked in. The $first_night Money
+     * passed by callers is also the post-tax first-night value, ensuring the
+     * "first_night" deposit type never under-collects in Sales Tax mode.
+     *
+     * @param Money $total       Full booking total (post-tax).
+     * @param Money $first_night First night room rate (post-tax, no one-time extras).
+     * @return array{deposit_money: Money, remaining_money: Money, deposit_type: string, deposit_value: float, deposit_type_label: string, is_non_refundable: bool}|false
+     */
+    public static function calculate_deposit_money(Money $total, Money $first_night): array|false
+    {
+        if ($total->isZero()) {
+            return false;
+        }
+
+        $deposit_type        = (string) get_option('mhbo_deposit_type', 'percentage');
+        $deposit_value       = (float)  get_option('mhbo_deposit_value', 20);
+        $is_non_refundable   = (bool)   get_option('mhbo_deposit_non_refundable', 0);
+        $currency            = $total->getCurrency();
+
+        switch ($deposit_type) {
+            case 'first_night':
+                $deposit_money      = $first_night;
+                $deposit_type_label = __("First Night's Rate", 'modern-hotel-booking');
+                break;
+            case 'fixed':
+                $deposit_money      = Money::fromDecimal((string) max(0.01, $deposit_value), $currency);
+                $deposit_type_label = $deposit_money->format();
+                break;
+            default: // percentage
+                $clamped            = max(1, min(100, $deposit_value));
+                $deposit_money      = $total->multiply((string) bcdiv((string) $clamped, '100', 4));
+                $deposit_type_label = $clamped . '%';
+                break;
+        }
+
+        // Clamp: deposit cannot exceed total
+        if ($deposit_money->compare($total) > 0) {
+            $deposit_money = $total;
+        }
+
+        $remaining_money = $total->subtract($deposit_money);
+
+        return [
+            'deposit_money'      => $deposit_money,
+            'remaining_money'    => $remaining_money,
+            'deposit_type'       => $deposit_type,
+            'deposit_value'      => $deposit_value,
+            'deposit_type_label' => $deposit_type_label,
+            'is_non_refundable'  => $is_non_refundable,
+        ];
+    }
+
+    /**
+     * Render the Professional Deposit Selection UI.
+     *
+     * @param Money                $total The total gross amount.
+     * @param array<string, mixed> $calc  The calculation results from the booking form.
+     * @return void
+     */
+    public static function render_deposit_selection_html(Money $total, array $calc): void
+    {
+        if (!get_option('mhbo_deposits_enabled', 0)) {
+            return;
+        }
+
+        $currency          = $total->getCurrency();
+        $first_night_money = Money::fromCents(0, $currency);
+        if (isset($calc['daily_prices']) && !empty($calc['daily_prices'])) {
+            $first = reset($calc['daily_prices']);
+            $first_night_money = $first instanceof Money
+                ? $first
+                : Money::fromDecimal((string) $first, $currency);
+        }
+
+        $deposit_data = self::calculate_deposit_money($total, $first_night_money);
+
+        // Do not show deposit if 0 or >= total (full payment required)
+        if (!$deposit_data || $deposit_data['deposit_money']->isZero() || $deposit_data['deposit_money']->compare($total) >= 0) {
+            return;
+        }
+
+        $deposit_money      = $deposit_data['deposit_money'];
+        $remaining_money    = $deposit_data['remaining_money'];
+        $allow_choice       = get_option('mhbo_deposit_allow_guest_choice', 1);
+        ?>
+        <div class="mhbo-deposit-options-wrapper" style="margin-bottom: 30px;">
+            <h4 style="margin-top:25px; margin-bottom:15px;"><?php echo esc_html(I18n::get_label('label_payment_options')); ?></h4>
+            <div class="mhbo-deposit-options">
+                <!-- Pay in Full Card -->
+                <div class="mhbo-payment-card <?php echo $allow_choice ? 'active' : 'disabled'; ?>" data-payment-type="full" data-amount="<?php echo esc_attr($total->toDecimal()); ?>">
+                    <input type="radio" name="mhbo_payment_type" value="full" <?php checked(true); ?> <?php disabled(!$allow_choice); ?>>
+                    <div class="mhbo-card-header">
+                        <div class="mhbo-card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="mhbo-card-title"><?php echo esc_html(I18n::get_label('label_pay_full')); ?></span>
+                    </div>
+                    <div class="mhbo-card-amount mhbo-full-amount"><?php echo esc_html($total->format()); ?></div>
+                    <div class="mhbo-card-description mhbo-full-description"><?php echo esc_html(I18n::get_label('label_pay_full_desc')); ?></div>
+                    <div class="mhbo-card-selected-indicator"></div>
+                </div>
+
+                <!-- Pay Deposit Card -->
+                <div class="mhbo-payment-card <?php echo esc_attr(!$allow_choice ? 'active' : ''); ?>"
+                    data-payment-type="deposit"
+                    data-amount="<?php echo esc_attr($deposit_money->toDecimal()); ?>"
+                    data-balance="<?php echo esc_attr($remaining_money->toDecimal()); ?>"
+                    data-deposit-type="<?php echo esc_attr((string) get_option('mhbo_deposit_type', 'percentage')); ?>"
+                    data-deposit-value="<?php echo esc_attr((string) get_option('mhbo_deposit_value', 20)); ?>"
+                    data-first-night-amount="<?php echo esc_attr($first_night_money->toDecimal()); ?>">
+                    <input type="radio" name="mhbo_payment_type" value="deposit" <?php checked(!$allow_choice); ?>>
+                    <?php if (!$allow_choice) : ?>
+                        <div class="mhbo-card-badge"><?php echo esc_html(I18n::get_label('label_required')); ?></div>
+                    <?php endif; ?>
+                    <div class="mhbo-card-header">
+                        <div class="mhbo-card-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                        <span class="mhbo-card-title"><?php echo esc_html(I18n::get_label('label_pay_deposit')); ?></span>
+                    </div>
+                    <div class="mhbo-card-amount mhbo-deposit-amount"><?php echo esc_html($deposit_money->format()); ?></div>
+                    <div class="mhbo-card-description mhbo-deposit-description">
+                        <?php
+                        printf(
+                            esc_html(I18n::get_label('label_pay_deposit_desc')),
+                            '<strong class="mhbo-deposit-balance-display">' . esc_html(I18n::format_currency($remaining_money)) . '</strong>'
+                        );
+                        if ($deposit_data['is_non_refundable']) {
+                            echo ' <div class="mhbo-deposit-note">' . esc_html(I18n::get_label('msg_deposit_non_refundable')) . '</div>';
+                        }
+                        ?>
+                    </div>
+                    <div class="mhbo-card-selected-indicator"></div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Check if the currently configured deposit is non-refundable.
+     *
+     * @return bool
+     */
+    public static function is_deposit_non_refundable(): bool
+    {
+        return (bool) get_option('mhbo_deposit_non_refundable', 0);
+    }
 }

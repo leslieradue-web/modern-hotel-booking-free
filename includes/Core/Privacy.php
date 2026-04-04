@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace MHBO\Core;
+use MHBO\Core\Cache;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -14,7 +15,7 @@ class Privacy
     /**
      * Initialize GDPR hooks.
      */
-    public function init()
+    public function init(): void
     {
         // Add Privacy Policy content
         add_action('admin_init', function () {
@@ -39,21 +40,21 @@ class Privacy
         add_filter('wp_privacy_personal_data_erasers', [$this, 'register_gdpr_eraser']);
     }
 
-    public function register_gdpr_exporter($exporters)
+    public function register_gdpr_exporter(array $exporters): array
     {
-        $exporters['modern-hotel-booking'] = array(
+        $exporters['modern-hotel-booking'] = [
             'exporter_friendly_name' => __('Modern Hotel Booking', 'modern-hotel-booking'),
             'callback' => [$this, 'export_personal_data'],
-        );
+        ];
         return $exporters;
     }
 
-    public function register_gdpr_eraser($erasers)
+    public function register_gdpr_eraser(array $erasers): array
     {
-        $erasers['modern-hotel-booking'] = array(
+        $erasers['modern-hotel-booking'] = [
             'eraser_friendly_name' => __('Modern Hotel Booking', 'modern-hotel-booking'),
             'callback' => [$this, 'erase_personal_data'],
-        );
+        ];
         return $erasers;
     }
 
@@ -62,14 +63,14 @@ class Privacy
      *
      * @param string $email_address
      * @param int    $page
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function export_personal_data($email_address, $page = 1)
+    public static function export_personal_data(string $email_address, int $page = 1): array
     {
         $number = 500; // Limit per page
         $page = (int) $page;
 
-        $export_items = array();
+        $export_items = [];
         global $wpdb;
 
         $cache_key = 'mhbo_gdpr_export_' . md5($email_address . '_' . $page);
@@ -90,71 +91,71 @@ class Privacy
         }
 
         foreach ($bookings as $booking) {
-            $data = array(
-                array(
+            $data = [
+                [
                     'name' => __('Booking ID', 'modern-hotel-booking'),
                     'value' => $booking->id,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Room ID', 'modern-hotel-booking'),
                     'value' => $booking->room_id,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Check-in Date', 'modern-hotel-booking'),
                     'value' => $booking->check_in,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Check-out Date', 'modern-hotel-booking'),
                     'value' => $booking->check_out,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Total Price', 'modern-hotel-booking'),
                     'value' => $booking->total_price,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Status', 'modern-hotel-booking'),
                     'value' => $booking->status,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Customer Name', 'modern-hotel-booking'),
                     'value' => $booking->customer_name,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Customer Phone', 'modern-hotel-booking'),
                     'value' => $booking->customer_phone,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Admin Notes', 'modern-hotel-booking'),
                     'value' => $booking->admin_notes,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Custom Fields', 'modern-hotel-booking'),
                     'value' => $booking->custom_fields,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Booking Extras', 'modern-hotel-booking'),
                     'value' => $booking->booking_extras,
-                ),
-                array(
+                ],
+                [
                     'name' => __('Payment Error Logs', 'modern-hotel-booking'),
                     'value' => $booking->payment_error,
-                ),
-            );
+                ],
+            ];
 
-            $export_items[] = array(
+            $export_items[] = [
                 'group_id' => 'mhbo-bookings',
                 'group_label' => __('Hotel Bookings', 'modern-hotel-booking'),
                 'item_id' => "mhbo-booking-{$booking->id}",
                 'data' => $data,
-            );
+            ];
         }
 
         $done = (is_array($bookings) ? count($bookings) : 0) < $number;
 
-        return array(
+        return [
             'data' => $export_items,
             'done' => $done,
-        );
+        ];
     }
 
     /**
@@ -162,15 +163,15 @@ class Privacy
      *
      * @param string $email_address
      * @param int    $page
-     * @return array
+     * @return array<string, mixed>
      */
-    public static function erase_personal_data($email_address, $page = 1)
+    public static function erase_personal_data(string $email_address, int $page = 1): array
     {
         $number = 500; // Limit per page
         $page = (int) $page;
         $items_removed = false;
         $items_retained = false;
-        $messages = array();
+        $messages = [];
 
         global $wpdb;
 
@@ -206,7 +207,7 @@ class Privacy
             );
 
             if ($updated) {
-                \MHBO\Core\Cache::invalidate_booking($booking->id);
+                Cache::invalidate_booking($booking->id);
                 $items_removed = true;
             } else {
                 $items_retained = true;
@@ -215,12 +216,12 @@ class Privacy
 
         $done = (is_array($bookings) ? count($bookings) : 0) < $number;
 
-        return array(
+        return [
             'items_removed' => $items_removed,
             'items_retained' => $items_retained,
             'messages' => $messages,
             'done' => $done,
-        );
+        ];
     }
 
     /**
@@ -229,13 +230,13 @@ class Privacy
      * @param int $booking_id
      * @return bool
      */
-    public static function erase_personal_data_by_id($booking_id)
+    public static function erase_personal_data_by_id(int $booking_id): bool
     {
         global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, GDPR erasure
         $result = (bool) $wpdb->update(
             $wpdb->prefix . 'mhbo_bookings',
-            array(
+            [
                 'customer_name'  => '[Anonymized]',
                 'customer_email' => 'deleted@site.invalid',
                 'customer_phone' => '[Anonymized]',
@@ -244,14 +245,14 @@ class Privacy
                 'custom_fields'  => null,
                 'booking_extras' => null, // Clear Pro extras too for GDPR
                 'payment_error'  => null,
-            ),
-            array('id' => $booking_id),
-            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),
-            array('%d')
+            ],
+            ['id' => $booking_id],
+            ['%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'],
+            ['%d']
         );
 
         if ($result) {
-            \MHBO\Core\Cache::invalidate_booking($booking_id);
+            Cache::invalidate_booking($booking_id);
         }
 
         return $result;

@@ -23,7 +23,7 @@ class Blocks {
     private static $instance = null;
 
     /** @return self */
-    public static function get_instance() {
+    public static function get_instance(): self {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -31,7 +31,7 @@ class Blocks {
     }
 
     private function __construct() {
-        add_action( 'init', array( $this, 'register_blocks' ) );
+        add_action( 'init', array( $this, 'register_blocks' ), 25 );
         add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_assets' ) );
         add_filter( 'block_categories_all', array( $this, 'add_block_category' ), 10, 2 );
     }
@@ -39,7 +39,7 @@ class Blocks {
     /**
      * Register dynamic blocks.
      */
-    public function register_blocks() {
+    public function register_blocks(): void {
         $blocks = array(
             'company-info'    => 'render_company_block',
             'whatsapp-button' => 'render_whatsapp_block',
@@ -57,9 +57,9 @@ class Blocks {
     }
 
     /**
-     * @param string $hook
+     * Enqueue block editor assets.
      */
-    public function enqueue_block_editor_assets() {
+    public function enqueue_block_editor_assets(): void {
         wp_enqueue_script(
             'mhbo-blocks-editor',
             MHBO_PLUGIN_URL . 'assets/js/mhbo-blocks-editor.js',
@@ -75,11 +75,11 @@ class Blocks {
     }
 
     /**
-     * @param array $categories
+     * @param array<int, array<string, mixed>> $categories
      * @param \WP_Block_Editor_Context $context
-     * @return array
+     * @return array<int, array<string, mixed>>
      */
-    public function add_block_category( $categories, $context ) {
+    public function add_block_category( $categories, $context ): array {
         return array_merge(
             $categories,
             array(
@@ -92,11 +92,11 @@ class Blocks {
         );
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       BLOCK ATTRIBUTES
-       ═══════════════════════════════════════════════════════════════ */
-
-    private function get_block_attributes( $slug ) {
+    /**
+     * @param string $slug
+     * @return array<string, array<string, mixed>>
+     */
+    private function get_block_attributes( string $slug ): array {
         switch ( $slug ) {
             case 'company-info':
                 return array(
@@ -131,11 +131,11 @@ class Blocks {
         return array();
     }
 
-    /* ═══════════════════════════════════════════════════════════════
-       BLOCK RENDER CALLBACKS
-       ═══════════════════════════════════════════════════════════════ */
-
-    public function render_company_block( $attributes ) {
+    /**
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function render_company_block( array $attributes ): string {
         return Shortcodes::get_instance()->render_company_info( array(
             'show_logo'         => $attributes['showLogo'] ? 'yes' : 'no',
             'show_address'      => $attributes['showAddress'] ? 'yes' : 'no',
@@ -145,7 +145,11 @@ class Blocks {
         ) );
     }
 
-    public function render_whatsapp_block( $attributes ) {
+    /**
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function render_whatsapp_block( array $attributes ): string {
         return Shortcodes::get_instance()->render_whatsapp( array(
             'style'   => $attributes['style'],
             'text'    => $attributes['text'],
@@ -153,14 +157,22 @@ class Blocks {
         ) );
     }
 
-    public function render_banking_block( $attributes ) {
+    /**
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function render_banking_block( array $attributes ): string {
         return Shortcodes::get_instance()->render_banking( array(
             'show_instructions' => $attributes['showInstructions'] ? 'yes' : 'no',
             'layout'            => $attributes['layout'],
         ) );
     }
 
-    public function render_revolut_block( $attributes ) {
+    /**
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function render_revolut_block( array $attributes ): string {
         return Shortcodes::get_instance()->render_revolut( array(
             'show_qr'   => $attributes['showQR'] ? 'yes' : 'no',
             'show_link' => $attributes['showLink'] ? 'yes' : 'no',
@@ -168,7 +180,11 @@ class Blocks {
         ) );
     }
 
-    public function render_card_block( $attributes ) {
+    /**
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    public function render_card_block( array $attributes ): string {
         return Shortcodes::get_instance()->render_business_card( array(
             'sections' => $attributes['sections'],
         ) );

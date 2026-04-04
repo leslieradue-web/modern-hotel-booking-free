@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Info {
 
     /** @var self|null */
-    private static $instance = null;
+    private static ?self $instance = null;
 
     /** Option keys — prefixed per WP.org rules. */
     const OPT_COMPANY  = 'mhbo_company_info';
@@ -34,7 +34,7 @@ class Info {
     const NONCE_TAB_ACTION  = 'mhbo_admin_tab_nav';
 
     /** @return self */
-    public static function get_instance() {
+    public static function get_instance(): self {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -56,7 +56,7 @@ class Info {
     /**
      * @param string $hook Current admin page hook suffix.
      */
-    public function enqueue_admin_assets( $hook ) {
+    public function enqueue_admin_assets( string $hook ): void {
         if ( 'hotel-booking_page_mhbo-settings' !== $hook ) {
             return;
         }
@@ -101,8 +101,26 @@ class Info {
        DEFAULT VALUES
        ═══════════════════════════════════════════════════════════════ */
 
-    /** @return array */
-    public static function get_company_defaults() {
+    /**
+     * @return array{
+     *   company_name: string,
+     *   address_line_1: string,
+     *   address_line_2: string,
+     *   city: string,
+     *   state: string,
+     *   postcode: string,
+     *   country: string,
+     *   telephone: string,
+     *   email: string,
+     *   contact_name: string,
+     *   logo_id: int,
+     *   logo_url: string,
+     *   tax_id: string,
+     *   registration_no: string,
+     *   website: string
+     * }
+     */
+    public static function get_company_defaults(): array {
         return array(
             'company_name'    => '',
             'address_line_1'  => '',
@@ -122,8 +140,17 @@ class Info {
         );
     }
 
-    /** @return array */
-    public static function get_whatsapp_defaults() {
+    /**
+     * @return array{
+     *   enabled: int,
+     *   phone_number: string,
+     *   default_msg: string,
+     *   button_text: string,
+     *   display_style: string,
+     *   position: string
+     * }
+     */
+    public static function get_whatsapp_defaults(): array {
         return array(
             'enabled'       => 0,
             'phone_number'  => '',
@@ -134,8 +161,21 @@ class Info {
         );
     }
 
-    /** @return array */
-    public static function get_banking_defaults() {
+    /**
+     * @return array{
+     *   enabled: int,
+     *   bank_name: string,
+     *   account_name: string,
+     *   account_number: string,
+     *   iban: string,
+     *   swift_bic: string,
+     *   sort_code: string,
+     *   branch_address: string,
+     *   reference_prefix: string,
+     *   instructions: string
+     * }
+     */
+    public static function get_banking_defaults(): array {
         return array(
             'enabled'          => 0,
             'bank_name'        => '',
@@ -150,8 +190,19 @@ class Info {
         );
     }
 
-    /** @return array */
-    public static function get_revolut_defaults() {
+    /**
+     * @return array{
+     *   enabled: int,
+     *   revolut_name: string,
+     *   revolut_tag: string,
+     *   revolut_iban: string,
+     *   revolut_link: string,
+     *   qr_code_id: int,
+     *   qr_code_url: string,
+     *   instructions: string
+     * }
+     */
+    public static function get_revolut_defaults(): array {
         return array(
             'enabled'       => 0,
             'revolut_name'  => '',
@@ -168,23 +219,23 @@ class Info {
        OPTION GETTERS
        ═══════════════════════════════════════════════════════════════ */
 
-    /** @return array */
-    public static function get_company() {
+    /** @return array{company_name: string, address_line_1: string, address_line_2: string, city: string, state: string, postcode: string, country: string, telephone: string, email: string, contact_name: string, logo_id: int, logo_url: string, tax_id: string, registration_no: string, website: string} */
+    public static function get_company(): array {
         return wp_parse_args( get_option( self::OPT_COMPANY, array() ), self::get_company_defaults() );
     }
 
-    /** @return array */
-    public static function get_whatsapp() {
+    /** @return array{enabled: int, phone_number: string, default_msg: string, button_text: string, display_style: string, position: string} */
+    public static function get_whatsapp(): array {
         return wp_parse_args( get_option( self::OPT_WHATSAPP, array() ), self::get_whatsapp_defaults() );
     }
 
-    /** @return array */
-    public static function get_banking() {
+    /** @return array{enabled: int, bank_name: string, account_name: string, account_number: string, iban: string, swift_bic: string, sort_code: string, branch_address: string, reference_prefix: string, instructions: string} */
+    public static function get_banking(): array {
         return wp_parse_args( get_option( self::OPT_BANKING, array() ), self::get_banking_defaults() );
     }
 
-    /** @return array */
-    public static function get_revolut() {
+    /** @return array{enabled: int, revolut_name: string, revolut_tag: string, revolut_iban: string, revolut_link: string, qr_code_id: int, qr_code_url: string, instructions: string} */
+    public static function get_revolut(): array {
         return wp_parse_args( get_option( self::OPT_REVOLUT, array() ), self::get_revolut_defaults() );
     }
 
@@ -192,7 +243,10 @@ class Info {
        SAVE HANDLER
        ═══════════════════════════════════════════════════════════════ */
 
-    public function handle_save(array $data) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function handle_save( array $data ): void {
         $tab        = isset($data['mhbo_business_subtab']) ? sanitize_key(wp_unslash($data['mhbo_business_subtab'])) : 'company';
         $valid_tabs = array('company', 'whatsapp', 'banking', 'revolut');
 
@@ -232,7 +286,10 @@ class Info {
 
     }
 
-    private function save_company(array $data) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function save_company( array $data ): void {
         $clean_data = array();
         // 2026/WP Repo Compliance: Explicit unslashing and sanitization per-key
         $clean_data['company_name']    = isset($data['company_name'])    ? sanitize_text_field(wp_unslash($data['company_name']))    : '';
@@ -254,7 +311,10 @@ class Info {
         update_option(self::OPT_COMPANY, $clean_data);
     }
 
-    private function save_whatsapp(array $data) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function save_whatsapp( array $data ): void {
         $clean_data = array();
         $clean_data['enabled']       = isset($data['wa_enabled']) ? 1 : 0;
         $clean_data['phone_number']  = isset($data['wa_phone_number'])  ? sanitize_text_field(wp_unslash($data['wa_phone_number']))    : '';
@@ -275,7 +335,10 @@ class Info {
         update_option(self::OPT_WHATSAPP, $clean_data);
     }
 
-    private function save_banking(array $data) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function save_banking( array $data ): void {
         $clean_data = array();
         $clean_data['enabled']          = isset($data['bank_enabled']) ? 1 : 0;
         $clean_data['bank_name']        = isset($data['bank_name'])        ? sanitize_text_field(wp_unslash($data['bank_name']))          : '';
@@ -293,7 +356,10 @@ class Info {
         update_option(self::OPT_BANKING, $clean_data);
     }
 
-    private function save_revolut(array $data) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function save_revolut( array $data ): void {
         $clean_data = array();
         $clean_data['enabled']      = isset($data['rev_enabled']) ? 1 : 0;
         $clean_data['revolut_name'] = isset($data['revolut_name']) ? sanitize_text_field(wp_unslash($data['revolut_name'])) : '';
@@ -316,7 +382,7 @@ class Info {
     /**
      * Render the settings tab content within the main Settings page.
      */
-    public static function render_settings_tab() {
+    public static function render_settings_tab(): void {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only UI navigation.
         $active_subtab = (isset($_GET['subtab']) ? sanitize_key(wp_unslash($_GET['subtab'])) : '') ?: 'company';
         $company  = self::get_company();
@@ -377,9 +443,9 @@ class Info {
     }
 
     /**
-     * @param array $data Company info values.
+     * @param array<string, mixed> $data Company info values.
      */
-    private function render_tab_company( $data ) {
+    private function render_tab_company( array $data ): void {
         ?>
 
 <table class="form-table" role="presentation">
@@ -445,8 +511,10 @@ class Info {
         <?php
     }
 
-    /** @param array $data */
-    private function render_tab_whatsapp( $data ) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function render_tab_whatsapp( array $data ): void {
         ?>
 
             <table class="form-table" role="presentation">
@@ -494,8 +562,10 @@ class Info {
         <?php
     }
 
-    /** @param array $data */
-    private function render_tab_banking( $data ) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function render_tab_banking( array $data ): void {
         ?>
 
             <table class="form-table" role="presentation">
@@ -527,8 +597,10 @@ class Info {
         <?php
     }
 
-    /** @param array $data */
-    private function render_tab_revolut( $data ) {
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function render_tab_revolut( array $data ): void {
         ?>
 
             <table class="form-table" role="presentation">
@@ -554,7 +626,10 @@ class Info {
         <?php
     }
 
-    private function render_tab_shortcodes() {
+    /**
+     * Render the shortcodes tab.
+     */
+    private function render_tab_shortcodes(): void {
         ?>
         <div class="mhbo-shortcodes-reference">
             <h2><?php esc_html_e( 'Available Shortcodes', 'modern-hotel-booking' ); ?></h2>
@@ -583,7 +658,7 @@ class Info {
      * @param string $image_url Attachment URL.
      * @param string $title     Media modal title.
      */
-    private function render_media_field( $prefix, $image_id, $image_url, $title ) {
+    private function render_media_field( string $prefix, int $image_id, string $image_url, string $title ): void {
         $has_image = ! empty( $image_url );
         $id_field  = str_replace( 'mhbo_', '', $prefix ) . '_id';
         $url_field = str_replace( 'mhbo_', '', $prefix ) . '_url';

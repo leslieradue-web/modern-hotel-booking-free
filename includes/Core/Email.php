@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace MHBO\Core;
+use MHBO\Core\Money;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -11,54 +12,67 @@ class Email
     /**
      * Initialize email hooks.
      */
-    public static function init()
+    public static function init(): void
     {
+        // phpstan-ignore-next-line return.void -- handlers are void; phpstan-wordpress false-positive for [self::class, 'method'] callables
         add_action('mhbo_booking_confirmed', [self::class, 'handle_booking_confirmed'], 20);
+        // phpstan-ignore-next-line return.void
         add_action('mhbo_booking_created', [self::class, 'handle_booking_created'], 20);
+        // phpstan-ignore-next-line return.void
         add_action('mhbo_booking_cancelled', [self::class, 'handle_booking_cancelled'], 20);
     }
 
     /**
      * Handler for booking confirmation event (Verified Payment / Manual Approval).
+     *
+     * @param int $booking_id The booking ID.
      */
-    public static function handle_booking_confirmed($booking_id)
+    public static function handle_booking_confirmed(int $booking_id): void
     {
-        return self::send_email((int) $booking_id, 'confirmed');
+        self::send_email($booking_id, 'confirmed');
     }
 
     /**
      * Handler for booking cancellation event.
+     *
+     * @param int $booking_id The booking ID.
      */
-    public static function handle_booking_cancelled($booking_id)
+    public static function handle_booking_cancelled(int $booking_id): void
     {
-        return self::send_email((int) $booking_id, 'cancelled');
+        self::send_email($booking_id, 'cancelled');
     }
 
     /**
      * Handler for booking creation event (Receipt / Arrival Selection).
+     * Sends a receipt immediately for on-site/arrival payments.
+     * Defers for Stripe/PayPal — those trigger 'mhbo_booking_confirmed' after server verification.
+     *
+     * @param int $booking_id The booking ID.
      */
-    public static function handle_booking_created($booking_id)
+    public static function handle_booking_created(int $booking_id): void
     {
         global $wpdb;
-        // RATIONALE: Required to check payment method for initial 'created' email only for offline methods.
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $booking = $wpdb->get_row($wpdb->prepare("SELECT payment_method, status FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", (int) $booking_id));
+        $booking = $wpdb->get_row($wpdb->prepare("SELECT payment_method, status FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $booking_id));
 
         if (!$booking) {
             return;
         }
 
-        // Only send initial 'created' email for 'arrival'/'onsite' methods right away.
-        // Stripe/PayPal bookings will wait for the 'confirmed' hook after verification.
         if (in_array($booking->payment_method, ['arrival', 'onsite'], true)) {
-            return self::send_email((int) $booking_id, $booking->status);
+            self::send_email($booking_id, (string) $booking->status);
         }
     }
 
     /**
      * Alias for send_booking_email for backward compatibility.
+     *
+     * @param int    $booking_id The booking ID.
+     * @param string $status     The booking status.
+     * @return bool True if email was sent successfully, false on failure.
      */
-    public static function send_email($booking_id, $status)
+    public static function send_email(int $booking_id, string $status): bool
     {
         return self::send_booking_email($booking_id, $status);
     }
@@ -66,8 +80,12 @@ class Email
     /**
      * Send a booking notification email to the customer.
      * Only sends for completed payments or arrival payment method.
+     *
+     * @param int    $booking_id The booking ID.
+     * @param string $status     The booking status.
+     * @return bool True if email was sent successfully, false on failure.
      */
-    public static function send_booking_email($booking_id, $status)
+    public static function send_booking_email(int $booking_id, string $status): bool
     {
         global $wpdb;
 
@@ -88,16 +106,16 @@ class Email
         }
 
         if (!$booking) {
-            return;
+            return false;
         }
 
         // Check if we should send email based on payment status
         $payment_status = isset($booking->payment_status) ? $booking->payment_status : 'pending';
-        $payment_method = isset($booking->payment_method) ? $booking->payment_method : 'onsite';
+        $payment_method = isset($booking->payment_method) ? $booking->payment_method : 'arrival';
 
         // DEDUPLICATION: Prevent duplicate confirmation emails
         if (isset($booking->email_sent) && (int) $booking->email_sent === 1 && 'confirmed' === $status) {
-            return;
+            return false;
         }
 
         // Allow email if:
@@ -108,7 +126,7 @@ class Email
 
         if (!$email_allowed) {
             // Payment not confirmed and not explicitly confirmed by admin - don't send confirmation email yet
-            return;
+            return false;
         }
 
         // UPDATE STATUS: Mark as sent BEFORE wp_mail to avoid race conditions with webhooks
@@ -139,10 +157,10 @@ class Email
         }
 
         // SECURITY: Validate email address before sending
-        $to = sanitize_email($booking->customer_email);
+        $to = sanitize_email((string) ($booking->customer_email ?? ''));
         if (!is_email($to)) {
             // Invalid email - skip sending
-            return;
+            return false;
         }
         $subject = I18n::decode($template_subject, $lang);
         $message = I18n::decode($template_message, $lang);
@@ -187,7 +205,8 @@ class Email
             $payment_details .= '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">' . esc_html(I18n::get_label('label_payment_confirmation')) . '</h4>';
             $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_payment_status')) . '</strong> ' . esc_html(I18n::get_label('label_paid')) . '</p>';
             if (!empty($booking->payment_amount)) {
-                $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_amount_paid')) . '</strong> ' . I18n::format_currency($booking->payment_amount) . '</p>';
+                $p_amt = Money::fromDecimal((string) $booking->payment_amount);
+                $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_amount_paid')) . '</strong> ' . I18n::format_currency($p_amt) . '</p>';
             }
             if (!empty($booking->payment_transaction_id)) {
                 $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_transaction_id')) . '</strong> ' . esc_html($booking->payment_transaction_id) . '</p>';
@@ -200,7 +219,7 @@ class Email
             }
             $payment_details .= '</div>';
         } elseif ('arrival' === $payment_method || 'onsite' === $payment_method) {
-            $payment_details = self::get_business_payment_details_html($booking_id, (float) $booking->total_price);
+            $payment_details = self::get_business_payment_details_html($booking_id, Money::fromDecimal((string) ($booking->total_price ?? 0)));
         }
 
         // Build tax breakdown section
@@ -290,13 +309,13 @@ class Email
 $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $site_name = get_bloginfo('name');
 
-        $headers = array(
+        $headers = [
             'Content-Type: text/html; charset=UTF-8',
             'From: ' . $site_name . ' <' . $admin_email . '>',
             'Reply-To: ' . $admin_email,
             'Bcc: ' . $admin_email
-        );
-        $attachments = array();
+        ];
+        $attachments = [];
 
         // Add iCal attachment for confirmed bookings
         if ('confirmed' === $status) {
@@ -307,22 +326,25 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             $attachments[] = $file_path;
         }
 
-        wp_mail($to, $subject, $message, $headers, $attachments);
+        $result = (bool) wp_mail($to, (string) $subject, (string) $message, $headers, $attachments);
 
         // Clean up temporary iCal file
         if (!empty($attachments)) {
             // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Temporary file cleanup
             @unlink($attachments[0]);
         }
+
+        return $result;
     }
 
     /**
      * Send a payment confirmation email (separate receipt).
      *
-     * @param int   $booking_id The booking ID.
-     * @param array $payment_data Payment details array.
+     * @param int                  $booking_id   The booking ID.
+     * @param array<string, mixed> $payment_data Payment details array.
+     * @return bool True if email was sent successfully, false on failure.
      */
-    public static function send_payment_confirmation_email($booking_id, $payment_data = array())
+    public static function send_payment_confirmation_email(int $booking_id, array $payment_data = []): bool
     {
         global $wpdb;
         // RATIONALE: Required to fetch booking record for payment confirmation email.
@@ -334,7 +356,7 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         ));
 
         if (!$booking) {
-            return;
+            return false;
         }
 
         $lang = $booking->booking_language ?: I18n::get_current_language();
@@ -373,7 +395,8 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         // Build payment details section
         $payment_details = '<div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">';
         $payment_details .= '<h4 style="margin: 0 0 15px 0; color: #2e7d32;">' . __('Payment Details', 'modern-hotel-booking') . '</h4>';
-        $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Amount Paid:', 'modern-hotel-booking') . '</strong> ' . I18n::format_currency(isset($payment_data['amount']) ? $payment_data['amount'] : $booking->total_price) . '</p>';
+        $p_amt = Money::fromDecimal((string) (isset($payment_data['amount']) ? $payment_data['amount'] : ($booking->total_price ?? 0)));
+        $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Amount Paid:', 'modern-hotel-booking') . '</strong> ' . I18n::format_currency($p_amt) . '</p>';
 
         if (!empty($payment_data['transaction_id'])) {
             $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Transaction ID:', 'modern-hotel-booking') . '</strong> ' . esc_html($payment_data['transaction_id']) . '</p>';
@@ -475,30 +498,33 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $site_name = get_bloginfo('name');
 
-        $headers = array(
+        $headers = [
             'Content-Type: text/html; charset=UTF-8',
             'From: ' . $site_name . ' <' . $admin_email . '>',
             'Reply-To: ' . $admin_email,
             'Bcc: ' . $admin_email
-        );
+        ];
 
         // SECURITY: Validate email before sending
-        $to = sanitize_email($booking->customer_email);
+        $to = sanitize_email((string) ($booking->customer_email ?? ''));
         if (!is_email($to)) {
             // Invalid email - skip sending
-            return;
+            return false;
         }
 
-        wp_mail($to, $subject, $message, $headers);
+        return (bool) wp_mail($to, (string) $subject, (string) $message, $headers);
     }
 
     /**
      * Generate a simple ICS file for email attachments.
+     *
+     * @param object $booking The booking object.
+     * @return string ICS file content.
      */
-    private static function generate_simple_ics($booking)
+    private static function generate_simple_ics(object $booking): string
     {
-        $dtstart = wp_date('Ymd', strtotime($booking->check_in));
-        $dtend = wp_date('Ymd', strtotime($booking->check_out));
+        $dtstart = wp_date('Ymd', strtotime((string)($booking->check_in ?? '')));
+        $dtend = wp_date('Ymd', strtotime((string)($booking->check_out ?? '')));
         $now = wp_date('Ymd\THis\Z');
 
         return "BEGIN:VCALENDAR\r\n" .
@@ -518,9 +544,9 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
      * Get placeholders for Business Information.
      *
      * @param string $lang Current language.
-     * @return array
+     * @return array<string, string>
      */
-    private static function get_business_placeholders($lang = '')
+    private static function get_business_placeholders(string $lang = ''): array
     {
         $placeholders = [];
 
@@ -535,8 +561,8 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             $placeholders['{company_website}']      = $company['website'] ?? '';
             $placeholders['{company_registration}'] = $company['registration_number'] ?? '';
 
-            $placeholders['{whatsapp_number}']      = $whatsapp['number'] ?? '';
-            $placeholders['{whatsapp_link}']        = !empty($whatsapp['number']) ? 'https://wa.me/' . preg_replace('/[^0-9]/', '', $whatsapp['number']) : '';
+            $placeholders['{whatsapp_number}']      = $whatsapp['phone_number'] ?? '';
+            $placeholders['{whatsapp_link}']        = !empty($whatsapp['phone_number']) ? 'https://wa.me/' . preg_replace('/[^0-9]/', '', $whatsapp['phone_number']) : '';
         }
 
         return $placeholders;
@@ -545,13 +571,13 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
     /**
      * Build the complete set of email placeholders with sanitization and fallbacks.
      *
-     * @param object $booking    The booking database row.
-     * @param string $status     The booking status.
-     * @param string $lang       The target language.
-     * @param array  $additional Additional pre-rendered components.
-     * @return array
+     * @param object               $booking    The booking database row.
+     * @param string               $status     The booking status.
+     * @param string               $lang       The target language.
+     * @param array<string, mixed> $additional Additional pre-rendered components.
+     * @return array<string, string|int|float>
      */
-    public static function get_booking_placeholders($booking, $status, $lang, $additional = [])
+    public static function get_booking_placeholders(object $booking, string $status, string $lang, array $additional = []): array
     {
         $check_in  = !empty($booking->check_in) ? strtotime($booking->check_in) : 0;
         $check_out = !empty($booking->check_out) ? strtotime($booking->check_out) : 0;
@@ -581,7 +607,8 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             '{nights}'                  => $nights,
             '{guests}'                  => (int) ($booking->guests ?? 1),
             '{children}'                => (int) ($booking->children ?? 0),
-            '{total_price}'             => I18n::format_currency((float) ($booking->total_price ?? 0)),
+            '{children_ages}'           => self::format_children_ages($booking->children_ages ?? ''),
+            '{total_price}'             => I18n::format_currency(Money::fromDecimal((string) ($booking->total_price ?? 0))),
             '{status}'                  => I18n::translate_status((string) $status),
             '{room_name}'               => esc_html($additional['room_name'] ?? ''),
 
@@ -619,11 +646,11 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
     /**
      * Apply placeholders to a string and clean up messy formatting.
      *
-     * @param string $text The text containing placeholders.
-     * @param array  $placeholders Map of placeholders to values.
+     * @param string                $text         The text containing placeholders.
+     * @param array<string, string|int|float> $placeholders Map of placeholders to values.
      * @return string The processed text.
      */
-    public static function apply_placeholders($text, $placeholders)
+    public static function apply_placeholders(string $text, array $placeholders): string
     {
         if (empty($text)) {
             return '';
@@ -636,8 +663,8 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $text = str_replace(array_keys($placeholders), array_values($placeholders), $text);
 
         // 3. Smart Cleanup of messy formatting
-        // Collapse multiple commas on the same line (e.g., ", , ,") into a single comma
-        $text = preg_replace('/,[ \t]*(,[ \t]*)+/', ', ', $text);
+        // Collapse multiple commas/spaces on the same line (e.g., ", , ,") into a single comma
+        $text = preg_replace('/[, \t]+(,[ \t]*)+/', ', ', $text);
 
         // Remove leading commas on lines (e.g., ", pending")
         $text = preg_replace('/^[ \t]*,+[ \t]*/m', '', $text);
@@ -646,34 +673,42 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         // This preserves greeting commas like "Hi {customer_name}," which usually have no space before the comma
         $text = preg_replace('/[ \t]+,[ \t]*$/m', '', $text);
 
-        // Collapse extra vertical whitespace
+        // Collapse extra vertical whitespace (more than 2 newlines)
         $text = preg_replace('/\n{3,}/', "\n\n", $text);
 
-        // Handle commas near HTML breaks
+        // Handle commas near HTML breaks and tags
         $text = preg_replace('/,\s*<br\s*\/?>/i', '<br>', $text);
         $text = preg_replace('/<br\s*\/?>\s*,/i', '<br>', $text);
+        $text = preg_replace('/,\s*<\/p>/i', '</p>', $text);
+        $text = preg_replace('/,\s*<\/div>/i', '</div>', $text);
+        $text = preg_replace('/<li>\s*,/i', '<li>', $text);
 
         return trim($text);
     }
 
     /**
      * Format booking extras for email placeholders.
+     *
+     * @param object $booking The booking object.
+     * @param string $lang    Current language code.
+     * @param string $format  Output format ('html' or 'text').
+     * @return string Formatted extras.
      */
-    private static function format_extras($booking, $lang, $format = 'html')
+    private static function format_extras(object $booking, string $lang, string $format = 'html'): string
     {
         if (empty($booking->booking_extras)) {
             return '';
         }
 
-        $extras = json_decode($booking->booking_extras, true);
+        $extras = json_decode((string)$booking->booking_extras, true);
         if (empty($extras) || !is_array($extras)) {
             return '';
         }
 
         $mhbo_output = '';
         foreach ($extras as $extra) {
-            $name = isset($extra['name']) ? I18n::decode($extra['name'], $lang) : '';
-            $total = isset($extra['total']) ? I18n::format_currency($extra['total']) : '';
+            $name = isset($extra['name']) ? I18n::decode((string)$extra['name'], $lang) : '';
+            $total = isset($extra['total']) ? I18n::format_currency((float)$extra['total']) : '';
 
             if (empty($name)) {
                 continue;
@@ -696,12 +731,13 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
     /**
      * Get business payment details for booking emails.
      *
-     * @param int   $booking_id
-     * @param float $total_price
-     * @return string HTML
+     * @param int   $booking_id  The booking ID.
+     * @param float|string|Money $total_price The total booking price.
+     * @return string HTML for payment details.
      */
-    private static function get_business_payment_details_html($booking_id, $total_price)
+    public static function get_business_payment_details_html(int $booking_id, float|string|Money $total_price): string
     {
+        $total_price = $total_price instanceof Money ? $total_price : Money::fromDecimal((string) $total_price);
         $mhbo_output  = '<div style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 5px; border: 1px solid #ffeccf;">';
         $mhbo_output .= '<h4 style="margin: 0 0 10px 0; color: #e65100;">' . esc_html(I18n::get_label('label_payment_info')) . '</h4>';
         $mhbo_output .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_amount_due')) . '</strong> ' . I18n::format_currency($total_price) . '</p>';
@@ -734,4 +770,26 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         return $mhbo_output;
     }
 
+/**
+     * Format a JSON list of children ages into a user-friendly, localized string.
+     * 
+     * This utility is used primarily in email notifications to provide detailed 
+     * guest composition data to administrators and customers.
+     * 
+     * @param string|null $ages_json JSON string of ages (e.g. '[5, 8]').
+     * @return string Formatted ages (e.g. '5, 8') or empty string if no indices found.
+     */
+    private static function format_children_ages(?string $ages_json): string
+    {
+        if (empty($ages_json)) {
+            return '';
+        }
+
+        $ages = json_decode($ages_json, true);
+        if (!is_array($ages) || empty($ages)) {
+            return '';
+        }
+
+        return implode(', ', array_map('absint', $ages));
+    }
 }

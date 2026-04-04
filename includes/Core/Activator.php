@@ -8,11 +8,12 @@ if (!defined('ABSPATH')) {
 
 class Activator
 {
-	public static function activate()
+	public static function activate(): void
 	{
 		global $wpdb;
 		$charset_collate = $wpdb->get_charset_collate();
 
+		// phpstan-ignore-next-line requireOnce.fileNotFound -- ABSPATH resolves correctly at runtime; PHPStan constant folding limitation
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
 		// Rule 13 rationale: Creating room types table for category-level management.
@@ -20,11 +21,11 @@ class Activator
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			name varchar(255) NOT NULL,
 			description text,
-			base_price decimal(10,2) NOT NULL DEFAULT '0.00',
+			base_price decimal(19,4) NOT NULL DEFAULT '0.0000',
 			max_adults tinyint(4) NOT NULL DEFAULT 2,
 			max_children tinyint(4) NOT NULL DEFAULT 0,
 			child_age_free_limit tinyint(4) NOT NULL DEFAULT 0,
-			child_rate decimal(10,2) NOT NULL DEFAULT 0.00,
+			child_rate decimal(19,4) NOT NULL DEFAULT 0.0000,
 			total_rooms mediumint(9) NOT NULL DEFAULT 1,
 			amenities text DEFAULT NULL,
 			image_url varchar(255) DEFAULT NULL,
@@ -38,7 +39,7 @@ class Activator
 			type_id mediumint(9) NOT NULL,
 			room_number varchar(50) NOT NULL,
 			status varchar(20) DEFAULT 'available',
-			custom_price decimal(10,2) DEFAULT NULL,
+			custom_price decimal(19,4) DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY type_id (type_id)
 		) $charset_collate;";
@@ -53,28 +54,28 @@ class Activator
 			customer_phone varchar(50) DEFAULT NULL,
 			check_in date NOT NULL,
 			check_out date NOT NULL,
-			total_price decimal(10,2) NOT NULL,
+			total_price decimal(19,4) NOT NULL,
 			status varchar(20) DEFAULT 'pending',
 			booking_token varchar(64) NOT NULL,
 			booking_language varchar(10) DEFAULT 'en',
 			admin_notes text DEFAULT NULL,
 			booking_extras text DEFAULT NULL,
-			discount_amount decimal(10,2) DEFAULT '0.00',
-			deposit_amount decimal(10,2) DEFAULT NULL,
+			discount_amount decimal(19,4) DEFAULT '0.0000',
+			deposit_amount decimal(19,4) DEFAULT NULL,
 			deposit_received tinyint(1) DEFAULT 0,
 			payment_type varchar(20) DEFAULT 'full',
-			remaining_balance decimal(10,2) DEFAULT NULL,
+			remaining_balance decimal(19,4) DEFAULT NULL,
 			balance_status varchar(20) DEFAULT 'collected',
 			refund_deadline_date date DEFAULT NULL,
 			deposit_is_non_refundable tinyint(1) DEFAULT 0,
-			payment_method varchar(50) DEFAULT 'onsite',
+			payment_method varchar(50) DEFAULT 'arrival',
 			payment_received tinyint(1) DEFAULT 0,
 			payment_status varchar(20) DEFAULT 'pending',
 			payment_transaction_id varchar(255) DEFAULT NULL,
 			payment_capture_id varchar(255) DEFAULT NULL,
 			payment_date datetime DEFAULT NULL,
 			payment_error text DEFAULT NULL,
-			payment_amount decimal(10,2) DEFAULT NULL,
+			payment_amount decimal(19,4) DEFAULT NULL,
 			email_sent tinyint(1) DEFAULT 0,
 			source varchar(50) DEFAULT 'direct',
 			guests tinyint(4) DEFAULT 1,
@@ -86,17 +87,17 @@ class Activator
 			custom_fields text DEFAULT NULL,
 			tax_enabled tinyint(1) DEFAULT 0,
 			tax_mode varchar(20) DEFAULT 'disabled',
-			tax_rate_accommodation decimal(5,2) DEFAULT 0.00,
-			tax_rate_extras decimal(5,2) DEFAULT 0.00,
-			room_total_net decimal(10,2) DEFAULT 0.00,
-			children_total_net decimal(10,2) DEFAULT 0.00,
-			extras_total_net decimal(10,2) DEFAULT 0.00,
-			room_tax decimal(10,2) DEFAULT 0.00,
-			children_tax decimal(10,2) DEFAULT 0.00,
-			extras_tax decimal(10,2) DEFAULT 0.00,
-			subtotal_net decimal(10,2) DEFAULT 0.00,
-			total_tax decimal(10,2) DEFAULT 0.00,
-			total_gross decimal(10,2) DEFAULT 0.00,
+			tax_rate_accommodation decimal(7,4) DEFAULT 0.0000,
+			tax_rate_extras decimal(7,4) DEFAULT 0.0000,
+			room_total_net decimal(19,4) DEFAULT 0.0000,
+			children_total_net decimal(19,4) DEFAULT 0.0000,
+			extras_total_net decimal(19,4) DEFAULT 0.0000,
+			room_tax decimal(19,4) DEFAULT 0.0000,
+			children_tax decimal(19,4) DEFAULT 0.0000,
+			extras_tax decimal(19,4) DEFAULT 0.0000,
+			subtotal_net decimal(19,4) DEFAULT 0.0000,
+			total_tax decimal(19,4) DEFAULT 0.0000,
+			total_gross decimal(19,4) DEFAULT 0.0000,
 			tax_breakdown text DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY room_id (room_id),
@@ -104,7 +105,7 @@ class Activator
 			KEY external_id (external_id),
 			KEY payment_status (payment_status),
 			KEY payment_transaction_id (payment_transaction_id),
-			KEY check_in_out (check_in, check_out),
+			KEY room_availability (room_id, status, check_in, check_out),
 			KEY status_payment (status, payment_status)
 		) $charset_collate;";
 		dbDelta($sql_bookings);
@@ -130,20 +131,6 @@ class Activator
 		) $charset_collate;";
 		dbDelta($sql_ical_connections);
 
-		$sql_ical = "CREATE TABLE {$wpdb->prefix}mhbo_ical_feeds (
-			id mediumint(9) NOT NULL AUTO_INCREMENT,
-			room_id mediumint(9) NOT NULL,
-			feed_url text NOT NULL,
-			feed_name varchar(100) DEFAULT NULL,
-			platform varchar(50) DEFAULT 'custom',
-			last_synced datetime DEFAULT NULL,
-			last_error text DEFAULT NULL,
-			events_count int(11) DEFAULT 0,
-			PRIMARY KEY  (id),
-			KEY room_id (room_id)
-		) $charset_collate;";
-		dbDelta($sql_ical);
-
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin tables
 		$sql_pricing = "CREATE TABLE {$wpdb->prefix}mhbo_pricing_rules (
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
@@ -152,15 +139,29 @@ class Activator
 			name varchar(100) NOT NULL,
 			start_date date NOT NULL,
 			end_date date NOT NULL,
-			amount decimal(10,2) NOT NULL DEFAULT 0.00,
+			amount decimal(19,4) NOT NULL DEFAULT 0.0000,
 			rule_type varchar(20) DEFAULT 'seasonal',
 			operation varchar(20) DEFAULT 'increase',
 			priority tinyint(4) DEFAULT 10,
 			PRIMARY KEY  (id),
+			KEY room_id (room_id),
 			KEY type_id (type_id),
-			KEY dates (start_date, end_date)
+			KEY rule_lookup (type_id, room_id, start_date, end_date)
 		) $charset_collate;";
 		dbDelta($sql_pricing);
+		
+		// Rule 13: Idempotency table for REST API reliable execution (2026 Standard).
+		$sql_idempotency = "CREATE TABLE {$wpdb->prefix}mhbo_idempotency (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			idempotency_key varchar(64) NOT NULL,
+			request_hash varchar(64) NOT NULL,
+			response_code int(11) NOT NULL,
+			response_body longtext NOT NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY idempotency_key (idempotency_key)
+		) $charset_collate;";
+		dbDelta($sql_idempotency);
 
 		// Add new options for multilingual and currency
 		add_option('mhbo_db_version', MHBO_VERSION);
@@ -173,7 +174,7 @@ class Activator
 		add_option('mhbo_gateway_onsite_enabled', 0);
 		add_option('mhbo_stripe_mode', 'test');
 		add_option('mhbo_paypal_mode', 'sandbox');
-		add_option('mhbo_ical_token', wp_generate_password(32, false));
+
 		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
 
 		// Rule 13: Initialize versions for caching
@@ -195,15 +196,7 @@ class Activator
 		add_option('mhbo_tax_decimal_places', 2);
 		add_option('mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]');
 
-		// iCal Sync Settings
-		add_option('mhbo_ical_auto_sync_enabled', 1);
-		add_option('mhbo_ical_sync_interval', '6hours');
-		add_option('mhbo_ical_retry_enabled', 1);
-		add_option('mhbo_ical_email_notifications', 0);
-		add_option('mhbo_ical_notification_email', get_option('admin_email'));
-		add_option('mhbo_ical_sync_lock_timeout', 30);
-
-		// Cache Settings (optional/configurable)
+// Cache Settings (optional/configurable)
 		add_option('mhbo_cache_enabled', 1);
 
 		// Default Amenities
@@ -227,7 +220,7 @@ class Activator
 	 * @param string $old_version Previous version
 	 * @param string $new_version New version
 	 */
-	public static function migrate($old_version, $new_version)
+	public static function migrate(string $old_version, string $new_version): void
 	{
 		// Run activate to ensure all tables and columns are up to date via dbDelta
 		self::activate();
@@ -274,13 +267,35 @@ class Activator
 		// Add new indexes for performance (for existing installations)
 		self::add_performance_indexes();
 
+		// Repair any data drift (Rule 13: maintain data integrity)
+		self::repair_data_drift();
+
 		update_option('mhbo_db_version', $new_version);
+	}
+
+	/**
+	 * Repair terminology drifts or legacy data paradoxes (formerly standalone DriftCheck).
+	 */
+	private static function repair_data_drift(): void
+	{
+		global $wpdb;
+		$table = $wpdb->prefix . 'mhbo_bookings';
+
+		// Rule 13 rationale: Healing 'onsite' to 'arrival' paradox for 2.2.8+ compatibility.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Data repair operation
+		$wpdb->update(
+			$table,
+			['payment_method' => 'arrival'],
+			['payment_method' => 'onsite'],
+			['%s'],
+			['%s']
+		);
 	}
 
 	/**
 	 * Migrate old iCal feeds to new connections table.
 	 */
-	private static function migrate_ical_feeds_to_connections()
+	private static function migrate_ical_feeds_to_connections(): void
 	{
 		global $wpdb;
 		// Check if old table exists
@@ -302,7 +317,7 @@ class Activator
 		foreach ($feeds as $feed) {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Schema migration
 				"{$wpdb->prefix}mhbo_ical_connections",
-				array(
+				[
 					'room_id' => $feed->room_id,
 					'platform' => $feed->platform ?? 'custom',
 					'name' => $feed->feed_name ?? '',
@@ -313,8 +328,8 @@ class Activator
 					'last_error' => $feed->last_error,
 					'created_at' => current_time('mysql'),
 					'events_count' => $feed->events_count ?? 0,
-				),
-				array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d')
+				],
+				['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d']
 			);
 		}
 	}
@@ -323,7 +338,7 @@ class Activator
 	 * Add performance indexes to existing tables.
 	 * Called during migration to improve query performance.
 	 */
-	private static function add_performance_indexes()
+	private static function add_performance_indexes(): void
 	{
 		global $wpdb;
 

@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace MHBO\Core;
+use MHBO\Core\Cache;
 
 if (!defined('ABSPATH')) {
     exit;

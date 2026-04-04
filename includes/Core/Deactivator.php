@@ -19,6 +19,8 @@ class Deactivator
 {
     /**
      * Run deactivation tasks.
+     *
+     * @return void
      */
     public static function deactivate(): void
     {
@@ -34,14 +36,16 @@ class Deactivator
 
     /**
      * Clear all scheduled cron events for this plugin.
+     *
+     * @return void
      */
     private static function clear_scheduled_crons(): void
     {
-        $crons = array(
+        $crons = [
             'mhbo_hourly_sync',
             'mhbo_daily_maintenance',
             'mhbo_ical_scheduled_sync',
-        );
+        ];
 
         foreach ($crons as $cron_hook) {
             $timestamp = wp_next_scheduled($cron_hook);
@@ -55,6 +59,8 @@ class Deactivator
 
     /**
      * Clear plugin transients (rate limiting, caching, etc.).
+     *
+     * @return void
      */
     private static function clear_transients(): void
     {

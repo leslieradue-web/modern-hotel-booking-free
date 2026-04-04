@@ -2,9 +2,9 @@
 Contributors: leslierad
 Tags: vacation rental, booking engine, room booking, direct booking, reservation system
 Requires at least: 6.2
-Tested up to: 6.9
-Stable tag: 2.2.8.0
-Requires PHP: 7.4
+Tested up to: 7.0
+Stable tag: 2.2.9
+Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,10 +45,9 @@ Need more power for your direct booking business? Upgrade to Pro and get:
 * iCal Two-Way Sync with Airbnb, Booking.com and VRBO
 * Seasonal & Dynamic Pricing
 * Advanced Email Templates
-* Revenue Analytics Dashboard
-* GDPR Compliant tools
 * Deposits & Partial Payments
-* Developer REST API
+* Developer REST API & Webhooks
+* Revenue Analytics Dashboard
 
 **Pricing** (simple & transparent):
 - First year (introductory): Personal $89 | Business (5 Licenses) $249 | Agency (25 Licenses) $749
@@ -166,11 +165,27 @@ The **Pro version** (available separately) adds connections to:
 
 == Changelog ==
 
+= 2.2.9 =
+* New (Pro): Added {children_ages} placeholder to booking emails for clearer guest composition.
+* iCal Pro: Added platform Dashicons (Airbnb, Booking.com, Google) to connection rows.
+* iCal Pro: Added "Sync All" bulk action to room editor for immediate full list updates.
+* iCal Pro: Implemented real-time AJAX feedback with spinners and dynamic status text.
+* Security: Hardened IP detection with full IPv6 support and trusted proxy header priority.
+* Security: Hardened SSRF protection with private IP blocking in Security class.
+* Improved: Centralized booking flow redirections to ensure a consistent user journey across different page layouts.
+* Refactor: Standardized client IP detection across all core and frontend handlers.
+* Refactor: Delegated iCal logic from core ICal.php to ICalManager.php (Separation of Concerns).
+* Improved: Standardized terminology from "Onsite / Manual" to "Pay on Arrival" across code and translation files.
+* Cleanup: Removed redundant hourly sync hooks and database global declarations.
+
+= 2.2.8.4 =
+* New (Pro): Secure Webhook system with HMAC-SHA256 signature verification.
+* New (Pro): Webhook delivery logging with status indicators and payload viewer.
+* New (Pro): AJAX-powered log clearing and "Test Webhook" connection tool.
+* Improved: Reinforced security gating for Pro-only administrative features.
+
 = 2.2.8.0 =
 * New: Added shortcodes and blocks for Business Info, WhatsApp, banking details, and Revolut.
-* New: Enhanced email placeholder engine with 30+ smart tags (Company, WhatsApp, etc.).
-* Localization: Updated internationalization for 15+ community locales (2026 Standard).
-* Improved: Synchronized metadata and documentation across 40+ files.
 
 = 2.2.7.8 =
 * New (Pro): Deposits & Partial Payments feature.

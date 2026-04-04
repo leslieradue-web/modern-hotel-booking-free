@@ -22,6 +22,11 @@ if (!defined('ABSPATH')) {
 use MHBO\Core\Cache;
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
+use MHBO\Core\Capabilities;
+use MHBO\Core\License;
+use MHBO\Core\Security;
+use MHBO\Core\Money;
+use MHBO\Core\Tax;
 
 /**
  * REST API endpoints for Modern Hotel Booking.
@@ -68,13 +73,37 @@ class RestApi
             ),
         ));
 
-register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
+register_rest_route($namespace, '/bookings', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_bookings'),
+            'permission_callback' => array($this, 'check_api_key'),
+            'args' => array(
+                'status' => array(
+                    'required' => false,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'per_page' => array(
+                    'required' => false,
+                    'sanitize_callback' => 'absint',
+                    'default' => 20,
+                ),
+                'page' => array(
+                    'required' => false,
+                    'sanitize_callback' => 'absint',
+                    'default' => 1,
+                ),
+            ),
+        ));
+
+        register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_booking'),
-            'permission_callback' => function () {
-                // SECURITY: Integer ID access is restricted to administrators only.
-                // General users must use the /bookings/{reference} endpoint.
-                return current_user_can('manage_options');
+            'permission_callback' => function ($request) {
+                // Allow administrators OR valid API Key holders
+                if (Capabilities::current_user_can(Capabilities::MANAGE_LHBO)) {
+                    return true;
+                }
+                return $this->check_api_key($request);
             },
         ));
 
@@ -187,7 +216,6 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
     public function check_pro_access()
     {
         
-        return true;
     }
 
     /**
@@ -228,17 +256,24 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
      */
     private function check_rate_limit()
     {
-        $ip = \MHBO\Core\Security::get_client_ip();
-        if (empty($ip) || '0.0.0.0' === $ip) {
-            // Can't determine IP, allow but log
-            return true;
-        }
-
-        $transient_key = 'mhbo_api_rate_' . md5($ip);
+        $ip = Security::get_client_ip();
+        
+        // 2026 BP: Rule 11 - Individual extraction/sanitization from superglobals.
+        // Rule 11: Individually extract and sanitize to avoid contamination.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- sanitized/unslashed on next line
+        $raw_api_key = isset($_SERVER['HTTP_X_MHBO_API_KEY']) ? wp_unslash($_SERVER['HTTP_X_MHBO_API_KEY']) : '';
+        $api_key = sanitize_text_field((string) $raw_api_key);
+        
+        // Use API Key for bucket if available, otherwise fallback to IP
+        $identifier = !empty($api_key) ? 'key_' . md5($api_key) : 'ip_' . md5($ip);
+        
+        $transient_key = 'mhbo_api_rate_' . $identifier;
         $request_count = get_transient($transient_key);
-
-        $limit = apply_filters('mhbo_api_rate_limit', 60); // Default 60 requests
-        $window = apply_filters('mhbo_api_rate_window', 60); // Per 60 seconds
+        
+        // Higher limit for API Key holders
+        $default_limit = !empty($api_key) ? 300 : 60;
+        $limit = apply_filters('mhbo_api_rate_limit', $default_limit, $api_key); 
+        $window = apply_filters('mhbo_api_rate_window', 60); 
 
         if (false === $request_count) {
             set_transient($transient_key, 1, $window);
@@ -253,7 +288,7 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             );
         }
 
-        set_transient($transient_key, $request_count + 1, $window);
+        set_transient($transient_key, (int) $request_count + 1, $window);
         return true;
     }
 
@@ -327,10 +362,11 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
     {
         global $wpdb;
 
-        $check_in = $request->get_param('check_in');
-        $check_out = $request->get_param('check_out');
+        // Rule 11: Extract and sanitize all inputs at start
+        $check_in  = sanitize_text_field($request->get_param('check_in'));
+        $check_out = sanitize_text_field($request->get_param('check_out'));
 
-        if ($check_in >= $check_out) {
+if ($check_in >= $check_out) {
             return new \WP_Error(
                 'mhbo_invalid_dates',
                 esc_html(I18n::get_label('label_check_out_after')),
@@ -354,22 +390,28 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             Cache::set_query($rooms_cache_key, $rooms, Cache::TABLE_ROOMS, HOUR_IN_SECONDS);
         }
 
+        // 2026 BP: Bulk pre-fetch all room metadata and policies in a single query 
+        // to eliminate the N+1 problem during availability calculations.
+        $room_ids = array_map(function($r) { return (int) $r->room_id; }, $rooms);
+        Pricing::prime_room_cache($room_ids);
+
         $available = array();
 
         foreach ($rooms as $room) {
-            // Use the centralized availability check
+            // Use the centralized availability check (Consolidated SQL)
             $availability_status = Pricing::is_room_available((int) $room->room_id, $check_in, $check_out);
 
             if (true === $availability_status) {
-                // Calculate total price for the stay
-                $total_price = 0;
+                // Calculate total price for the stay using Money precision
+                $currency = Pricing::get_currency_code();
+                $total_money = Money::fromCents(0, $currency);
                 $period = new \DatePeriod(
                     new \DateTime($check_in),
                     new \DateInterval('P1D'),
                     new \DateTime($check_out)
                 );
                 foreach ($period as $date) {
-                    $total_price += Pricing::calculate_daily_price($room->room_id, $date->format('Y-m-d'));
+                    $total_money = $total_money->add(Pricing::calculate_daily_price_money($room->room_id, $date->format('Y-m-d')));
                 }
 
                 $available[] = array(
@@ -379,8 +421,8 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
                     'type_name' => I18n::decode($room->type_name),
                     'max_adults' => (int) $room->max_adults,
                     'max_children' => (int) $room->max_children,
-                    'total_price' => round($total_price, 2),
-                    'price_formatted' => I18n::format_currency($total_price),
+                    'total_price' => (float) $total_money->toDecimal(),
+                    'price_formatted' => $total_money->format(),
                 );
             }
         }
@@ -402,20 +444,24 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
     public function get_calendar_data($request)
     {
         global $wpdb;
-        $room_id = $request->get_param('room_id');
-        $year = $request->get_param('year') ?: wp_date('Y');
-        $month = $request->get_param('month') ?: wp_date('m');
+        
+        // Rule 11: Extract and sanitize all inputs at start
+        $raw_room_id = $request->get_param('room_id');
+        $room_id     = ($raw_room_id !== null && '' !== $raw_room_id) ? absint($raw_room_id) : -1;
+        $year        = absint($request->get_param('year') ?: wp_date('Y'));
+        $month       = absint($request->get_param('month') ?: wp_date('m'));
 
-        // Aggregated view if room_id is 0 or missing
-        if (!$room_id) {
-            $start_date_obj = new \DateTime("$year-$month-01");
-            $end_date_obj = clone $start_date_obj;
-            $end_date_obj->modify('+12 months');
+        // Validate room_id - If 0, we serve aggregated data for the search page
+        if (0 === $room_id) {
+            $start_str = sprintf('%04d-%02d-01', $year, $month);
+            $dt_start  = new \DateTime($start_str);
+            $dt_end    = clone $dt_start;
+            $dt_end->modify('last day of this month');
+            return $this->get_aggregated_calendar_data($start_str, $dt_end->format('Y-m-d'));
+        }
 
-            $start_str = $start_date_obj->format('Y-m-d');
-            $end_str = $end_date_obj->format('Y-m-d');
-
-            return $this->get_aggregated_calendar_data($start_str, $end_str);
+        if ($room_id < 0) {
+            return new \WP_Error('mhbo_missing_room_id', __('Room ID is required.', 'modern-hotel-booking'), array('status' => 400));
         }
 
         // Fetch bookings with status to differentiate pending vs confirmed
@@ -481,7 +527,8 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             $period = new \DatePeriod($start_date, new \DateInterval('P1D'), $end_date);
             foreach ($period as $dt) {
                 $date_str = $dt->format('Y-m-d');
-                $price = Pricing::calculate_daily_price($room_id, $date_str);
+                $price_money = Pricing::calculate_daily_price_money($room_id, $date_str);
+                $price = (float) $price_money->toDecimal();
 
                 // Determine availability status using centralized logic
                 // For calendar, we check if the room can be booked STARTING on this date
@@ -504,6 +551,7 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
                 // Room is unbookable if status is not 'available' OR if price is 0 (unbooked)
                 $is_unbookable = ('available' !== $room_status) || (!$is_booked && $price <= 0);
 
+                $show_decimals = (int) get_option('mhbo_calendar_show_decimals', 0) === 1;
                 $data[] = [
                     'date' => $date_str,
                     'status' => $is_booked ? 'booked' : ($is_unbookable ? 'unbookable' : 'available'),
@@ -512,7 +560,7 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
                     'is_checkout' => $is_check_out_day,
                     'can_check_in' => $can_check_in, // Add hint for frontend
                     'price' => $price,
-                    'price_formatted' => I18n::format_currency($price)
+                    'price_formatted' => $price_money->format(false, $show_decimals ? null : 0)
                 ];
             }
         } catch (\Exception $e) {
@@ -531,12 +579,12 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
 
         // Get all rooms with caching using Rule 13 patterns
         $cache_key = 'mhbo_available_rooms_ids';
-        $rooms = \MHBO\Core\Cache::get_query($cache_key, \MHBO\Core\Cache::TABLE_ROOMS);
+        $rooms = Cache::get_query($cache_key, Cache::TABLE_ROOMS);
 
         if (false === $rooms) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table, caching implemented via Cache::set_query
             $rooms = $wpdb->get_results("SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE status = 'available'");
-            \MHBO\Core\Cache::set_query($cache_key, $rooms, \MHBO\Core\Cache::TABLE_ROOMS, 3600);
+            Cache::set_query($cache_key, $rooms, Cache::TABLE_ROOMS, 3600);
         }
 
         if (empty($rooms)) {
@@ -544,14 +592,13 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
         }
 
         $room_ids = array_column($rooms, 'id');
-        $room_placeholders = implode(',', array_fill(0, count($room_ids), '%d'));
 
         // Same-day Turnover Setting
         $prevent_turnover = (bool) get_option('mhbo_prevent_same_day_turnover', false);
 
         // 2026 Best Practice (Rule 13): Use Cache class with versioned keys.
         $cache_key = 'mhbo_avail_agg_' . md5(implode(',', $room_ids) . $start_str . $end_str . (int)$prevent_turnover);
-        $bookings = \MHBO\Core\Cache::get_query($cache_key, \MHBO\Core\Cache::TABLE_BOOKINGS);
+        $bookings = Cache::get_query($cache_key, Cache::TABLE_BOOKINGS);
 
         if (false === $bookings) {
             $room_placeholders_string = implode(',', array_fill(0, count($room_ids), '%d'));
@@ -582,7 +629,7 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             // phpcs:enable
 
             // Store in cache with 1 hour TTL (Rule 13 versioned)
-            \MHBO\Core\Cache::set_query($cache_key, $bookings, \MHBO\Core\Cache::TABLE_BOOKINGS, 3600);
+            Cache::set_query($cache_key, $bookings, Cache::TABLE_BOOKINGS, 3600);
         }
 
         // Organize bookings by room
@@ -658,7 +705,8 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
 
                 // Calculate price (lowest available)
                 if (!$is_occupied_pm) {
-                    $price = Pricing::calculate_daily_price($rid, $date_str);
+                    $price_money = Pricing::calculate_daily_price_money((int) $rid, $date_str);
+                    $price = (float) $price_money->toDecimal();
                     if ($min_price === null || $price < $min_price) {
                         $min_price = $price;
                     }
@@ -699,12 +747,13 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
                 }
             }
 
+            $show_decimals = (int) get_option('mhbo_calendar_show_decimals', 0) === 1;
             $data[] = [
                 'date' => $date_str,
                 'status' => $status,
                 'booking_status' => $booking_status,
                 'price' => $min_price !== null ? $min_price : 0,
-                'price_formatted' => $min_price !== null ? I18n::format_currency($min_price) : '-',
+                'price_formatted' => $min_price !== null ? I18n::format_currency($min_price, $show_decimals ? null : 0) : '-',
                 'is_checkin' => $is_checkin,
                 'is_checkout' => $is_checkout,
             ];
@@ -721,23 +770,38 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
      */
     public function recalculate_price($request)
     {
-        $room_id = $request->get_param('room_id');
-        $check_in = $request->get_param('check_in');
-        $check_out = $request->get_param('check_out');
-        $guests = $request->get_param('guests') ?: 1;
-        $children = $request->get_param('children') ?: 0;
-        $child_ages = $request->get_param('child_ages') ?: array();
-        $extras = $request->get_param('extras') ?: array();
-        $payment_type = $request->get_param('mhbo_payment_type') ?: 'full';
+        // Rule 11: Extract and sanitize all inputs at start
+        $room_id         = absint($request->get_param('room_id'));
+        $check_in        = sanitize_text_field($request->get_param('check_in'));
+        $check_out       = sanitize_text_field($request->get_param('check_out'));
+        $guests          = absint($request->get_param('guests') ?: 1);
+        $children        = absint($request->get_param('children') ?: 0);
+        $child_ages      = is_array($request->get_param('child_ages')) ? array_map('absint', $request->get_param('child_ages')) : array();
+        // Rule 11: sanitize extras map at input boundary (key → sanitize_key, value → sanitize_text_field)
+        $extras_raw      = is_array($request->get_param('extras')) ? $request->get_param('extras') : array();
+        $extras          = array();
+        foreach ($extras_raw as $k => $v) {
+            $extras[ sanitize_key((string) $k) ] = sanitize_text_field((string) $v);
+        }
+        $payment_type    = sanitize_text_field($request->get_param('mhbo_payment_type') ?: 'full');
+        $payment_method  = sanitize_text_field($request->get_param('mhbo_payment_method') ?: '');
 
-        $calc = Pricing::calculate_booking_total($room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages);
+        // Terminology Normalization: Map 'onsite' (Pro) to 'arrival' (Core)
+        if ('onsite' === $payment_method) {
+            $payment_method = 'arrival';
+        }
 
-        if ($calc && get_option('mhbo_deposits_enabled', 0) && $payment_type === 'deposit') {
-            $first_night_price = !empty($calc['daily_prices']) ? reset($calc['daily_prices']) : 0;
-            $deposit_data = Pricing::calculate_deposit($calc['total'], (float)$first_night_price);
+$calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages);
+
+        if ($calc && get_option('mhbo_deposits_enabled', 0)) {
+            $first_night_money = !empty($calc['daily_prices']) ? reset($calc['daily_prices']) : Money::fromCents(0, $calc['total']->getCurrency());
+            $deposit_data = Pricing::calculate_deposit_money($calc['total'], $first_night_money);
             if ($deposit_data) {
-                $calc['deposit_amount'] = $deposit_data['deposit_amount'];
-                $calc['remaining_balance'] = $deposit_data['remaining_balance'];
+                // Return high-precision objects and legacy floats for compatibility
+                $calc['deposit_money'] = $deposit_data['deposit_money'];
+                $calc['remaining_money'] = $deposit_data['remaining_money'];
+                $calc['deposit_amount'] = $deposit_data['deposit_money']->toDecimal();
+                $calc['remaining_balance'] = (float)$deposit_data['remaining_money']->toDecimal();
             }
         }
 
@@ -754,32 +818,50 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             'mode' => 'disabled',
             'totals' => array(
                 'subtotal_net' => $calc['total'],
-                'total_tax' => 0,
+                'total_tax' => Money::fromCents(0, Pricing::get_currency_code()),
                 'total_gross' => $calc['total']
             )
         );
 
         // Include deposit info for HTML rendering if present
-        if (isset($calc['deposit_amount'])) {
-            $tax_data['deposit_amount'] = $calc['deposit_amount'];
-            $tax_data['remaining_balance'] = $calc['remaining_balance'];
+        if (isset($calc['deposit_money'])) {
+            $tax_data['deposit_amount'] = (float)$calc['deposit_money']->toDecimal();
+            $tax_data['remaining_balance'] = (float)$calc['remaining_money']->toDecimal();
         }
 
-        return rest_ensure_response(array(
+        $payable_now = $calc['total'];
+        if (isset($calc['deposit_money'])) {
+            $payable_now = $calc['deposit_money'];
+        }
+
+        $response = rest_ensure_response(array(
             'success' => true,
-            'total' => (float) $calc['total'],
-            'total_formatted' => I18n::format_currency($calc['total']),
-            'room_total' => (float) $calc['room_total'],
-            'children_total' => (float) ($calc['children_total'] ?? 0),
-            'extras_total' => (float) $calc['extras_total'],
-            'deposit_amount' => (float) ($calc['deposit_amount'] ?? 0),
-            'deposit_amount_formatted' => isset($calc['deposit_amount']) ? I18n::format_currency($calc['deposit_amount']) : '',
-            'remaining_balance' => (float) ($calc['remaining_balance'] ?? 0),
-            'remaining_balance_formatted' => isset($calc['remaining_balance']) ? I18n::format_currency($calc['remaining_balance']) : '',
+            'total' => (float) $calc['total']->toDecimal(),
+            'total_formatted' => $calc['total']->format(),
+            'payable_now' => (float) $payable_now->toDecimal(),
+            'payable_now_formatted' => $payable_now->format(),
+            'room_total' => (float) $calc['room_total']->toDecimal(),
+            'children_total' => (float) ($calc['children_total'] ?? Money::fromCents(0, Pricing::get_currency_code()))->toDecimal(),
+            'extras_total' => (float) $calc['extras_total']->toDecimal(),
+            'deposit_amount' => (float) (isset($calc['deposit_money']) ? $calc['deposit_money']->toDecimal() : 0),
+            'deposit_amount_formatted' => isset($calc['deposit_money']) ? $calc['deposit_money']->format() : '',
+            'remaining_balance' => (float) (isset($calc['remaining_money']) ? $calc['remaining_money']->toDecimal() : 0),
+            'remaining_balance_formatted' => isset($calc['remaining_money']) ? $calc['remaining_money']->format() : '',
+            'extras_breakdown' => array_reduce($calc['extras_breakdown'] ?? array(), function($carry, $item) {
+                $carry[(string)$item['id']] = array(
+                    'value'     => (float) $item['total']->toDecimal(),
+                    'formatted' => $item['total']->format(),
+                    'name'      => $item['name'],
+                    'quantity'  => $item['quantity'],
+                );
+                return $carry;
+            }, array()),
             'breakdown' => $calc,
             'tax' => $tax_data,
-            'tax_breakdown_html' => (!\MHBO\Core\Tax::is_enabled() || get_option('mhbo_tax_display_frontend', 1)) ? \MHBO\Core\Tax::render_breakdown_html($tax_data, null, false, array(), false) : '',
+            'tax_breakdown_html' => (Tax::is_enabled() && get_option('mhbo_tax_display_frontend', 1)) ? Tax::render_breakdown_html($tax_data, null, false, array(), false) : '',
         ));
+
+return $response;
     }
 
     /**
@@ -789,7 +871,7 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
      */
     public function get_tax_settings()
     {
-        $tax = \MHBO\Core\Tax::get_settings();
+        $tax = Tax::get_settings();
 
         return rest_ensure_response(array(
             'enabled' => $tax['enabled'],
@@ -801,6 +883,68 @@ register_rest_route($namespace, '/bookings/(?P<id>\d+)', array(
             'display_frontend' => (bool) $tax['display_frontend'],
             'prices_include_tax' => (bool) $tax['prices_include_tax'],
         ));
+    }
+
+/**
+     * Prepare a booking object for REST response.
+     *
+     * @param object           $booking Booking row.
+     * @param \WP_REST_Request $request Request object.
+     * @param mixed            $access  Access level (true, error, or 'owner').
+     * @return array<string, mixed>
+     */
+    private function prepare_booking_for_response(object $booking, \WP_REST_Request $request, mixed $access = true): array
+    {
+        // Return limited data for non-admin access
+        $is_admin = Capabilities::current_user_can(Capabilities::MANAGE_SETTINGS);
+        
+        // Treat API key holders as admins for data visibility
+        $is_api_client = !empty($request->get_header('X-MHBO-API-KEY'));
+
+        $response_data = array(
+            'id' => (int) $booking->id,
+            'room_id' => (int) $booking->room_id,
+            'check_in' => $booking->check_in,
+            'check_out' => $booking->check_out,
+            'total_price' => (float) $booking->total_price,
+            'status' => $booking->status,
+            'booking_language' => $booking->booking_language,
+            'source' => $booking->source,
+            'created_at' => $booking->created_at,
+            'payment_type'               => $booking->payment_type ?? 'full',
+            'deposit_amount'             => (float)($booking->deposit_amount ?? 0),
+            'remaining_balance'          => (float)($booking->remaining_balance ?? 0),
+            'balance_status'             => $booking->balance_status ?? 'collected',
+            'deposit_is_non_refundable'  => (bool)($booking->deposit_is_non_refundable ?? 0),
+            'refund_deadline_date'       => $booking->refund_deadline_date ?? null,
+        );
+
+        // Include PII only for admin access, API clients, or verified owners
+        if ($is_admin || $is_api_client || 'owner' === $access) {
+            $response_data['customer_name'] = $booking->customer_name;
+            $response_data['customer_email'] = $booking->customer_email;
+            $response_data['customer_phone'] = $booking->customer_phone;
+            
+            $breakdown = $booking->tax_breakdown ? json_decode($booking->tax_breakdown, true) : null;
+            if (isset($breakdown['extras']) && is_array($breakdown['extras'])) {
+                foreach ($breakdown['extras'] as &$extra) {
+                    if (isset($extra['name'])) {
+                        $extra['name'] = I18n::decode($extra['name'], $booking->booking_language);
+                    }
+                }
+            }
+
+            $response_data['tax'] = array(
+                'enabled' => (bool) ($booking->tax_enabled ?? 0),
+                'mode' => $booking->tax_mode ?? 'disabled',
+                'subtotal_net' => (float) ($booking->subtotal_net ?? $booking->total_price),
+                'total_tax' => (float) ($booking->total_tax ?? 0),
+                'total_gross' => (float) ($booking->total_gross ?? $booking->total_price),
+                'breakdown' => $breakdown,
+            );
+        }
+
+        return $response_data;
     }
 
 }

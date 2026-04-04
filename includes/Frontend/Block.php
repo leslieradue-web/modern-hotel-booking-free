@@ -19,7 +19,7 @@ class Block
     public function init()
     {
         add_action('init', [$this, 'register_frontend_assets'], 5);
-        add_action('init', [$this, 'register_blocks']);
+        add_action('init', [$this, 'register_blocks'], 25);
     }
 
     /**
@@ -93,10 +93,6 @@ class Block
      */
     public function register_blocks()
     {
-        if (!function_exists('register_block_type')) {
-            return;
-        }
-
         // Register Booking Form using metadata
         $booking_form_block = register_block_type(MHBO_PLUGIN_DIR . 'assets/block/booking-form', [
             'render_callback' => [$this, 'render_booking_block'],

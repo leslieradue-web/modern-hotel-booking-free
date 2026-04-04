@@ -9,7 +9,23 @@
     registerBlockType('modern-hotel-booking/room-calendar', {
         title: __('Room Availability Calendar', 'modern-hotel-booking'),
         icon: 'calendar-alt',
-        category: 'theme',
+        category: 'mhbo-hotel',
+        transforms: {
+            from: [
+                {
+                    type: 'shortcode',
+                    tag: 'mhbo_room_calendar',
+                    attributes: {
+                        roomId: {
+                            type: 'number',
+                            shortcode: function (attributes) {
+                                return attributes.named.room_id ? parseInt(attributes.named.room_id, 10) : 0;
+                            },
+                        },
+                    },
+                },
+            ],
+        },
         attributes: {
             roomId: {
                 type: 'number',
@@ -34,15 +50,29 @@
                         })
                     )
                 ),
-                el('div', { key: 'preview', className: 'wp-block-modern-hotel-booking-room-calendar mhbo-block-preview' },
-                    el('div', { className: 'mhbo-block-icon dashicons dashicons-calendar-alt' }),
-                    el('p', {}, __('Room Availability Calendar', 'modern-hotel-booking')),
-                    el('p', { style: { fontSize: '13px', color: '#666' } },
-                        attributes.roomId > 0
-                            ? __('Room ID: ', 'modern-hotel-booking') + attributes.roomId
-                            : __('Please select a Room ID in the sidebar.', 'modern-hotel-booking')
+                el('div', { key: 'preview', className: 'wp-block-modern-hotel-booking-room-calendar mhbo-block-calendar-preview' },
+                    el('div', { className: 'mhbo-preview-header' },
+                        el('div', { className: 'mhbo-preview-month' }, __('April 2026', 'modern-hotel-booking')),
+                        el('div', { className: 'mhbo-preview-nav' }, '‹ ›')
                     ),
-                    el('small', {}, __('(Preview only - real calendar shows on frontend)', 'modern-hotel-booking'))
+                    el('div', { className: 'mhbo-preview-grid' },
+                        // Render 7 empty days as a mock
+                        [1, 2, 3, 4, 5, 6, 7].map(function (d) {
+                            return el('div', { className: 'mhbo-preview-day' + (d === 3 ? ' is-selected' : '') }, 
+                                el('span', { className: 'mhbo-day-num' }, d),
+                                el('span', { className: 'mhbo-day-price' }, '$199')
+                            );
+                        })
+                    ),
+                    el('div', { className: 'mhbo-preview-overlay' },
+                        el('div', { className: 'mhbo-block-icon dashicons dashicons-calendar-alt' }),
+                        el('p', {}, __('Room Availability Calendar', 'modern-hotel-booking')),
+                        el('p', { className: 'mhbo-preview-room-id' },
+                            attributes.roomId > 0
+                                ? __('Room ID: ', 'modern-hotel-booking') + attributes.roomId
+                                : __('Select Room ID in Sidebar', 'modern-hotel-booking')
+                        )
+                    )
                 )
             ];
         },

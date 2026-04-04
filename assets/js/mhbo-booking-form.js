@@ -61,7 +61,7 @@
                         const children = childrenSelect ? childrenSelect.value : 0;
 
                         const extras = {};
-                        form.querySelectorAll('.mhbo-extra-input:checked, .mhbo-extra-quantity-input').forEach(function (input) {
+                        form.querySelectorAll('.mhbo-extra-input').forEach(function (input) {
                             let val = 0;
                             if (input.type === 'checkbox') {
                                 if (input.checked) val = 1;
@@ -69,8 +69,8 @@
                                 val = input.value;
                             }
                             
-                            if (val) {
-                                // Extract key from data-extra-id or name attribute [key]
+                            if (val && parseFloat(val) > 0) {
+                                // Priority: data-extra-id, then id from name
                                 const extraId = input.dataset.extraId;
                                 if (extraId) {
                                     extras[extraId] = val;
@@ -114,9 +114,15 @@
                             if (totalHidden) totalHidden.value = data.total;
                             if (arrivalTotalEl) arrivalTotalEl.textContent = data.total_formatted;
 
-                            const taxContainer = wrapper.querySelector('.mhbo-tax-breakdown-container');
+                            // Update tax breakdown (2026 BP: Robust detection)
+                            const taxContainer = wrapper.querySelector('.mhbo-tax-breakdown-container, .mhbo-tax-summary, .mhbo-price-summary-totals');
                             if (taxContainer && typeof data.tax_breakdown_html !== 'undefined') {
                                 taxContainer.innerHTML = data.tax_breakdown_html;
+                                if (data.tax_breakdown_html === '') {
+                                    taxContainer.style.display = 'none';
+                                } else {
+                                    taxContainer.style.display = 'block';
+                                }
                             }
 
                             // Update Payment Cards if deposit info returned
@@ -141,6 +147,20 @@
                                 }
                             }
 
+                            // [Premium] Update individual extra impact labels
+                            if (data.extras_breakdown) {
+                                Object.entries(data.extras_breakdown).forEach(([id, impact]) => {
+                                    const card = form.querySelector(`.mhbo-extra-card[data-extra-id="${id}"]`);
+                                    if (card) {
+                                        const tag = card.querySelector('.mhbo-extra-price-tag');
+                                        if (tag && impact.value > 0) {
+                                            tag.textContent = '+ ' + impact.formatted;
+                                            tag.classList.add('mhbo-impact-highlight');
+                                        }
+                                    }
+                                });
+                            }
+
                             // Toggle deposit/balance rows based on selection
                             updateDepositVisibility();
 
@@ -154,6 +174,15 @@
                             }
                         } else {
                             debugLog('Recalculate failed:', data.message);
+                            // [CRITICAL 2026 FIX] Show error to user in a consistent way
+                            const errorContainer = wrapper.querySelector('.mhbo-booking-errors, .mhbo-errors-container');
+                            if (errorContainer) {
+                                errorContainer.innerHTML = '<div class="mhbo-error">' + (data.message || 'Error recalculating price.') + '</div>';
+                                errorContainer.style.display = 'block';
+                                setTimeout(() => {
+                                    errorContainer.style.display = 'none';
+                                }, 5000);
+                            }
                         }
                     } catch (err) {
                         debugLog('Recalculate error:', err);
@@ -223,7 +252,66 @@
             }
 
             if (guestsSelect) guestsSelect.addEventListener('change', recalculatePrice);
-            $(wrapper).on('change', 'input[name^="mhbo_extras"]', recalculatePrice);
+            
+            // Premium Extras Interactions (2026 BP)
+            $(wrapper).on('click', '.mhbo-extra-card', function(e) {
+                // Prevent double trigger if clicking buttons inside
+                if ($(e.target).closest('.mhbo-qty-btn').length) return;
+                
+                const $card = $(this);
+                const $input = $card.find('.mhbo-extra-input');
+                
+                if ($input.attr('type') === 'checkbox') {
+                    $input.prop('checked', !$input.prop('checked')).trigger('change');
+                    $card.toggleClass('selected', $input.prop('checked'));
+                    
+                    // Visual feedback: brief scale pop
+                    $card.css('transform', 'scale(0.98)');
+                    setTimeout(() => $card.css('transform', ''), 100);
+                }
+            });
+
+            // Handle Quantity Buttons
+            $(wrapper).on('click', '.mhbo-qty-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const $btn = $(this);
+                const $card = $btn.closest('.mhbo-extra-card');
+                const $input = $card.find('.mhbo-extra-input'); // Actual hidden input
+                const $display = $card.find('.mhbo-extra-qty-display'); // Read-only display
+                
+                let currentVal = parseFloat($input.val()) || 0;
+                const isPlus = $btn.hasClass('plus');
+                
+                if (isPlus) {
+                    currentVal++;
+                } else {
+                    currentVal = Math.max(0, currentVal - 1);
+                }
+                
+                $input.val(currentVal).trigger('change');
+                $display.val(currentVal);
+                $card.toggleClass('selected', currentVal > 0);
+            });
+
+            // Initial sync for cards (if some are pre-filled)
+            wrapper.querySelectorAll('.mhbo-extra-card').forEach(card => {
+                const input = card.querySelector('.mhbo-extra-input');
+                if (input && (input.checked || parseFloat(input.value) > 0)) {
+                    card.classList.add('selected');
+                    const qtyDisplay = card.querySelector('.mhbo-extra-qty-display');
+                    if (qtyDisplay) qtyDisplay.value = input.value;
+                }
+            });
+
+            $(wrapper).on('change', '.mhbo-extra-input', recalculatePrice);
+
+            // [CRITICAL 2026 FIX] Add listeners for check-in/out to trigger recalculation when calendar updates them
+            const dateInputs = wrapper.querySelectorAll('input[name="check_in"], input[name="check_out"]');
+            dateInputs.forEach(input => {
+                input.addEventListener('change', recalculatePrice);
+            });
 
             // Payment Type Change
             $(wrapper).on('change', 'input[name="mhbo_payment_type"]', function() {

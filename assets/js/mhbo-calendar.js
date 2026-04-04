@@ -7,6 +7,12 @@ jQuery(document).ready(function ($) {
         return isDebug ? console.error.bind(console, '[MHBO]') : function () { };
     })();
 
+    // Create shared tooltip element (2026 BP: Single tooltip per page for performance)
+    let $tooltip = $('.mhbo-calendar-tooltip');
+    if (!$tooltip.length) {
+        $tooltip = $('<div class="mhbo-calendar-tooltip"><span class="mhbo-tooltip-nights"></span><span class="mhbo-tooltip-price"></span></div>').appendTo('body');
+    }
+
     function initAllCalendars() {
         $('.mhbo-calendar-container').each(function () {
             const $wrapper = $(this);
@@ -228,6 +234,84 @@ jQuery(document).ready(function ($) {
 
                 // ATTACH INSTANCE TO WRAPPER (CRITICAL FOR HARDENING)
                 $wrapper.data('mhbo-picker', picker);
+
+                // --- INTERACTIVE PRICE-ON-HOVER (2026 BP) ---
+                $wrapper.on('mousemove', '.flatpickr-day', function (e) {
+                    if (!picker || picker.selectedDates.length !== 1) {
+                        $tooltip.removeClass('mhbo-visible');
+                        $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
+                        return;
+                    }
+
+                    const hoverDate = this.dateObj;
+                    if (!hoverDate || hoverDate < picker.selectedDates[0] || $(this).hasClass('flatpickr-disabled')) {
+                        $tooltip.removeClass('mhbo-visible');
+                        $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
+                        return;
+                    }
+
+                    // Calculate range from selected check-in to hovered date
+                    const start = picker.selectedDates[0];
+                    const end = hoverDate;
+                    
+                    // Don't show for same day
+                    if (start.getTime() === end.getTime()) {
+                        $tooltip.removeClass('mhbo-visible');
+                        $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
+                        return;
+                    }
+
+                    // Calculate total and night count
+                    let total = 0;
+                    let nights = 0;
+                    let d = new Date(start);
+                    
+                    // Clear previous hover glow
+                    $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
+
+                    while (d < end) {
+                        const dStr = picker.formatDate(d, "Y-m-d");
+                        if (priceData[dStr]) {
+                            total += parseFloat(priceData[dStr].price);
+                        }
+                        
+                        // Apply hover glow to valid days in range
+                        // Find the element for this date
+                        const dayElem = picker.daysContainer.querySelector(`[aria-label="${picker.formatDate(d, picker.config.ariaDateFormat)}"]`);
+                        if (dayElem) {
+                            $(dayElem).addClass('mhbo-range-hover');
+                        }
+
+                        nights++;
+                        d.setDate(d.getDate() + 1);
+                    }
+
+                    const formattedTotal = formatCurrency(total);
+                    const nightsLabel = nights === 1 ? (mhbo_calendar.i18n.night || 'Night') : (mhbo_calendar.i18n.nights || 'Nights');
+                    const nightsFull = nights + ' ' + nightsLabel;
+
+                    const showPrice = $wrapper.data('show-price') === 1;
+
+                    // Update and position tooltip
+                    $tooltip.find('.mhbo-tooltip-nights').text(nightsFull);
+                    
+                    if (showPrice && total > 0) {
+                        $tooltip.find('.mhbo-tooltip-price').text(formattedTotal).show();
+                    } else {
+                        $tooltip.find('.mhbo-tooltip-price').hide();
+                    }
+                    
+                    // Use clientX/Y for position:fixed elements to avoid scroll offsets
+                    $tooltip.css({
+                        left: e.clientX,
+                        top: e.clientY
+                    }).addClass('mhbo-visible');
+                });
+
+                $wrapper.on('mouseleave', '.mhbo-calendar-inline', function () {
+                    $tooltip.removeClass('mhbo-visible');
+                    $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
+                });
             }
 
             function updateBookingForm(dates) {

@@ -140,7 +140,7 @@ class Calendar
                 'settings' => [
                     'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
                     'currency_pos' => get_option('mhbo_currency_position', 'before'),
-                    'currency_decimals' => apply_filters('mhbo_currency_decimals', 0),
+                    'currency_decimals' => (int) get_option('mhbo_calendar_show_decimals', 0) === 1 ? (int) apply_filters('mhbo_currency_decimals', 2) : 0,
                     'currency_space_before' => 0,
                     'currency_space_after' => 0,
                     'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
@@ -157,6 +157,8 @@ class Calendar
                     'check_in_from' => I18n::get_label('label_check_in_from'),
                     'check_out_by' => I18n::get_label('label_check_out_by'),
                     'continue_booking' => I18n::get_label('label_continue_booking'),
+                    'night' => I18n::get_label('label_night'),
+                    'nights' => I18n::get_label('label_nights'),
                 ],
                 'current_lang' => $current_lang
             ]);
@@ -233,15 +235,26 @@ class Calendar
             <?php
             // Build the action URL for the booking form submission
             $action_url = I18n::decode(get_option('mhbo_booking_page_url'), null, false);
-            if (!$action_url) {
-                $b_page_id = get_option('mhbo_booking_page');
-                if ($b_page_id) {
+            if (empty($action_url)) {
+                $b_page_id = (int) get_option('mhbo_booking_page');
+                if ($b_page_id > 0) {
                     $action_url = get_permalink($b_page_id);
                 }
             }
-            if (!$action_url) {
+
+            // Fallback: If no booking page is configured, use the home URL to avoid relative path issues
+            if (empty($action_url)) {
                 $action_url = home_url('/');
             }
+
+            /**
+             * Filter the calendar form action URL.
+             *
+             * @since 1.0.0
+             * @param string $action_url The resolved action URL.
+             * @param int    $room_id    The current room ID (or 0 for aggregated).
+             */
+            $action_url = apply_filters('mhbo_calendar_action_url', $action_url, $room_id);
 
             // Button label depends on context
             $btn_label = ($room_id > 0) ? I18n::get_label('btn_book_now') : I18n::get_label('btn_search_rooms');
@@ -286,6 +299,7 @@ class Calendar
                             <!-- Room Type and Guests selections are deliberately deferred to the subsequent pages -->
                             <input type="hidden" name="type_id" class="mhbo-cal-type-id" value="0">
                             <input type="hidden" name="guests" class="mhbo-cal-guests" value="2">
+                            
                         <?php endif; ?>
                     </div>
 

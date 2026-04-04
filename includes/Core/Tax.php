@@ -2,6 +2,8 @@
 
 namespace MHBO\Core;
 
+use MHBO\Core\Money;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -51,10 +53,10 @@ class Tax
     /**
      * Get tax label for current language
      *
-     * @param string $language Language code (optional)
+     * @param string|null $language Language code (optional)
      * @return string
      */
-    public static function get_label($language = null)
+    public static function get_label(?string $language = null): string
     {
         if (null === $language) {
             $language = I18n::get_current_language();
@@ -69,9 +71,9 @@ class Tax
      *
      * @return string
      */
-    public static function get_registration_number()
+    public static function get_registration_number(): string
     {
-        return get_option('mhbo_tax_registration_number', '');
+        return (string) get_option('mhbo_tax_registration_number', '');
     }
 
     /**
@@ -79,7 +81,7 @@ class Tax
      *
      * @return float
      */
-    public static function get_accommodation_rate()
+    public static function get_accommodation_rate(): float
     {
         return floatval(get_option('mhbo_tax_rate_accommodation', 0.00));
     }
@@ -89,7 +91,7 @@ class Tax
      *
      * @return float
      */
-    public static function get_extras_rate()
+    public static function get_extras_rate(): float
     {
         return floatval(get_option('mhbo_tax_rate_extras', 0.00));
     }
@@ -99,9 +101,9 @@ class Tax
      *
      * @return string
      */
-    public static function get_rounding_mode()
+    public static function get_rounding_mode(): string
     {
-        return get_option('mhbo_tax_rounding_mode', self::ROUND_PER_TOTAL);
+        return (string) get_option('mhbo_tax_rounding_mode', self::ROUND_PER_TOTAL);
     }
 
     /**
@@ -109,7 +111,7 @@ class Tax
      *
      * @return int
      */
-    public static function get_decimal_places()
+    public static function get_decimal_places(): int
     {
         return intval(get_option('mhbo_tax_decimal_places', 2));
     }
@@ -117,9 +119,9 @@ class Tax
     /**
      * Get all tax settings as an array
      *
-     * @return array Tax settings
+     * @return array<string, mixed> Tax settings
      */
-    public static function get_settings()
+    public static function get_settings(): array
     {
         $mode = self::get_mode();
 
@@ -146,35 +148,18 @@ class Tax
      * @param float $gross_amount Gross amount (includes tax)
      * @param float $tax_rate Tax rate as percentage
      * @param bool $round Whether to round the result (default: true)
-     * @return array ['net' => float, 'tax' => float, 'gross' => float]
+     * @return array<string, float> ['net' => float, 'tax' => float, 'gross' => float]
      */
-    public static function calculate_from_gross($gross_amount, $tax_rate, $round = true)
+    public static function calculate_from_gross(float $gross_amount, float $tax_rate, bool $round = true): array
     {
-        $decimal_places = self::get_decimal_places();
-
-        if ($tax_rate === 0.0 || $gross_amount === 0.0) {
-            return [
-                'net' => $round ? round(floatval($gross_amount), $decimal_places) : floatval($gross_amount),
-                'tax' => 0.00,
-                'gross' => $round ? round(floatval($gross_amount), $decimal_places) : floatval($gross_amount)
-            ];
-        }
-
-        $net = $gross_amount / (1 + ($tax_rate / 100));
-        $tax = $gross_amount - $net;
-
-        if ($round) {
-            return [
-                'net' => round($net, $decimal_places),
-                'tax' => round($tax, $decimal_places),
-                'gross' => round(floatval($gross_amount), $decimal_places)
-            ];
-        }
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
+        $gross_money = Money::fromDecimal((string) $gross_amount, $currency);
+        $calc = self::calculate_from_gross_money($gross_money, $tax_rate);
 
         return [
-            'net' => $net,
-            'tax' => $tax,
-            'gross' => floatval($gross_amount)
+            'net'   => $round ? floatval($calc['net']->toDecimal()) : floatval($calc['net']->toDecimal()), // Backward compatibility
+            'tax'   => $round ? floatval($calc['tax']->toDecimal()) : floatval($calc['tax']->toDecimal()),
+            'gross' => $round ? floatval($calc['gross']->toDecimal()) : floatval($calc['gross']->toDecimal())
         ];
     }
 
@@ -186,35 +171,18 @@ class Tax
      * @param float $net_amount Net amount (before tax)
      * @param float $tax_rate Tax rate as percentage
      * @param bool $round Whether to round the result (default: true)
-     * @return array ['net' => float, 'tax' => float, 'gross' => float]
+     * @return array<string, float> ['net' => float, 'tax' => float, 'gross' => float]
      */
-    public static function calculate_from_net($net_amount, $tax_rate, $round = true)
+    public static function calculate_from_net(float $net_amount, float $tax_rate, bool $round = true): array
     {
-        $decimal_places = self::get_decimal_places();
-
-        if ($tax_rate === 0.0 || $net_amount === 0.0) {
-            return [
-                'net' => $round ? round(floatval($net_amount), $decimal_places) : floatval($net_amount),
-                'tax' => 0.00,
-                'gross' => $round ? round(floatval($net_amount), $decimal_places) : floatval($net_amount)
-            ];
-        }
-
-        $tax = $net_amount * ($tax_rate / 100);
-        $gross = $net_amount + $tax;
-
-        if ($round) {
-            return [
-                'net' => round(floatval($net_amount), $decimal_places),
-                'tax' => round($tax, $decimal_places),
-                'gross' => round($gross, $decimal_places)
-            ];
-        }
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
+        $net_money = Money::fromDecimal((string) $net_amount, $currency);
+        $calc = self::calculate_from_net_money($net_money, $tax_rate);
 
         return [
-            'net' => floatval($net_amount),
-            'tax' => $tax,
-            'gross' => $gross
+            'net'   => $round ? floatval($calc['net']->toDecimal()) : floatval($calc['net']->toDecimal()), // Backward compatibility
+            'tax'   => $round ? floatval($calc['tax']->toDecimal()) : floatval($calc['tax']->toDecimal()),
+            'gross' => $round ? floatval($calc['gross']->toDecimal()) : floatval($calc['gross']->toDecimal())
         ];
     }
 
@@ -223,11 +191,11 @@ class Tax
      *
      * @param float $amount The amount (gross for VAT, net for Sales Tax)
      * @param float $tax_rate Tax rate as percentage
-     * @param string $mode Tax mode (optional, uses current setting)
+     * @param string|null $mode Tax mode (optional, uses current setting)
      * @param bool $round Whether to round the result (default: true)
-     * @return array ['net' => float, 'tax' => float, 'gross' => float]
+     * @return array<string, float> ['net' => float, 'tax' => float, 'gross' => float]
      */
-    public static function calculate_tax($amount, $tax_rate, $mode = null, $round = true)
+    public static function calculate_tax(float $amount, float $tax_rate, ?string $mode = null, bool $round = true): array
     {
         if (null === $mode) {
             $mode = self::get_mode();
@@ -240,34 +208,103 @@ class Tax
         }
 
         // Disabled mode - no tax
-        $decimal_places = self::get_decimal_places();
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
+        $money = Money::fromDecimal((string) $amount, $currency);
         return [
-            'net' => $round ? round(floatval($amount), $decimal_places) : floatval($amount),
-            'tax' => 0.00,
-            'gross' => $round ? round(floatval($amount), $decimal_places) : floatval($amount)
+            'net'   => (float) $money->toDecimal(),
+            'tax'   => 0.0,
+            'gross' => (float) $money->toDecimal(),
         ];
     }
 
     /**
+     * Precision-safe tax calculation using Money objects.
+     *
+     * @param Money $amount   The amount (gross for VAT, net for Sales Tax).
+     * @param float $tax_rate Tax rate as percentage.
+     * @param string|null $mode Tax mode.
+     * @return array{net: Money, tax: Money, gross: Money}
+     */
+    public static function calculate_tax_money(Money $amount, float $tax_rate, ?string $mode = null): array
+    {
+        if (null === $mode) {
+            $mode = self::get_mode();
+        }
+
+        if ($tax_rate === 0.0 || $amount->isZero()) {
+            return [
+                'net' => $amount,
+                'tax' => Money::fromCents(0, $amount->getCurrency()),
+                'gross' => $amount
+            ];
+        }
+
+        if (self::MODE_VAT === $mode) {
+            return self::calculate_from_gross_money($amount, $tax_rate);
+        } elseif (self::MODE_SALES_TAX === $mode) {
+            return self::calculate_from_net_money($amount, $tax_rate);
+        }
+
+        // Disabled mode
+        return [
+            'net' => $amount,
+            'tax' => Money::fromCents(0, $amount->getCurrency()),
+            'gross' => $amount
+        ];
+    }
+
+    /**
+     * Formula: Net = Gross / (1 + Rate/100), Tax = Gross - Net
+     */
+    private static function calculate_from_gross_money(Money $gross, float $rate): array
+    {
+        // 1 + Rate/100
+        $divisor = 1 + ($rate / 100);
+        
+        $net = $gross->divide($divisor);
+        $tax = $gross->subtract($net);
+
+        return [
+            'net' => $net,
+            'tax' => $tax,
+            'gross' => $gross
+        ];
+    }
+
+    /**
+     * Formula: Tax = Net * (Rate/100), Gross = Net + Tax
+     */
+    private static function calculate_from_net_money(Money $net, float $rate): array
+    {
+        $multiplier = $rate / 100;
+        
+        $tax = $net->multiply($multiplier);
+        $gross = $net->add($tax);
+
+        return [
+            'net' => $net,
+            'tax' => $tax,
+            'gross' => $gross
+        ];
+    }
+
+/**
      * Calculate full booking tax breakdown
      *
-     * @param array $booking_data Booking data containing:
+     * @param array<string, mixed> $booking_data Booking data containing:
      *   - room_total: float Total room charges
      *   - children_total: float Total children charges (optional)
      *   - extras_total: float Total extras charges (optional)
      *   - extras: array Extras breakdown (optional)
-     * @return array Tax breakdown
+     * @return array<string, mixed> Tax breakdown
      */
-    public static function calculate_booking_tax($booking_data)
+    public static function calculate_booking_tax(array $booking_data): array
     {
         $mode = self::get_mode();
         $accommodation_rate = self::get_accommodation_rate();
         $extras_rate = self::get_extras_rate();
         $rounding_mode = self::get_rounding_mode();
-        $decimal_places = self::get_decimal_places();
-
-        // For ROUND_PER_TOTAL, we calculate unrounded values first
-        $should_round_individual = (self::ROUND_PER_LINE === $rounding_mode);
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
 
         $result = [
             'enabled' => self::is_enabled(),
@@ -290,138 +327,128 @@ class Tax
             ],
             'rounding' => [
                 'mode' => $rounding_mode,
-                'decimal_places' => $decimal_places
+                'decimal_places' => self::get_decimal_places()
             ],
             'calculated_at' => current_time('mysql')
         ];
 
-// Calculate room tax
-        $room_total = floatval($booking_data['room_total'] ?? 0);
-        if (0 < $room_total) {
-            $room_calc = self::calculate_tax($room_total, $accommodation_rate, $mode, $should_round_individual);
+        // Initialize component total Money objects
+        $total_net_money = Money::fromCents(0, $currency);
+        $total_tax_money = Money::fromCents(0, $currency);
+        $total_gross_money = Money::fromCents(0, $currency);
+
+        $room_net_money = Money::fromCents(0, $currency);
+        $room_tax_money = Money::fromCents(0, $currency);
+        $children_net_money = Money::fromCents(0, $currency);
+        $children_tax_money = Money::fromCents(0, $currency);
+        $extras_net_money = Money::fromCents(0, $currency);
+        $extras_tax_money = Money::fromCents(0, $currency);
+
+        // Calculate room tax
+        $room_total_val = (string) ($booking_data['room_total'] ?? '0');
+        if ('0' !== $room_total_val && '0.00' !== $room_total_val) {
+            $room_money = Money::fromDecimal($room_total_val, $currency);
+            $room_calc = self::calculate_tax_money($room_money, $accommodation_rate, $mode);
+            
+            $room_net_money = $room_calc['net'];
+            $room_tax_money = $room_calc['tax'];
+
             $result['breakdown']['room'] = [
-                'gross_amount' => $room_total,
-                'net' => $room_calc['net'],
+                'gross_amount' => $room_money->toDecimal(),
+                'net' => $room_net_money->toDecimal(),
                 'tax_rate' => $accommodation_rate,
-                'tax' => $room_calc['tax'],
-                'gross' => $room_calc['gross']
+                'tax' => $room_tax_money->toDecimal(),
+                'gross' => $room_calc['gross']->toDecimal()
             ];
+
+            $total_net_money = $total_net_money->add($room_net_money);
+            $total_tax_money = $total_tax_money->add($room_tax_money);
+            $total_gross_money = $total_gross_money->add($room_calc['gross']);
         }
 
         // Calculate children tax
-        $children_total = floatval($booking_data['children_total'] ?? 0);
-        if (0 < $children_total) {
-            $children_calc = self::calculate_tax($children_total, $accommodation_rate, $mode, $should_round_individual);
+        $children_total_val = (string) ($booking_data['children_total'] ?? '0');
+        if ('0' !== $children_total_val && '0.00' !== $children_total_val) {
+            $children_money = Money::fromDecimal($children_total_val, $currency);
+            $children_calc = self::calculate_tax_money($children_money, $accommodation_rate, $mode);
+
+            $children_net_money = $children_calc['net'];
+            $children_tax_money = $children_calc['tax'];
+
             $result['breakdown']['children'] = [
-                'gross_amount' => $children_total,
-                'net' => $children_calc['net'],
+                'gross_amount' => $children_money->toDecimal(),
+                'net' => $children_net_money->toDecimal(),
                 'tax_rate' => $accommodation_rate,
-                'tax' => $children_calc['tax'],
-                'gross' => $children_calc['gross']
+                'tax' => $children_tax_money->toDecimal(),
+                'gross' => $children_calc['gross']->toDecimal()
             ];
+
+            $total_net_money = $total_net_money->add($children_net_money);
+            $total_tax_money = $total_tax_money->add($children_tax_money);
+            $total_gross_money = $total_gross_money->add($children_calc['gross']);
         }
 
         // Calculate extras tax
-        $extras_total = floatval($booking_data['extras_total'] ?? 0);
-        $extras_items = $booking_data['extras'] ?? [];
+        $extras_items = (array)($booking_data['extras'] ?? []);
+        $extras_total_val = (string) ($booking_data['extras_total'] ?? '0');
 
-        if (0 < $extras_total && !empty($extras_items)) {
+        if (!empty($extras_items)) {
             foreach ($extras_items as $extra) {
-                $extra_amount = floatval($extra['total'] ?? 0);
-                if (0 < $extra_amount) {
-                    $extra_calc = self::calculate_tax($extra_amount, $extras_rate, $mode, $should_round_individual);
+                $extra_total_val = (string) ($extra['total'] ?? '0');
+                if ('0' !== $extra_total_val && '0.00' !== $extra_total_val) {
+                    $extra_money = Money::fromDecimal($extra_total_val, $currency);
+                    $extra_calc = self::calculate_tax_money($extra_money, $extras_rate, $mode);
+
                     $result['breakdown']['extras'][] = [
                         'id' => $extra['id'] ?? '',
                         'name' => I18n::decode($extra['name'] ?? ''),
-                        'gross_amount' => $extra_amount,
-                        'net' => $extra_calc['net'],
+                        'gross_amount' => $extra_money->toDecimal(),
+                        'net' => $extra_calc['net']->toDecimal(),
                         'tax_rate' => $extras_rate,
-                        'tax' => $extra_calc['tax'],
-                        'gross' => $extra_calc['gross']
+                        'tax' => $extra_calc['tax']->toDecimal(),
+                        'gross' => $extra_calc['gross']->toDecimal()
                     ];
+
+                    $extras_net_money = $extras_net_money->add($extra_calc['net']);
+                    $extras_tax_money = $extras_tax_money->add($extra_calc['tax']);
+                    $total_net_money = $total_net_money->add($extra_calc['net']);
+                    $total_tax_money = $total_tax_money->add($extra_calc['tax']);
+                    $total_gross_money = $total_gross_money->add($extra_calc['gross']);
                 }
             }
-        } elseif (0 < $extras_total) {
-            // No item breakdown, just total
-            $extras_calc = self::calculate_tax($extras_total, $extras_rate, $mode, $should_round_individual);
+        } elseif ('0' !== $extras_total_val && '0.00' !== $extras_total_val) {
+            $extras_money = Money::fromDecimal($extras_total_val, $currency);
+            $extras_calc = self::calculate_tax_money($extras_money, $extras_rate, $mode);
+
             $result['breakdown']['extras'][] = [
                 'id' => 'total',
                 'name' => 'Extras',
-                'gross_amount' => $extras_total,
-                'net' => $extras_calc['net'],
+                'gross_amount' => $extras_money->toDecimal(),
+                'net' => $extras_calc['net']->toDecimal(),
                 'tax_rate' => $extras_rate,
-                'tax' => $extras_calc['tax'],
-                'gross' => $extras_calc['gross']
+                'tax' => $extras_calc['tax']->toDecimal(),
+                'gross' => $extras_calc['gross']->toDecimal()
             ];
+
+            $extras_net_money = $extras_calc['net'];
+            $extras_tax_money = $extras_calc['tax'];
+            $total_net_money = $total_net_money->add($extras_net_money);
+            $total_tax_money = $total_tax_money->add($extras_tax_money);
+            $total_gross_money = $total_gross_money->add($extras_calc['gross']);
         }
 
-        // Calculate totals - always round at the end
-        $total_net = 0;
-        $total_tax = 0;
-        $total_gross = 0;
-
-        // Initialize component totals
-        $room_net = 0;
-        $room_tax = 0;
-        $children_net = 0;
-        $children_tax = 0;
-        $extras_net = 0;
-        $extras_tax = 0;
-
-        if (isset($result['breakdown']['room'])) {
-            $room_net = $result['breakdown']['room']['net'];
-            $room_tax = $result['breakdown']['room']['tax'];
-            $total_net += $room_net;
-            $total_tax += $room_tax;
-            $total_gross += $result['breakdown']['room']['gross'];
-        }
-        if (isset($result['breakdown']['children'])) {
-            $children_net = $result['breakdown']['children']['net'];
-            $children_tax = $result['breakdown']['children']['tax'];
-            $total_net += $children_net;
-            $total_tax += $children_tax;
-            $total_gross += $result['breakdown']['children']['gross'];
-        }
-        foreach ($result['breakdown']['extras'] as $extra) {
-            $extras_net += $extra['net'];
-            $extras_tax += $extra['tax'];
-            $total_net += $extra['net'];
-            $total_tax += $extra['tax'];
-            $total_gross += $extra['gross'];
-        }
-
-        // Round totals
+        // Final totals
         $result['totals'] = [
-            'room_net' => round($room_net, $decimal_places),
-            'room_tax' => round($room_tax, $decimal_places),
-            'children_net' => round($children_net, $decimal_places),
-            'children_tax' => round($children_tax, $decimal_places),
-            'extras_net' => round($extras_net, $decimal_places),
-            'extras_tax' => round($extras_tax, $decimal_places),
-            'subtotal_net' => round($total_net, $decimal_places),
-            'total_tax' => round($total_tax, $decimal_places),
-            'total_gross' => round($total_gross, $decimal_places)
+            'room_net' => $room_net_money,
+            'room_tax' => $room_tax_money,
+            'children_net' => $children_net_money,
+            'children_tax' => $children_tax_money,
+            'extras_net' => $extras_net_money,
+            'extras_tax' => $extras_tax_money,
+            'subtotal_net' => $total_net_money,
+            'total_tax' => $total_tax_money,
+            'total_gross' => $total_gross_money
         ];
-
-        // For ROUND_PER_TOTAL, also round the individual breakdown items for display
-        if (self::ROUND_PER_TOTAL === $rounding_mode) {
-            if (isset($result['breakdown']['room'])) {
-                $result['breakdown']['room']['net'] = round($result['breakdown']['room']['net'], $decimal_places);
-                $result['breakdown']['room']['tax'] = round($result['breakdown']['room']['tax'], $decimal_places);
-                $result['breakdown']['room']['gross'] = round($result['breakdown']['room']['gross'], $decimal_places);
-            }
-            if (isset($result['breakdown']['children'])) {
-                $result['breakdown']['children']['net'] = round($result['breakdown']['children']['net'], $decimal_places);
-                $result['breakdown']['children']['tax'] = round($result['breakdown']['children']['tax'], $decimal_places);
-                $result['breakdown']['children']['gross'] = round($result['breakdown']['children']['gross'], $decimal_places);
-            }
-            foreach ($result['breakdown']['extras'] as &$extra) {
-                $extra['net'] = round($extra['net'], $decimal_places);
-                $extra['tax'] = round($extra['tax'], $decimal_places);
-                $extra['gross'] = round($extra['gross'], $decimal_places);
-            }
-            unset($extra); // Break reference
-        }
 
         return $result;
     }
@@ -429,10 +456,10 @@ class Tax
     /**
      * Alias for calculate_booking_tax for backward compatibility
      *
-     * @param array $booking_data Booking data
-     * @return array Tax breakdown
+     * @param array<string, mixed> $booking_data Booking data
+     * @return array<string, mixed> Tax breakdown
      */
-    public static function calculate_breakdown($booking_data)
+    public static function calculate_breakdown(array $booking_data): array
     {
         return self::calculate_booking_tax($booking_data);
     }
@@ -441,9 +468,9 @@ class Tax
      * Get stored tax breakdown for a booking
      *
      * @param int $booking_id Booking ID
-     * @return array|null Tax breakdown or null if not found
+     * @return array<string, mixed>|null Tax breakdown or null if not found
      */
-    public static function get_tax_breakdown($booking_id)
+    public static function get_tax_breakdown(int $booking_id): ?array
     {
         global $wpdb;
 
@@ -473,7 +500,16 @@ class Tax
             return json_decode($booking['tax_breakdown'], true);
         }
 
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
+
         // Otherwise, reconstruct from database columns
+        $room_net = Money::fromDecimal((string) ($booking['room_total_net'] ?? '0'), $currency);
+        $room_tax = Money::fromDecimal((string) ($booking['room_tax'] ?? '0'), $currency);
+        $children_net = Money::fromDecimal((string) ($booking['children_total_net'] ?? '0'), $currency);
+        $children_tax = Money::fromDecimal((string) ($booking['children_tax'] ?? '0'), $currency);
+        $extras_net = Money::fromDecimal((string) ($booking['extras_total_net'] ?? '0'), $currency);
+        $extras_tax = Money::fromDecimal((string) ($booking['extras_tax'] ?? '0'), $currency);
+
         return [
             'enabled' => self::MODE_DISABLED !== $booking['tax_mode'],
             'mode' => $booking['tax_mode'],
@@ -483,28 +519,28 @@ class Tax
             ],
             'breakdown' => [
                 'room' => [
-                    'net' => floatval($booking['room_total_net']),
-                    'tax' => floatval($booking['room_tax']),
-                    'gross' => floatval($booking['room_total_net']) + floatval($booking['room_tax'])
+                    'net' => $room_net->toDecimal(),
+                    'tax' => $room_tax->toDecimal(),
+                    'gross' => $room_net->add($room_tax)->toDecimal()
                 ],
                 'children' => [
-                    'net' => floatval($booking['children_total_net']),
-                    'tax' => floatval($booking['children_tax']),
-                    'gross' => floatval($booking['children_total_net']) + floatval($booking['children_tax'])
+                    'net' => $children_net->toDecimal(),
+                    'tax' => $children_tax->toDecimal(),
+                    'gross' => $children_net->add($children_tax)->toDecimal()
                 ],
                 'extras' => [
                     [
                         'name' => I18n::get_label('label_extras') ?? __('Extras', 'modern-hotel-booking'),
-                        'net' => floatval($booking['extras_total_net']),
-                        'tax' => floatval($booking['extras_tax']),
-                        'gross' => floatval($booking['extras_total_net']) + floatval($booking['extras_tax'])
+                        'net' => $extras_net->toDecimal(),
+                        'tax' => $extras_tax->toDecimal(),
+                        'gross' => $extras_net->add($extras_tax)->toDecimal()
                     ]
                 ]
             ],
             'totals' => [
-                'subtotal_net' => floatval($booking['subtotal_net']),
-                'total_tax' => floatval($booking['total_tax']),
-                'total_gross' => floatval($booking['total_gross'])
+                'subtotal_net' => Money::fromDecimal((string) ($booking['subtotal_net'] ?? '0'), $currency)->toDecimal(),
+                'total_tax' => Money::fromDecimal((string) ($booking['total_tax'] ?? '0'), $currency)->toDecimal(),
+                'total_gross' => Money::fromDecimal((string) ($booking['total_gross'] ?? '0'), $currency)->toDecimal()
             ]
         ];
     }
@@ -512,12 +548,12 @@ class Tax
     /**
      * Format tax breakdown for display
      *
-     * @param array $breakdown Tax breakdown array
-     * @param string $language Language code (optional)
-     * @param array $meta Optional metadata (guests, children)
-     * @return array Formatted breakdown for display
+     * @param array<string, mixed> $breakdown Tax breakdown array
+     * @param string|null $language Language code (optional)
+     * @param array<string, mixed> $meta Optional metadata (guests, children)
+     * @return array<string, mixed> Formatted breakdown for display
      */
-    public static function format_tax_breakdown($breakdown, $language = null, $meta = array())
+    public static function format_tax_breakdown(array $breakdown, ?string $language = null, array $meta = []): array
     {
         if (null === $language) {
             $language = I18n::get_current_language();
@@ -604,9 +640,9 @@ class Tax
         // Totals
         $totals = $breakdown['totals'] ?? [];
         $formatted['totals'] = [
-            'subtotal_net' => $totals['subtotal_net'] ?? 0,
-            'total_tax' => $totals['total_tax'] ?? 0,
-            'total_gross' => $totals['total_gross'] ?? 0,
+            'subtotal_net' => is_array($totals['subtotal_net'] ?? 0) ? 0 : ($totals['subtotal_net'] ?? 0),
+            'total_tax' => is_array($totals['total_tax'] ?? 0) ? 0 : ($totals['total_tax'] ?? 0),
+            'total_gross' => is_array($totals['total_gross'] ?? 0) ? 0 : ($totals['total_gross'] ?? 0),
             'subtotal_net_formatted' => I18n::format_currency($totals['subtotal_net'] ?? 0),
             'total_tax_formatted' => I18n::format_currency($totals['total_tax'] ?? 0),
             'total_gross_formatted' => I18n::format_currency($totals['total_gross'] ?? 0),
@@ -621,14 +657,14 @@ class Tax
     /**
      * Render HTML for tax breakdown
      *
-     * @param array $breakdown Tax breakdown (from calculate_booking_tax or storage)
-     * @param string $language Language code (optional)
+     * @param array<string, mixed> $breakdown Tax breakdown (from calculate_booking_tax or storage)
+     * @param string|null $language Language code (optional)
      * @param bool $is_email Whether to use email-friendly inline styles
-     * @param array $meta Optional metadata (guests, children)
+     * @param array<string, mixed> $meta Optional metadata (guests, children)
      * @param bool $show_note Whether to show the tax included note (VAT mode only)
      * @return string HTML
      */
-    public static function render_breakdown_html($breakdown, $language = null, $is_email = false, $meta = array(), $show_note = true)
+    public static function render_breakdown_html(array $breakdown, ?string $language = null, bool $is_email = false, array $meta = [], bool $show_note = true): string
     {
         if (!self::is_enabled() && ($breakdown['enabled'] ?? false) === false) {
             return '';
@@ -649,14 +685,19 @@ class Tax
         ];
 
         // Get tax rates and amounts for separate display
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
         $rates = $breakdown['rates'] ?? [];
         $totals = $breakdown['totals'] ?? [];
         $accommodation_rate = floatval($rates['accommodation'] ?? self::get_accommodation_rate());
         $extras_rate = floatval($rates['extras'] ?? self::get_extras_rate());
-        $room_tax = floatval($totals['room_tax'] ?? 0);
-        $children_tax = floatval($totals['children_tax'] ?? 0);
-        $extras_tax = floatval($totals['extras_tax'] ?? 0);
-        $accommodation_tax_total = $room_tax + $children_tax;
+        
+        $room_tax_money = Money::fromDecimal((string) ($totals['room_tax'] ?? '0'), $currency);
+        $children_tax_money = Money::fromDecimal((string) ($totals['children_tax'] ?? '0'), $currency);
+        $extras_tax_money = Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency);
+        
+        $accommodation_tax_total_money = $room_tax_money->add($children_tax_money);
+        $accommodation_tax_total = floatval($accommodation_tax_total_money->toDecimal());
+        $extras_tax = floatval($extras_tax_money->toDecimal());
 
         // Check if we need to show separate tax lines
         $show_separate_tax_lines = ($accommodation_rate !== $extras_rate) && ($accommodation_tax_total > 0 || $extras_tax > 0);
@@ -717,7 +758,7 @@ class Tax
                                     <td style="<?php echo esc_attr($styles['td']); ?>">
                                         <?php
                                         // translators: 1: Tax label, 2: Tax rate percentage
-                                        echo esc_html(sprintf(I18n::get_label('label_tax_accommodation') ?? __('%1$s - Accommodation (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $accommodation_rate)); ?>
+                                        echo esc_html(sprintf(I18n::get_label('label_tax_accommodation') ?? __('%1$s - Accommodation (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], (float) $accommodation_rate + 0)); ?>
                                     </td>
                                     <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                         <?php echo esc_html(I18n::format_currency($accommodation_tax_total)); ?>
@@ -729,7 +770,7 @@ class Tax
                                     <td style="<?php echo esc_attr($styles['td']); ?>">
                                         <?php
                                         // translators: 1: Tax label, 2: Tax rate percentage
-                                        echo esc_html(sprintf(I18n::get_label('label_tax_extras') ?? __('%1$s - Extras (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $extras_rate)); ?>
+                                        echo esc_html(sprintf(I18n::get_label('label_tax_extras') ?? __('%1$s - Extras (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], (float) $extras_rate + 0)); ?>
                                     </td>
                                     <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                         <?php echo esc_html(I18n::format_currency($extras_tax)); ?>
@@ -741,7 +782,7 @@ class Tax
                                 <td style="<?php echo esc_attr($styles['td']); ?>">
                                     <?php
                                     // translators: 1: Tax label, 2: Tax rate percentage
-                                    echo esc_html(sprintf(I18n::get_label('label_tax_rate') ?? __('%1$s (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], $accommodation_rate)); ?>
+                                    echo esc_html(sprintf(I18n::get_label('label_tax_rate') ?? __('%1$s (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], (float) $accommodation_rate + 0)); ?>
                                 </td>
                                 <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                     <?php echo esc_html($formatted['totals']['total_tax_formatted']); ?>
@@ -772,7 +813,7 @@ class Tax
                     style="<?php echo $is_email ? esc_attr($styles['reg_number']) : ''; ?>">
                     <?php
                     // translators: %s: Tax registration number.
-                    echo esc_html(sprintf(I18n::get_label('label_tax_registration') ?? __('Tax Registration: %s', 'modern-hotel-booking'), $formatted['registration_number'])); ?>
+                    echo esc_html(sprintf(I18n::get_label('label_tax_registration'), $formatted['registration_number'])); ?>
                 </p>
             <?php endif; ?>
         </div>
@@ -811,14 +852,19 @@ class Tax
         $lines[] = str_repeat('-', 40);
 
         // Get tax rates and amounts for separate display
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
         $rates = $breakdown['rates'] ?? [];
         $totals = $breakdown['totals'] ?? [];
         $accommodation_rate = floatval($rates['accommodation'] ?? 0);
         $extras_rate = floatval($rates['extras'] ?? 0);
-        $room_tax = floatval($totals['room_tax'] ?? 0);
-        $children_tax = floatval($totals['children_tax'] ?? 0);
-        $extras_tax = floatval($totals['extras_tax'] ?? 0);
-        $accommodation_tax_total = $room_tax + $children_tax;
+        
+        $room_tax_money = Money::fromDecimal((string) ($totals['room_tax'] ?? '0'), $currency);
+        $children_tax_money = Money::fromDecimal((string) ($totals['children_tax'] ?? '0'), $currency);
+        $extras_tax_money = Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency);
+        
+        $accommodation_tax_total_money = $room_tax_money->add($children_tax_money);
+        $accommodation_tax_total = floatval($accommodation_tax_total_money->toDecimal());
+        $extras_tax = floatval($extras_tax_money->toDecimal());
 
         // Check if we need to show separate tax lines
         $show_separate_tax_lines = ($accommodation_rate !== $extras_rate) && ($accommodation_tax_total > 0 || $extras_tax > 0);
@@ -868,30 +914,35 @@ class Tax
         // Use pre-calculated component totals from the breakdown if available
         $totals = $tax_breakdown['totals'] ?? [];
         $breakdown = $tax_breakdown['breakdown'] ?? [];
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
 
         $data = [
             'tax_enabled' => ($tax_breakdown['enabled'] ?? false) ? 1 : 0,
             'tax_mode' => $tax_breakdown['mode'] ?? self::MODE_DISABLED,
             'tax_rate_accommodation' => $tax_breakdown['rates']['accommodation'] ?? 0,
             'tax_rate_extras' => $tax_breakdown['rates']['extras'] ?? 0,
-            'room_total_net' => $totals['room_net'] ?? $breakdown['room']['net'] ?? 0,
-            'room_tax' => $totals['room_tax'] ?? $breakdown['room']['tax'] ?? 0,
-            'children_total_net' => $totals['children_net'] ?? $breakdown['children']['net'] ?? 0,
-            'children_tax' => $totals['children_tax'] ?? $breakdown['children']['tax'] ?? 0,
-            'extras_total_net' => $totals['extras_net'] ?? 0,
-            'extras_tax' => $totals['extras_tax'] ?? 0,
-            'subtotal_net' => $totals['subtotal_net'] ?? 0,
-            'total_tax' => $totals['total_tax'] ?? 0,
-            'total_gross' => $totals['total_gross'] ?? 0,
+            'room_total_net' => Money::fromDecimal((string) ($totals['room_net'] ?? $breakdown['room']['net'] ?? '0'), $currency)->toDecimal(),
+            'room_tax' => Money::fromDecimal((string) ($totals['room_tax'] ?? $breakdown['room']['tax'] ?? '0'), $currency)->toDecimal(),
+            'children_total_net' => Money::fromDecimal((string) ($totals['children_net'] ?? $breakdown['children']['net'] ?? '0'), $currency)->toDecimal(),
+            'children_tax' => Money::fromDecimal((string) ($totals['children_tax'] ?? $breakdown['children']['tax'] ?? '0'), $currency)->toDecimal(),
+            'extras_total_net' => Money::fromDecimal((string) ($totals['extras_net'] ?? '0'), $currency)->toDecimal(),
+            'extras_tax' => Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency)->toDecimal(),
+            'subtotal_net' => Money::fromDecimal((string) ($totals['subtotal_net'] ?? '0'), $currency)->toDecimal(),
+            'total_tax' => Money::fromDecimal((string) ($totals['total_tax'] ?? '0'), $currency)->toDecimal(),
+            'total_gross' => Money::fromDecimal((string) ($totals['total_gross'] ?? '0'), $currency)->toDecimal(),
             'tax_breakdown' => wp_json_encode($tax_breakdown)
         ];
 
         // Fallback for extras if totals not populated (should not happen with latest calculate_booking_tax)
-        if (0 >= $data['extras_total_net'] && !empty($breakdown['extras'])) {
+        if (Money::fromDecimal((string) $data['extras_total_net'], $currency)->isZero() && !empty($breakdown['extras'])) {
+            $e_net = Money::fromCents(0, $currency);
+            $e_tax = Money::fromCents(0, $currency);
             foreach ($breakdown['extras'] as $extra) {
-                $data['extras_total_net'] += $extra['net'] ?? 0;
-                $data['extras_tax'] += $extra['tax'] ?? 0;
+                $e_net = $e_net->add(Money::fromDecimal((string) ($extra['net'] ?? '0'), $currency));
+                $e_tax = $e_tax->add(Money::fromDecimal((string) ($extra['tax'] ?? '0'), $currency));
             }
+            $data['extras_total_net'] = $e_net->toDecimal();
+            $data['extras_tax'] = $e_tax->toDecimal();
         }
 
         $format = [
@@ -950,11 +1001,12 @@ class Tax
             ];
         }
 
+        $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
         return [
             'has_tax' => (bool) $booking->tax_enabled,
-            'tax_amount' => floatval($booking->total_tax),
+            'tax_amount' => Money::fromDecimal((string) ($booking->total_tax ?? '0'), $currency)->toDecimal(),
             'tax_mode' => $booking->tax_mode,
-            'total_gross' => floatval($booking->total_gross ?: $booking->total_price)
+            'total_gross' => Money::fromDecimal((string) ($booking->total_gross ?: $booking->total_price ?: '0'), $currency)->toDecimal()
         ];
     }
 }

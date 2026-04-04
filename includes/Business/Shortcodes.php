@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Shortcodes {
 
     /** @var self|null */
-    private static $instance = null;
+    private static ?self $instance = null;
 
     /**
      * Allowed SVG tags and attributes for wp_kses().
@@ -46,7 +46,7 @@ class Shortcodes {
     const COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" class="mhbo-icon-copy"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
 
     /** @return self */
-    public static function get_instance() {
+    public static function get_instance(): self {
         if ( null === self::$instance ) {
             self::$instance = new self();
         }
@@ -64,7 +64,7 @@ class Shortcodes {
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
     }
 
-    public function enqueue_frontend_assets() {
+    public function enqueue_frontend_assets(): void {
         wp_enqueue_style(
             'mhbo-business-front',
             MHBO_PLUGIN_URL . 'assets/css/mhbo-business-front.css',
@@ -88,7 +88,7 @@ class Shortcodes {
     /**
      * [mhbo_company_info]
      *
-     * @param array $atts {
+     * @param array|string $atts {
      *     @type string $show_logo        'yes'|'no'
      *     @type string $show_address     'yes'|'no'
      *     @type string $show_contact     'yes'|'no'
@@ -97,7 +97,7 @@ class Shortcodes {
      * }
      * @return string HTML
      */
-    public function render_company_info( $atts ) {
+    public function render_company_info( $atts ): string {
         $atts = shortcode_atts( array(
             'show_logo'         => 'yes',
             'show_address'      => 'yes',
@@ -166,14 +166,14 @@ class Shortcodes {
     /**
      * [mhbo_whatsapp]
      *
-     * @param array $atts {
+     * @param array|string $atts {
      *     @type string $style   'button'|'link'|'floating'
      *     @type string $text    Button text
      *     @type string $message Pre-filled message
      * }
      * @return string HTML
      */
-    public function render_whatsapp( $atts ) {
+    public function render_whatsapp( $atts ): string {
         $data = Info::get_whatsapp();
         if ( empty( $data['enabled'] ) || empty( $data['phone_number'] ) ) {
             return '';
@@ -208,8 +208,11 @@ class Shortcodes {
 
     /**
      * [mhbo_banking_details]
+     * 
+     * @param array|string $atts Shortcode attributes.
+     * @return string
      */
-    public function render_banking( $atts ) {
+    public function render_banking( $atts ): string {
         $data = Info::get_banking();
         if ( empty( $data['enabled'] ) || empty( $data['iban'] ) ) {
             return '';
@@ -277,8 +280,11 @@ class Shortcodes {
 
     /**
      * [mhbo_revolut_details]
+     * 
+     * @param array|string $atts Shortcode attributes.
+     * @return string
      */
-    public function render_revolut( $atts ) {
+    public function render_revolut( $atts ): string {
         $data = Info::get_revolut();
         if ( empty( $data['enabled'] ) || ( empty( $data['revolut_tag'] ) && empty( $data['revolut_iban'] ) ) ) {
             return '';
@@ -343,8 +349,11 @@ class Shortcodes {
 
     /**
      * [mhbo_business_card]
+     * 
+     * @param array|string $atts Shortcode attributes.
+     * @return string
      */
-    public function render_business_card( $atts ) {
+    public function render_business_card( $atts ): string {
         $atts = shortcode_atts( array(
             'sections' => 'company,whatsapp,banking,revolut',
         ), $atts, 'mhbo_business_card' );
@@ -376,8 +385,11 @@ class Shortcodes {
 
     /**
      * [mhbo_payment_methods]
+     * 
+     * @param array|string $atts Shortcode attributes.
+     * @return string
      */
-    public function render_payment_methods( $atts ) {
+    public function render_payment_methods( $atts ): string {
         $atts = shortcode_atts( array(
             'booking_id' => 0,
         ), $atts, 'mhbo_payment_methods' );
@@ -386,7 +398,7 @@ class Shortcodes {
         $bank   = $this->render_banking( array( 'booking_id' => $atts['booking_id'] ) );
         $rev    = $this->render_revolut( array() );
 
-        if ( $bank || $rev ) {
+        if ( (bool) $bank || (bool) $rev ) {
             $output .= '<div class="mhbo-payment-methods-grid">';
             if ( $bank ) {
                 $output .= '<div class="mhbo-pm-col">' . $bank . '</div>';

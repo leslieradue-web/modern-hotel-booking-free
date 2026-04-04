@@ -9,7 +9,99 @@
     --mhbo-text: #2c3338;
     --mhbo-text-light: #646970;
     --mhbo-border: #dcdcde;
-    --mhbo-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --mhbo-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --mhbo-shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --mhbo-radius: 12px;
+    --mhbo-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animations */
+@keyframes mhboFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.mhbo-animate-in {
+    animation: mhboFadeIn 0.4s ease forwards;
+}
+
+/* Tooltips & Help Context */
+.mhbo-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.mhbo-tooltip .mhbo-tooltip-text {
+    display: none;
+    visibility: hidden;
+    width: 220px;
+    background-color: var(--mhbo-midnight);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 10001;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -110px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    pointer-events: none;
+    font-weight: 400;
+}
+
+.mhbo-tooltip .mhbo-tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--mhbo-midnight) transparent transparent transparent;
+}
+
+.mhbo-tooltip:hover .mhbo-tooltip-text {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+}
+
+.mhbo-help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: var(--mhbo-sand);
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+    font-style: normal;
+}
+
+/* Form Component Polishing */
+.wrap.mhbo-admin-wrap .large-text,
+.wrap.mhbo-admin-wrap textarea.large-text {
+    max-width: 800px;
+    width: 100%;
+}
+
+#mhbo-hotel-booking-overview .large-text {
+    max-width: 450px;
+    width: 100%;
+}
+
+/* Specific Room Type Form Refinement */
+.mhbo-admin-wrap form table.form-table th {
+    width: 200px;
 }
 
 /* Global Polish */
@@ -18,14 +110,124 @@
 .mhbo-settings-section {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
     color: var(--mhbo-text);
-    max-width: none !important;
-    margin: 20px 40px 0 20px !important;
+    margin: 20px 20px 40px 0 !important;
+    padding: 0;
+}
+
+.mhbo-admin-page-header {
+    background: linear-gradient(135deg, rgba(240, 249, 255, 0.9) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(224, 242, 254, 0.8);
+    border-radius: var(--mhbo-radius);
+    padding: 25px 35px;
+    margin: 0 20px 30px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    box-shadow: 0 10px 25px -5px rgba(186, 230, 253, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.mhbo-admin-page-header::after {
+    content: "\f22f"; /* dashed building icon */
+    font-family: dashicons;
+    position: absolute;
+    right: 10px;
+    top: -10px;
+    font-size: 120px;
+    opacity: 0.02;
+    color: var(--mhbo-midnight);
+    pointer-events: none;
+    transform: rotate(-10deg);
+}
+
+.mhbo-admin-page-header h1 {
+    margin: 0 !important;
+    font-weight: 800 !important;
+    color: var(--mhbo-midnight) !important;
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.01em !important;
+}
+
+.mhbo-admin-page-header .subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #64748b;
+    max-width: 600px;
+}
+
+.mhbo-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Premium Button Styling */
+.wp-admin .mhbo-admin-wrap .mhbo-btn-primary {
+    background: #2563eb !important; /* MHBO Primary Blue */
+    color: #fff !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-btn-primary:hover {
+    background: #1d4ed8 !important; /* Slightly darker on hover */
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
+    transform: translateY(-1px);
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Breadcrumbs */
+.mhbo-breadcrumbs {
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--mhbo-text-light);
+}
+
+.mhbo-breadcrumbs a {
+    color: var(--mhbo-sand);
+    text-decoration: none;
+    transition: var(--mhbo-transition);
+}
+
+.mhbo-breadcrumbs a:hover {
+    color: var(--mhbo-midnight);
+}
+
+.mhbo-breadcrumb-sep {
+    margin: 0 8px;
+    opacity: 0.3;
+}
+
+.mhbo-breadcrumb-current {
+    color: var(--mhbo-midnight);
 }
 
 /* Premium Card Component */
 .mhbo-card {
     background: var(--mhbo-white);
-    border-radius: 12px;
+    border-radius: var(--mhbo-radius);
     border: 1px solid var(--mhbo-border);
     box-shadow: var(--mhbo-shadow);
     padding: 30px;
@@ -35,6 +237,11 @@
     width: 100% !important;
     max-width: none !important;
     box-sizing: border-box !important;
+    transition: var(--mhbo-transition);
+}
+
+.mhbo-card:hover {
+    box-shadow: var(--mhbo-shadow-hover);
 }
 
 .mhbo-card::before {
@@ -55,7 +262,8 @@
 .mhbo-card h3 {
     margin-top: 0;
     color: var(--mhbo-midnight);
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 1.25rem;
 }
 
 /* Stats Grid */
@@ -68,12 +276,16 @@
 
 .mhbo-stat-card {
     background: var(--mhbo-white);
-    padding: 24px;
-    border-radius: 12px;
     border: 1px solid var(--mhbo-border);
-    text-align: center;
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: var(--mhbo-radius);
+    padding: 25px;
     box-shadow: var(--mhbo-shadow);
+    transition: var(--mhbo-transition);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .mhbo-stat-card:hover {
@@ -81,19 +293,24 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.mhbo-stat-card h3 {
-    margin: 0;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--mhbo-text-light);
+.mhbo-stat-value, .mhbo-stat-card p {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--mhbo-midnight);
+    line-height: 1;
+    margin: 0 0 8px 0 !important;
 }
 
-.mhbo-stat-card p {
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin: 12px 0 0;
-    color: var(--mhbo-midnight);
+.mhbo-stat-label, .mhbo-stat-card h3 {
+    font-size: 14px;
+    color: var(--mhbo-text-light);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* Status Pills */
@@ -187,6 +404,21 @@
     padding: 0 0 15px 0 !important;
 }
 
+/* Tooltip Styles */
+.mhbo-tooltip {
+    color: var(--mhbo-sand);
+    cursor: help;
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.mhbo-tooltip:hover {
+    color: var(--mhbo-midnight);
+}
+
 .mhbo-holiday-tag {
     background: var(--mhbo-sand-light) !important;
     border: 1px solid var(--mhbo-sand) !important;
@@ -205,10 +437,69 @@
 
 .mhbo-form-section-header h3 {
     margin: 0 !important;
-    font-size: 1.1rem !important;
+    font-size: 0.9rem !important;
     color: var(--mhbo-midnight) !important;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    font-weight: 800 !important;
+}
+
+/* Modern Extras Grid & Cards */
+.mhbo-extras-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.mhbo-extra-item {
+    position: relative;
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 25px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-bottom: 0 !important;
+}
+
+.mhbo-extra-item:hover {
+    border-color: var(--mhbo-sand) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+.mhbo-extra-item::before {
+    display: none !important;
+}
+
+.mhbo-extra-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.mhbo-extra-item .notice-dismiss {
+    top: 15px;
+    right: 15px;
+}
+
+.mhbo-icon-picker {
+    flex-shrink: 0;
+}
+
+.mhbo-dashicon-select {
+    width: 60px !important;
+    height: 40px !important;
+    padding: 0 8px !important;
+    font-size: 1.2rem !important;
+    text-align: center;
+}
+
+@media (max-width: 1000px) {
+    .mhbo-extra-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
 }
 
 #mhbo_add_amount_outstanding,
@@ -357,6 +648,15 @@
         width: 100%;
         margin-bottom: 5px;
     }
+
+    .mhbo-admin-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mhbo-admin-page-header h1 {
+        font-size: 1.5rem !important;
+    }
 }
 
 /* ========================================
@@ -381,7 +681,70 @@
     left: 0;
     width: 4px;
     height: 100%;
-    background: var(--mhbo-border);
+    background: var(--mhbo-midnight);
+}
+
+.mhbo-license-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--mhbo-border);
+}
+
+.mhbo-license-header h2 {
+    margin: 0 !important;
+}
+
+.mhbo-badge-premium {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.mhbo-pro-features {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--mhbo-offwhite);
+    border-radius: 10px;
+    border: 1px dashed var(--mhbo-border);
+}
+
+.mhbo-pro-features h4 {
+    margin: 0 0 15px 0;
+    color: var(--mhbo-midnight);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mhbo-pro-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.mhbo-pro-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--mhbo-text-light);
+}
+
+.mhbo-pro-item .dashicons {
+    color: #10b981;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
 }
 
 .mhbo-license-banner.mhbo-license-active {
@@ -717,6 +1080,18 @@
     .mhbo-quick-actions-grid {
         grid-template-columns: 1fr;
     }
+
+    .mhbo-admin-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px;
+        text-align: left;
+    }
+
+    .mhbo-header-actions {
+        width: 100%;
+        margin-top: 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -760,4 +1135,1077 @@
     border-color: #c5a059 !important;
     background: #fffcf5 !important;
     box-shadow: 0 4px 12px rgba(197, 160, 89, 0.15);
+}
+
+/* Calendar Card Polish */
+.mhbo-calendar-card {
+    background: var(--mhbo-white);
+    border-radius: var(--mhbo-radius);
+    border: 1px solid var(--mhbo-border);
+    box-shadow: var(--mhbo-shadow);
+    padding: 25px;
+    margin-top: 30px;
+    margin-right: 20px;
+    transition: var(--mhbo-transition);
+}
+
+.mhbo-calendar-card:hover {
+    box-shadow: var(--mhbo-shadow-hover);
+}
+
+#mhbo-calendar {
+    min-height: 500px;
+}
+
+/* Action Buttons Grid in Table */
+.mhbo-actions-cell {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.mhbo-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1.5px solid var(--mhbo-border);
+    color: var(--mhbo-midnight);
+    text-decoration: none;
+    transition: var(--mhbo-transition);
+    cursor: pointer;
+}
+
+.mhbo-action-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Color Modifiers */
+.mhbo-btn-edit:hover,
+.mhbo-btn-confirm:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.mhbo-btn-cancel:hover,
+.mhbo-btn-delete:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.mhbo-btn-confirm {
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #16a34a;
+}
+
+.mhbo-btn-confirm:hover {
+    background: #f0fdf4;
+    border-color: #22c55e;
+    color: #16a34a;
+}
+
+.mhbo-btn-delete {
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+}
+
+/* Tooltip fallback for icon buttons */
+.mhbo-action-btn:active {
+    transform: scale(0.95);
+}
+
+/* --- Bookings Table & Data Grid --- */
+
+.mhbo-table-container.mhbo-card {
+    background: var(--mhbo-white);
+    border-radius: var(--mhbo-radius);
+    border: 1px solid var(--mhbo-border);
+    box-shadow: var(--mhbo-shadow);
+    padding: 0; /* Let the table fill the card */
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+.mhbo-bookings-table {
+    border: none !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.mhbo-bookings-table thead th {
+    background: #f8fafc;
+    border-bottom: 2px solid var(--mhbo-border);
+    padding: 16px 20px !important;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+}
+
+.mhbo-bookings-table tbody td {
+    padding: 18px 20px !important;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.mhbo-bookings-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.mhbo-bookings-table tbody tr:hover {
+    background: #fdfaf5 !important; /* Subtle sand highlight */
+}
+
+/* Row Animations */
+.mhbo-animate-in {
+    animation: mhbo-fade-slide-up 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes mhbo-fade-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Column Specific Styles */
+.mhbo-id-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.mhbo-guest-info strong {
+    display: block;
+    color: var(--mhbo-midnight);
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.mhbo-guest-email, .mhbo-guest-phone {
+    display: block;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.mhbo-room-info .mhbo-room-number {
+    font-weight: 600;
+    color: var(--mhbo-sand);
+    display: block;
+}
+
+.mhbo-room-info small {
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.mhbo-dates-info {
+    font-size: 13px;
+    color: var(--mhbo-midnight);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mhbo-arrow {
+    color: #cbd5e1;
+}
+
+.mhbo-price {
+    font-weight: 700;
+    color: var(--mhbo-midnight);
+    font-size: 14px;
+}
+
+.mhbo-balance-pill {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.mhbo-balance-pill.paid {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.mhbo-balance-pill.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Status Badges */
+.mhbo-status-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mhbo-status-pending { background: #fee2e2; color: #991b1b; }
+.mhbo-status-confirmed { background: #dcfce7; color: #166534; }
+.mhbo-status-cancelled { background: #f1f5f9; color: #475569; }
+
+/* Payment Pills */
+.mhbo-payment-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.mhbo-payment-pending { background: #ffe4e6; color: #be123c; }
+.mhbo-payment-completed { background: #ecfdf5; color: #047857; }
+.mhbo-payment-refunded { background: #f1f5f9; color: #475569; }
+
+.mhbo-lang-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    background: #f8fafc;
+    padding: 2px 5px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+}
+
+/* Premium Row Interactions */
+.mhbo-booking-row {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.mhbo-booking-row:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.12);
+    background: #ffffff !important;
+    position: relative;
+    z-index: 5;
+}
+
+.mhbo-primary-text {
+    font-size: 15px;
+    color: var(--mhbo-midnight);
+    letter-spacing: -0.01em;
+}
+
+.mhbo-actions-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Empty State */
+.mhbo-empty-state-cell {
+    padding: 80px 0 !important;
+}
+
+.mhbo-empty-state {
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.mhbo-empty-state .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #cbd5e1;
+    margin-bottom: 20px;
+}
+
+.mhbo-empty-state h3 {
+    margin: 0 0 10px 0;
+    color: var(--mhbo-midnight);
+}
+
+.mhbo-empty-state p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* Payment Info Column */
+.mhbo-payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mhbo-payment-method {
+    font-weight: 600;
+    color: #475569;
+    font-size: 11px;
+}
+
+/* Responsiveness Fix for Modern Data Grid */
+/* 
+   ==========================================================================
+   DIAMOND-GRADE 2026 RESPONSIVE DASHBOARD (MOBILE & TABLET)
+   Architecture: High-Density CSS Grid
+   Adaptive 2x2 (Mobile) and 3x3 (Tablet) optimized viewports.
+   Targets: .mhbo-bookings-table 
+   - 1920px: Proportional Data Grid with 'Row-Lift' Interaction
+   - 992px:  Tablet 3x3 Grid Matrix
+   - 782px:  Mobile 2x2 High-Density Matrix
+   ==========================================================================
+*/
+@media (max-width: 992px) {
+    .wp-admin .wrap table.mhbo-bookings-table,
+    .wp-admin .wrap table.mhbo-bookings-table thead,
+    .wp-admin .wrap table.mhbo-bookings-table tbody,
+    .wp-admin .wrap table.mhbo-bookings-table tr,
+    .wp-admin .wrap table.mhbo-bookings-table th,
+    .wp-admin .wrap table.mhbo-bookings-table td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        float: none !important;
+        position: relative !important;
+    }
+
+    .wp-admin .wrap table.mhbo-bookings-table thead {
+        display: none !important;
+    }
+
+    .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important; /* Default Mobile */
+        grid-template-areas: 
+            "id lang"
+            "guest guest"
+            "dates dates"
+            "room status"
+            "total payment"
+            "actions actions" !important;
+        background: var(--mhbo-white) !important;
+        margin: 24px 0 !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid var(--mhbo-border) !important;
+        padding: 0 !important;
+    }
+
+    /* Tablet Specific 3-Column Optimization (783px - 992px) */
+    @media (min-width: 783px) {
+        .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row {
+            grid-template-columns: 1fr 1.2fr 1fr !important;
+            grid-template-areas: 
+                "id guest status"
+                "lang dates room"
+                "total payment actions" !important;
+            background: #fff !important;
+        }
+
+        .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row td.mhbo-col-actions {
+            border-top: none !important;
+            border-left: 1px solid #f1f5f9 !important;
+            background: transparent !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+        }
+
+        .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row td.mhbo-col-id,
+        .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row td.mhbo-col-lang {
+            background: transparent !important;
+            border-right: 1px solid #f1f5f9 !important;
+        }
+    }
+
+    .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row td {
+        display: block !important;
+        padding: 44px 16px 16px !important;
+        min-height: 94px !important;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        background: transparent !important;
+    }
+
+    /* Meta Label Styling - Absolute Precision */
+    .wp-admin .wrap table.mhbo-bookings-table tbody tr.mhbo-booking-row td::before {
+        content: attr(data-colname) !important;
+        position: absolute !important;
+        top: 18px !important;
+        left: 16px !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.12em !important;
+        color: #94a3b8 !important;
+        line-height: 1 !important;
+        display: block !important;
+        z-index: 10 !important;
+    }
+
+    /* Grid Area Assignments */
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-id      { grid-area: id !important; background: #f8fafc !important; border-right: 1px solid #f1f5f9 !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-lang    { grid-area: lang !important; background: #f8fafc !important; border-right: 1px solid #f1f5f9 !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-guest   { grid-area: guest !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-dates   { grid-area: dates !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-room    { grid-area: room !important; border-right: 1px solid #f1f5f9 !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-status  { grid-area: status !important; border-bottom: 1px solid #f1f5f9 !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-total   { grid-area: total !important; border-right: 1px solid #f1f5f9 !important; border-bottom: none !important; }
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-payment { grid-area: payment !important; border-bottom: none !important; }
+    
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-actions { 
+        grid-area: actions !important; 
+        background: #f8fafc !important;
+        padding: 20px !important;
+        border-top: 1px solid #f1f5f9 !important;
+        border-bottom: none !important;
+    }
+
+    .wp-admin .wrap table.mhbo-bookings-table tr.mhbo-booking-row td.mhbo-col-actions::before {
+        display: none !important;
+    }
+
+    .mhbo-actions-group {
+        justify-content: center !important;
+        gap: 16px !important;
+        display: flex !important;
+        width: 100% !important;
+    }
+
+    /* Lang Tag Adjustment */
+    .mhbo-lang-tag {
+        position: relative !important;
+        top: 0 !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .mhbo-header-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 12px;
+    }
+    
+    .mhbo-header-actions .button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ==========================================================================
+   MHBO — ROOM TYPES & CONFIGURATION (DIAMOND-GRADE 2026)
+   ========================================================================== */
+
+/* Universal Layout Container */
+.wp-admin .mhbo-admin-wrap .mhbo-modern-form-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-bottom: 24px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-form-section {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid var(--mhbo-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--mhbo-primary);
+    margin: 0 0 24px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Language Tabs — Glassmorphic Design */
+.wp-admin .mhbo-admin-wrap .mhbo-lang-tabs-container {
+    background: var(--mhbo-white);
+    border-radius: 12px;
+    border: 1px solid var(--mhbo-border);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-tab-nav {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--mhbo-border);
+    padding: 4px;
+    gap: 4px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-tab-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 12px;
+    color: #94a3b8;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-tab-btn:hover {
+    color: var(--mhbo-primary);
+    background: #f1f5f9;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-tab-btn.mhbo-tab-active {
+    background: var(--mhbo-white);
+    color: var(--mhbo-primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Settings Matrix (2x2) */
+.wp-admin .mhbo-admin-wrap .mhbo-settings-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px !important;
+}
+
+@media (max-width: 782px) {
+    .wp-admin .mhbo-admin-wrap .mhbo-settings-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-settings-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Compact Prefix Container */
+.wp-admin .mhbo-admin-wrap .mhbo-input-prefix-container {
+    display: flex;
+    align-items: stretch;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    transition: all 0.2s ease;
+    height: 48px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-input-prefix-container:focus-within {
+    border-color: var(--mhbo-primary);
+    box-shadow: 0 0 0 4px rgba(var(--mhbo-primary-rgb), 0.1);
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-input-prefix {
+    background: #f8fafc;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    font-weight: 800;
+    font-size: 12px;
+    color: #64748b;
+    border-right: 1px solid #e2e8f0;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-input-prefix-container input {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    flex-grow: 1;
+    margin: 0 !important;
+    height: auto !important;
+    padding: 0 16px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+/* Room Card Grid — High Density (Corrected Breakthrough) */
+.wp-admin .mhbo-admin-wrap .mhbo-room-type-grid {
+    display: grid !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+    gap: 24px !important;
+    margin: 10px 0 50px !important;
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* 2026 Section Headers — High Contrast */
+.wp-admin .mhbo-admin-wrap .mhbo-section-header {
+    margin: 40px 0 20px;
+    padding: 0 5px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-section-header h3 {
+    margin: 0 !important;
+    font-size: 1.4rem !important;
+    color: #1e293b !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-section-header p {
+    margin: 4px 0 0 !important;
+    color: #64748b !important;
+    font-size: 0.9rem !important;
+}
+
+/* Small Tablet (700px - 1000px) — 2 Columns */
+@media (min-width: 700px) {
+    .wp-admin .mhbo-admin-wrap .mhbo-room-type-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Landscape Tablet / Small Desktop (1001px - 1400px) — 3 Columns */
+@media (min-width: 1001px) {
+    .wp-admin .mhbo-admin-wrap .mhbo-room-type-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+/* Large Desktop (1401px+) — 4 Columns */
+@media (min-width: 1401px) {
+    .wp-admin .mhbo-admin-wrap .mhbo-room-type-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* Room Card Design — Compact / Backend Style */
+.wp-admin .mhbo-admin-wrap .mhbo-room-card {
+    background: var(--mhbo-white);
+    border-radius: 16px;
+    border: 1px solid var(--mhbo-border);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    position: relative;
+    overflow: hidden;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.12);
+    border-color: var(--mhbo-primary);
+}
+
+/* Room ID Highlight (High Contrast) */
+.wp-admin .mhbo-admin-wrap .mhbo-room-id {
+    background: var(--mhbo-primary);
+    color: #fff !important;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: inline-block;
+    margin-top: 4px;
+}
+
+/* Thumbnail Styling (Fixed Size for Backend) */
+.wp-admin .mhbo-admin-wrap .mhbo-room-card-head {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Room Card Components — COMPACT GRID PERFECTION */
+.wp-admin .mhbo-admin-wrap .mhbo-room-thumb.mhbo-diamond-thumb {
+    position: relative;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+    flex-shrink: 0 !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-diamond-thumb img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+
+/* Diamond Badge #1 / #2 / etc. */
+.wp-admin .mhbo-admin-wrap .mhbo-room-badge-index {
+    position: absolute !important;
+    top: -2px !important;
+    right: -2px !important;
+    background: #1e293b !important; /* Premium Midnight */
+    color: #fff !important;
+    padding: 2px 6px !important;
+    border-radius: 6px !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    z-index: 20 !important;
+    border: 1px solid #fff !important;
+    line-height: 1 !important;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-info-group {
+    flex-grow: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Form Inputs — HARMONIZED MODERN STYLE */
+.wp-admin .mhbo-admin-wrap .mhbo-input-large,
+.wp-admin .mhbo-admin-wrap .mhbo-input-mid {
+    width: 100%;
+    height: 42px !important;
+    padding: 8px 16px !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    font-size: 14px !important;
+    color: #1e293b !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-input-large:focus,
+.wp-admin .mhbo-admin-wrap .mhbo-input-mid:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+    outline: none !important;
+}
+
+.wp-admin .mhbo-admin-wrap select.mhbo-input-mid {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px !important;
+}
+
+.wp-admin .mhbo-admin-wrap textarea.mhbo-input-large {
+    height: auto !important;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+/* Amenities Mini Tags */
+.wp-admin .mhbo-admin-wrap .mhbo-amenities-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-mini-tag {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Card Body (Details) */
+.wp-admin .mhbo-admin-wrap .mhbo-room-card-body {
+    padding: 16px 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 16px 0 !important;
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-meta-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-meta-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 2px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-meta-value {
+    font-weight: 700;
+    color: var(--mhbo-primary);
+    font-size: 13px;
+}
+
+/* Action Strip */
+/* Form Action Dock */
+.wp-admin .mhbo-admin-wrap .mhbo-form-actions-dock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-top: 30px;
+    padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-card-actions {
+    background: #f8fafc;
+    padding: 12px 20px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-action-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1.5px solid var(--mhbo-border);
+    color: #1a3b5d; /* --mhbo-midnight */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-action-btn .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Edit Button Hover */
+.wp-admin .mhbo-admin-wrap .mhbo-action-btn.mhbo-btn-edit:hover {
+    background: #eff6ff !important;
+    border-color: #3b82f6 !important;
+    color: #2563eb !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Delete Button Hover */
+.wp-admin .mhbo-admin-wrap .mhbo-action-btn.mhbo-btn-delete:hover {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    color: #dc2626 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Form Card Consistency & Layout Perfection — DIAMOND GRADE 2026 */
+.wp-admin .mhbo-admin-wrap .mhbo-room-form-card {
+    background: var(--mhbo-white);
+    padding: 40px; /* Increased padding for premium breathing room */
+    border-radius: 24px;
+    border: 1px solid var(--mhbo-border);
+    box-shadow: var(--mhbo-shadow-sm);
+    margin-bottom: 48px;
+}
+
+/* Modern Label/Field Stack — Pure Design No Nesting */
+.wp-admin .mhbo-admin-wrap .mhbo-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-label {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1e293b;
+    margin-bottom: 2px;
+    display: block;
+    letter-spacing: -0.01em;
+}
+
+/* Section Titles refinement — DIAMOND STYLE */
+.wp-admin .mhbo-admin-wrap .mhbo-section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #94a3b8;
+    margin-bottom: 32px;
+    margin-top: 40px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 16px;
+    font-weight: 800;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-form-section:first-child .mhbo-section-title {
+    margin-top: 0;
+}
+
+/* Flatten Nested Sections — NO DOUBLE BOXES */
+.wp-admin .mhbo-admin-wrap .mhbo-form-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Lang Tab Refinement — Blended Integration */
+.wp-admin .mhbo-admin-wrap .mhbo-lang-tabs-container {
+    background: transparent !important; /* Removed gray box */
+    border: none !important; /* Removed border */
+    padding: 0 !important;
+    margin-top: 10px !important;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-tab-panes {
+    background: transparent !important;
+    border: none !important;
+    padding: 24px 0 0 0 !important;
+}
+
+/* Room Index Badge — Sleek Top-Right indicator */
+.wp-admin .mhbo-admin-wrap .mhbo-room-badge-index {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--mhbo-primary);
+    color: #fff !important;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 5;
+    letter-spacing: -0.01em;
+}
+
+/* Thumbnails and Grid stability */
+.wp-admin .mhbo-admin-wrap .mhbo-room-thumb {
+    position: relative; /* For index badge */
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-room-thumbnail {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    display: block;
+}
+
+.wp-admin .mhbo-admin-wrap .mhbo-thumb-placeholder {
+    width: 64px;
+    height: 64px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+ * RESPONSIVE DATA TABLES (Bookings)
+ * -------------------------------------------------------------------------- */
+
+.wp-admin .mhbo-admin-wrap .mhbo-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth iOS horizontal scrolling */
+    border-radius: 16px; /* Diamond Grade contour */
+    box-shadow: var(--mhbo-shadow-sm);
+    background: var(--mhbo-white);
+    margin-top: 24px;
+    border: 1px solid var(--mhbo-border);
+}
+
+/* Neutralize the inner WP list table to inherit the container's aesthetic */
+.wp-admin .mhbo-admin-wrap .mhbo-table-container .wp-list-table {
+    border: none;
+    box-shadow: none;
+    margin: 0;
+}
+
+/* Premium internal spacing */
+.wp-admin .mhbo-admin-wrap .mhbo-table-container .wp-list-table th,
+.wp-admin .mhbo-admin-wrap .mhbo-table-container .wp-list-table td {
+    padding: 16px 20px;
+    vertical-align: middle;
 }

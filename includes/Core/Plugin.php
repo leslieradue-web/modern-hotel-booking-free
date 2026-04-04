@@ -1,6 +1,9 @@
 <?php declare(strict_types=1);
 
 namespace MHBO\Core;
+use MHBO\Core\ICal;
+use MHBO\Core\License;
+use MHBO\Core\Pricing;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -32,9 +35,7 @@ class Plugin
         I18n::init();
         Email::init();
 
-        /* ---- iCal Export (public endpoint) ---- */
-
-/* ---- REST API ---- */
+        /* ---- iCal Export (public endpoint) ---- *//* ---- REST API ---- */
         add_action('rest_api_init', function () {
             $api = new RestApi();
             $api->register_routes();

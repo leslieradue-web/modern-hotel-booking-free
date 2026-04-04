@@ -24,10 +24,33 @@
     function initLicenseManagement() {
         const $activateBtn = $('#mhbo_activate_license');
         const $deactivateBtn = $('#mhbo_deactivate_license');
+        const $checkBtn = $('#mhbo_check_license_btn');
         const $spinner = $('#mhbo_license_spinner');
         const $message = $('#mhbo_license_message');
 
-        if (!$activateBtn.length && !$deactivateBtn.length) return;
+        if (!$activateBtn.length && !$deactivateBtn.length && !$checkBtn.length) return;
+
+        $checkBtn.on('click', function (e) {
+            e.preventDefault();
+            $spinner.addClass('is-active');
+            $message.text('');
+
+            $.post(ajaxurl, {
+                action: 'mhbo_check_license',
+                security: config.nonces?.license || ''
+            }, function (response) {
+                $spinner.removeClass('is-active');
+                if (response.success) {
+                    $message.html('<span style="color:green;">' + response.data.message + '</span>');
+                    setTimeout(function () { location.reload(); }, 1500);
+                } else {
+                    $message.html('<span style="color:red;">' + (response.data ? response.data.message : 'Error') + '</span>');
+                }
+            }).fail(function () {
+                $spinner.removeClass('is-active');
+                $message.html('<span style="color:red;">' + (config.i18n?.connection_error || 'Connection error.') + '</span>');
+            });
+        });
 
         $activateBtn.on('click', function (e) {
             e.preventDefault();
@@ -196,6 +219,7 @@
     function initThemeSelection() {
         const $themeInputs = $('input[name="mhbo_active_theme"]');
         const $customColors = $('#mhbo-custom-colors-wrap');
+        const $applyBtn = $('.mhbo-apply-theme-btn');
 
         if (!$themeInputs.length) return;
 
@@ -206,6 +230,15 @@
                 $customColors.slideDown();
             } else {
                 $customColors.slideUp();
+            }
+        });
+
+        // RATIONALE: Provide immediate visual feedback when the user clicks "Apply Theme".
+        // This makes the transition feel more responsive before the actual page reload.
+        $applyBtn.closest('form').on('submit', function (e) {
+            if ($(e.originalEvent.submitter).hasClass('mhbo-apply-theme-btn')) {
+                const $btn = $(e.originalEvent.submitter);
+                $btn.val(config.i18n?.applying || 'Applying Theme...').prop('disabled', true);
             }
         });
     }

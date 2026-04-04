@@ -28,13 +28,20 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class I18n
-{
+/**
+     * I18n class handles all localization and translation logic.
+     */
+    class I18n
+    {
     /**
      * Initialize translation filters.
+     *
+     * @return void
      */
     public static function init(): void
     {
+        // WordPress 4.6+ auto-loads translations for plugins hosted on WP.org.
+        // load_plugin_textdomain() is no longer required and is discouraged by Plugin Check.
         add_filter('gettext_modern-hotel-booking', array(self::class, 'filter_gettext'), 10, 3);
     }
 
@@ -144,29 +151,29 @@ class I18n
         switch (self::detect_plugin()) {
             case 'qtranslate':
                 $qtranslate_config = self::get_q_config();
-                return isset($qtranslate_config['enabled_languages']) ? $qtranslate_config['enabled_languages'] : array(self::locale_code());
+                return isset($qtranslate_config['enabled_languages']) ? $qtranslate_config['enabled_languages'] : [self::locale_code()];
 
             case 'wpml':
-                $langs = apply_filters('wpml_active_languages', null, array('skip_missing' => 0)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML hook
-                return is_array($langs) ? array_keys($langs) : array(self::locale_code());
+                $langs = apply_filters('wpml_active_languages', null, ['skip_missing' => 0]); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML hook
+                return is_array($langs) ? array_keys($langs) : [self::locale_code()];
 
             case 'polylang':
                 if (function_exists('pll_languages_list')) {
-                    $list = call_user_func('pll_languages_list', array('fields' => 'slug'));
-                    return !empty($list) ? $list : array(self::locale_code());
+                    $list = call_user_func('pll_languages_list', ['fields' => 'slug']);
+                    return !empty($list) ? $list : [self::locale_code()];
                 }
-                return array(self::locale_code());
+                return [self::locale_code()];
 
             default:
-                $langs = array_unique(array('en', self::locale_code()));
-                return apply_filters('mhbo_i18n_get_available_languages', array_values($langs));
+                $langs = array_unique(['en', self::locale_code()]);
+                return (array) apply_filters('mhbo_i18n_get_available_languages', array_values($langs));
         }
     }
 
     /**
      * Get qTranslate-XT configuration (third-party global).
      *
-     * @return array
+     * @return array<string, mixed>
      */
     private static function get_q_config(): array
     {
@@ -178,12 +185,12 @@ class I18n
      * Decode a multilingual string.
      * Format: [:en]Hello[:ro]Salut[:]
      *
-     * @param string      $text The string to decode.
+     * @param mixed       $text The value to decode.
      * @param string|null $lang Optional language code.
      * @param bool        $fallback Whether to fallback to other languages if requested is missing.
      * @return string|null
      */
-    public static function decode($text, $lang = null, $fallback = true): ?string
+    public static function decode(mixed $text, ?string $lang = null, bool $fallback = true): ?string
     {
         if (empty($text) || !is_string($text)) {
             return is_scalar($text) ? (string) $text : null;
@@ -242,48 +249,38 @@ class I18n
             return $map[$lang];
         }
 
-        // 2. Try prefix match
-        if (2 === strlen($lang)) {
-            foreach ($map as $k => $v) {
-                if (0 === strpos($k, $lang . '_')) {
-                    return $v;
-                }
-            }
-        }
-
-        // 3. Try short match
+        // 2. Try short code match (e.g. 'en' for 'en_US')
         if (!empty($map[$lang_short])) {
             return $map[$lang_short];
         }
 
-        // If no fallback allowed, stop here
-        if (!$fallback) {
-            return null;
-        }
+        // 3. Fallback logic (WP 7.0+ Future-Proofing)
+        if ($fallback) {
+            $default = strtolower(self::get_default_language());
+            $default_short = substr($default, 0, 2);
 
-        // 4. Fallback to default language
-        $default = strtolower(self::get_default_language());
-        if (!empty($map[$default])) {
-            return $map[$default];
-        }
-        $default_short = substr($default, 0, 2);
-        if (!empty($map[$default_short])) {
-            return $map[$default_short];
-        }
+            // Try site default (full then short)
+            if (isset($map[$default])) {
+                return apply_filters('mhbo_i18n_decode', $map[$default], $text, $lang);
+            }
+            if (isset($map[$default_short])) {
+                return apply_filters('mhbo_i18n_decode', $map[$default_short], $text, $lang);
+            }
 
-        // 5. Fallback to English
-        if (!empty($map['en'])) {
-            return $map['en'];
-        }
+            // Fallback to English (Global Standard)
+            if (isset($map['en'])) {
+                return apply_filters('mhbo_i18n_decode', $map['en'], $text, $lang);
+            }
 
-        // 6. Final fallback to the first available non-empty block
-        foreach ($map as $val) {
-            if (!empty($val)) {
-                return apply_filters('mhbo_i18n_decode', $val, $text, $lang);
+            // Final fallback to any first available non-empty translation
+            foreach ($map as $val) {
+                if (!empty($val)) {
+                    return apply_filters('mhbo_i18n_decode', $val, $text, $lang);
+                }
             }
         }
 
-        // 7. Final, final fallback: strip all tags
+        // 4. Last resort: strip qTranslate tags and return result
         $result = preg_replace('/\[:([a-z]{2}(?:_[a-z]{2})?)\]/i', '', $text);
         $result = str_replace('[:]', '', $result);
 
@@ -293,13 +290,13 @@ class I18n
     /**
      * Encode an array of [lang => text] into a multilingual string.
      *
-     * @param array $values
-     * @return string
+     * @param mixed $values The values to encode (typically an associative array).
+     * @return string The encoded multilingual string.
      */
-    public static function encode($values): string
+    public static function encode(mixed $values): string
     {
         if (!is_array($values)) {
-            return $values;
+            return (string) $values;
         }
         $out = '';
         foreach ($values as $lang => $text) {
@@ -334,7 +331,7 @@ class I18n
      * @param string|null $language   Optional language code for multilingual strings.
      * @return string Decoded text.
      */
-    public static function translate_and_decode($translated, $language = null): string
+    public static function translate_and_decode(string $translated, ?string $language = null): string
     {
         // If translation is empty, return as-is
         if (empty($translated)) {
@@ -355,32 +352,50 @@ class I18n
     /**
      * Format currency based on site settings.
      *
-     * @param float|int $amount
-     * @return string
+     * @param float|int|string|Money $amount The numeric amount to format.
+     * @return string The formatted currency string.
      */
-    public static function format_currency($amount): string
+    public static function format_currency(mixed $amount, ?int $decimals_override = null): string
     {
-        $symbol = get_option('mhbo_currency_symbol', '$');
-        $position = get_option('mhbo_currency_position', 'before');
-        $decimal_separator = apply_filters('mhbo_currency_decimal_separator', '.');
-        $thousand_separator = apply_filters('mhbo_currency_thousand_separator', ',');
-        $decimals = apply_filters('mhbo_currency_decimals', 0);
+        $decimal_separator = (string) apply_filters('mhbo_currency_decimal_separator', '.');
+        $thousand_separator = (string) apply_filters('mhbo_currency_thousand_separator', ',');
+        $symbol = (string) get_option('mhbo_currency_symbol', '$');
+        $position = (string) get_option('mhbo_currency_position', 'before');
 
-        $formatted = number_format((float) $amount, $decimals, $decimal_separator, $thousand_separator);
-
-        if ('before' === $position) {
-            return $symbol . $formatted;
+        // Handle arrays from legacy or malformed JSON serialization
+        if (is_array($amount)) {
+            if (isset($amount['amount_in_cents']) && isset($amount['currency'])) {
+                $amount = Money::fromCents($amount['amount_in_cents'], $amount['currency']);
+            } else {
+                $amount = 0; // Default fallback for entirely invalid data
+            }
         }
-        return $formatted . $symbol;
+
+        if ($amount instanceof Money) {
+            $decimals = $decimals_override ?? (int) apply_filters('mhbo_currency_decimals', $amount->getCurrencyDecimals());
+            $formatted = number_format((float) $amount->toDecimal(), $decimals, $decimal_separator, $thousand_separator);
+        } else {
+            $decimals = $decimals_override ?? (int) apply_filters('mhbo_currency_decimals', 2);
+            $formatted = number_format((float) ($amount ?? 0), $decimals, $decimal_separator, $thousand_separator);
+        }
+
+        // Smart Space Logic: Add space if symbol is multi-character or alphanumeric
+        $add_space = strlen($symbol) > 1 || preg_match('/^[a-zA-Z0-9]+$/', $symbol);
+        $add_space = (bool) apply_filters('mhbo_currency_add_space', $add_space, $symbol);
+        $space = $add_space ? ' ' : '';
+
+        $result = ($position === 'before') ? $symbol . $space . $formatted : $formatted . $space . $symbol;
+
+        return (string) apply_filters('mhbo_currency_format', $result, $amount, $symbol, $position);
     }
 
     /**
      * Format a date string based on WP settings.
      *
-     * @param string $date_string
-     * @return string
+     * @param string $date_string The date string to format (Y-m-d).
+     * @return string The localized date string.
      */
-    public static function format_date($date_string): string
+    public static function format_date(string $date_string): string
     {
         if (empty($date_string)) {
             return '';
@@ -388,13 +403,32 @@ class I18n
         return date_i18n(get_option('date_format'), strtotime($date_string));
     }
 
+/**
+     * Get a localized label for a payment method.
+     *
+     * @param string|null $method The payment method key.
+     * @return string The localized label.
+     */
+    public static function get_payment_method_label(?string $method): string
+    {
+        if (empty($method)) {
+            $method = 'arrival';
+        }
+        return apply_filters('mhbo_payment_method_label', match ($method) {
+            'stripe'  => __('Stripe', 'modern-hotel-booking'),
+            'paypal'  => __('PayPal', 'modern-hotel-booking'),
+            'arrival', 'onsite' => __('Pay on Arrival / Manual', 'modern-hotel-booking'),
+            default   => ucfirst($method)
+        }, $method);
+    }
+
     /**
      * Get a localized label for front-end/admin use.
      *
-     * @param string $key
-     * @return string
+     * @param string $key The label key.
+     * @return string The localized label.
      */
-    public static function get_label($key): string
+    public static function get_label(string $key): string
     {
         // Check for database override first
         $override = get_option("mhbo_label_{$key}");
@@ -452,10 +486,13 @@ class I18n
             // translators: %d: number of children
             'label_children_count' => __('Children x %d', 'modern-hotel-booking'),
             // translators: %d: number of nights
-            'label_nights_count' => __('%d nights', 'modern-hotel-booking'),
-            'label_nights_count_single' => __('1 night', 'modern-hotel-booking'),
+            'label_nights_count' => __('%d Nights', 'modern-hotel-booking'),
+            'label_nights_count_single' => __('1 Night', 'modern-hotel-booking'),
+            'label_night' => __('Night', 'modern-hotel-booking'),
+            'label_nights' => __('Nights', 'modern-hotel-booking'),
             'label_stay_details' => __('Stay Details', 'modern-hotel-booking'),
             'label_guest' => __('Guest', 'modern-hotel-booking'),
+            'label_room_number' => __('Room Number', 'modern-hotel-booking'),
             // translators: 1: check-in date, 2: check-out date
             'label_available_rooms' => __('Available Rooms from %1$s to %2$s', 'modern-hotel-booking'),
             'label_no_rooms' => __('No rooms available for these dates.', 'modern-hotel-booking'),
@@ -473,9 +510,12 @@ class I18n
             'btn_confirm_booking' => __('Confirm Booking', 'modern-hotel-booking'),
             'btn_pay_confirm' => __('Pay & Confirm', 'modern-hotel-booking'),
             'msg_booking_confirmed' => __('Booking Confirmed!', 'modern-hotel-booking'),
+            'msg_booking_confirmed_received' => __('Booking Pending', 'modern-hotel-booking'),
             'msg_confirmation_sent' => __('A confirmation email has been sent to you.', 'modern-hotel-booking'),
             // translators: %s: Customer email address
             'msg_confirmation_sent_to' => __('A confirmation email has been sent to %s.', 'modern-hotel-booking'),
+            // translators: %s: Customer email address
+            'msg_pending_sent_to' => __('A copy of this pending booking was sent to %s. We will contact you shortly.', 'modern-hotel-booking'),
             'label_reservation' => __('RESERVATION', 'modern-hotel-booking'),
             'msg_booking_received' => __('Booking Pending', 'modern-hotel-booking'),
             'msg_booking_received_detail' => __('We have received your request and will contact you shortly.', 'modern-hotel-booking'),
@@ -523,6 +563,7 @@ class I18n
             // translators: %1$s: tax name, %2$s: tax percentage
             'label_tax_rate' => __('%1$s (%2$s%%)', 'modern-hotel-booking'),
             'label_availability_error' => __('Dates are not available.', 'modern-hotel-booking'),
+            'label_room_not_available' => __('Room not Available', 'modern-hotel-booking'),
             'label_room_not_found' => __('Room not found.', 'modern-hotel-booking'),
             'label_secure_payment' => __('Secure Online Payment', 'modern-hotel-booking'),
             'label_security_error' => __('Security verification failed. Please refresh the page.', 'modern-hotel-booking'),
@@ -538,7 +579,9 @@ class I18n
             'msg_paypal_required' => __('Please use the PayPal button to complete your payment.', 'modern-hotel-booking'),
             'label_enhance_stay' => __('Enhance Your Stay', 'modern-hotel-booking'),
             'label_per_person' => __('per person', 'modern-hotel-booking'),
+            
             'label_per_person_per_night' => __('per person / night', 'modern-hotel-booking'),
+            
             // translators: %s: Tax rate percentage
             'label_tax_note_includes' => __('Price includes %s', 'modern-hotel-booking'),
             // translators: %s: Tax rate percentage
@@ -573,6 +616,14 @@ class I18n
             // translators: %d: Maximum number of adults
             'label_max_adults_error' => __('Error: Maximum adults for this room is %d.', 'modern-hotel-booking'),
             'label_rest_pro_error' => __('REST API access is a Pro feature.', 'modern-hotel-booking'),
+            'msg_pro_required' => __('This feature requires a Pro licence.', 'modern-hotel-booking'),
+            'msg_missing_api_key' => __('API key is missing. Please include your API key in the request.', 'modern-hotel-booking'),
+            'msg_invalid_api_key' => __('Invalid API key. Please check your credentials.', 'modern-hotel-booking'),
+            'label_booking_busy' => __('The room is currently being booked. Please try again in a moment.', 'modern-hotel-booking'),
+            'label_booking_success' => __('Booking created successfully.', 'modern-hotel-booking'),
+            'label_calculation_failed' => __('Unable to calculate the price for the selected dates. Please try again.', 'modern-hotel-booking'),
+            'label_invalid_child_age' => __('Child age must be between 0 and 17 years.', 'modern-hotel-booking'),
+            'label_missing_child_ages' => __('Please provide an age for each child.', 'modern-hotel-booking'),
             'label_invalid_nonce' => __('Invalid nonce.', 'modern-hotel-booking'),
             'label_api_rate_limit' => __('Too many requests. Please try again later.', 'modern-hotel-booking'),
             'msg_payment_success_email' => __('Payment received successfully. A confirmation email has been sent.', 'modern-hotel-booking'),
@@ -612,6 +663,7 @@ class I18n
             'label_payment_confirmation' => __('Payment Confirmation', 'modern-hotel-booking'),
             'label_privacy_policy' => __('privacy policy', 'modern-hotel-booking'),
             'label_terms_conditions' => __('Terms & Conditions', 'modern-hotel-booking'),
+            'gdpr_checkbox_text' => __('I have read and agree to the [privacy_policy].', 'modern-hotel-booking'),
             'label_payment_info' => __('Payment Information', 'modern-hotel-booking'),
             
             'msg_pay_on_arrival_email' => __('Payment will be collected upon arrival at the property.', 'modern-hotel-booking'),
@@ -629,6 +681,7 @@ class I18n
             'label_paypal_id_missing' => __('PayPal payment failed: Order ID missing.', 'modern-hotel-booking'),
             'label_payment_required' => __('Payment is required.', 'modern-hotel-booking'),
             'label_api_not_configured' => __('API key has not been configured. Set it in Hotel Booking → Settings.', 'modern-hotel-booking'),
+            'label_no_room_available_auto' => __('No available room could be resolved for your selection. Please try different dates or contact us.', 'modern-hotel-booking'),
             'label_invalid_api_key' => __('Invalid or missing API key.', 'modern-hotel-booking'),
             'label_webhook_sig_required' => __('Webhook signature required. Unauthorized requests are rejected.', 'modern-hotel-booking'),
             'label_stripe_webhook_secret_missing' => __('Stripe webhook secret not configured. Please set it in Settings.', 'modern-hotel-booking'),
@@ -659,17 +712,35 @@ class I18n
             // translators: %s: Error message
             'label_auth_failed_env' => __('Authentication failed: %s', 'modern-hotel-booking'),
             'label_common_causes' => __('Common causes:', 'modern-hotel-booking'),
-        );
+            'label_booking_id' => __('Booking ID', 'modern-hotel-booking'),
+            'label_reference_number' => __('Reference Number', 'modern-hotel-booking'),
+            'label_amenities' => __('Amenities', 'modern-hotel-booking'),
+            'btn_view_room' => __('View Room Details', 'modern-hotel-booking'),
+            'label_back_to_rooms' => __('Back to Rooms List', 'modern-hotel-booking'),
+            'btn_select_room' => __('Select This Room', 'modern-hotel-booking'),
+            'label_room_details' => __('Room Summary & Amenities', 'modern-hotel-booking'),
+            'label_guest_details' => __('Guest Contact Information', 'modern-hotel-booking'),
+            'label_payment_details' => __('Payment & Billing Details', 'modern-hotel-booking'),
+            'label_adults' => __('Adults', 'modern-hotel-booking'),
+            'label_adult' => __('Adult', 'modern-hotel-booking'),
+            'label_children_count_simple' => __('Children', 'modern-hotel-booking'),
+            'label_child' => __('Child', 'modern-hotel-booking'),
+            'label_no_extras' => __('No extras selected.', 'modern-hotel-booking'),
+            'label_total_with_tax' => __('Total (including taxes)', 'modern-hotel-booking'),
+            'label_booking_dates' => __('Reservation Dates', 'modern-hotel-booking'),
+
+);
     }
 
     /**
-     * Register a string for translation with WPML/Polylang
+     * Register a string for translation with WPML/Polylang.
      *
-     * @param string $name String name/identifier
-     * @param string $value String value
-     * @param string $context Context/package name
+     * @param string $name    String name/identifier.
+     * @param string $value   String value.
+     * @param string $context Context/package name.
+     * @return void
      */
-    public static function register_string($name, $value, $context = 'Modern Hotel Booking'): void
+    public static function register_string(string $name, string $value, string $context = 'Modern Hotel Booking'): void
     {
         $plugin = self::detect_plugin();
 
@@ -691,7 +762,7 @@ class I18n
      * @param string|null $language Language code (optional)
      * @return string Translated string
      */
-    public static function get_translated_string($name, $default = '', $context = 'Modern Hotel Booking', $language = null): string
+    public static function get_translated_string(string $name, string $default = '', string $context = 'Modern Hotel Booking', ?string $language = null): string
     {
         $plugin = self::detect_plugin();
 
@@ -751,10 +822,10 @@ class I18n
     /**
      * Translate a booking status slug.
      *
-     * @param string $status
-     * @return string
+     * @param string $status The status slug.
+     * @return string The translated status.
      */
-    public static function translate_status($status): string
+    public static function translate_status(string $status): string
     {
         switch ($status) {
             case 'pending':
@@ -771,10 +842,10 @@ class I18n
     /**
      * Translate a payment method slug.
      *
-     * @param string $method
-     * @return string
+     * @param string $method The payment method slug.
+     * @return string The translated payment method.
      */
-    public static function translate_payment_method($method): string
+    public static function translate_payment_method(string $method): string
     {
         switch ($method) {
             case 'onsite':
@@ -821,7 +892,7 @@ class I18n
      * @param string $code 3-letter currency code.
      * @return bool
      */
-    public static function is_valid_currency($code): bool
+    public static function is_valid_currency(string $code): bool
     {
         $code = strtoupper(trim($code));
         $valid_codes = [
@@ -879,9 +950,6 @@ class I18n
             'ISK',
             'HRK',
             'BGN',
-            'RON',
-            'LVL',
-            'LTL',
             'EEK',
             'SKK',
             'SIT',
@@ -898,9 +966,6 @@ class I18n
             'MGA',
             'MAD',
             'TND',
-            'DZD',
-            'EGP',
-            'QAR',
             'OMR',
             'BHD',
             'JOD',
