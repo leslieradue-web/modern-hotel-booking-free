@@ -3,10 +3,10 @@
  * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.2.9
+ * Version:           2.3.0
  * Requires at least: 6.2
  * Tested up to:      7.0
- * Requires PHP:      8.1
+ * Requires PHP:      8.0
  * Author:            StartMySuccess
  * Author URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
  * License:           GPL v2 or later
@@ -22,15 +22,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// PHP version check — must be at least 8.1.
-if (version_compare(PHP_VERSION, '8.1.0', '<')) {
+// PHP version check — must be at least 8.0.
+if (version_compare(PHP_VERSION, '8.0.0', '<')) {
     add_action('admin_notices', function () {
         printf(
             '<div class="notice notice-error"><p><strong>%s</strong></p><p>%s</p></div>',
             esc_html__('Modern Hotel Booking Error', 'modern-hotel-booking'),
             sprintf(
                 // translators: %s: current PHP version number
-                esc_html__('This plugin requires PHP 8.1 or higher. You are running PHP %s. Please upgrade your PHP version.', 'modern-hotel-booking'),
+                esc_html__('This plugin requires PHP 8.0 or higher. You are running PHP %s. Please upgrade your PHP version.', 'modern-hotel-booking'),
                 esc_html(PHP_VERSION)
             )
         );
@@ -38,7 +38,7 @@ if (version_compare(PHP_VERSION, '8.1.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.2.9');
+define('MHBO_VERSION', '2.3.0');
 define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -72,9 +72,6 @@ spl_autoload_register(function ($class) {
 
 // Rule 13: Register capabilities as early as possible.
 \MHBO\Core\Capabilities::register();
-if (class_exists('MHBO\Core\Playground')) {
-    \MHBO\Core\Playground::init();
-}
 
 /**
  * Activation hook.

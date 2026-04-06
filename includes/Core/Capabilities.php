@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
  * WordPress 6.x Abilities API.
  * 
  * @package MHBOCore
- * @since   2.2.9.0
+ * @since   2.3.0
  */
 class Capabilities
 {
