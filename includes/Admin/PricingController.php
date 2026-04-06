@@ -92,10 +92,6 @@ class PricingController
             Cache::invalidate_pricing();
             
             add_settings_error('mhbo_settings', 'rule_added', __('Pricing rule created successfully.', 'modern-hotel-booking'), 'success');
-            set_transient('settings_errors', get_settings_errors(), 30);
-            
-            wp_safe_redirect(admin_url('admin.php?page=mhbo-pricing-rules&mhbo_msg=rule_added'));
-            exit;
         }
 
         // 2. DELETE RULE
@@ -110,10 +106,6 @@ class PricingController
             Cache::invalidate_pricing();
             
             add_settings_error('mhbo_settings', 'rule_deleted', __('Pricing rule removed successfully.', 'modern-hotel-booking'), 'success');
-            set_transient('settings_errors', get_settings_errors(), 30);
-
-            wp_safe_redirect(admin_url('admin.php?page=mhbo-pricing-rules&mhbo_msg=rule_deleted'));
-            exit;
         }
     }
 
@@ -145,9 +137,7 @@ class PricingController
             ); ?>
 
             <?php 
-            if (isset($_GET['mhbo_msg'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only display flag; settings_errors() outputs pre-saved WP transient data, not raw user input
-                settings_errors('mhbo_settings');
-            }
+            settings_errors('mhbo_settings');
             ?>
             
             <div class="mhbo-card">
@@ -217,7 +207,7 @@ class PricingController
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($rules)): ?>
+                        <?php if (count($rules) === 0): ?>
                             <tr><td colspan="5" style="padding:20px; text-align:center; color:#999;"><?php esc_html_e('No pricing rules defined.', 'modern-hotel-booking'); ?></td></tr>
                         <?php else: ?>
                             <?php foreach ($rules as $rule): 

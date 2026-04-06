@@ -93,10 +93,10 @@ class Security
         $trusted_proxies_raw = (string) get_option('mhbo_trusted_proxies', '');
         $is_trusted = false;
 
-        if (!empty($trusted_proxies_raw)) {
+        if ('' !== $trusted_proxies_raw) {
             $trusted_proxies = array_map('trim', explode(',', $trusted_proxies_raw));
             foreach ($trusted_proxies as $proxy) {
-                if (empty($proxy)) {
+                if ('' === $proxy) {
                     continue;
                 }
                 if ($remote_addr === $proxy || self::ip_in_range($remote_addr, $proxy)) {
@@ -117,7 +117,7 @@ class Security
 
             foreach ($header_priority as $header) {
                 $header_value = isset($server[$header]) ? (string) $server[$header] : '';
-                if (empty($header_value)) {
+                if ($header_value === '') {
                     continue;
                 }
 
@@ -131,7 +131,7 @@ class Security
                 }
                 
                 // Fallback: If no public IP found but header has any valid IP, take the first one
-                if (!empty($ips[0]) && filter_var($ips[0], FILTER_VALIDATE_IP)) {
+                if (isset($ips[0]) && $ips[0] !== '' && filter_var($ips[0], FILTER_VALIDATE_IP)) {
                     $ip = $ips[0];
                     break;
                 }

@@ -260,22 +260,22 @@
 
 /* Confirmed: Check-in day (afternoon booked, morning free) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-confirmed.mhbo-half-booked-checkin {
-    background: linear-gradient(135deg, #fff 50%, rgba(229, 62, 62, 0.15) 50%) !important;
+    background: linear-gradient(to bottom right, #fff 50%, rgba(229, 62, 62, 0.15) 50%) !important;
 }
 
 /* Confirmed: Check-out day (morning booked, afternoon free) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-confirmed.mhbo-half-booked-checkout {
-    background: linear-gradient(135deg, rgba(229, 62, 62, 0.15) 50%, #fff 50%) !important;
+    background: linear-gradient(to top right, rgba(229, 62, 62, 0.15) 50%, #fff 50%) !important;
 }
 
 /* Pending: Check-in day (afternoon booked, morning free) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-pending.mhbo-half-booked-checkin {
-    background: linear-gradient(135deg, #fff 50%, rgba(221, 107, 32, 0.15) 50%) !important;
+    background: linear-gradient(to bottom right, #fff 50%, rgba(221, 107, 32, 0.15) 50%) !important;
 }
 
 /* Pending: Check-out day (morning booked, afternoon free) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-pending.mhbo-half-booked-checkout {
-    background: linear-gradient(135deg, rgba(221, 107, 32, 0.15) 50%, #fff 50%) !important;
+    background: linear-gradient(to top right, rgba(221, 107, 32, 0.15) 50%, #fff 50%) !important;
 }
 
 /* Overriding the text color for half-booked days to ensure readability */
@@ -312,14 +312,42 @@
     color: var(--mhbo-primary) !important;
     text-align: center !important;
     width: 100% !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px;
     margin-top: auto !important;
     padding-bottom: 5px;
     line-height: 1 !important;
     white-space: normal !important;
     text-overflow: clip !important;
     overflow: visible !important;
-    word-break: break-all !important;
+}
+
+.mhbo-price-part-amount {
+    white-space: nowrap !important;
+}
+
+.mhbo-price-part-currency {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+/* On very small screen widths or inside small parent containers, stack them */
+@media (max-width: 400px) {
+    .mhbo-calendar-wrapper .mhbo-fp-price {
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        font-size: 0.85rem !important;
+    }
+    
+    .mhbo-price-part-currency {
+        font-size: 0.75rem;
+        line-height: 1;
+    }
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.selected .mhbo-fp-price,
@@ -632,15 +660,15 @@
 
 /* --- ULTRA SELECTION PRIORITY (Fix for Contrast on 16th/Caps) --- */
 /* These must be defined after all booking-status colors to override half-booked states */
-.mhbo-calendar-wrapper .flatpickr-day.selected,
-.mhbo-calendar-wrapper .flatpickr-day.startRange,
-.mhbo-calendar-wrapper .flatpickr-day.endRange,
-.mhbo-calendar-wrapper .flatpickr-day.selected.inRange,
-.mhbo-calendar-wrapper .flatpickr-day.startRange.inRange,
-.mhbo-calendar-wrapper .flatpickr-day.endRange.inRange,
-.mhbo-calendar-wrapper .flatpickr-day.selected:hover,
-.mhbo-calendar-wrapper .flatpickr-day.startRange:hover,
-.mhbo-calendar-wrapper .flatpickr-day.endRange:hover {
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.selected,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.startRange,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.endRange,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.selected.inRange,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.startRange.inRange,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.endRange.inRange,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.selected:hover,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.startRange:hover,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.endRange:hover {
     background: var(--mhbo-primary) !important;
     background: linear-gradient(135deg, var(--mhbo-primary) 0%, color-mix(in srgb, var(--mhbo-primary), #000 20%) 100%) !important;
     color: #ffffff !important;
@@ -652,16 +680,16 @@
 }
 
 /* Force price text to be white on selected caps */
-.mhbo-calendar-wrapper .flatpickr-day.selected .mhbo-fp-price,
-.mhbo-calendar-wrapper .flatpickr-day.startRange .mhbo-fp-price,
-.mhbo-calendar-wrapper .flatpickr-day.endRange .mhbo-fp-price {
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.selected .mhbo-fp-price,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.startRange .mhbo-fp-price,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.endRange .mhbo-fp-price {
     color: #ffffff !important;
     opacity: 1 !important;
 }
 
 /* Force day number to be white on selected caps */
-.mhbo-calendar-wrapper .flatpickr-day.selected .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.startRange .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.endRange .mhbo-day-number {
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.selected .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.startRange .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.endRange .mhbo-day-number {
     color: #ffffff !important;
 }

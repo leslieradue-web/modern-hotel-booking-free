@@ -9,6 +9,8 @@
  * @since   2.1.0
  */
 
+declare(strict_types=1);
+
 namespace MHBO\Business;
 
 if (!defined('ABSPATH')) exit;
@@ -107,14 +109,14 @@ class Shortcodes {
         ), $atts, 'mhbo_company_info' );
 
         $data = Info::get_company();
-        if ( empty( $data['company_name'] ) && empty( $data['logo_url'] ) ) {
+        if ( '' === (string) ($data['company_name'] ?? '') && '' === (string) ($data['logo_url'] ?? '') ) {
             return '';
         }
 
         ob_start();
         ?>
         <div class="mhbo-company-info mhbo-card-premium mhbo-layout-<?php echo esc_attr( $atts['layout'] ); ?>">
-            <?php if ( 'yes' === $atts['show_logo'] && ! empty( $data['logo_url'] ) ) : ?>
+            <?php if ( 'yes' === $atts['show_logo'] && '' !== (string) ($data['logo_url'] ?? '') ) : ?>
                 <div class="mhbo-logo">
                     <img src="<?php echo esc_url( $data['logo_url'] ); ?>" alt="<?php echo esc_attr( $data['company_name'] ); ?>" />
                 </div>
@@ -125,8 +127,8 @@ class Shortcodes {
 
                 <?php if ( 'yes' === $atts['show_address'] ) : ?>
                     <address class="mhbo-address">
-                        <?php echo esc_html( $data['address_line_1'] ); ?><br>
-                        <?php if ( ! empty( $data['address_line_2'] ) ) : ?>
+                        <?php echo esc_html( $data['address_line_1'] ?? '' ); ?><br>
+                        <?php if ( '' !== (string) ($data['address_line_2'] ?? '') ) : ?>
                             <?php echo esc_html( $data['address_line_2'] ); ?><br>
                         <?php endif; ?>
                         <?php echo esc_html( $data['city'] ); ?>, <?php echo esc_html( $data['state'] ); ?> <?php echo esc_html( $data['postcode'] ); ?><br>
@@ -137,10 +139,10 @@ class Shortcodes {
                 <div class="mhbo-business-meta">
                     <?php if ( 'yes' === $atts['show_contact'] ) : ?>
                         <div class="mhbo-contact">
-                            <?php if ( $data['telephone'] ) : ?>
+                            <?php if ( '' !== (string) ($data['telephone'] ?? '') ) : ?>
                                 <p><span class="mhbo-meta-label"><?php esc_html_e( 'Tel:', 'modern-hotel-booking' ); ?></span> <a href="tel:<?php echo esc_attr( $data['telephone'] ); ?>"><?php echo esc_html( $data['telephone'] ); ?></a></p>
                             <?php endif; ?>
-                            <?php if ( $data['email'] ) : ?>
+                            <?php if ( '' !== (string) ($data['email'] ?? '') ) : ?>
                                 <p><span class="mhbo-meta-label"><?php esc_html_e( 'Email:', 'modern-hotel-booking' ); ?></span> <a href="mailto:<?php echo esc_attr( $data['email'] ); ?>"><?php echo esc_html( $data['email'] ); ?></a></p>
                             <?php endif; ?>
                         </div>
@@ -148,10 +150,10 @@ class Shortcodes {
 
                     <?php if ( 'yes' === $atts['show_registration'] ) : ?>
                         <div class="mhbo-legal">
-                            <?php if ( $data['tax_id'] ) : ?>
+                            <?php if ( '' !== (string) ($data['tax_id'] ?? '') ) : ?>
                                 <p><span class="mhbo-meta-label"><?php esc_html_e( 'Tax ID:', 'modern-hotel-booking' ); ?></span> <?php echo esc_html( $data['tax_id'] ); ?></p>
                             <?php endif; ?>
-                            <?php if ( $data['registration_no'] ) : ?>
+                            <?php if ( '' !== (string) ($data['registration_no'] ?? '') ) : ?>
                                 <p><span class="mhbo-meta-label"><?php esc_html_e( 'Reg:', 'modern-hotel-booking' ); ?></span> <?php echo esc_html( $data['registration_no'] ); ?></p>
                             <?php endif; ?>
                         </div>
@@ -175,7 +177,7 @@ class Shortcodes {
      */
     public function render_whatsapp( $atts ): string {
         $data = Info::get_whatsapp();
-        if ( empty( $data['enabled'] ) || empty( $data['phone_number'] ) ) {
+        if ( ! (bool) ($data['enabled'] ?? false) || '' === (string) ($data['phone_number'] ?? '') ) {
             return '';
         }
 
@@ -185,9 +187,9 @@ class Shortcodes {
             'message' => $data['default_msg'],
         ), $atts, 'mhbo_whatsapp' );
 
-        $wa_url = 'https://wa.me/' . preg_replace( '/[^\d]/', '', $data['phone_number'] );
-        if ( ! empty( $atts['message'] ) ) {
-            $wa_url = add_query_arg( 'text', rawurlencode( $atts['message'] ), $wa_url );
+        $wa_url = 'https://wa.me/' . preg_replace( '/[^\d]/', '', (string) ($data['phone_number'] ?? '') );
+        if ( '' !== (string) ($atts['message'] ?? '') ) {
+            $wa_url = add_query_arg( 'text', rawurlencode( (string) $atts['message'] ), $wa_url );
         }
 
         ob_start();
@@ -214,7 +216,7 @@ class Shortcodes {
      */
     public function render_banking( $atts ): string {
         $data = Info::get_banking();
-        if ( empty( $data['enabled'] ) || empty( $data['iban'] ) ) {
+        if ( ! (bool) ($data['enabled'] ?? false) || '' === (string) ($data['iban'] ?? '') ) {
             return '';
         }
 
@@ -234,7 +236,7 @@ class Shortcodes {
                 <h4><?php echo esc_html( $data['bank_name'] ?: __( 'Bank Transfer Details', 'modern-hotel-booking' ) ); ?></h4>
             </div>
             <div class="mhbo-grid">
-                <?php if ( $data['account_name'] ) : ?>
+                <?php if ( '' !== (string) ($data['account_name'] ?? '') ) : ?>
                     <div class="mhbo-field">
                         <strong><?php esc_html_e( 'Account Holder', 'modern-hotel-booking' ); ?></strong>
                         <span><?php echo esc_html( $data['account_name'] ); ?></span>
@@ -249,7 +251,7 @@ class Shortcodes {
                         </button>
                     </div>
                 </div>
-                <?php if ( $data['swift_bic'] ) : ?>
+                <?php if ( '' !== (string) ($data['swift_bic'] ?? '') ) : ?>
                     <div class="mhbo-field">
                         <strong><?php esc_html_e( 'SWIFT/BIC', 'modern-hotel-booking' ); ?></strong>
                         <div class="mhbo-copy-wrapper">
@@ -270,8 +272,8 @@ class Shortcodes {
                     </div>
                 </div>
             </div>
-            <?php if ( 'yes' === $atts['show_instructions'] && ! empty( $data['instructions'] ) ) : ?>
-                <div class="mhbo-instructions"><?php echo wp_kses_post( $data['instructions'] ); ?></div>
+            <?php if ( 'yes' === $atts['show_instructions'] && '' !== (string) ($data['instructions'] ?? '') ) : ?>
+                <div class="mhbo-instructions"><?php echo wp_kses_post( (string) $data['instructions'] ); ?></div>
             <?php endif; ?>
         </div>
         <?php
@@ -286,7 +288,7 @@ class Shortcodes {
      */
     public function render_revolut( $atts ): string {
         $data = Info::get_revolut();
-        if ( empty( $data['enabled'] ) || ( empty( $data['revolut_tag'] ) && empty( $data['revolut_iban'] ) ) ) {
+        if ( ! (bool) ($data['enabled'] ?? false) || ( '' === (string) ($data['revolut_tag'] ?? '') && '' === (string) ($data['revolut_iban'] ?? '') ) ) {
             return '';
         }
 
@@ -305,7 +307,7 @@ class Shortcodes {
             </div>
             <div class="mhbo-flex">
                 <div class="mhbo-rev-info">
-                    <?php if ( $data['revolut_tag'] ) : ?>
+                    <?php if ( '' !== (string) ($data['revolut_tag'] ?? '') ) : ?>
                         <div class="mhbo-field">
                             <strong><?php esc_html_e( 'Revtag', 'modern-hotel-booking' ); ?></strong>
                             <div class="mhbo-copy-wrapper">
@@ -316,7 +318,7 @@ class Shortcodes {
                             </div>
                         </div>
                     <?php endif; ?>
-                    <?php if ( $data['revolut_iban'] ) : ?>
+                    <?php if ( '' !== (string) ($data['revolut_iban'] ?? '') ) : ?>
                         <div class="mhbo-field">
                             <strong><?php esc_html_e( 'IBAN', 'modern-hotel-booking' ); ?></strong>
                             <div class="mhbo-copy-wrapper">
@@ -339,8 +341,8 @@ class Shortcodes {
                     </div>
                 <?php endif; ?>
             </div>
-            <?php if ( ! empty( $data['instructions'] ) ) : ?>
-                <div class="mhbo-instructions"><?php echo wp_kses_post( $data['instructions'] ); ?></div>
+            <?php if ( '' !== (string) ($data['instructions'] ?? '') ) : ?>
+                <div class="mhbo-instructions"><?php echo wp_kses_post( (string) $data['instructions'] ); ?></div>
             <?php endif; ?>
         </div>
         <?php

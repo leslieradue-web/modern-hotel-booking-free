@@ -98,7 +98,7 @@ class Block
             'render_callback' => [$this, 'render_booking_block'],
         ]);
 
-        if ($booking_form_block && !empty($booking_form_block->editor_script)) {
+        if ($booking_form_block && isset($booking_form_block->editor_script) && '' !== $booking_form_block->editor_script) {
             wp_set_script_translations($booking_form_block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
         }
 
@@ -107,7 +107,7 @@ class Block
             'render_callback' => [$this, 'render_calendar_block'],
         ]);
 
-        if ($room_calendar_block && !empty($room_calendar_block->editor_script)) {
+        if ($room_calendar_block && isset($room_calendar_block->editor_script) && '' !== $room_calendar_block->editor_script) {
             wp_set_script_translations($room_calendar_block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
         }
     }
@@ -120,7 +120,7 @@ class Block
      */
     public function render_booking_block($attributes)
     {
-        $room_id = !empty($attributes['roomId']) ? absint($attributes['roomId']) : 0;
+        $room_id = (isset($attributes['roomId']) && 0 !== (int)$attributes['roomId']) ? absint($attributes['roomId']) : 0;
         return do_shortcode('[modern_hotel_booking room_id="' . $room_id . '"]');
     }
 
@@ -132,7 +132,7 @@ class Block
      */
     public function render_calendar_block($attributes)
     {
-        $room_id = !empty($attributes['roomId']) ? absint($attributes['roomId']) : 0;
+        $room_id = (isset($attributes['roomId']) && 0 !== (int)$attributes['roomId']) ? absint($attributes['roomId']) : 0;
 
         if (!$room_id) {
             return '<div class="mhbo-block-error">' . esc_html(I18n::get_label('label_block_no_room')) . '</div>';

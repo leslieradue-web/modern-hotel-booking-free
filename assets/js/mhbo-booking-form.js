@@ -33,21 +33,29 @@
             const errorBox = wrapper.querySelector('.mhbo-booking-errors');
 
             let debounceTimer;
+            let recalcAbortController = null; // Cancel in-flight requests to prevent 429
 
             /**
              * Recalculate price via REST API
              */
             function recalculatePrice() {
                 if (!totalDisplay) return;
-                
+
+                // Cancel any in-flight request immediately so it doesn't count against rate limits.
+                if (recalcAbortController) {
+                    recalcAbortController.abort();
+                    recalcAbortController = null;
+                }
+
                 clearTimeout(debounceTimer);
                 totalDisplay.classList.add('mhbo_faded');
                 if (arrivalTotalEl) arrivalTotalEl.classList.add('mhbo_faded');
                 if (submitBtn) submitBtn.disabled = true;
 
                 debounceTimer = setTimeout(async function () {
-                    window.dispatchEvent(new CustomEvent('mhbo_processing_start', { 
-                        detail: { source: 'booking_form', instance: wrapper } 
+                    recalcAbortController = new AbortController();
+                    window.dispatchEvent(new CustomEvent('mhbo_processing_start', {
+                        detail: { source: 'booking_form', instance: wrapper }
                     }));
 
                     try {
@@ -86,11 +94,17 @@
 
                         const childrenAges = [];
                         form.querySelectorAll('input[name="child_ages[]"]').forEach(function (input) {
-                            childrenAges.push(input.value);
+                            const v = input.value.trim();
+                            // Only include ages that have been explicitly entered.
+                            // Missing ages are treated as chargeable by the backend (safe default).
+                            if (v !== '') {
+                                childrenAges.push(parseInt(v, 10));
+                            }
                         });
 
                         const response = await fetch(mhbo_vars.rest_url + '/recalculate-price', {
                             method: 'POST',
+                            signal: recalcAbortController.signal,
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-WP-Nonce': mhbo_vars.nonce
@@ -112,6 +126,19 @@
                         if (data.success) {
                             totalDisplay.textContent = data.total_formatted;
                             if (totalHidden) totalHidden.value = data.total;
+
+                            // Children cost row — show when children contribute to the total
+                            const childrenRow = wrapper.querySelector('.mhbo-children-cost-row');
+                            const childrenTotalEl = wrapper.querySelector('.mhbo-children-total-display');
+                            if (childrenRow && childrenTotalEl) {
+                                if (data.children_total > 0 && data.children_total_formatted) {
+                                    childrenTotalEl.textContent = data.children_total_formatted;
+                                    childrenRow.style.display = '';
+                                } else {
+                                    childrenRow.style.display = 'none';
+                                    childrenTotalEl.textContent = '';
+                                }
+                            }
                             if (arrivalTotalEl) arrivalTotalEl.textContent = data.total_formatted;
 
                             // Update tax breakdown (2026 BP: Robust detection)
@@ -127,18 +154,31 @@
 
                             // Update Payment Cards if deposit info returned
                             if (data.deposit_amount_formatted) {
+                                // Reveal the deposit wrapper if it was hidden pending first price load.
+                                const depositWrapper = form.querySelector('.mhbo-deposit-options-wrapper');
+                                if (depositWrapper && depositWrapper.style.display === 'none') {
+                                    depositWrapper.style.display = '';
+                                }
+
                                 const depositCard = form.querySelector('.mhbo-payment-card[data-payment-type="deposit"]');
                                 if (depositCard) {
                                     const amountEl = depositCard.querySelector('.mhbo-deposit-amount');
                                     const balanceEl = depositCard.querySelector('.mhbo-deposit-balance-display');
                                     if (amountEl) amountEl.textContent = data.deposit_amount_formatted;
                                     if (balanceEl) balanceEl.textContent = data.remaining_balance_formatted;
-                                    
+
                                     // Update data attributes for gateways
                                     depositCard.dataset.amount = data.deposit_amount;
                                     depositCard.dataset.balance = data.remaining_balance;
                                 }
-                                
+
+                                // 2026 BP: Also update the Reservation Summary deposit rows so the
+                                // in-summary breakdown matches the payment card and the charged amount.
+                                const depositAmountDisplay = wrapper.querySelector('#mhbo-deposit-amount-display');
+                                const remainingBalanceDisplay = wrapper.querySelector('#mhbo-remaining-balance-display');
+                                if (depositAmountDisplay) depositAmountDisplay.textContent = data.deposit_amount_formatted;
+                                if (remainingBalanceDisplay) remainingBalanceDisplay.textContent = data.remaining_balance_formatted;
+
                                 const fullCard = form.querySelector('.mhbo-payment-card[data-payment-type="full"]');
                                 if (fullCard) {
                                     const fullAmountEl = fullCard.querySelector('.mhbo-full-amount');
@@ -147,15 +187,28 @@
                                 }
                             }
 
-                            // [Premium] Update individual extra impact labels
+                            // [Premium] Update individual extra pricing display
                             if (data.extras_breakdown) {
                                 Object.entries(data.extras_breakdown).forEach(([id, impact]) => {
                                     const card = form.querySelector(`.mhbo-extra-card[data-extra-id="${id}"]`);
-                                    if (card) {
-                                        const tag = card.querySelector('.mhbo-extra-price-tag');
-                                        if (tag && impact.value > 0) {
-                                            tag.textContent = '+ ' + impact.formatted;
-                                            tag.classList.add('mhbo-impact-highlight');
+                                    if (!card) return;
+
+                                    const tag       = card.querySelector('.mhbo-extra-price-tag');
+                                    const breakdown = card.querySelector('.mhbo-extra-price-breakdown');
+
+                                    // Unit price always shows the per-unit cost (large display)
+                                    if (tag && impact.unit_price_formatted) {
+                                        tag.textContent = impact.unit_price_formatted;
+                                        tag.classList.add('mhbo-impact-highlight');
+                                    }
+
+                                    // Breakdown line: "× N = RON 40" when multiplier > 1
+                                    if (breakdown) {
+                                        const mult = impact.multiplier || 1;
+                                        if (mult > 1 && impact.value > 0) {
+                                            breakdown.textContent = '× ' + mult + ' = ' + impact.formatted;
+                                        } else {
+                                            breakdown.textContent = '';
                                         }
                                     }
                                 });
@@ -185,8 +238,10 @@
                             }
                         }
                     } catch (err) {
+                        if (err.name === 'AbortError') return; // Superseded by a newer request — not an error.
                         debugLog('Recalculate error:', err);
                     } finally {
+                        recalcAbortController = null;
                         totalDisplay.classList.remove('mhbo_faded');
                         if (arrivalTotalEl) arrivalTotalEl.classList.remove('mhbo_faded');
                         
@@ -200,14 +255,21 @@
             }
 
             /**
-             * Update visibility of deposit-related summary rows
+             * Update visibility of deposit-related summary rows and wrapper.
+             * 2026 BP: Also toggles .mhbo-deposit-breakdown-summary wrapper — required because
+             * Tax.php renders the wrapper hidden by default on the booking form (payment_type='full').
              */
             function updateDepositVisibility() {
                 const paymentType = form.querySelector('input[name="mhbo_payment_type"]:checked');
                 const isDeposit = paymentType && paymentType.value === 'deposit';
-                
+
                 wrapper.querySelectorAll('.mhbo-deposit-amount-row, .mhbo-remaining-balance-row').forEach(row => {
                     row.style.display = isDeposit ? 'table-row' : 'none';
+                });
+
+                // Show/hide the deposit summary section wrapper
+                wrapper.querySelectorAll('.mhbo-deposit-breakdown-summary').forEach(el => {
+                    el.style.display = isDeposit ? '' : 'none';
                 });
             }
 
@@ -237,7 +299,7 @@
                             let label = mhbo_vars.label_child_n_age.replace('%d', (i + 1));
                             html += '<div class="mhbo-child-age-group">' +
                                 '<label>' + label + ' <span class="required">*</span></label>' +
-                                '<input type="number" name="child_ages[]" value="0" min="0" max="17" required class="mhbo-child-age-input">' +
+                                '<input type="number" name="child_ages[]" value="" placeholder="0" min="0" max="17" required class="mhbo-child-age-input">' +
                                 '</div>';
                         }
                         agesInputs.innerHTML = html;
@@ -253,59 +315,27 @@
 
             if (guestsSelect) guestsSelect.addEventListener('change', recalculatePrice);
             
-            // Premium Extras Interactions (2026 BP)
-            $(wrapper).on('click', '.mhbo-extra-card', function(e) {
-                // Prevent double trigger if clicking buttons inside
-                if ($(e.target).closest('.mhbo-qty-btn').length) return;
-                
-                const $card = $(this);
-                const $input = $card.find('.mhbo-extra-input');
-                
-                if ($input.attr('type') === 'checkbox') {
-                    $input.prop('checked', !$input.prop('checked')).trigger('change');
-                    $card.toggleClass('selected', $input.prop('checked'));
-                    
-                    // Visual feedback: brief scale pop
-                    $card.css('transform', 'scale(0.98)');
-                    setTimeout(() => $card.css('transform', ''), 100);
-                }
-            });
-
-            // Handle Quantity Buttons
+            // Quantity stepper buttons — update the input directly (it IS the form field).
             $(wrapper).on('click', '.mhbo-qty-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                const $btn = $(this);
-                const $card = $btn.closest('.mhbo-extra-card');
-                const $input = $card.find('.mhbo-extra-input'); // Actual hidden input
-                const $display = $card.find('.mhbo-extra-qty-display'); // Read-only display
-                
-                let currentVal = parseFloat($input.val()) || 0;
-                const isPlus = $btn.hasClass('plus');
-                
-                if (isPlus) {
-                    currentVal++;
-                } else {
-                    currentVal = Math.max(0, currentVal - 1);
-                }
-                
-                $input.val(currentVal).trigger('change');
-                $display.val(currentVal);
-                $card.toggleClass('selected', currentVal > 0);
+                const $card  = $(this).closest('.mhbo-extra-card');
+                const $input = $card.find('.mhbo-extra-input');
+                let val = parseFloat($input.val()) || 0;
+                val = $(this).hasClass('plus') ? val + 1 : Math.max(0, val - 1);
+                $input.val(val).trigger('change');
             });
 
-            // Initial sync for cards (if some are pre-filled)
-            wrapper.querySelectorAll('.mhbo-extra-card').forEach(card => {
-                const input = card.querySelector('.mhbo-extra-input');
-                if (input && (input.checked || parseFloat(input.value) > 0)) {
-                    card.classList.add('selected');
-                    const qtyDisplay = card.querySelector('.mhbo-extra-qty-display');
-                    if (qtyDisplay) qtyDisplay.value = input.value;
-                }
+            // Sync card selected state + trigger price recalculation on any extra change.
+            $(wrapper).on('change', '.mhbo-extra-input', function() {
+                const $input  = $(this);
+                const $card   = $input.closest('.mhbo-extra-card');
+                const selected = $input.attr('type') === 'checkbox'
+                    ? $input.prop('checked')
+                    : parseFloat($input.val()) > 0;
+                $card.toggleClass('selected', selected);
+                recalculatePrice();
             });
-
-            $(wrapper).on('change', '.mhbo-extra-input', recalculatePrice);
 
             // [CRITICAL 2026 FIX] Add listeners for check-in/out to trigger recalculation when calendar updates them
             const dateInputs = wrapper.querySelectorAll('input[name="check_in"], input[name="check_out"]');

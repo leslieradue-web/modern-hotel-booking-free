@@ -230,7 +230,7 @@ register_rest_route($namespace, '/bookings', array(
         // Require nonce for protection against CSRF
         if ($request !== null) {
             $nonce = $request->get_header('X-WP-Nonce');
-            if (empty($nonce) || !wp_verify_nonce($nonce, 'wp_rest')) {
+            if ('' === (string) ($nonce ?? '') || !wp_verify_nonce((string) $nonce, 'wp_rest')) {
                 return new \WP_Error(
                     'mhbo_unauthorized',
                     esc_html(I18n::get_label('label_invalid_nonce')),
@@ -265,13 +265,13 @@ register_rest_route($namespace, '/bookings', array(
         $api_key = sanitize_text_field((string) $raw_api_key);
         
         // Use API Key for bucket if available, otherwise fallback to IP
-        $identifier = !empty($api_key) ? 'key_' . md5($api_key) : 'ip_' . md5($ip);
+        $identifier = ($api_key !== '' && $api_key !== null) ? 'key_' . md5($api_key) : 'ip_' . md5($ip);
         
         $transient_key = 'mhbo_api_rate_' . $identifier;
         $request_count = get_transient($transient_key);
         
         // Higher limit for API Key holders
-        $default_limit = !empty($api_key) ? 300 : 60;
+        $default_limit = ($api_key !== '' && $api_key !== null) ? 300 : 60;
         $limit = apply_filters('mhbo_api_rate_limit', $default_limit, $api_key); 
         $window = apply_filters('mhbo_api_rate_window', 60); 
 
@@ -496,10 +496,12 @@ if ($check_in >= $check_out) {
         $booked_dates = [];
         $check_ins = [];
         $check_outs = [];
+        $checkout_booking_status = [];
 
         foreach ($bookings as $b) {
             $check_ins[] = $b->check_in;
             $check_outs[] = $b->check_out;
+            $checkout_booking_status[$b->check_out] = $b->status;
             try {
                 // Determine if this booking blocks specific dates
                 $period = new \DatePeriod(
@@ -539,23 +541,48 @@ if ($check_in >= $check_out) {
                 // Check "Prevent Same-day Turnover" for check-in availability
                 // If the date is a check-out date of an existing booking, it's only available if turnover is allowed.
                 $is_check_out_day = in_array($date_str, $check_outs, true);
+                
+                // Also check if the NEXT day is a check-in day
+                $next_day = new \DateTime($date_str);
+                $next_day->modify('+1 day');
+                $next_day_str = $next_day->format('Y-m-d');
+                $next_day_is_check_in = in_array($next_day_str, $check_ins, true);
+
                 $prevent_turnover = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
                 
                 $can_check_in = true;
                 if ($is_booked) {
                     $can_check_in = false;
-                } elseif ($is_check_out_day && (bool) $prevent_turnover) {
+                } elseif ($is_check_out_day && $prevent_turnover) {
+                    $can_check_in = false;
+                } elseif ($next_day_is_check_in && $prevent_turnover) {
+                    // Prevent checking in on the day immediately preceding an existing booking.
                     $can_check_in = false;
                 }
 
                 // Room is unbookable if status is not 'available' OR if price is 0 (unbooked)
                 $is_unbookable = ('available' !== $room_status) || (!$is_booked && $price <= 0);
 
+                // Determine final response 'status' to force frontend disable if turnover is prevented
+                // If we cannot check in because of turnover prevention, force status to 'booked' so JS disables it.
+                $final_status = 'available';
+                if ($is_booked || (!$can_check_in && $is_check_out_day)) {
+                    $final_status = 'booked';
+                } elseif ($is_unbookable) {
+                    $final_status = 'unbookable';
+                }
+
+                $b_status = $is_booked ? $booked_dates[$date_str] : null;
+                // Provide booking status for checkout dates so the UI renders half-day colors
+                if (!$is_booked && $is_check_out_day && isset($checkout_booking_status[$date_str])) {
+                     $b_status = $checkout_booking_status[$date_str];
+                }
+
                 $show_decimals = (int) get_option('mhbo_calendar_show_decimals', 0) === 1;
                 $data[] = [
                     'date' => $date_str,
-                    'status' => $is_booked ? 'booked' : ($is_unbookable ? 'unbookable' : 'available'),
-                    'booking_status' => $is_booked ? $booked_dates[$date_str] : null,
+                    'status' => $final_status,
+                    'booking_status' => $b_status,
                     'is_checkin' => in_array($date_str, $check_ins, true),
                     'is_checkout' => $is_check_out_day,
                     'can_check_in' => $can_check_in, // Add hint for frontend
@@ -587,7 +614,7 @@ if ($check_in >= $check_out) {
             Cache::set_query($cache_key, $rooms, Cache::TABLE_ROOMS, 3600);
         }
 
-        if (empty($rooms)) {
+        if (count($rooms) === 0) {
             return rest_ensure_response([]);
         }
 
@@ -675,11 +702,20 @@ if ($check_in >= $check_out) {
                     }
                     
                     // Prevent same-day turnover block (Afternoon of checkout)
-                    // RATIONALE: Blocks check-in but doesn't count as a "stay" for visual occupancy.
-                    // This aligns with individual calendar's status=available behavior.
                     if ($prevent_turnover && $date_str === (string) $b['check_out']) {
                         $is_blocked_pm = true;
                         if ($b['status'] === 'pending') $has_pending_pm = true;
+                    }
+
+                    // Dead day block (Day before Check-In)
+                    if ($prevent_turnover) {
+                        $next_day = new \DateTime($date_str);
+                        $next_day->modify('+1 day');
+                        $next_day_str = $next_day->format('Y-m-d');
+                        if ($next_day_str === (string) $b['check_in']) {
+                            // Block check-in on the day before
+                            $is_blocked_pm = true;
+                        }
                     }
 
                     // AM Occupancy (Morning of checkout)
@@ -730,9 +766,8 @@ if ($check_in >= $check_out) {
                 }
             } elseif ($rooms_free_pm === 0) {
                 // All rooms are either booked or turnover-blocked.
-                // We show 'available' to match individual calendar visualization (White or Split),
-                // but the price will be null and the frontend will see it's unselectable starting this day.
-                $status = 'available';
+                // We show status 'booked' to match frontend disabling logic.
+                $status = 'booked';
                 $booking_status = $has_pending_pm ? 'pending' : 'confirmed';
                 
                 if ($rooms_free_am === 0) {
@@ -756,6 +791,8 @@ if ($check_in >= $check_out) {
                 'price_formatted' => $min_price !== null ? I18n::format_currency($min_price, $show_decimals ? null : 0) : '-',
                 'is_checkin' => $is_checkin,
                 'is_checkout' => $is_checkout,
+                'can_checkin' => $rooms_free_pm > 0,
+                'can_checkout' => $rooms_free_am > 0,
             ];
         }
 
@@ -793,8 +830,20 @@ if ($check_in >= $check_out) {
 
 $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages);
 
-        if ($calc && get_option('mhbo_deposits_enabled', 0)) {
-            $first_night_money = !empty($calc['daily_prices']) ? reset($calc['daily_prices']) : Money::fromCents(0, $calc['total']->getCurrency());
+        if ($calc && get_option('mhbo_deposits_enabled', 0) && (isset($calc['nights']) ? (int) $calc['nights'] : 0) > 1) {
+            // 2026 BP: For 'first_night' deposit type, use room-rate-only calc (no extras, no children)
+            // to match the industry standard meaning of "first night's rate" (accommodation only).
+            // For percentage/fixed types, first_night_money is not used by calculate_deposit_money.
+            // Uses calculate_booking_money (not daily_prices[0]) to ensure tax is applied in all modes.
+            $fn_deposit_type_api = (string) get_option('mhbo_deposit_type', 'percentage');
+            $first_night_end     = gmdate('Y-m-d', strtotime($check_in . ' +1 day'));
+            $fn_extras_api       = ('first_night' === $fn_deposit_type_api) ? [] : $extras;
+            $fn_children_api     = ('first_night' === $fn_deposit_type_api) ? 0 : (int) $children;
+            $fn_ages_api         = ('first_night' === $fn_deposit_type_api) ? [] : $child_ages;
+            $first_night_calc    = Pricing::calculate_booking_money($room_id, $check_in, $first_night_end, (int) $guests, $fn_extras_api, $fn_children_api, $fn_ages_api);
+            $first_night_money   = (is_array($first_night_calc) && isset($first_night_calc['total']))
+                ? $first_night_calc['total']
+                : Money::fromCents(0, $calc['total']->getCurrency());
             $deposit_data = Pricing::calculate_deposit_money($calc['total'], $first_night_money);
             if ($deposit_data) {
                 // Return high-precision objects and legacy floats for compatibility
@@ -834,6 +883,7 @@ $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) 
             $payable_now = $calc['deposit_money'];
         }
 
+        $children_money = $calc['children_total'] ?? Money::fromCents(0, Pricing::get_currency_code());
         $response = rest_ensure_response(array(
             'success' => true,
             'total' => (float) $calc['total']->toDecimal(),
@@ -841,7 +891,8 @@ $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) 
             'payable_now' => (float) $payable_now->toDecimal(),
             'payable_now_formatted' => $payable_now->format(),
             'room_total' => (float) $calc['room_total']->toDecimal(),
-            'children_total' => (float) ($calc['children_total'] ?? Money::fromCents(0, Pricing::get_currency_code()))->toDecimal(),
+            'children_total' => (float) $children_money->toDecimal(),
+            'children_total_formatted' => $children_money->isPositive() ? $children_money->format() : '',
             'extras_total' => (float) $calc['extras_total']->toDecimal(),
             'deposit_amount' => (float) (isset($calc['deposit_money']) ? $calc['deposit_money']->toDecimal() : 0),
             'deposit_amount_formatted' => isset($calc['deposit_money']) ? $calc['deposit_money']->format() : '',
@@ -849,10 +900,14 @@ $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) 
             'remaining_balance_formatted' => isset($calc['remaining_money']) ? $calc['remaining_money']->format() : '',
             'extras_breakdown' => array_reduce($calc['extras_breakdown'] ?? array(), function($carry, $item) {
                 $carry[(string)$item['id']] = array(
-                    'value'     => (float) $item['total']->toDecimal(),
-                    'formatted' => $item['total']->format(),
-                    'name'      => $item['name'],
-                    'quantity'  => $item['quantity'],
+                    'value'               => (float) $item['total']->toDecimal(),
+                    'formatted'           => $item['total']->format(),
+                    'unit_price_value'    => (float) $item['price']->toDecimal(),
+                    'unit_price_formatted'=> $item['price']->format(),
+                    'multiplier'          => (int) ($item['multiplier'] ?? 1),
+                    'pricing_type'        => $item['pricing_type'] ?? 'fixed',
+                    'name'                => $item['name'],
+                    'quantity'            => $item['quantity'],
                 );
                 return $carry;
             }, array()),
@@ -899,7 +954,7 @@ return $response;
         $is_admin = Capabilities::current_user_can(Capabilities::MANAGE_SETTINGS);
         
         // Treat API key holders as admins for data visibility
-        $is_api_client = !empty($request->get_header('X-MHBO-API-KEY'));
+        $is_api_client = ($request->get_header('X-MHBO-API-KEY') !== '' && $request->get_header('X-MHBO-API-KEY') !== null);
 
         $response_data = array(
             'id' => (int) $booking->id,

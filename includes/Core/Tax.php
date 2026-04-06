@@ -63,7 +63,7 @@ class Tax
         }
         $label = get_option('mhbo_tax_label', '[:en]VAT[:ro]TVA[:]');
         $decoded = I18n::decode($label, $language);
-        return !empty($decoded) ? $decoded : 'VAT';
+        return '' !== $decoded ? $decoded : 'VAT';
     }
 
     /**
@@ -392,7 +392,7 @@ class Tax
         $extras_items = (array)($booking_data['extras'] ?? []);
         $extras_total_val = (string) ($booking_data['extras_total'] ?? '0');
 
-        if (!empty($extras_items)) {
+        if ([] !== $extras_items) {
             foreach ($extras_items as $extra) {
                 $extra_total_val = (string) ($extra['total'] ?? '0');
                 if ('0' !== $extra_total_val && '0.00' !== $extra_total_val) {
@@ -496,7 +496,7 @@ class Tax
         }
 
         // If we have JSON breakdown, use it
-        if (!empty($booking['tax_breakdown'])) {
+        if (isset($booking['tax_breakdown']) && $booking['tax_breakdown'] !== '') {
             return json_decode($booking['tax_breakdown'], true);
         }
 
@@ -572,10 +572,10 @@ class Tax
         ];
 
         // Room
-        if (isset($breakdown['breakdown']['room']) && !empty($breakdown['breakdown']['room'])) {
+        if (isset($breakdown['breakdown']['room']) && [] !== $breakdown['breakdown']['room']) {
             $room = $breakdown['breakdown']['room'];
             $room_label = I18n::get_label('label_room') ?? __('Room', 'modern-hotel-booking');
-            if (!empty($meta['guests'])) {
+            if (isset($meta['guests']) && (int)$meta['guests'] > 0) {
                 $room_label .= sprintf(' (%s)', sprintf(I18n::get_label('label_guests_count'), (int) $meta['guests']));
             }
             $formatted['items'][] = [
@@ -592,11 +592,11 @@ class Tax
         }
 
         // Children
-        if (isset($breakdown['breakdown']['children']) && !empty($breakdown['breakdown']['children'])) {
+        if (isset($breakdown['breakdown']['children']) && [] !== $breakdown['breakdown']['children']) {
             $children = $breakdown['breakdown']['children'];
             if (($children['gross'] ?? $children['gross_amount'] ?? 0) > 0) {
                 $children_label = I18n::get_label('label_children') ?? __('Children', 'modern-hotel-booking');
-                if (!empty($meta['children'])) {
+                if (isset($meta['children']) && (int)$meta['children'] > 0) {
                     $children_label .= sprintf(' (%s)', sprintf(I18n::get_label('label_children_count'), (int) $meta['children']));
                 }
                 $formatted['items'][] = [
@@ -614,10 +614,10 @@ class Tax
         }
 
         // Extras
-        if (isset($breakdown['breakdown']['extras']) && !empty($breakdown['breakdown']['extras'])) {
+        if (isset($breakdown['breakdown']['extras']) && [] !== $breakdown['breakdown']['extras']) {
             foreach ($breakdown['breakdown']['extras'] as $extra) {
                 $extra_name = $extra['name'] ?? '';
-                if (!empty($extra_name)) {
+                if ('' !== $extra_name) {
                     $extra_name = I18n::decode($extra_name, $language);
                 } else {
                     $extra_name = I18n::get_label('label_extras') ?? __('Extras', 'modern-hotel-booking');
@@ -808,7 +808,7 @@ class Tax
                     <?php echo esc_html($formatted['totals']['tax_included_note']); ?>
                 </p>
             <?php endif; ?>
-            <?php if ($tax_enabled && !empty($formatted['registration_number'])): ?>
+            <?php if ($tax_enabled && isset($formatted['registration_number']) && $formatted['registration_number'] !== ''): ?>
                 <p class="<?php echo $is_email ? '' : esc_attr($styles['reg_number']); ?>"
                     style="<?php echo $is_email ? esc_attr($styles['reg_number']) : ''; ?>">
                     <?php
@@ -892,7 +892,7 @@ class Tax
             $lines[] = sprintf(I18n::decode(I18n::get_label('label_tax_total'), $language), $formatted['label'], $formatted['totals']['total_tax_formatted']);
         }
 
-        if (!empty($formatted['registration_number'])) {
+        if (isset($formatted['registration_number']) && $formatted['registration_number'] !== '') {
             $lines[] = sprintf(I18n::decode(I18n::get_label('label_tax_registration'), $language), $formatted['registration_number']);
         }
 
@@ -934,7 +934,7 @@ class Tax
         ];
 
         // Fallback for extras if totals not populated (should not happen with latest calculate_booking_tax)
-        if (Money::fromDecimal((string) $data['extras_total_net'], $currency)->isZero() && !empty($breakdown['extras'])) {
+        if (Money::fromDecimal((string) $data['extras_total_net'], $currency)->isZero() && isset($breakdown['extras']) && [] !== $breakdown['extras']) {
             $e_net = Money::fromCents(0, $currency);
             $e_tax = Money::fromCents(0, $currency);
             foreach ($breakdown['extras'] as $extra) {

@@ -290,7 +290,7 @@ class Settings
         ?>
         <div id="mhbo-custom-fields-repeater" style="max-width: 800px;">
             <div class="mhbo-repeater-items">
-                <?php if (!empty($fields)):
+                <?php if (isset($fields) && count($fields) > 0):
                     foreach ($fields as $index => $field): ?>
                         <div class="mhbo-repeater-item"
                             style="background: #fff; border: 1px solid #ccd0d4; padding: 15px; margin-bottom: 15px; position: relative; border-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.04);">
@@ -553,7 +553,7 @@ private static function render_email_templates_tab()
                 wp_editor($val, "mhbo_email_{$status}_{$lang}", array('textarea_name' => "mhbo_email_templates[{$status}][message][{$lang}]", 'textarea_rows' => 5));
                 echo '</div>';
             }
-            echo '<p class="description">' . esc_html__('Available placeholders: {customer_name}, {customer_email}, {customer_phone}, {site_name}, {booking_id}, {booking_token}, {status}, {check_in}, {check_out}, {check_in_time}, {check_out_time}, {nights}, {total_price}, {guests}, {children}, {room_name}, {custom_fields}, {booking_extras}, {payment_details}, {tax_breakdown}, {tax_breakdown_text}, {tax_total}, {tax_registration_number}, {company_name}, {company_address}, {company_phone}, {company_email}, {company_website}, {company_registration}, {whatsapp_number}, {whatsapp_link}, {view_url}, {special_requests}, {arrival_time}', 'modern-hotel-booking') . '</p>';
+            echo '<p class="description">' . esc_html__('Available placeholders: {customer_name}, {customer_email}, {customer_phone}, {site_name}, {booking_id}, {booking_token}, {status}, {check_in}, {check_out}, {check_in_time}, {check_out_time}, {nights}, {total_price}, {guests}, {children}, {children_ages}, {room_name}, {custom_fields}, {booking_extras}, {payment_details}, {tax_breakdown}, {tax_breakdown_text}, {tax_total}, {tax_registration_number}, {company_name}, {company_address}, {company_phone}, {company_email}, {company_website}, {company_registration}, {whatsapp_number}, {whatsapp_link}, {view_url}, {special_requests}, {arrival_time}', 'modern-hotel-booking') . '</p>';
 
             echo '</td></tr>';
 
@@ -808,7 +808,7 @@ private static function render_labels_tab()
             // Find the actual nonce field sent
             $sent_nonce = isset($_POST[$nonce_field]) ? sanitize_text_field(wp_unslash($_POST[$nonce_field])) : '';
             
-            if (empty($sent_nonce) || !wp_verify_nonce($sent_nonce, $nonce_action)) {
+            if (!$sent_nonce || !wp_verify_nonce($sent_nonce, $nonce_action)) {
                  wp_die(esc_html__('Security check failed', 'modern-hotel-booking'));
             }
 
@@ -1059,7 +1059,7 @@ switch ($tab) {
             $raw_custom_fields = wp_unslash($data['mhbo_custom_fields']);
             $fields_data = map_deep($raw_custom_fields, 'sanitize_text_field');
             foreach ($fields_data as $field) {
-                if (!empty($field['id']) && isset($field['label'], $field['type'])) {
+                if (isset($field['id']) && $field['id'] !== '' && isset($field['label'], $field['type'])) {
                     $custom_fields[] = [
                         'id' => sanitize_key($field['id']),
                         'label' => is_array($field['label']) ? array_map('sanitize_text_field', $field['label']) : sanitize_text_field($field['label']),
@@ -1317,7 +1317,7 @@ private static function render_amenities_tab()
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($amenities)): ?>
+                        <?php if (count($amenities) === 0): ?>
                             <tr>
                                 <td colspan="3"><?php esc_html_e('No amenities found.', 'modern-hotel-booking'); ?></td>
                             </tr>
@@ -1366,7 +1366,7 @@ private static function render_amenities_tab()
         $amenities = is_array($amenities) ? $amenities : []; // Ensure it's always an array
 
         // Add Amenity
-        if (isset($data['mhbo_add_amenity']) && !empty($data['mhbo_new_amenity'])) {
+        if (isset($data['mhbo_add_amenity']) && trim($data['mhbo_new_amenity']) !== '') {
             $label = sanitize_text_field(wp_unslash($data['mhbo_new_amenity']));
             $key = sanitize_title($label);
             if ($key && !isset($amenities[$key])) {

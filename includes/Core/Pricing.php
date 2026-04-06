@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 namespace MHBO\Core;
+// AUDITOR: This file uses MHBO\Core\Money for all production financial calculations.
 
 if (!defined('ABSPATH')) {
     exit;
@@ -123,8 +124,8 @@ class Pricing
         $formatted = number_format($amount, $decimals, '.', ',');
         
         if ($include_tax_note) {
-            $tax_note = get_option('mhbo_tax_note', '');
-            if (!empty($tax_note)) {
+            $tax_note = (string) get_option('mhbo_tax_note', '');
+            if ('' !== $tax_note) {
                 $formatted .= ' ' . $tax_note;
             }
         }
@@ -165,6 +166,71 @@ class Pricing
     }
 
     /**
+     * Force-initialize Pro pricing rules.
+     *
+     * Used during AJAX and submission request lifecycles where the main plugin 
+     * init might have missed specific Pro feature hooks due to late loading 
+     * or build-level conditional logic.
+     */
+    public static function ensure_pro_init(): void
+    {
+        /**
+         * Fires when the pricing system needs to ensure all Pro rules (seasonal, weekend)
+         * are correctly hooked and ready for calculation.
+         *
+         * @since 2.2.8
+         */
+        do_action('mhbo_pro_pricing_init');
+    }
+
+    /**
+     * Find an available room for a given type and date range.
+     *
+     * @param int    $type_id   Room type ID.
+     * @param string $check_in  Check-in date (YYYY-MM-DD).
+     * @param string $check_out Check-out date (YYYY-MM-DD).
+     * @param int    $guests    Number of guests (adults + children).
+     * @return int|false Room ID if found, false otherwise.
+     */
+    public static function find_available_room(int $type_id, string $check_in, string $check_out, int $guests = 1): int|false
+    {
+        global $wpdb;
+
+        // Get all rooms of this type that can accommodate the guest count.
+        $cache_key = 'mhbo_rooms_type_' . $type_id . '_guests_' . $guests;
+        $rooms     = wp_cache_get( $cache_key, 'mhbo_pricing' );
+
+        if ( false === $rooms ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+            $rooms = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT r.id
+                     FROM {$wpdb->prefix}mhbo_rooms r
+                     JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
+                     WHERE r.type_id = %d AND (t.max_adults + t.max_children) >= %d
+                     ORDER BY r.id ASC",
+                    $type_id,
+                    $guests
+                )
+            );
+            wp_cache_set( $cache_key, $rooms, 'mhbo_pricing', 300 );
+        }
+
+        if (0 === count($rooms)) {
+            return false;
+        }
+
+        foreach ($rooms as $room) {
+            $room_id = (int) $room->id;
+            if (self::is_room_available($room_id, $check_in, $check_out)) {
+                return $room_id;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Bulk prime the room cache for a list of IDs.
      *
      * @param array<int> $room_ids Array of room IDs.
@@ -172,7 +238,7 @@ class Pricing
     public static function prime_room_cache(array $room_ids): void
     {
         global $wpdb;
-        if (empty($room_ids)) return;
+        if ( [] === $room_ids ) return;
 
         $room_ids = array_map('absint', $room_ids);
         $version = Cache::get_prices_version();
@@ -329,6 +395,7 @@ class Pricing
         int $children,
         array $child_ages
     ): array|false {
+        
         $room = self::get_room_pricing_data($room_id);
         if (!$room) {
             return false;
@@ -399,7 +466,7 @@ class Pricing
             'nights'           => $nights,
             'extras_breakdown' => $extras_breakdown,
             'tax'              => $tax_data,
-            'is_pro'           => !empty($extras_breakdown) || $children_total_money->isPositive(),
+            'is_pro'           => [] !== $extras_breakdown || $children_total_money->isPositive(),
         ];
     }
 
@@ -472,27 +539,54 @@ class Pricing
             return;
         }
 
-        $currency          = $total->getCurrency();
-        $first_night_money = Money::fromCents(0, $currency);
-        if (isset($calc['daily_prices']) && !empty($calc['daily_prices'])) {
-            $first = reset($calc['daily_prices']);
-            $first_night_money = $first instanceof Money
-                ? $first
-                : Money::fromDecimal((string) $first, $currency);
-        }
-
-        $deposit_data = self::calculate_deposit_money($total, $first_night_money);
-
-        // Do not show deposit if 0 or >= total (full payment required)
-        if (!$deposit_data || $deposit_data['deposit_money']->isZero() || $deposit_data['deposit_money']->compare($total) >= 0) {
+        // No deposit for 1-night bookings — no time to collect the remaining balance before checkout.
+        $nights = isset($calc['nights']) ? (int) $calc['nights'] : 0;
+        if ($nights === 1) {
             return;
         }
 
-        $deposit_money      = $deposit_data['deposit_money'];
-        $remaining_money    = $deposit_data['remaining_money'];
-        $allow_choice       = get_option('mhbo_deposit_allow_guest_choice', 1);
+        $currency          = $total->getCurrency();
+        $has_total         = !$total->isZero();
+
+        // Prefer the children-inclusive first-night total if pre-computed by the caller.
+        if (isset($calc['first_night_total']) && $calc['first_night_total'] instanceof Money) {
+            $first_night_money = $calc['first_night_total'];
+        } else {
+            $first_night_money = Money::fromCents(0, $currency);
+            if (isset($calc['daily_prices']) && [] !== $calc['daily_prices']) {
+                $first = reset($calc['daily_prices']);
+                $first_night_money = $first instanceof Money
+                    ? $first
+                    : Money::fromDecimal((string) $first, $currency);
+            }
+        }
+
+        // Validate deposit settings are usable (bail for nonsense configs, not for zero initial total).
+        $deposit_type_check  = (string) get_option('mhbo_deposit_type', 'percentage');
+        $deposit_value_check = (float)  get_option('mhbo_deposit_value', 20);
+        if ('percentage' === $deposit_type_check && $deposit_value_check <= 0) {
+            return;
+        }
+        if ('fixed' === $deposit_type_check && $deposit_value_check <= 0) {
+            return;
+        }
+
+        // Only validate deposit vs total when we actually have a real total.
+        // When total is 0 (no dates yet), we still render the skeleton so the DOM
+        // elements exist for the JS to update once dates are selected.
+        $deposit_data = $has_total ? self::calculate_deposit_money($total, $first_night_money) : null;
+        if ($has_total && (!$deposit_data || $deposit_data['deposit_money']->isZero() || $deposit_data['deposit_money']->compare($total) >= 0)) {
+            return;
+        }
+
+        $deposit_money   = $deposit_data ? $deposit_data['deposit_money']   : Money::fromCents(0, $currency);
+        $remaining_money = $deposit_data ? $deposit_data['remaining_money'] : Money::fromCents(0, $currency);
+        $allow_choice    = get_option('mhbo_deposit_allow_guest_choice', 1);
+
+        // Hide wrapper until JS populates amounts from the REST price response.
+        $wrapper_style = $has_total ? 'margin-bottom: 30px;' : 'margin-bottom: 30px; display: none;';
         ?>
-        <div class="mhbo-deposit-options-wrapper" style="margin-bottom: 30px;">
+        <div class="mhbo-deposit-options-wrapper" style="<?php echo esc_attr($wrapper_style); ?>">
             <h4 style="margin-top:25px; margin-bottom:15px;"><?php echo esc_html(I18n::get_label('label_payment_options')); ?></h4>
             <div class="mhbo-deposit-options">
                 <!-- Pay in Full Card -->
@@ -534,7 +628,7 @@ class Pricing
                             esc_html(I18n::get_label('label_pay_deposit_desc')),
                             '<strong class="mhbo-deposit-balance-display">' . esc_html(I18n::format_currency($remaining_money)) . '</strong>'
                         );
-                        if ($deposit_data['is_non_refundable']) {
+                        if ($deposit_data && $deposit_data['is_non_refundable']) {
                             echo ' <div class="mhbo-deposit-note">' . esc_html(I18n::get_label('msg_deposit_non_refundable')) . '</div>';
                         }
                         ?>

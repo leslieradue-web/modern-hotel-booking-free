@@ -27,7 +27,7 @@ class AdminUI
         ?>
         <div class="mhbo-admin-page-header mhbo-animate-in">
             <div class="mhbo-header-content">
-                <?php if (!empty($breadcrumbs)): ?>
+                <?php if (count($breadcrumbs) > 0): ?>
                     <nav class="mhbo-breadcrumbs" style="margin-bottom: 12px;">
                         <?php foreach ($breadcrumbs as $crumb): ?>
                             <a href="<?php echo esc_url($crumb['url']); ?>"><?php echo esc_html($crumb['label']); ?></a>
@@ -42,7 +42,7 @@ class AdminUI
                     <span class="subtitle"><?php echo esc_html($subtitle); ?></span>
                 <?php endif; ?>
             </div>
-            <?php if (!empty($actions)): ?>
+            <?php if (count($actions) > 0): ?>
                 <div class="mhbo-header-actions">
                     <?php foreach ($actions as $action): ?>
                         <a href="<?php echo esc_url($action['url']); ?>" class="button <?php echo esc_attr($action['class'] ?? 'button-secondary'); ?>">

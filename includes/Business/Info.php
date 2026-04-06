@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Business Info Settings
  *
@@ -10,8 +12,6 @@
  */
 
 namespace MHBO\Business;
-
-if (!defined('ABSPATH')) exit;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -659,7 +659,7 @@ class Info {
      * @param string $title     Media modal title.
      */
     private function render_media_field( string $prefix, int $image_id, string $image_url, string $title ): void {
-        $has_image = ! empty( $image_url );
+        $has_image = '' !== (string) $image_url;
         $id_field  = str_replace( 'mhbo_', '', $prefix ) . '_id';
         $url_field = str_replace( 'mhbo_', '', $prefix ) . '_url';
         ?>

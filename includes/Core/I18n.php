@@ -14,7 +14,7 @@ declare(strict_types=1);
  * statically and cannot resolve runtime values.
  *
  * Correct:   __( 'Hello', 'modern-hotel-booking' )
- * Incorrect: __( $text,   $domain )
+ * Incorrect: __ ( ' . variable . ' )
  *
  * If you need to include dynamic values, use printf/sprintf with placeholders:
  *   echo esc_html( sprintf( __( 'Hello %s', 'text-domain' ), $name ) );
@@ -58,7 +58,7 @@ if (!defined('ABSPATH')) {
      */
     public static function filter_gettext(string $translated, string $text, string $domain): string
     {
-        if (empty(trim($translated))) {
+        if ('' === trim($translated)) {
             return $text;
         }
         return $translated;
@@ -104,7 +104,7 @@ if (!defined('ABSPATH')) {
         // Uses filter_input() to avoid nonce-verification warnings — this is a
         // read-only display parameter that does not change state.
         $lang_param = filter_input(INPUT_GET, 'lang', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        if (is_admin() && !empty($lang_param)) {
+        if (is_admin() && '' !== (string) $lang_param) {
             return sanitize_key($lang_param);
         }
 
@@ -160,7 +160,7 @@ if (!defined('ABSPATH')) {
             case 'polylang':
                 if (function_exists('pll_languages_list')) {
                     $list = call_user_func('pll_languages_list', ['fields' => 'slug']);
-                    return !empty($list) ? $list : [self::locale_code()];
+                    return [] !== $list ? $list : [self::locale_code()];
                 }
                 return [self::locale_code()];
 
@@ -192,7 +192,7 @@ if (!defined('ABSPATH')) {
      */
     public static function decode(mixed $text, ?string $lang = null, bool $fallback = true): ?string
     {
-        if (empty($text) || !is_string($text)) {
+        if ($text === '' || !is_string($text)) {
             return is_scalar($text) ? (string) $text : null;
         }
 
@@ -245,12 +245,12 @@ if (!defined('ABSPATH')) {
         $lang_short = substr($lang, 0, 2);
 
         // 1. Try exact match
-        if (!empty($map[$lang])) {
+        if (isset($map[$lang]) && '' !== $map[$lang]) {
             return $map[$lang];
         }
 
         // 2. Try short code match (e.g. 'en' for 'en_US')
-        if (!empty($map[$lang_short])) {
+        if (isset($map[$lang_short]) && '' !== $map[$lang_short]) {
             return $map[$lang_short];
         }
 
@@ -274,7 +274,7 @@ if (!defined('ABSPATH')) {
 
             // Final fallback to any first available non-empty translation
             foreach ($map as $val) {
-                if (!empty($val)) {
+                if ('' !== $val) {
                     return apply_filters('mhbo_i18n_decode', $val, $text, $lang);
                 }
             }
@@ -300,11 +300,11 @@ if (!defined('ABSPATH')) {
         }
         $out = '';
         foreach ($values as $lang => $text) {
-            if (!empty($text)) {
+            if ('' !== $text) {
                 $out .= "[:{$lang}]{$text}";
             }
         }
-        if (!empty($out)) {
+        if ('' !== $out) {
             $out .= '[:]';
         }
         return $out;
@@ -334,14 +334,14 @@ if (!defined('ABSPATH')) {
     public static function translate_and_decode(string $translated, ?string $language = null): string
     {
         // If translation is empty, return as-is
-        if (empty($translated)) {
+        if ('' === $translated) {
             return $translated;
         }
 
         // If the translated string contains multilingual format, decode it
         if (false !== strpos($translated, '[:')) {
             $decoded = self::decode($translated, $language);
-            if (!empty($decoded)) {
+            if (null !== $decoded && '' !== $decoded) {
                 return $decoded;
             }
         }
@@ -397,7 +397,7 @@ if (!defined('ABSPATH')) {
      */
     public static function format_date(string $date_string): string
     {
-        if (empty($date_string)) {
+        if ('' === $date_string) {
             return '';
         }
         return date_i18n(get_option('date_format'), strtotime($date_string));
@@ -411,7 +411,7 @@ if (!defined('ABSPATH')) {
      */
     public static function get_payment_method_label(?string $method): string
     {
-        if (empty($method)) {
+        if (null === $method || '' === $method) {
             $method = 'arrival';
         }
         return apply_filters('mhbo_payment_method_label', match ($method) {
@@ -436,15 +436,15 @@ if (!defined('ABSPATH')) {
         $labels = self::get_all_default_labels();
         $default_val = isset($labels[$key]) ? $labels[$key] : $key;
 
-        $value = !empty($override) ? $override : $default_val;
+        $value = (false !== $override && '' !== $override) ? $override : $default_val;
 
         // Check for translated string via WPML/Polylang
         $translated = self::get_translated_string("Label: {$key}", $value, 'MHBO Frontend Labels');
 
         // If translation is found and not empty, decode it (it might still be qTranslate format)
-        if (!empty($translated)) {
+        if ('' !== $translated) {
             $decoded = self::decode($translated);
-            if (!empty($decoded)) {
+            if (null !== $decoded && '' !== $decoded) {
                 return $decoded;
             }
         }
@@ -496,6 +496,8 @@ if (!defined('ABSPATH')) {
             // translators: 1: check-in date, 2: check-out date
             'label_available_rooms' => __('Available Rooms from %1$s to %2$s', 'modern-hotel-booking'),
             'label_no_rooms' => __('No rooms available for these dates.', 'modern-hotel-booking'),
+            'label_checkout_only' => __('This date is restricted to check-outs only.', 'modern-hotel-booking'),
+            'label_checkin_only' => __('This date is restricted to check-ins only.', 'modern-hotel-booking'),
             'label_per_night' => __('per night', 'modern-hotel-booking'),
             // translators: %1$d: number of nights, %2$s: nightly rate
             'label_total_nights' => __('%1$d nights: %2$s', 'modern-hotel-booking'),
@@ -772,16 +774,16 @@ if (!defined('ABSPATH')) {
 
         if ('wpml' === $plugin) {
             $translated = apply_filters('wpml_translate_single_string', $default, $context, $name, $language); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML filter
-            return !empty($translated) ? $translated : $default;
+            return '' !== $translated ? $translated : $default;
         } elseif ('polylang' === $plugin) {
             if (function_exists('pll__')) {
                 $translated = call_user_func('pll__', $default);
-                return !empty($translated) ? $translated : $default;
+                return '' !== $translated ? $translated : $default;
             }
         }
 
         $decoded = self::decode($default, $language);
-        return !empty($decoded) ? $decoded : $default;
+        return (null !== $decoded && '' !== $decoded) ? $decoded : $default;
     }
 
     /**
@@ -798,11 +800,11 @@ if (!defined('ABSPATH')) {
         $statuses = ['pending', 'confirmed', 'cancelled', 'payment'];
         foreach ($statuses as $status) {
             $subject = get_option("mhbo_email_{$status}_subject", '');
-            if (!empty($subject)) {
+            if ('' !== $subject) {
                 self::register_string("Email {$status} Subject", $subject, 'MHBO Email Templates');
             }
             $message = get_option("mhbo_email_{$status}_message", '');
-            if (!empty($message)) {
+            if ('' !== $message) {
                 self::register_string("Email {$status} Message", $message, 'MHBO Email Templates');
             }
         }
@@ -811,7 +813,7 @@ if (!defined('ABSPATH')) {
         $labels = self::get_all_default_labels();
         foreach ($labels as $key => $default_val) {
             $label = get_option("mhbo_label_{$key}", '');
-            if (!empty($label)) {
+            if ('' !== $label) {
                 self::register_string("Label: {$key}", $label, 'MHBO Frontend Labels');
             } else {
                 self::register_string("Label: {$key}", $default_val, 'MHBO Frontend Labels');

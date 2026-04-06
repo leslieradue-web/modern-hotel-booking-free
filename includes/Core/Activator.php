@@ -298,9 +298,12 @@ class Activator
 	private static function migrate_ical_feeds_to_connections(): void
 	{
 		global $wpdb;
-		// Check if old table exists
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$old_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", "{$wpdb->prefix}mhbo_ical_feeds"));
+		$old_exists = $wpdb->get_var($wpdb->prepare(
+			"SELECT name FROM sqlite_master WHERE type='table' AND name = %s UNION SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = %s LIMIT 1",
+			"{$wpdb->prefix}mhbo_ical_feeds",
+			"{$wpdb->prefix}mhbo_ical_feeds"
+		));
 		if (!$old_exists) {
 			return;
 		}
@@ -343,28 +346,43 @@ class Activator
 		global $wpdb;
 
 		// Add composite index for booking date range queries
-		// Add composite index for booking date range queries
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration, table name hardcoded
-		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhbo_bookings WHERE Key_name = 'idx_check_in_out'");
-		if (empty($index_check)) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema migration, table name hardcoded
-			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhbo_bookings ADD INDEX idx_check_in_out (check_in, check_out)");
+		// 2026 BP: Database-agnostic index existence check
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$index_check = $wpdb->get_var($wpdb->prepare(
+			"SELECT name FROM sqlite_master WHERE type='index' AND name = %s UNION SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_NAME = %s AND INDEX_NAME = %s LIMIT 1",
+			'idx_check_in_out',
+			"{$wpdb->prefix}mhbo_bookings",
+			'idx_check_in_out'
+		));
+		if ( null === $index_check ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable
+			$wpdb->query("CREATE INDEX IF NOT EXISTS idx_check_in_out ON {$wpdb->prefix}mhbo_bookings (check_in, check_out)");
 		}
 
 		// Add composite index for status/payment filtering
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhbo_bookings WHERE Key_name = 'idx_status_payment'");
-		if (empty($index_check)) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema migration
-			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhbo_bookings ADD INDEX idx_status_payment (status, payment_status)");
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$index_check = $wpdb->get_var($wpdb->prepare(
+			"SELECT name FROM sqlite_master WHERE type='index' AND name = %s UNION SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_NAME = %s AND INDEX_NAME = %s LIMIT 1",
+			'idx_status_payment',
+			"{$wpdb->prefix}mhbo_bookings",
+			'idx_status_payment'
+		));
+		if ( null === $index_check ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable
+			$wpdb->query("CREATE INDEX IF NOT EXISTS idx_status_payment ON {$wpdb->prefix}mhbo_bookings (status, payment_status)");
 		}
 
 		// Add index for pricing rules date queries
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$index_check = $wpdb->get_var("SHOW INDEX FROM {$wpdb->prefix}mhbo_pricing_rules WHERE Key_name = 'idx_dates'");
-		if (empty($index_check)) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Schema migration
-			$wpdb->query("ALTER TABLE {$wpdb->prefix}mhbo_pricing_rules ADD INDEX idx_dates (start_date, end_date)");
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$index_check = $wpdb->get_var($wpdb->prepare(
+			"SELECT name FROM sqlite_master WHERE type='index' AND name = %s UNION SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_NAME = %s AND INDEX_NAME = %s LIMIT 1",
+			'idx_dates',
+			"{$wpdb->prefix}mhbo_pricing_rules",
+			'idx_dates'
+		));
+		if ( null === $index_check ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable
+			$wpdb->query("CREATE INDEX IF NOT EXISTS idx_dates ON {$wpdb->prefix}mhbo_pricing_rules (start_date, end_date)");
 		}
 	}
 }

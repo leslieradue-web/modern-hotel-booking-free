@@ -32,9 +32,20 @@ class Money implements \JsonSerializable
      * @var array<string, int>
      */
     private static array $CURRENCY_PRECISION = [
-        'USD' => 2, 'EUR' => 2, 'GBP' => 2, 'CAD' => 2, 'AUD' => 2,
-        'JPY' => 0, 'HUF' => 0, 'TWD' => 0,
-        'KWD' => 3, 'BHD' => 3, 'OMR' => 3, 'JOD' => 3,
+        // Standard 2-decimal currencies (Majority of global currencies)
+        'USD' => 2, 'EUR' => 2, 'GBP' => 2, 'CAD' => 2, 'AUD' => 2, 'NZD' => 2,
+        'CHF' => 2, 'HKD' => 2, 'SGD' => 2, 'SEK' => 2, 'DKK' => 2, 'NOK' => 2,
+        'ILS' => 2, 'MXN' => 2, 'BRL' => 2, 'PLN' => 2, 'CZK' => 2, 'RON' => 2,
+        'RUB' => 2, 'TRY' => 2, 'ZAR' => 2, 'THB' => 2, 'INR' => 2, 'AED' => 2,
+        'SAR' => 2, 'QAR' => 2, 'EGP' => 2, 'MAD' => 2, 'NGN' => 2, 'KES' => 2,
+        'MUR' => 2, 'SCR' => 2, 'MYR' => 2, 'PHP' => 2,
+ 
+        // Zero-decimal currencies (No cents/minor units)
+        'JPY' => 0, 'HUF' => 0, 'TWD' => 0, 'KRW' => 0, 'CLP' => 0, 'PYG' => 0,
+        'VND' => 0, 'IDR' => 0, 'ISK' => 0, 'UGX' => 0, 'RWF' => 0,
+ 
+        // Three-decimal currencies
+        'KWD' => 3, 'BHD' => 3, 'OMR' => 3, 'JOD' => 3, 'LYD' => 3, 'TND' => 3,
     ];
 
     /**

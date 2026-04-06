@@ -136,6 +136,8 @@
 
                     let newDisabled = [...disabledDates];
                     if (firstBookedAfter) {
+                        // For 2026 BP: Always un-disable firstBookedAfter.
+                        // The REST API implicitly shifts firstBookedAfter back by 1 day ("dead day") when turnover is prevented.
                         newDisabled = newDisabled.filter(d => d !== firstBookedAfter);
                     }
                     instance.set('disable', newDisabled);
@@ -156,14 +158,22 @@
                         instance.setDate([selectedDates[0], nextDay], false);
                         selectedDates = [selectedDates[0], nextDay];
 
-                        // Keep checkout date un-disabled
+                        // Keep checkout date un-disabled if turnover is allowed
+                        const preventTurnover = (typeof mhbo_vars !== 'undefined' && mhbo_vars.prevent_turnover) || false;
                         let checkOutStr = instance.formatDate(nextDay, "Y-m-d");
-                        let newDisabledFinal = disabledDates.filter(d => d !== checkOutStr);
+                        let newDisabledFinal = disabledDates;
+                        if (!preventTurnover) {
+                            newDisabledFinal = disabledDates.filter(d => d !== checkOutStr);
+                        }
                         instance.set('disable', newDisabledFinal);
                     } else {
-                        // Keep checkout date un-disabled
+                        // Keep checkout date un-disabled if turnover is allowed
+                        const preventTurnover = (typeof mhbo_vars !== 'undefined' && mhbo_vars.prevent_turnover) || false;
                         let checkOutStr2 = instance.formatDate(selectedDates[1], "Y-m-d");
-                        let newDisabledFinal2 = disabledDates.filter(d => d !== checkOutStr2);
+                        let newDisabledFinal2 = disabledDates;
+                        if (!preventTurnover) {
+                            newDisabledFinal2 = disabledDates.filter(d => d !== checkOutStr2);
+                        }
                         instance.set('disable', newDisabledFinal2);
                     }
 

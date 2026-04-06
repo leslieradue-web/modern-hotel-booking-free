@@ -32,7 +32,7 @@ class Calendar
                 'mhbo-calendar-style',
                 MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
                 ['mhbo-flatpickr-css', 'mhbo-style'],
-                MHBO_VERSION
+                (string) time() // Cache buster for active development
             );
         }
         if (!wp_style_is('mhbo-flatpickr-css', 'registered')) {
@@ -145,6 +145,7 @@ class Calendar
                     'currency_space_after' => 0,
                     'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
                     'checkout_time' => get_option('mhbo_checkout_time', '11:00'),
+                    'prevent_turnover' => (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1,
                 ],
                 'i18n' => [
                     'your_selection' => I18n::get_label('label_your_selection'),
@@ -159,6 +160,8 @@ class Calendar
                     'continue_booking' => I18n::get_label('label_continue_booking'),
                     'night' => I18n::get_label('label_night'),
                     'nights' => I18n::get_label('label_nights'),
+                    'checkout_only_error' => I18n::get_label('label_checkout_only'),
+                    'checkin_only_error' => I18n::get_label('label_checkin_only'),
                 ],
                 'current_lang' => $current_lang
             ]);
@@ -235,7 +238,7 @@ class Calendar
             <?php
             // Build the action URL for the booking form submission
             $action_url = I18n::decode(get_option('mhbo_booking_page_url'), null, false);
-            if (empty($action_url)) {
+            if ('' === $action_url) {
                 $b_page_id = (int) get_option('mhbo_booking_page');
                 if ($b_page_id > 0) {
                     $action_url = get_permalink($b_page_id);
@@ -243,7 +246,7 @@ class Calendar
             }
 
             // Fallback: If no booking page is configured, use the home URL to avoid relative path issues
-            if (empty($action_url)) {
+            if ('' === $action_url) {
                 $action_url = home_url('/');
             }
 

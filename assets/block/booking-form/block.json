@@ -2,7 +2,7 @@
     "$schema": "../../../.dev/schemas/wp-block.json",
     "apiVersion": 3,
     "name": "modern-hotel-booking/booking-form",
-    "version": "2.2.9",
+    "version": "2.3.0",
     "title": "Hotel Booking Form",
     "category": "mhbo-hotel",
     "icon": "building",

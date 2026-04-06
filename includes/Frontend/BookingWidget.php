@@ -64,7 +64,7 @@ class BookingWidget extends \WP_Widget
 
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core provides HTML for widget wrappers, still using wp_kses_post for compliance
         echo wp_kses_post($args['before_widget']);
-        if (!empty($instance['title'])) {
+        if (isset($instance['title']) && '' !== $instance['title']) {
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress core provides HTML for widget wrappers
             echo wp_kses_post($args['before_title']) . esc_html(apply_filters('widget_title', $instance['title'])) . wp_kses_post($args['after_title']);
         }
@@ -87,7 +87,7 @@ class BookingWidget extends \WP_Widget
 
     public function form($instance)
     {
-        $title = !empty($instance['title']) ? $instance['title'] : __('Book Your Stay', 'modern-hotel-booking');
+        $title = (isset($instance['title']) && '' !== $instance['title']) ? $instance['title'] : __('Book Your Stay', 'modern-hotel-booking');
         ?>
         <p>
             <label for="<?php echo esc_attr($this->get_field_id('title')); ?>">
@@ -103,7 +103,7 @@ class BookingWidget extends \WP_Widget
     public function update($new_instance, $old_instance)
     {
         $instance = array();
-        $instance['title'] = (!empty($new_instance['title'])) ? wp_strip_all_tags($new_instance['title']) : '';
+        $instance['title'] = (isset($new_instance['title']) && '' !== $new_instance['title']) ? wp_strip_all_tags($new_instance['title']) : '';
         return $instance;
     }
 }

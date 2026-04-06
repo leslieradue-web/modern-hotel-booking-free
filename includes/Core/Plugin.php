@@ -51,7 +51,7 @@ class Plugin
         $block = new Block();
         $block->init();
 
-        if (is_admin()) {
+if (is_admin()) {
             $this->load_admin();
         } else {
             $this->load_frontend();
@@ -61,7 +61,7 @@ class Plugin
         $calendar = new Calendar();
         $calendar->init();
 
-// Register Widget (Must be global to show in Admin > Widgets)
+        // Register Widget (Must be global to show in Admin > Widgets)
         add_action('widgets_init', function () {
             register_widget(BookingWidget::class);
         });

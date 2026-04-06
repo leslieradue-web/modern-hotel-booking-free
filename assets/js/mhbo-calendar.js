@@ -34,6 +34,7 @@ jQuery(document).ready(function ($) {
             let priceData = {};
             let bookingStatusData = {}; // Track booking status per date
             let changeoverData = {}; // Track changeover status (checkin/checkout/both)
+            let eligibilityData = {}; // Track selection eligibility (can_checkin/can_checkout)
 
             function showInlineError(message) {
                 if ($errorBox.length) {
@@ -98,6 +99,12 @@ jQuery(document).ready(function ($) {
                     } else if (item.is_checkout) {
                         changeoverData[item.date] = 'checkout';
                     }
+
+                    // Store eligibility for selection guards
+                    eligibilityData[item.date] = {
+                        checkin: item.can_checkin !== false,
+                        checkout: item.can_checkout !== false
+                    };
                 });
             }
 
@@ -125,6 +132,27 @@ jQuery(document).ready(function ($) {
                         // Clear errors on change
                         $errorBox.hide();
 
+                        const dateStrClicked = selectedDates.length > 0 ? instance.formatDate(selectedDates[selectedDates.length - 1], "Y-m-d") : null;
+
+                        // 1. Guard: Check-In Eligibility
+                        if (selectedDates.length === 1 && dateStrClicked && eligibilityData[dateStrClicked]) {
+                            if (!eligibilityData[dateStrClicked].checkin) {
+                                showInlineError(mhbo_calendar.i18n.checkout_only_error || 'This date is restricted to check-outs only.');
+                                instance.clear();
+                                return;
+                            }
+                        }
+
+                        // 2. Guard: Check-Out Eligibility 
+                        if (selectedDates.length === 2 && dateStrClicked && eligibilityData[dateStrClicked]) {
+                            if (!eligibilityData[dateStrClicked].checkout) {
+                                showInlineError(mhbo_calendar.i18n.checkin_only_error || 'This date is restricted to check-ins only.');
+                                // Keep the check-in date, but clear the check-out
+                                instance.setDate([selectedDates[0]], false);
+                                return;
+                            }
+                        }
+
                         // dynamically allow the next booked date to be a checkout date
                         if (selectedDates.length === 1) {
                             const checkIn = selectedDates[0];
@@ -150,6 +178,8 @@ jQuery(document).ready(function ($) {
                             // AND restrict maxDate to prevent "jumping over" existing bookings
                             let newDisabled = [...disabledDates];
                             if (firstBookedAfter) {
+                                // For 2026 BP: Always un-disable firstBookedAfter.
+                                // The REST API implicitly shifts firstBookedAfter back by 1 day ("dead day") when turnover is prevented.
                                 newDisabled = newDisabled.filter(d => d !== firstBookedAfter);
                                 instance.set('maxDate', firstBookedAfter);
                             } else {
@@ -174,7 +204,7 @@ jQuery(document).ready(function ($) {
                                 // Silently update visual selection
                                 instance.setDate([selectedDates[0], nextDay], false);
 
-                                // Keep checkout date un-disabled
+                                // Always keep checkout date un-disabled conceptually (dead day logic handles restrictions natively)
                                 let checkOutStr = instance.formatDate(nextDay, "Y-m-d");
                                 let newDisabledFinal = disabledDates.filter(d => d !== checkOutStr);
                                 instance.set('disable', newDisabledFinal);
@@ -183,7 +213,7 @@ jQuery(document).ready(function ($) {
                                 return;
                             }
 
-                            // Keep the checkout date un-disabled if it was booked, so flatpickr doesn't erase it
+                            // Always keep the checkout date un-disabled conceptually so flatpickr doesn't erase it
                             let checkOutStr2 = instance.formatDate(selectedDates[1], "Y-m-d");
                             let newDisabledFinal2 = disabledDates.filter(d => d !== checkOutStr2);
                             instance.set('disable', newDisabledFinal2);
@@ -223,9 +253,24 @@ jQuery(document).ready(function ($) {
 
                         // Only render prices for room-specific calendars (not aggregated views).
                         if (showPrice && priceData[date] && !dayElem.classList.contains('flatpickr-disabled')) {
-                            // Insert a space between number and currency for better wrapping on small screens
-                            const priceText = priceData[date].formatted.replace(/(\d)([^\d\s.,])/, '$1 $2');
-                            const $priceTag = $('<span class="mhbo-fp-price">' + priceText + '</span>');
+                            const pos = mhbo_calendar.settings.currency_pos;
+                            const symbol = mhbo_calendar.settings.currency_symbol;
+                            const priceVal = priceData[date].price;
+                            const decimals = (typeof mhbo_calendar.settings.currency_decimals !== 'undefined') ? parseInt(mhbo_calendar.settings.currency_decimals) : 0;
+                            
+                            const formattedPrice = parseFloat(priceVal).toFixed(decimals);
+                            
+                            let priceHtml = '';
+                            const spanCurrency = '<span class="mhbo-price-part-currency">' + symbol + '</span>';
+                            const spanAmount = '<span class="mhbo-price-part-amount">' + formattedPrice + '</span>';
+                            
+                            if (pos === 'before') {
+                                priceHtml = spanCurrency + spanAmount;
+                            } else {
+                                priceHtml = spanAmount + spanCurrency;
+                            }
+                            
+                            const $priceTag = $('<span class="mhbo-fp-price">' + priceHtml + '</span>');
                             $(dayElem).append($priceTag);
                             $(dayElem).addClass('has-price');
                         }

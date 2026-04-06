@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * Business Blocks Integration
  *
@@ -10,8 +12,6 @@
  */
 
 namespace MHBO\Business;
-
-if (!defined('ABSPATH')) exit;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;

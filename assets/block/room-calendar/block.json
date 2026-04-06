@@ -2,7 +2,7 @@
     "$schema": "../../../.dev/schemas/wp-block.json",
     "apiVersion": 3,
     "name": "modern-hotel-booking/room-calendar",
-    "version": "2.2.9",
+    "version": "2.3.0",
     "title": "Room Availability Calendar",
     "category": "mhbo-hotel",
     "icon": "calendar-alt",
