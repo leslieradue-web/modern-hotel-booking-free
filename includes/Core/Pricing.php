@@ -310,9 +310,9 @@ class Pricing
      * @param string $check_in           Check-in date (YYYY-MM-DD).
      * @param string $check_out          Check-out date (YYYY-MM-DD).
      * @param int    $exclude_booking_id Booking ID to exclude (for edit flows).
-     * @return true|string True if available; I18n label key on conflict.
+     * @return bool|string True if available; I18n label key on conflict.
      */
-    public static function is_room_available(int $room_id, string $check_in, string $check_out, int $exclude_booking_id = 0): true|string
+    public static function is_room_available(int $room_id, string $check_in, string $check_out, int $exclude_booking_id = 0): bool|string
     {
         global $wpdb;
 
