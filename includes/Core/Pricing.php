@@ -496,7 +496,7 @@ class Pricing
         switch ($deposit_type) {
             case 'first_night':
                 $deposit_money      = $first_night;
-                $deposit_type_label = __("First Night's Rate", 'modern-hotel-booking');
+                $deposit_type_label = I18n::get_label('label_first_night_rate');
                 break;
             case 'fixed':
                 $deposit_money      = Money::fromDecimal((string) max(0.01, $deposit_value), $currency);

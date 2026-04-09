@@ -19,8 +19,8 @@ class BookingWidget extends \WP_Widget
     {
         parent::__construct(
             self::ID_BASE,
-            __('MHBO: Booking Search', 'modern-hotel-booking'),
-            array('description' => __('A compact booking search form.', 'modern-hotel-booking'))
+            I18n::get_label('widget_title'),
+            array('description' => I18n::get_label('widget_desc'))
         );
 
         // Enqueue assets when widget is displayed
@@ -87,11 +87,11 @@ class BookingWidget extends \WP_Widget
 
     public function form($instance)
     {
-        $title = (isset($instance['title']) && '' !== $instance['title']) ? $instance['title'] : __('Book Your Stay', 'modern-hotel-booking');
+        $title = (isset($instance['title']) && '' !== $instance['title']) ? $instance['title'] : I18n::get_label('widget_default_title');
         ?>
         <p>
             <label for="<?php echo esc_attr($this->get_field_id('title')); ?>">
-                <?php esc_html_e('Title:', 'modern-hotel-booking'); ?>
+                <?php echo esc_html(I18n::get_label('widget_field_title')); ?>
             </label>
             <input class="widefat" id="<?php echo esc_attr($this->get_field_id('title')); ?>"
                 name="<?php echo esc_attr($this->get_field_name('title')); ?>" type="text"

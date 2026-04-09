@@ -7,9 +7,9 @@
     var __ = wp.i18n.__;
 
     registerBlockType('modern-hotel-booking/room-calendar', {
-        title: __('Room Availability Calendar', 'modern-hotel-booking'),
+        title: __('Hotel: Room Calendar', 'modern-hotel-booking'),
         icon: 'calendar-alt',
-        category: 'mhbo-hotel',
+        category: 'hotel-booking',
         transforms: {
             from: [
                 {
@@ -52,7 +52,7 @@
                 ),
                 el('div', { key: 'preview', className: 'wp-block-modern-hotel-booking-room-calendar mhbo-block-calendar-preview' },
                     el('div', { className: 'mhbo-preview-header' },
-                        el('div', { className: 'mhbo-preview-month' }, __('April 2026', 'modern-hotel-booking')),
+                        el('div', { className: 'mhbo-preview-month' }, '— —'),
                         el('div', { className: 'mhbo-preview-nav' }, '‹ ›')
                     ),
                     el('div', { className: 'mhbo-preview-grid' },
@@ -69,7 +69,7 @@
                         el('p', {}, __('Room Availability Calendar', 'modern-hotel-booking')),
                         el('p', { className: 'mhbo-preview-room-id' },
                             attributes.roomId > 0
-                                ? __('Room ID: ', 'modern-hotel-booking') + attributes.roomId
+                                ? wp.i18n.sprintf( __('Room ID: %d', 'modern-hotel-booking'), attributes.roomId )
                                 : __('Select Room ID in Sidebar', 'modern-hotel-booking')
                         )
                     )

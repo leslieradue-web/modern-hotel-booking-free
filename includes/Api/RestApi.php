@@ -461,7 +461,7 @@ if ($check_in >= $check_out) {
         }
 
         if ($room_id < 0) {
-            return new \WP_Error('mhbo_missing_room_id', __('Room ID is required.', 'modern-hotel-booking'), array('status' => 400));
+            return new \WP_Error('mhbo_missing_room_id', I18n::get_label('api_err_room_id_required'), array('status' => 400));
         }
 
         // Fetch bookings with status to differentiate pending vs confirmed
@@ -591,7 +591,7 @@ if ($check_in >= $check_out) {
                 ];
             }
         } catch (\Exception $e) {
-            return new \WP_Error('mhbo_calendar_error', __('Error generating calendar data.', 'modern-hotel-booking'), array('status' => 500));
+            return new \WP_Error('mhbo_calendar_error', I18n::get_label('api_err_calendar_gen'), array('status' => 500));
         }
 
         return rest_ensure_response($data);
@@ -857,7 +857,7 @@ $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) 
         if (!$calc) {
             return new \WP_Error(
                 'mhbo_calculation_failed',
-                __('Error calculating price. Please check input data.', 'modern-hotel-booking'),
+                I18n::get_label('api_err_price_calc'),
                 array('status' => 400)
             );
         }

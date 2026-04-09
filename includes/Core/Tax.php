@@ -530,7 +530,7 @@ class Tax
                 ],
                 'extras' => [
                     [
-                        'name' => I18n::get_label('label_extras') ?? __('Extras', 'modern-hotel-booking'),
+                        'name' => I18n::get_label('label_extras'),
                         'net' => $extras_net->toDecimal(),
                         'tax' => $extras_tax->toDecimal(),
                         'gross' => $extras_net->add($extras_tax)->toDecimal()
@@ -574,7 +574,7 @@ class Tax
         // Room
         if (isset($breakdown['breakdown']['room']) && [] !== $breakdown['breakdown']['room']) {
             $room = $breakdown['breakdown']['room'];
-            $room_label = I18n::get_label('label_room') ?? __('Room', 'modern-hotel-booking');
+            $room_label = I18n::get_label('label_room');
             if (isset($meta['guests']) && (int)$meta['guests'] > 0) {
                 $room_label .= sprintf(' (%s)', sprintf(I18n::get_label('label_guests_count'), (int) $meta['guests']));
             }
@@ -595,7 +595,7 @@ class Tax
         if (isset($breakdown['breakdown']['children']) && [] !== $breakdown['breakdown']['children']) {
             $children = $breakdown['breakdown']['children'];
             if (($children['gross'] ?? $children['gross_amount'] ?? 0) > 0) {
-                $children_label = I18n::get_label('label_children') ?? __('Children', 'modern-hotel-booking');
+                $children_label = I18n::get_label('label_children');
                 if (isset($meta['children']) && (int)$meta['children'] > 0) {
                     $children_label .= sprintf(' (%s)', sprintf(I18n::get_label('label_children_count'), (int) $meta['children']));
                 }
@@ -620,7 +620,7 @@ class Tax
                 if ('' !== $extra_name) {
                     $extra_name = I18n::decode($extra_name, $language);
                 } else {
-                    $extra_name = I18n::get_label('label_extras') ?? __('Extras', 'modern-hotel-booking');
+                    $extra_name = I18n::get_label('label_extras');
                 }
 
                 $formatted['items'][] = [
@@ -702,12 +702,10 @@ class Tax
         // Check if we need to show separate tax lines
         $show_separate_tax_lines = ($accommodation_rate !== $extras_rate) && ($accommodation_tax_total > 0 || $extras_tax > 0);
 
-        // translators: %s: Tax label (e.g., "VAT", "Tax").
-        $tax_breakdown_label = I18n::get_label('label_tax_breakdown') ?? __('%s Breakdown', 'modern-hotel-booking');
-        $booking_summary_label = I18n::get_label('label_booking_summary') ?? __('Booking Summary', 'modern-hotel-booking');
+        // Totals title
         $title = $tax_enabled
-            ? sprintf($tax_breakdown_label, $formatted['label'])
-            : $booking_summary_label;
+            ? sprintf(I18n::get_label('label_tax_breakdown'), $formatted['label'])
+            : I18n::get_label('label_booking_summary');
 
         ob_start();
         ?>
@@ -723,10 +721,10 @@ class Tax
                 <thead>
                     <tr>
                         <th style="<?php echo esc_attr($styles['th']); ?>">
-                            <?php echo esc_html(I18n::get_label('label_item') ?? __('Item', 'modern-hotel-booking')); ?>
+                            <?php echo esc_html(I18n::get_label('label_item')); ?>
                         </th>
                         <th style="<?php echo esc_attr($styles['th']); ?> text-align: right;">
-                            <?php echo esc_html(I18n::get_label('label_amount') ?? __('Amount', 'modern-hotel-booking')); ?>
+                            <?php echo esc_html(I18n::get_label('label_amount')); ?>
                         </th>
                     </tr>
                 </thead>
@@ -746,7 +744,7 @@ class Tax
                     <?php if ($tax_enabled): ?>
                         <tr class="mhbo-tax-total">
                             <td style="<?php echo esc_attr($styles['td']); ?>">
-                                <strong><?php echo esc_html(I18n::get_label('label_subtotal') ?? __('Subtotal', 'modern-hotel-booking')); ?></strong>
+                                <strong><?php echo esc_html(I18n::get_label('label_subtotal')); ?></strong>
                             </td>
                             <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                 <strong><?php echo esc_html($formatted['totals']['subtotal_net_formatted']); ?></strong>
@@ -757,8 +755,7 @@ class Tax
                                 <tr class="mhbo-tax-item">
                                     <td style="<?php echo esc_attr($styles['td']); ?>">
                                         <?php
-                                        // translators: 1: Tax label, 2: Tax rate percentage
-                                        echo esc_html(sprintf(I18n::get_label('label_tax_accommodation') ?? __('%1$s - Accommodation (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], (float) $accommodation_rate + 0)); ?>
+                                        echo esc_html(sprintf(I18n::get_label('label_tax_accommodation'), $formatted['label'], (float) $accommodation_rate + 0)); ?>
                                     </td>
                                     <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                         <?php echo esc_html(I18n::format_currency($accommodation_tax_total)); ?>
@@ -769,8 +766,7 @@ class Tax
                                 <tr class="mhbo-tax-item">
                                     <td style="<?php echo esc_attr($styles['td']); ?>">
                                         <?php
-                                        // translators: 1: Tax label, 2: Tax rate percentage
-                                        echo esc_html(sprintf(I18n::get_label('label_tax_extras') ?? __('%1$s - Extras (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], (float) $extras_rate + 0)); ?>
+                                        echo esc_html(sprintf(I18n::get_label('label_tax_extras'), $formatted['label'], (float) $extras_rate + 0)); ?>
                                     </td>
                                     <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                         <?php echo esc_html(I18n::format_currency($extras_tax)); ?>
@@ -781,8 +777,7 @@ class Tax
                             <tr class="mhbo-tax-item">
                                 <td style="<?php echo esc_attr($styles['td']); ?>">
                                     <?php
-                                    // translators: 1: Tax label, 2: Tax rate percentage
-                                    echo esc_html(sprintf(I18n::get_label('label_tax_rate') ?? __('%1$s (%2$s%%)', 'modern-hotel-booking'), $formatted['label'], (float) $accommodation_rate + 0)); ?>
+                                    echo esc_html(sprintf(I18n::get_label('label_tax_rate'), $formatted['label'], (float) $accommodation_rate + 0)); ?>
                                 </td>
                                 <td style="<?php echo esc_attr($styles['td_right']); ?>">
                                     <?php echo esc_html($formatted['totals']['total_tax_formatted']); ?>
@@ -793,7 +788,7 @@ class Tax
                     <tr class="<?php echo $is_email ? '' : esc_attr($styles['grand_total']); ?>">
                         <td
                             style="<?php echo esc_attr($styles['td']); ?> <?php echo $is_email ? esc_attr($styles['grand_total']) : ''; ?>">
-                            <strong><?php echo esc_html(I18n::get_label('label_total') ?? __('Total Price', 'modern-hotel-booking')); ?></strong>
+                            <strong><?php echo esc_html(I18n::get_label('label_total')); ?></strong>
                         </td>
                         <td
                             style="<?php echo esc_attr($styles['td_right']); ?> <?php echo $is_email ? esc_attr($styles['grand_total']) : ''; ?>">
@@ -872,8 +867,7 @@ class Tax
         if ($show_separate_tax_lines) {
             if ($accommodation_tax_total > 0) {
                 $lines[] = sprintf(
-                    // translators: 1: tax label (e.g., VAT), 2: tax rate percentage, 3: formatted tax amount
-                    __('  %1$s - Accommodation (%2$s%%): %3$s', 'modern-hotel-booking'),
+                    I18n::get_label('label_tax_accommodation'),
                     $formatted['label'],
                     $accommodation_rate,
                     I18n::format_currency($accommodation_tax_total)
@@ -881,8 +875,7 @@ class Tax
             }
             if ($extras_tax > 0) {
                 $lines[] = sprintf(
-                    // translators: 1: tax label (e.g., VAT), 2: tax rate percentage, 3: formatted tax amount
-                    __('  %1$s - Extras (%2$s%%): %3$s', 'modern-hotel-booking'),
+                    I18n::get_label('label_tax_extras'),
                     $formatted['label'],
                     $extras_rate,
                     I18n::format_currency($extras_tax)

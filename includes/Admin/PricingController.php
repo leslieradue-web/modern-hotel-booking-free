@@ -34,7 +34,7 @@ class PricingController
     public static function render(): void
     {
         if (!Capabilities::current_user_can(Capabilities::MANAGE_SETTINGS)) {
-            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'modern-hotel-booking'));
+            wp_die(esc_html(I18n::get_label('msg_insufficient_perms')));
         }
 
         $instance = new self();
@@ -55,7 +55,7 @@ class PricingController
         // 1. ADD RULE
         if (isset($_POST['submit_pricing'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() called immediately inside
             if (!check_admin_referer('mhbo_add_pricing')) {
-                wp_die(esc_html__('Security check failed', 'modern-hotel-booking'));
+                wp_die(esc_html(I18n::get_label('msg_security_fail')));
             }
 
             $rule_name = isset($_POST['rule_name']) ? sanitize_text_field(wp_unslash($_POST['rule_name'])) : '';
@@ -91,21 +91,21 @@ class PricingController
 
             Cache::invalidate_pricing();
             
-            add_settings_error('mhbo_settings', 'rule_added', __('Pricing rule created successfully.', 'modern-hotel-booking'), 'success');
+            add_settings_error('mhbo_settings', 'rule_added', I18n::get_label('pricing_msg_added'), 'success');
         }
 
         // 2. DELETE RULE
         if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- wp_verify_nonce() called inside this block
             $id = absint($_GET['id']);
             if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_pricing_' . $id)) {
-                wp_die(esc_html__('Security check failed.', 'modern-hotel-booking'));
+                wp_die(esc_html(I18n::get_label('msg_security_fail')));
             }
 
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
             $wpdb->delete($table, array('id' => $id));
             Cache::invalidate_pricing();
             
-            add_settings_error('mhbo_settings', 'rule_deleted', __('Pricing rule removed successfully.', 'modern-hotel-booking'), 'success');
+            add_settings_error('mhbo_settings', 'rule_deleted', I18n::get_label('pricing_msg_deleted'), 'success');
         }
     }
 
@@ -128,11 +128,11 @@ class PricingController
         ?>
         <div class="wrap mhbo-admin-wrap">
             <?php AdminUI::render_header(
-                __('Pricing Rules & Schedules', 'modern-hotel-booking'),
-                __('Define custom seasonal rates, discounts, and holiday surcharges.', 'modern-hotel-booking'),
+                I18n::get_label('pricing_title'),
+                I18n::get_label('pricing_desc'),
                 [],
                 [
-                    ['label' => __('Dashboard', 'modern-hotel-booking'), 'url' => admin_url('admin.php?page=mhbo-dashboard')]
+                    ['label' => I18n::get_label('dash_title'), 'url' => admin_url('admin.php?page=mhbo-dashboard')]
                 ]
             ); ?>
 
@@ -141,43 +141,43 @@ class PricingController
             ?>
             
             <div class="mhbo-card">
-                <h3 style="margin-top:0; color: var(--mhbo-primary, #1a365d);"><?php esc_html_e('Define New Adjustment', 'modern-hotel-booking'); ?></h3>
+                <h3 style="margin-top:0; color: var(--mhbo-primary, #1a365d);"><?php echo esc_html(I18n::get_label('pricing_add_title')); ?></h3>
                 <form method="post">
                     <?php wp_nonce_field('mhbo_add_pricing'); ?>
                     
                     <table class="form-table">
                         <tr>
-                            <th scope="row"><label for="rule_name"><?php esc_html_e('Campaign Name', 'modern-hotel-booking'); ?></label></th>
-                            <td><input type="text" name="rule_name" id="rule_name" class="regular-text" required placeholder="<?php esc_attr_e('e.g. Summer Special 2026', 'modern-hotel-booking'); ?>"></td>
+                            <th scope="row"><label for="rule_name"><?php echo esc_html(I18n::get_label('pricing_campaign')); ?></label></th>
+                            <td><input type="text" name="rule_name" id="rule_name" class="regular-text" required placeholder="<?php echo esc_attr(I18n::get_label('pricing_campaign_placeholder')); ?>"></td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="start_date"><?php esc_html_e('Active Period', 'modern-hotel-booking'); ?></label></th>
+                            <th scope="row"><label for="start_date"><?php echo esc_html(I18n::get_label('pricing_active_period')); ?></label></th>
                             <td>
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <input type="date" name="start_date" id="start_date" required>
-                                    <span><?php esc_html_e('until', 'modern-hotel-booking'); ?></span>
+                                    <span><?php echo esc_html(I18n::get_label('pricing_until')); ?></span>
                                     <input type="date" name="end_date" id="end_date" required>
                                 </div>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="price_modifier"><?php esc_html_e('Price Change', 'modern-hotel-booking'); ?></label></th>
+                            <th scope="row"><label for="price_modifier"><?php echo esc_html(I18n::get_label('pricing_change')); ?></label></th>
                             <td>
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <input type="number" step="any" name="price_modifier" id="price_modifier" style="width:100px;" required>
                                     <select name="modifier_type">
                                         <option value="fixed"><?php echo esc_html(strtoupper((string)get_option('mhbo_currency_code', 'USD'))); ?></option>
-                                        <option value="percent"><?php esc_html_e('Percentage %', 'modern-hotel-booking'); ?></option>
+                                        <option value="percent"><?php echo esc_html(I18n::get_label('pricing_percent')); ?></option>
                                     </select>
                                 </div>
-                                <p class="description"><?php esc_html_e('Positive for surcharges, negative for discounts.', 'modern-hotel-booking'); ?></p>
+                                <p class="description"><?php echo esc_html(I18n::get_label('pricing_change_desc')); ?></p>
                             </td>
                         </tr>
                         <tr>
-                            <th scope="row"><label for="type_id"><?php esc_html_e('Target Room Type', 'modern-hotel-booking'); ?></label></th>
+                            <th scope="row"><label for="type_id"><?php echo esc_html(I18n::get_label('pricing_target_room')); ?></label></th>
                             <td>
                                 <select name="type_id" id="type_id" class="regular-text">
-                                    <option value="0"><?php esc_html_e('All Room Types (Global Rule)', 'modern-hotel-booking'); ?></option>
+                                    <option value="0"><?php echo esc_html(I18n::get_label('pricing_all_rooms')); ?></option>
                                     <?php foreach ($types as $t): ?>
                                         <option value="<?php echo esc_attr((string)$t->id); ?>">
                                             <?php echo esc_html(I18n::decode($t->name)); ?>
@@ -189,29 +189,29 @@ class PricingController
                     </table>
                     
                     <div style="margin-top:20px; padding-top:20px; border-top:1px solid #eee;">
-                        <input type="submit" name="submit_pricing" class="button button-primary button-large" value="<?php esc_attr_e('Create Pricing Rule', 'modern-hotel-booking'); ?>">
+                        <input type="submit" name="submit_pricing" class="button button-primary button-large" value="<?php echo esc_attr(I18n::get_label('pricing_btn_create')); ?>">
                     </div>
                 </form>
             </div>
 
             <div class="mhbo-card" style="margin-top:30px;">
-                <h3><?php esc_html_e('Active & Scheduled Adjustments', 'modern-hotel-booking'); ?></h3>
+                <h3><?php echo esc_html(I18n::get_label('pricing_active_rules')); ?></h3>
                 <table class="wp-list-table widefat fixed striped" style="box-shadow: none; border:none;">
                     <thead>
                         <tr>
-                            <th><?php esc_html_e('Rule Name', 'modern-hotel-booking'); ?></th>
-                            <th><?php esc_html_e('Validity', 'modern-hotel-booking'); ?></th>
-                            <th><?php esc_html_e('Impact', 'modern-hotel-booking'); ?></th>
-                            <th><?php esc_html_e('Applicability', 'modern-hotel-booking'); ?></th>
-                            <th style="width:100px;"><?php esc_html_e('Actions', 'modern-hotel-booking'); ?></th>
+                            <th><?php echo esc_html(I18n::get_label('pricing_rule_name')); ?></th>
+                            <th><?php echo esc_html(I18n::get_label('pricing_validity')); ?></th>
+                            <th><?php echo esc_html(I18n::get_label('pricing_impact')); ?></th>
+                            <th><?php echo esc_html(I18n::get_label('pricing_applicability')); ?></th>
+                            <th style="width:100px;"><?php echo esc_html(I18n::get_label('label_actions')); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($rules) === 0): ?>
-                            <tr><td colspan="5" style="padding:20px; text-align:center; color:#999;"><?php esc_html_e('No pricing rules defined.', 'modern-hotel-booking'); ?></td></tr>
+                            <tr><td colspan="5" style="padding:20px; text-align:center; color:#999;"><?php echo esc_html(I18n::get_label('pricing_no_rules')); ?></td></tr>
                         <?php else: ?>
                             <?php foreach ($rules as $rule): 
-                                $rule_type = __('Global (All Types)', 'modern-hotel-booking');
+                                $rule_type = I18n::get_label('pricing_global_label');
                                 if ($rule->type_id > 0) {
                                     foreach ($types as $t) {
                                         if ((int)$t->id === (int)$rule->type_id) {
@@ -250,8 +250,8 @@ class PricingController
                                     <td>
                                         <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin.php?page=mhbo-pricing-rules&action=delete&id=' . $rule->id), 'mhbo_delete_pricing_' . $rule->id)); ?>" 
                                         class="button button-small button-link-delete" 
-                                        onclick="return confirm('<?php esc_attr_e('Permanently remove this pricing adjustment?', 'modern-hotel-booking'); ?>');">
-                                            <?php esc_html_e('Delete', 'modern-hotel-booking'); ?>
+                                        onclick="return confirm('<?php echo esc_attr(I18n::get_label('pricing_delete_confirm')); ?>');">
+                                            <?php echo esc_html(I18n::get_label('btn_delete')); ?>
                                         </a>
                                     </td>
                                 </tr>

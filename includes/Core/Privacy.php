@@ -17,21 +17,20 @@ class Privacy
      */
     public function init(): void
     {
-        // Add Privacy Policy content
         add_action('admin_init', function () {
             if (function_exists('wp_add_privacy_policy_content')) {
-                $content = '<h2>' . __('Modern Hotel Booking', 'modern-hotel-booking') . '</h2>';
-                $content .= '<p>' . __('This plugin collects and displays the following information:', 'modern-hotel-booking') . '</p>';
-                $content .= '<h3>' . __('Guest Data', 'modern-hotel-booking') . '</h3>';
+                $content = '<h2>' . I18n::get_label('privacy_policy_heading') . '</h2>';
+                $content .= '<p>' . I18n::get_label('privacy_policy_collection_desc') . '</p>';
+                $content .= '<h3>' . I18n::get_label('privacy_policy_guest_data') . '</h3>';
                 $content .= '<ul>';
-                $content .= '<li>' . __('Name, Email, and Phone Number', 'modern-hotel-booking') . '</li>';
-                $content .= '<li>' . __('Booking Dates and Room Preferences', 'modern-hotel-booking') . '</li>';
+                $content .= '<li>' . I18n::get_label('privacy_policy_guest_data_desc_1') . '</li>';
+                $content .= '<li>' . I18n::get_label('privacy_policy_guest_data_desc_2') . '</li>';
                 $content .= '</ul>';
-                $content .= '<h3>' . __('Business Information', 'modern-hotel-booking') . '</h3>';
-                $content .= '<p>' . __('The site administrator may configure business details (Company Name, Address, Tax ID) and payment information (Bank Transfer IBAN, Revolut Tag) to be displayed on the frontend and in booking emails.', 'modern-hotel-booking') . '</p>';
-                $content .= '<p>' . __('This data is stored in the WordPress options table and is used solely for facilitation of the booking process.', 'modern-hotel-booking') . '</p>';
+                $content .= '<h3>' . I18n::get_label('privacy_policy_business_info') . '</h3>';
+                $content .= '<p>' . I18n::get_label('privacy_policy_business_info_desc_1') . '</p>';
+                $content .= '<p>' . I18n::get_label('privacy_policy_business_info_desc_2') . '</p>';
 
-                wp_add_privacy_policy_content('Modern Hotel Booking', $content);
+                wp_add_privacy_policy_content(I18n::get_label('privacy_policy_heading'), $content);
             }
         });
 
@@ -43,7 +42,7 @@ class Privacy
     public function register_gdpr_exporter(array $exporters): array
     {
         $exporters['modern-hotel-booking'] = [
-            'exporter_friendly_name' => __('Modern Hotel Booking', 'modern-hotel-booking'),
+            'exporter_friendly_name' => I18n::get_label('privacy_policy_heading'),
             'callback' => [$this, 'export_personal_data'],
         ];
         return $exporters;
@@ -52,7 +51,7 @@ class Privacy
     public function register_gdpr_eraser(array $erasers): array
     {
         $erasers['modern-hotel-booking'] = [
-            'eraser_friendly_name' => __('Modern Hotel Booking', 'modern-hotel-booking'),
+            'eraser_friendly_name' => I18n::get_label('privacy_policy_heading'),
             'callback' => [$this, 'erase_personal_data'],
         ];
         return $erasers;
@@ -93,58 +92,58 @@ class Privacy
         foreach ($bookings as $booking) {
             $data = [
                 [
-                    'name' => __('Booking ID', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_booking_id'),
                     'value' => $booking->id,
                 ],
                 [
-                    'name' => __('Room ID', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_room_id'),
                     'value' => $booking->room_id,
                 ],
                 [
-                    'name' => __('Check-in Date', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_check_in'),
                     'value' => $booking->check_in,
                 ],
                 [
-                    'name' => __('Check-out Date', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_check_out'),
                     'value' => $booking->check_out,
                 ],
                 [
-                    'name' => __('Total Price', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_total_price'),
                     'value' => $booking->total_price,
                 ],
                 [
-                    'name' => __('Status', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_status'),
                     'value' => $booking->status,
                 ],
                 [
-                    'name' => __('Customer Name', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_customer_name'),
                     'value' => $booking->customer_name,
                 ],
                 [
-                    'name' => __('Customer Phone', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_customer_phone'),
                     'value' => $booking->customer_phone,
                 ],
                 [
-                    'name' => __('Admin Notes', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_admin_notes'),
                     'value' => $booking->admin_notes,
                 ],
                 [
-                    'name' => __('Custom Fields', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_custom_fields'),
                     'value' => $booking->custom_fields,
                 ],
                 [
-                    'name' => __('Booking Extras', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_booking_extras'),
                     'value' => $booking->booking_extras,
                 ],
                 [
-                    'name' => __('Payment Error Logs', 'modern-hotel-booking'),
+                    'name' => I18n::get_label('gdpr_payment_errors'),
                     'value' => $booking->payment_error,
                 ],
             ];
 
             $export_items[] = [
                 'group_id' => 'mhbo-bookings',
-                'group_label' => __('Hotel Bookings', 'modern-hotel-booking'),
+                'group_label' => I18n::get_label('gdpr_group_label'),
                 'item_id' => "mhbo-booking-{$booking->id}",
                 'data' => $data,
             ];
@@ -192,9 +191,9 @@ class Privacy
             $updated = $wpdb->update(
                 $wpdb->prefix . 'mhbo_bookings',
                 array(
-                    'customer_name'  => '[Deleted]',
+                    'customer_name'  => I18n::get_label('msg_deleted'),
                     'customer_email' => 'deleted@site.invalid',
-                    'customer_phone' => '[Deleted]',
+                    'customer_phone' => I18n::get_label('msg_deleted'),
                     'booking_token'  => wp_generate_password(64, false), // Revoke access link
                     'admin_notes'    => null,
                     'custom_fields'  => null,
@@ -237,9 +236,9 @@ class Privacy
         $result = (bool) $wpdb->update(
             $wpdb->prefix . 'mhbo_bookings',
             [
-                'customer_name'  => '[Anonymized]',
+                'customer_name'  => I18n::get_label('msg_anonymized'),
                 'customer_email' => 'deleted@site.invalid',
-                'customer_phone' => '[Anonymized]',
+                'customer_phone' => I18n::get_label('msg_anonymized'),
                 'booking_token'  => wp_generate_password(64, false), // Revoke access link
                 'admin_notes'    => null,
                 'custom_fields'  => null,

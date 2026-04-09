@@ -250,7 +250,7 @@ class Calendar
                 $action_url = home_url('/');
             }
 
-            /**
+            /*
              * Filter the calendar form action URL.
              *
              * @since 1.0.0
@@ -310,13 +310,12 @@ class Calendar
                         class="mhbo-btn-primary mhbo-booking-btn-submit"><?php echo esc_html($btn_label); ?></button>
                 </form>
             </div>
-            </div>
 
             <?php if (get_option('mhbo_powered_by_link', 0)): ?>
                 <div class="mhbo-powered-by" style="text-align: right; margin-top: 10px; font-size: 11px; opacity: 0.7;">
                     <a href="<?php echo esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'); ?>"
                         target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
-                        Powered by <strong>Modern Hotel Booking</strong>
+                        <?php echo esc_html(I18n::get_label('powered_by')); ?> <strong><?php echo esc_html(I18n::get_label('label_plugin_name')); ?></strong>
                     </a>
                 </div>
             <?php endif; ?>

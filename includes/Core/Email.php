@@ -152,13 +152,13 @@ class Email
 
         // Load multilingual templates from options with hardcoded fallbacks if empty
         $template_subject = get_option("mhbo_email_{$status}_subject");
-        if ( '' === (string) ($template_subject ?? '') ) {
-            $template_subject = "[:en]Booking {$status} - #{$booking_id}[:]";
+        if ('' === (string) $template_subject) {
+            $template_subject = I18n::get_label("email_booking_status_subject");
         }
 
         $template_message = get_option("mhbo_email_{$status}_message");
-        if ( '' === (string) ($template_message ?? '') ) {
-            $template_message = "[:en]Hello {customer_name}, your booking #{$booking_id} status is now {$status}.[:]";
+        if ('' === (string) $template_message) {
+            $template_message = I18n::get_label("email_booking_status_message");
         }
 
         // SECURITY: Validate email address before sending
@@ -222,7 +222,7 @@ class Email
                 $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_payment_date')) . '</strong> ' . date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime((string) $booking->payment_date)) . '</p>';
             }
             if ( '' !== (string) ($booking->payment_method ?? '') ) {
-                $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_payment_method')) . '</strong> ' . esc_html(ucfirst((string) $booking->payment_method)) . '</p>';
+                $payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html(I18n::get_label('label_payment_method')) . '</strong> ' . esc_html(I18n::translate_payment_method((string) $booking->payment_method)) . '</p>';
             }
             $payment_details .= '</div>';
         } elseif ('arrival' === $payment_method || 'onsite' === $payment_method) {
@@ -267,15 +267,15 @@ class Email
                 if ($accommodation_rate === $extras_rate) {
                     $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('label_price_includes_tax'), $tax_label, $accommodation_rate)) . '</p>';
                 } else {
-                    // translators: 1: tax label (e.g., VAT), 2: accommodation tax rate, 3: extras tax rate
-                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(__('Price includes %1$s - Accommodation: %2$s%%, Extras: %3$s%%', 'modern-hotel-booking'), $tax_label, $accommodation_rate, $extras_rate)) . '</p>';
+                    /* translators: %1$s: tax label (e.g., VAT), %2$s: accommodation tax rate, %3$s: extras tax rate */
+                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('email_tax_includes_split'), $tax_label, $accommodation_rate, $extras_rate)) . '</p>';
                 }
             } elseif (Tax::MODE_SALES_TAX === $tax_mode) {
                 if ($accommodation_rate === $extras_rate) {
                     $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('label_tax_added_at_checkout'), $tax_label, $accommodation_rate)) . '</p>';
                 } else {
-                    // translators: 1: tax label (e.g., Sales Tax), 2: accommodation tax rate, 3: extras tax rate
-                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(__('%1$s added at checkout - Accommodation: %2$s%%, Extras: %3$s%%', 'modern-hotel-booking'), $tax_label, $accommodation_rate, $extras_rate)) . '</p>';
+                    /* translators: %1$s: tax label (e.g., Sales Tax), %2$s: accommodation tax rate, %3$s: extras tax rate */
+                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('email_tax_added_split'), $tax_label, $accommodation_rate, $extras_rate)) . '</p>';
                 }
             }
             if ( '' !== (string) ($reg_number ?? '') ) {
@@ -369,31 +369,30 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
 
         $lang = $booking->booking_language ?: I18n::get_current_language();
 
-        // Load multilingual templates from options with hardcoded fallbacks if empty
         $template_subject = get_option("mhbo_email_payment_subject");
-        if ( '' === (string) ($template_subject ?? '') ) {
-            $template_subject = "[:en]Payment Confirmation - Booking #{$booking_id}[:]";
+        if ('' === (string) $template_subject) {
+            $template_subject = I18n::get_label("email_payment_confirmation_subject");
         }
 
         $template_message = get_option("mhbo_email_payment_message");
-        if ( '' === (string) ($template_message ?? '') ) {
+        if ('' === (string) $template_message) {
             $template_message = '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">';
-            $template_message .= '<h2 style="color: #2e7d32;">' . __('Payment Confirmation', 'modern-hotel-booking') . '</h2>';
+            $template_message .= '<h2 style="color: #2e7d32;">' . I18n::get_label('email_payment_confirmation_heading') . '</h2>';
             // translators: %s: customer name
-            $template_message .= '<p>' . sprintf(__('Dear %s,', 'modern-hotel-booking'), '{customer_name}') . '</p>';
-            $template_message .= '<p>' . __('Thank you for your payment. Your booking has been confirmed.', 'modern-hotel-booking') . '</p>';
+            $template_message .= '<p>' . sprintf(I18n::get_label('email_dear_customer'), '{customer_name}') . '</p>';
+            $template_message .= '<p>' . I18n::get_label('email_payment_thank_you') . '</p>';
 
             $template_message .= '<div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">';
-            $template_message .= '<h4 style="margin: 0 0 15px 0;">' . __('Booking Details', 'modern-hotel-booking') . '</h4>';
-            $template_message .= '<p style="margin: 5px 0;"><strong>' . __('Booking ID:', 'modern-hotel-booking') . '</strong> #{booking_id}</p>';
-            $template_message .= '<p style="margin: 5px 0;"><strong>' . __('Check-in:', 'modern-hotel-booking') . '</strong> {check_in}</p>';
-            $template_message .= '<p style="margin: 5px 0;"><strong>' . __('Check-out:', 'modern-hotel-booking') . '</strong> {check_out}</p>';
+            $template_message .= '<h4 style="margin: 0 0 15px 0;">' . I18n::get_label('email_booking_details') . '</h4>';
+            $template_message .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_booking_id') . '</strong> #{booking_id}</p>';
+            $template_message .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_check_in') . '</strong> {check_in}</p>';
+            $template_message .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_check_out') . '</strong> {check_out}</p>';
             $template_message .= '</div>';
 
             $template_message .= '{payment_details}';
 
-            $template_message .= '<p>' . __('If you have any questions, please don\'t hesitate to contact us.', 'modern-hotel-booking') . '</p>';
-            $template_message .= '<p>' . __('Best regards,', 'modern-hotel-booking') . '<br>' . get_bloginfo('name') . '</p>';
+            $template_message .= '<p>' . I18n::get_label('email_contact_us_prompt') . '</p>';
+            $template_message .= '<p>' . I18n::get_label('email_best_regards') . '<br>' . get_bloginfo('name') . '</p>';
             $template_message .= '</div>';
         }
 
@@ -402,22 +401,22 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
 
         // Build payment details section
         $payment_details = '<div style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">';
-        $payment_details .= '<h4 style="margin: 0 0 15px 0; color: #2e7d32;">' . __('Payment Details', 'modern-hotel-booking') . '</h4>';
+        $payment_details .= '<h4 style="margin: 0 0 15px 0; color: #2e7d32;">' . I18n::get_label('email_payment_details') . '</h4>';
         $p_amt = Money::fromDecimal((string) (isset($payment_data['amount']) ? $payment_data['amount'] : ($booking->total_price ?? 0)));
-        $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Amount Paid:', 'modern-hotel-booking') . '</strong> ' . I18n::format_currency($p_amt) . '</p>';
+        $payment_details .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_amount_paid') . '</strong> ' . I18n::format_currency($p_amt) . '</p>';
 
-        if ( '' !== (string) ($payment_data['transaction_id'] ?? '') ) {
-            $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Transaction ID:', 'modern-hotel-booking') . '</strong> ' . esc_html((string) $payment_data['transaction_id']) . '</p>';
-        } elseif ( '' !== (string) ($booking->payment_transaction_id ?? '') ) {
-            $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Transaction ID:', 'modern-hotel-booking') . '</strong> ' . esc_html((string) $booking->payment_transaction_id) . '</p>';
+        if ('' !== (string) ($payment_data['transaction_id'] ?? '')) {
+            $payment_details .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_transaction_id') . '</strong> ' . esc_html((string) $payment_data['transaction_id']) . '</p>';
+        } elseif ('' !== (string) ($booking->payment_transaction_id ?? '')) {
+            $payment_details .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_transaction_id') . '</strong> ' . esc_html((string) $booking->payment_transaction_id) . '</p>';
         }
 
-        if ( '' !== (string) ($payment_data['method'] ?? '') ) {
-            $method_name = ucfirst((string) $payment_data['method']);
-            $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Payment Method:', 'modern-hotel-booking') . '</strong> ' . esc_html($method_name) . '</p>';
+        if ('' !== (string) ($payment_data['method'] ?? '')) {
+            $method_name = I18n::translate_payment_method((string) $payment_data['method']);
+            $payment_details .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_payment_method') . '</strong> ' . esc_html($method_name) . '</p>';
         }
 
-        $payment_details .= '<p style="margin: 5px 0;"><strong>' . __('Payment Date:', 'modern-hotel-booking') . '</strong> ' . date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime(current_time('mysql'))) . '</p>';
+        $payment_details .= '<p style="margin: 5px 0;"><strong>' . I18n::get_label('email_payment_date') . '</strong> ' . date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime(current_time('mysql'))) . '</p>';
         $payment_details .= '</div>';
 
         // Build tax breakdown section
@@ -544,7 +543,7 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             "DTSTAMP:$now\r\n" .
             "DTSTART;VALUE=DATE:$dtstart\r\n" .
             "DTEND;VALUE=DATE:$dtend\r\n" .
-            "SUMMARY:Hotel Booking #{$booking->id}\r\n" .
+            "SUMMARY:" . sprintf(I18n::get_label('label_hotel_booking_id'), $booking->id) . "\r\n" .
             "END:VEVENT\r\n" .
             "END:VCALENDAR";
     }
@@ -592,7 +591,7 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $nights    = ($check_in > 0 && $check_out > $check_in) ? (int) round(($check_out - $check_in) / DAY_IN_SECONDS) : 0;
 
         // SANITIZATION: All user-provided data must be escaped for use in HTML emails.
-        $c_name  = '' !== (string) ($booking->customer_name ?? '') ? esc_html((string) $booking->customer_name) : __('Guest', 'modern-hotel-booking');
+        $c_name  = '' !== (string) ($booking->customer_name ?? '') ? esc_html((string) $booking->customer_name) : I18n::get_label('label_guest');
         $c_email = '' !== (string) ($booking->customer_email ?? '') ? sanitize_email((string) $booking->customer_email) : '';
         $c_phone = '' !== (string) ($booking->customer_phone ?? '') ? esc_html((string) $booking->customer_phone) : '';
         $special = '' !== (string) ($booking->special_requests ?? '') ? esc_html((string) $booking->special_requests) : '';
@@ -756,18 +755,18 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             $revolut = \MHBO\Business\Info::get_revolut();
             if ( (bool) ($banking['enabled'] ?? false) && '' !== (string) ($banking['iban'] ?? '') ) {
                 $mhbo_output .= '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ffd8a8;">';
-                $mhbo_output .= '<h5 style="margin: 0 0 10px 0;">' . esc_html__('Bank Transfer Details', 'modern-hotel-booking') . '</h5>';
-                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html__('Bank:', 'modern-hotel-booking') . '</strong> ' . esc_html($banking['bank_name']) . '</p>';
-                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html__('IBAN:', 'modern-hotel-booking') . '</strong> <code style="background:#fff;padding:2px 5px;border:1px solid #ccc;">' . esc_html($banking['iban']) . '</code></p>';
-                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html__('Reference:', 'modern-hotel-booking') . '</strong> ' . esc_html($banking['reference_prefix'] . $booking_id) . '</p>';
+                $mhbo_output .= '<h5 style="margin: 0 0 10px 0;">' . esc_html(I18n::get_label('label_bank_transfer_details')) . '</h5>';
+                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html(I18n::get_label('label_bank')) . '</strong> ' . esc_html((string) $banking['bank_name']) . '</p>';
+                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html(I18n::get_label('label_iban')) . '</strong> <code style="background:#fff;padding:2px 5px;border:1px solid #ccc;">' . esc_html((string) $banking['iban']) . '</code></p>';
+                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html(I18n::get_label('label_reference')) . '</strong> ' . esc_html($banking['reference_prefix'] . $booking_id) . '</p>';
                 $mhbo_output .= '</div>';
             }
             if ( (bool) ($revolut['enabled'] ?? false) && '' !== (string) ($revolut['revolut_tag'] ?? '') ) {
                 $mhbo_output .= '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ffd8a8;">';
-                $mhbo_output .= '<h5 style="margin: 0 0 10px 0;">' . esc_html__('Revolut Payment', 'modern-hotel-booking') . '</h5>';
-                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html__('Revtag:', 'modern-hotel-booking') . '</strong> <code style="background:#fff;padding:2px 5px;border:1px solid #ccc;">' . esc_html($revolut['revolut_tag']) . '</code></p>';
+                $mhbo_output .= '<h5 style="margin: 0 0 10px 0;">' . esc_html(I18n::get_label('label_revolut_payment')) . '</h5>';
+                $mhbo_output .= '<p style="margin: 3px 0; font-size: 0.9em;"><strong>' . esc_html(I18n::get_label('label_revtag')) . '</strong> <code style="background:#fff;padding:2px 5px;border:1px solid #ccc;">' . esc_html((string) $revolut['revolut_tag']) . '</code></p>';
                 if ( '' !== (string) ($revolut['revolut_link'] ?? '') ) {
-                    $mhbo_output .= '<p style="margin: 5px 0;"><a href="' . esc_url((string) $revolut['revolut_link']) . '" style="display:inline-block;background:#000;color:#fff;padding:5px 15px;text-decoration:none;border-radius:4px;font-size:0.85em;">' . esc_html__('Pay via Revolut.me', 'modern-hotel-booking') . '</a></p>';
+                    $mhbo_output .= '<p style="margin: 5px 0;"><a href="' . esc_url((string) $revolut['revolut_link']) . '" style="display:inline-block;background:#000;color:#fff;padding:5px 15px;text-decoration:none;border-radius:4px;font-size:0.85em;">' . esc_html(I18n::get_label('label_pay_via_revolut')) . '</a></p>';
                 }
                 $mhbo_output .= '</div>';
             }

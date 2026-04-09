@@ -515,9 +515,9 @@ class Shortcode
                         $arrival_children = Money::fromDecimal((string) ($booking->children_total_net ?? 0), $arrival_currency);
                         if ($arrival_total->isPositive()) {
                             if ($arrival_children->isPositive()) {
-                                echo '<p style="margin:4px 0;"><span>' . esc_html(I18n::get_label('label_children') ?: __('Children', 'modern-hotel-booking')) . ':</span> ' . esc_html($arrival_children->format()) . '</p>';
+                                echo '<p style="margin:4px 0;"><span>' . esc_html(I18n::get_label('label_children')) . ':</span> ' . esc_html($arrival_children->format()) . '</p>';
                             }
-                            echo '<p style="margin:4px 0;"><strong>' . esc_html(I18n::get_label('label_total') ?: __('Total', 'modern-hotel-booking')) . ':</strong> ' . esc_html($arrival_total->format()) . '</p>';
+                            echo '<p style="margin:4px 0;"><strong>' . esc_html(I18n::get_label('label_total')) . ':</strong> ' . esc_html($arrival_total->format()) . '</p>';
                         }
                         echo '</div>';
                     } elseif ('failed' === $booking->payment_status) {
@@ -1005,7 +1005,7 @@ $deposit_data = null;
                     $children_total_init = $calc ? $calc['children_total'] : Money::fromCents(0, Pricing::get_currency_code());
                     ?>
                     <div class="mhbo-children-cost-row" style="<?php echo esc_attr($children_total_init->isPositive() ? '' : 'display:none;'); ?> font-size:0.9rem; color:#64748b; margin-top:6px;">
-                        <?php echo esc_html(I18n::get_label('label_children') ?: __('Children', 'modern-hotel-booking')); ?>:
+                        <?php echo esc_html(I18n::get_label('label_children')); ?>:
                         <span class="mhbo-children-total-display"><?php echo esc_html($children_total_init->isPositive() ? $children_total_init->format() : ''); ?></span>
                     </div>
                     <p style="font-size: 1.2em; margin-top: 15px;">

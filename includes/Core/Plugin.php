@@ -70,7 +70,7 @@ if (is_admin()) {
         $this->load_business();
 
         add_filter('plugin_action_links_' . MHBO_PLUGIN_BASENAME, function ($links) {
-            $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=mhbo-settings')) . '">' . esc_html__('Settings', 'modern-hotel-booking') . '</a>';
+            $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=mhbo-settings')) . '">' . esc_html(I18n::get_label('label_settings')) . '</a>';
             array_unshift($links, $settings_link);
             return $links;
         });
@@ -97,7 +97,6 @@ if (is_admin()) {
     {
         \MHBO\Business\Info::get_instance();
         \MHBO\Business\Shortcodes::get_instance();
-        \MHBO\Business\Blocks::get_instance();
     }
 
     /**

@@ -6,9 +6,9 @@
     var PanelBody = wp.components.PanelBody;
 
     registerBlockType('modern-hotel-booking/booking-form', {
-        title: wp.i18n.__('Hotel Booking Form', 'modern-hotel-booking'),
+        title: wp.i18n.__('Hotel: Booking Form', 'modern-hotel-booking'),
         icon: 'building',
-        category: 'mhbo-hotel',
+        category: 'hotel-booking',
         transforms: {
             from: [
                 {
@@ -42,11 +42,11 @@
                 el('div', { className: props.className + ' mhbo-booking-bar-preview' },
                     el('div', { className: 'mhbo-bar-item' },
                         el('div', { className: 'mhbo-bar-label' }, wp.i18n.__('Check-in', 'modern-hotel-booking')),
-                        el('div', { className: 'mhbo-bar-value' }, wp.i18n.__('Apr 10, 2026', 'modern-hotel-booking'))
+                        el('div', { className: 'mhbo-bar-value' }, '— — —')
                     ),
                     el('div', { className: 'mhbo-bar-item' },
                         el('div', { className: 'mhbo-bar-label' }, wp.i18n.__('Check-out', 'modern-hotel-booking')),
-                        el('div', { className: 'mhbo-bar-value' }, wp.i18n.__('Apr 15, 2026', 'modern-hotel-booking'))
+                        el('div', { className: 'mhbo-bar-value' }, '— — —')
                     ),
                     el('div', { className: 'mhbo-bar-item' },
                         el('div', { className: 'mhbo-bar-label' }, wp.i18n.__('Guests', 'modern-hotel-booking')),
@@ -55,8 +55,8 @@
                     el('div', { className: 'mhbo-bar-button' }, wp.i18n.__('Book Now', 'modern-hotel-booking')),
                     el('div', { className: 'mhbo-preview-info-overlay' },
                         el('span', { className: 'dashicons dashicons-building' }),
-                        el('span', {}, attributes.roomId > 0 
-                            ? wp.i18n.sprintf(wp.i18n.__('Room ID: %d', 'modern-hotel-booking'), attributes.roomId) 
+                        el('span', {}, attributes.roomId > 0
+                            ? wp.i18n.sprintf(/* translators: %d: room ID number */ wp.i18n.__('Room ID: %d', 'modern-hotel-booking'), attributes.roomId)
                             : wp.i18n.__('General Booking Form', 'modern-hotel-booking')
                         )
                     )

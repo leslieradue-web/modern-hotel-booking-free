@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 }
 
 use MHBO\Core\I18n;
+use MHBO\Business\Shortcodes as BusinessShortcodes;
 
 /**
  * Handles Gutenberg Block registration for 2026 compliance.
@@ -18,13 +19,34 @@ class Block
      */
     public function init()
     {
+        add_filter('block_categories_all', [$this, 'add_block_category'], 10, 2);
         add_action('init', [$this, 'register_frontend_assets'], 5);
         add_action('init', [$this, 'register_blocks'], 25);
     }
 
     /**
+     * Add Modern Hotel Booking category to the block inserter.
+     *
+     * @param array<int, array<string, mixed>> $categories Existing categories.
+     * @param mixed $post Current post.
+     * @return array<int, array<string, mixed>> Updated categories.
+     */
+    public function add_block_category(array $categories, $post): array
+    {
+        return array_merge(
+            $categories,
+            [
+                [
+                    'slug'  => 'hotel-booking',
+                    'title' => I18n::get_label('label_block_business_info'),
+                    'icon'  => 'admin-home',
+                ],
+            ]
+        );
+    }
+
+    /**
      * Register frontend scripts and styles for block.json viewScript/style references.
-     * Must run before register_blocks() so handles are available.
      */
     public function register_frontend_assets()
     {
@@ -44,7 +66,7 @@ class Block
             MHBO_VERSION
         );
 
-        // Register Calendar CSS (depends on flatpickr and base style)
+        // Register Calendar CSS
         wp_register_style(
             'mhbo-calendar-style',
             MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
@@ -61,7 +83,7 @@ class Block
             true
         );
 
-        // Register Calendar JS (depends on jQuery and Flatpickr)
+        // Register Calendar JS
         wp_register_script(
             'mhbo-calendar-js',
             MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js',
@@ -70,74 +92,165 @@ class Block
             true
         );
 
-        // Register locale scripts (conditionally loaded)
-        wp_register_script(
-            'mhbo-flatpickr-ro',
-            MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.ro.js',
-            ['mhbo-flatpickr-js'],
-            '4.6.13',
-            true
-        );
+        // 2026 Best Practice: Register Script Modules for viewScriptModule support
+        if (function_exists('wp_register_script_module')) {
+            // Register Vendor Modules (Shimmed if necessary)
+            wp_register_script_module(
+                'mhbo-flatpickr-module',
+                MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
+                [],
+                '4.6.13'
+            );
 
-        wp_register_script(
-            'mhbo-flatpickr-de',
-            MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.de.js',
-            ['mhbo-flatpickr-js'],
-            '4.6.13',
-            true
-        );
+            // Register Bridge Module for blocks to interact with legacy jQuery logic safely
+            /** @var array<int, string> $deps */
+            $deps = ['@wordpress/interactivity'];
+            wp_register_script_module(
+                'mhbo-bridge-module',
+                MHBO_PLUGIN_URL . 'assets/js/mhbo-bridge.js',
+                /** @phpstan-ignore argument.type */
+                $deps,
+                MHBO_VERSION
+            );
+        }
     }
 
     /**
-     * Register the blocks.
+     * Register all 7 blocks using metadata.
      */
     public function register_blocks()
     {
-        // Register Booking Form using metadata
-        $booking_form_block = register_block_type(MHBO_PLUGIN_DIR . 'assets/block/booking-form', [
-            'render_callback' => [$this, 'render_booking_block'],
-        ]);
+        $blocks = [
+            'booking-form'    => 'render_booking_block',
+            'room-calendar'   => 'render_calendar_block',
+            'company-info'    => 'render_company_block',
+            'whatsapp-button' => 'render_whatsapp_block',
+            'banking-details' => 'render_banking_block',
+            'revolut-details' => 'render_revolut_block',
+            'business-card'   => 'render_card_block',
+        ];
 
-        if ($booking_form_block && isset($booking_form_block->editor_script) && '' !== $booking_form_block->editor_script) {
-            wp_set_script_translations($booking_form_block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
-        }
+        foreach ($blocks as $slug => $callback) {
+            $path = MHBO_PLUGIN_DIR . 'assets/block/' . $slug;
+            
+            if (!file_exists($path . '/block.json')) {
+                continue;
+            }
 
-        // Register Room Calendar using metadata
-        $room_calendar_block = register_block_type(MHBO_PLUGIN_DIR . 'assets/block/room-calendar', [
-            'render_callback' => [$this, 'render_calendar_block'],
-        ]);
+            // Register using block.json - WP 6.5+ handles most things from here
+            $block = register_block_type($path, [
+                'render_callback' => [$this, $callback],
+            ]);
 
-        if ($room_calendar_block && isset($room_calendar_block->editor_script) && '' !== $room_calendar_block->editor_script) {
-            wp_set_script_translations($room_calendar_block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
+            // Set translations for the editor script if present.
+            // WP 6.7 BP: guard with has_translation() before calling wp_set_script_translations().
+            if ($block && '' !== ($block->editor_script ?? '') && is_string($block->editor_script)) {
+                if (!\function_exists('has_translation') || \has_translation('modern-hotel-booking')) {
+                    wp_set_script_translations($block->editor_script, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
+                }
+            }
+
+            // 2026 BP: Set translations for viewScriptModule (WP 6.7+ supports wp_set_script_translations
+            // for Script Module IDs, not just classic script handles).
+            // viewScriptModule may be a string OR an array — iterate safely.
+            /** @phpstan-ignore property.notFound */
+            if ($block && property_exists($block, 'view_script_module') && [] !== (array)($block->view_script_module ?? [])) {
+                $modules = is_array($block->view_script_module)
+                    ? $block->view_script_module
+                    : [$block->view_script_module];
+
+                $has_trans = !\function_exists('has_translation') || \has_translation('modern-hotel-booking');
+
+                if ($has_trans) {
+                    foreach ($modules as $module_id) {
+                        if (is_string($module_id) && '' !== $module_id) {
+                            wp_set_script_translations($module_id, 'modern-hotel-booking', MHBO_PLUGIN_DIR . 'languages');
+                        }
+                    }
+                }
+            }
         }
     }
 
+    /* ---- Render Callbacks (Dynamic) ---- */
+
     /**
-     * Server-side render callback for the booking form block.
-     * 
-     * @param array $attributes Block attributes.
-     * @return string Block HTML.
+     * @param array<string, mixed> $attributes
      */
-    public function render_booking_block($attributes)
+    public function render_booking_block($attributes): string
     {
-        $room_id = (isset($attributes['roomId']) && 0 !== (int)$attributes['roomId']) ? absint($attributes['roomId']) : 0;
-        return do_shortcode('[modern_hotel_booking room_id="' . $room_id . '"]');
+        $room_id = (isset($attributes['roomId'])) ? absint($attributes['roomId']) : 0;
+        return do_shortcode(sprintf('[modern_hotel_booking room_id="%d"]', $room_id));
     }
 
     /**
-     * Server-side render callback for the room calendar block.
-     * 
-     * @param array $attributes Block attributes.
-     * @return string Block HTML.
+     * @param array<string, mixed> $attributes
      */
-    public function render_calendar_block($attributes)
+    public function render_calendar_block($attributes): string
     {
-        $room_id = (isset($attributes['roomId']) && 0 !== (int)$attributes['roomId']) ? absint($attributes['roomId']) : 0;
-
+        $room_id = (isset($attributes['roomId'])) ? absint($attributes['roomId']) : 0;
         if (!$room_id) {
             return '<div class="mhbo-block-error">' . esc_html(I18n::get_label('label_block_no_room')) . '</div>';
         }
+        return do_shortcode(sprintf('[mhbo_room_calendar room_id="%d"]', $room_id));
+    }
 
-        return do_shortcode('[mhbo_room_calendar room_id="' . $room_id . '"]');
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function render_company_block($attributes): string
+    {
+        return BusinessShortcodes::get_instance()->render_company_info([
+            'show_logo'         => ($attributes['showLogo'] ?? true) ? 'yes' : 'no',
+            'show_address'      => ($attributes['showAddress'] ?? true) ? 'yes' : 'no',
+            'show_contact'      => ($attributes['showContact'] ?? true) ? 'yes' : 'no',
+            'show_registration' => ($attributes['showRegistration'] ?? true) ? 'yes' : 'no',
+            'layout'            => $attributes['layout'] ?? 'default',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function render_whatsapp_block($attributes): string
+    {
+        return BusinessShortcodes::get_instance()->render_whatsapp([
+            'style'   => $attributes['style'] ?? 'button',
+            'text'    => $attributes['text'] ?? '',
+            'message' => $attributes['message'] ?? '',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function render_banking_block($attributes): string
+    {
+        return BusinessShortcodes::get_instance()->render_banking([
+            'show_instructions' => ($attributes['showInstructions'] ?? true) ? 'yes' : 'no',
+            'layout'            => $attributes['layout'] ?? 'default',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     */
+    public function render_revolut_block($attributes): string
+    {
+        return BusinessShortcodes::get_instance()->render_revolut([
+            'show_qr'   => ($attributes['showQR'] ?? true) ? 'yes' : 'no',
+            'show_link' => ($attributes['showLink'] ?? true) ? 'yes' : 'no',
+            'layout'    => $attributes['layout'] ?? 'default',
+        ]);
+    }
+
+     /**
+     * @param array<string, mixed> $attributes
+     */
+    public function render_card_block($attributes): string
+    {
+        return BusinessShortcodes::get_instance()->render_business_card([
+            'sections' => $attributes['sections'] ?? ['all'],
+        ]);
     }
 }

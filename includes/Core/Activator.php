@@ -202,11 +202,11 @@ class Activator
 		// Default Amenities
 		if (false === get_option('mhbo_amenities_list')) {
 			$default_amenities = [
-				'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
-				'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
-				'tv'        => __('Smart TV', 'modern-hotel-booking'),
-				'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
-				'pool'      => __('Pool View', 'modern-hotel-booking')
+				'wifi'      => I18n::get_label('amenity_free_wifi'),
+				'ac'        => I18n::get_label('amenity_air_conditioning'),
+				'tv'        => I18n::get_label('amenity_smart_tv'),
+				'breakfast' => I18n::get_label('amenity_breakfast_included'),
+				'pool'      => I18n::get_label('amenity_pool_view')
 			];
 			update_option('mhbo_amenities_list', $default_amenities);
 		}
@@ -255,11 +255,11 @@ class Activator
 		// Default Amenities (for migration)
 		if (false === get_option('mhbo_amenities_list')) {
 			$default_amenities = [
-				'wifi'      => __('Free WiFi', 'modern-hotel-booking'),
-				'ac'        => __('Air Conditioning', 'modern-hotel-booking'),
-				'tv'        => __('Smart TV', 'modern-hotel-booking'),
-				'breakfast' => __('Breakfast Included', 'modern-hotel-booking'),
-				'pool'      => __('Pool View', 'modern-hotel-booking')
+				'wifi'      => I18n::get_label('amenity_free_wifi'),
+				'ac'        => I18n::get_label('amenity_air_conditioning'),
+				'tv'        => I18n::get_label('amenity_smart_tv'),
+				'breakfast' => I18n::get_label('amenity_breakfast_included'),
+				'pool'      => I18n::get_label('amenity_pool_view')
 			];
 			update_option('mhbo_amenities_list', $default_amenities);
 		}

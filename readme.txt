@@ -3,7 +3,7 @@ Contributors: leslierad
 Tags: room booking, availability calendar, vacation rental, guesthouse, reservation system
 Requires at least: 6.6
 Tested up to: 6.9
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,7 +32,7 @@ This versatile plugin is perfectly designed for:
 * **Business Info & Communication** — Integrated WhatsApp chat, Company profiles, and business card displays.
 * **Offline Payment Support** — Built-in support for Bank Transfers (IBAN/SWIFT) and Revolut payments with QR codes.
 * **Automated Email Notifications** — customizable confirmations for guests and admins.
-* **Native Gutenberg Blocks** — add booking forms to any page seamlessly.
+* **7 Native Gutenberg Blocks** — add booking forms, calendars, and business info to any page (Hotel: Booking Form, Room Calendar, Company Profile, etc.).
 * **Mobile-First Design** — fully responsive forms and calendars.
 * **Multilingual Ready** — WPML, Polylang and qTranslate-X compatible.
 * **Zero-Trace Privacy** — No tracking, no analytics, no data collection. Your business stays private.
@@ -66,12 +66,12 @@ All plans include updates and priority support. Cancel anytime — no forced aut
 2. Go to **Hotel Booking > Rooms** — Add the actual rooms and assign them to a room type. You can set custom prices or availability status here.
 3. (Optional) Go to **Hotel Booking > Pricing Rules** — Add seasonal pricing (fixed amount or percentage).
 4. Create or choose a page for bookings and add one of these:
-   - Gutenberg block: **Hotel Booking Form**
+   - Gutenberg block: **Hotel: Booking Form**
    - Shortcode: `[mhbo_booking_form]` or `[modern_hotel_booking]`
    - Or use the widget
 5. Go to **Hotel Booking > Settings** — **IMPORTANT**: Select your Booking Page from the dropdown and save. Configure any other options (emails, currency, etc.) and save again.
-6. (Optional) For individual room pages, use the **Room Availability Calendar** block or shortcode `[mhbo_room_calendar room_id="1"]` (replace 1 with the actual room ID).
-7. (New) Use the **Business Info** tab in settings to configure WhatsApp, Bank Details, and Revolut. Display them anywhere using blocks or shortcodes like `[mhbo_whatsapp]` or `[mhbo_business_card]`.
+6. (Optional) For individual room pages, use the **Hotel: Room Calendar** block or shortcode `[mhbo_room_calendar room_id="1"]` (replace 1 with the actual room ID).
+7. (New) Use the **Business Info** tab in settings to configure WhatsApp, Bank Details, and Revolut. Display them anywhere using blocks like **Hotel: Company Profile**, **Hotel: Chat on WhatsApp**, or the combined **Hotel: Business Contact Card**.
 
 Once set up, guests can search and create bookings from your dedicated booking page or individual room pages. The system shows real-time availability and calculates prices instantly.
 
@@ -155,6 +155,12 @@ The **Pro version** (available separately) adds connections to:
 
 == Changelog ==
 
+= 2.3.1 =
+* New: Added interactive business blocks (WhatsApp, Banking, Revolut) for enhanced direct guest communication.
+* Improved: Performance and styling refinements for the Booking Form and Room Calendar blocks.
+* Improved: Complete localization parity for core and Pro features in 15 languages.
+
+
 = 2.3.0 =
 * New (Pro): Added {children_ages} placeholder to booking emails for clearer guest composition.
 * iCal Pro: Added platform Dashicons (Airbnb, Booking.com, Google) to connection rows.
@@ -165,15 +171,7 @@ The **Pro version** (available separately) adds connections to:
 * Improved: Admin Layout alignments and responsive architectures for Bookings and Room Types dashboards.
 * Improved: Standardized terminology from "Onsite / Manual" to "Pay on Arrival" across code and translation files.
 
-= 2.2.8.4 =
-* New (Pro): Secure Webhook system with HMAC-SHA256 signature verification.
-* New (Pro): Webhook delivery logging with status indicators and payload viewer.
-* New (Pro): AJAX-powered log clearing and "Test Webhook" connection tool.
-* Improved: Reinforced security gating for Pro-only administrative features.
-
-For older changelog entries, please see `changelog.txt` in the plugin folder.
-
 == Upgrade Notice ==
 
-= 2.3.0 =
-Minimum PHP requirement standardized to 8.0. Performance and compatibility update. Recommended for all users on WordPress 6.6+.
+= 2.3.1 =
+Recommended update for enhanced performance and full localization parity across all modules.
