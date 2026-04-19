@@ -108,6 +108,8 @@
             return;
         }
 
+        let pendingCheckIn = null; // Track first date click to detect backwards selection
+
         flatpickr(pickerInput, {
             mode: "range",
             dateFormat: "Y-m-d",
@@ -115,8 +117,20 @@
             disable: disabledDates,
             disableMobile: true,
             onChange: function (selectedDates, dateStr, instance) {
+                // Backwards-selection guard: if the user clicks a date before their
+                // selected check-in, flatpickr reorders the pair. Detect this and
+                // restart selection from the earlier date as a fresh check-in.
+                if (selectedDates.length === 2 && pendingCheckIn) {
+                    if (selectedDates[0].getTime() !== pendingCheckIn.getTime()) {
+                        pendingCheckIn = selectedDates[0];
+                        instance.setDate([selectedDates[0]], true); // re-fires onChange with length=1
+                        return;
+                    }
+                }
+
                 // dynamically allow the next booked date to be a checkout date
                 if (selectedDates.length === 1) {
+                    pendingCheckIn = selectedDates[0];
                     const checkIn = selectedDates[0];
                     let firstBookedAfter = null;
                     let minDiff = Infinity;
@@ -187,6 +201,7 @@
                     localStorage.setItem(prefix + 'check_in', start);
                     localStorage.setItem(prefix + 'check_out', end);
                 } else {
+                    pendingCheckIn = null;
                     instance.set('disable', disabledDates);
                 }
             }

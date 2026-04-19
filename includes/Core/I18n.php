@@ -230,7 +230,7 @@ if (!defined('ABSPATH')) {
 
         // qTranslate style parsing - leverage native function if available (only if fallback is enabled)
         if ($fallback && function_exists('qtranxf_use')) {
-            return qtranxf_use($lang, $text);
+            return \call_user_func('qtranxf_use', $lang, $text);
         }
 
         // Detect if this is a plain string (no multilingual tags)
@@ -540,7 +540,7 @@ if (!defined('ABSPATH')) {
      */
     public static function get_all_default_labels(): array
     {
-        return array(
+        $labels = array(
             'btn_search_rooms' => __('Search Rooms', 'modern-hotel-booking'),
             'label_check_in' => __('Check-in', 'modern-hotel-booking'),
             'label_check_out' => __('Check-out', 'modern-hotel-booking'),
@@ -593,11 +593,18 @@ if (!defined('ABSPATH')) {
             'msg_booking_deleted' => __('Booking Deleted.', 'modern-hotel-booking'),
             'msg_manual_booking_added' => __('Manual Booking Added!', 'modern-hotel-booking'),
             'msg_confirm_remove_extra' => __('Are you sure you want to remove this extra?', 'modern-hotel-booking'),
-            'msg_failed_save_booking' => __('Failed to save booking. Please try again.', 'modern-hotel-booking'),
-            'msg_failed_update_booking' => __('Failed to update booking.', 'modern-hotel-booking'),
-            'msg_insufficient_permissions' => __('Insufficient permissions.', 'modern-hotel-booking'),
+            'msg_failed_save_booking'        => __('Failed to save booking. Please try again.', 'modern-hotel-booking'),
+            'msg_failed_update_booking'      => __('Failed to update booking.', 'modern-hotel-booking'),
+            'msg_insufficient_permissions'   => __('Insufficient permissions.', 'modern-hotel-booking'),
+            'msg_api_saved'                  => __('Settings saved successfully.', 'modern-hotel-booking'),
+            'msg_booking_updated'            => __('Booking updated successfully.', 'modern-hotel-booking'),
+            'msg_tax_saved'                  => __('Tax settings saved successfully.', 'modern-hotel-booking'),
             'msg_security_failure' => __('Security verification failed. Please try again.', 'modern-hotel-booking'),
             'msg_invalid_request' => __('Invalid request parameters.', 'modern-hotel-booking'),
+            'label_bank_acc_name' => __('Account Holder', 'modern-hotel-booking'),
+            'label_bank_iban' => __('IBAN / Account Number', 'modern-hotel-booking'),
+            'label_reference' => __('Reference', 'modern-hotel-booking'),
+            'label_pay_via_revolut' => __('Pay via Revolut', 'modern-hotel-booking'),
             /* Admin Menu & Dashboard */
             'label_dashboard' => __('Dashboard', 'modern-hotel-booking'),
             'label_bookings' => __('Bookings', 'modern-hotel-booking'),
@@ -643,13 +650,15 @@ if (!defined('ABSPATH')) {
             'label_admin_notes'     => __('Admin Notes', 'modern-hotel-booking'),
             'btn_update_booking'    => __('Update Booking', 'modern-hotel-booking'),
             'btn_delete_booking'    => __('Delete Booking', 'modern-hotel-booking'),
+            'btn_download_invoice'  => __('📥 Download Invoice', 'modern-hotel-booking'),
+            'btn_email_invoice'     => __('📧 Email Invoice', 'modern-hotel-booking'),
             'msg_confirm_delete_bk' => __('Are you sure you want to delete this booking? This action cannot be undone.', 'modern-hotel-booking'),
             'msg_no_bookings'       => __('No bookings found.', 'modern-hotel-booking'),
             'msg_no_results'        => __('Your search criteria didn\'t return any results.', 'modern-hotel-booking'),
             'label_balance_collected' => __('Balance Collected', 'modern-hotel-booking'),
             'label_balance_due'      => __('Remaining Balance Due', 'modern-hotel-booking'),
             'label_mark_collected'  => __('Mark Balance as Collected', 'modern-hotel-booking'),
-            'label_na_short'         => __('N/A', 'modern-hotel-booking'),
+            'label_na_short'         => _x('N/A', 'short for not applicable', 'modern-hotel-booking'),
             'msg_deposit_non_refundable_short' => __('(Non-Refundable)', 'modern-hotel-booking'),
             'label_pro_payment_summary' => __('Pro: Payment Summary & Balance Tracking', 'modern-hotel-booking'),
             'label_deposit_policy_snapshot' => __('Deposit Policy Snapshot', 'modern-hotel-booking'),
@@ -670,7 +679,13 @@ if (!defined('ABSPATH')) {
             'status_cancelled'      => _x('Cancelled', 'booking status', 'modern-hotel-booking'),
             'status_pending'        => _x('Pending', 'status', 'modern-hotel-booking'),
             'status_processing'     => _x('Processing', 'payment status', 'modern-hotel-booking'),
+            'status_completed'      => _x('Completed', 'booking status', 'modern-hotel-booking'),
+            'desc_status_completed' => __('Status Completed', 'modern-hotel-booking'),
+            'status_failed'         => _x('Failed', 'payment status', 'modern-hotel-booking'),
             'status_refunded'       => _x('Refunded', 'payment status', 'modern-hotel-booking'),
+            'status_checked_in'     => __('Checked In', 'modern-hotel-booking'),
+            'status_checked_out'    => __('Checked Out', 'modern-hotel-booking'),
+            'status_no_show'        => __('No Show', 'modern-hotel-booking'),
             /* Room Management */
             'label_unit_inventory' => __('Full Unit Inventory', 'modern-hotel-booking'),
             'label_unit_number' => __('Unit #', 'modern-hotel-booking'),
@@ -684,6 +699,42 @@ if (!defined('ABSPATH')) {
             'label_status_maintenance' => __('Inactive / Maintenance', 'modern-hotel-booking'),
             'label_receiving_bookings' => __('Receiving Bookings', 'modern-hotel-booking'),
             'label_out_of_service' => __('Out of Service', 'modern-hotel-booking'),
+            'label_total_units' => __('Total Units', 'modern-hotel-booking'),
+            /* Extras / Service Add-ons */
+            'label_add_extra'               => __('Add New Service Add-on', 'modern-hotel-booking'),
+            'label_service_title'           => __('Service Title', 'modern-hotel-booking'),
+            'label_service_title_placeholder' => __('e.g. Premium Breakfast Buffet', 'modern-hotel-booking'),
+            'label_base_price'              => __('Base Price', 'modern-hotel-booking'),
+            'label_pricing_model'           => __('Pricing Model', 'modern-hotel-booking'),
+            'label_booking_input'           => __('Booking Input', 'modern-hotel-booking'),
+            'opt_fixed_fee'                 => __('Fixed One-time Fee', 'modern-hotel-booking'),
+            'opt_per_person'                => __('Per Guest Selection', 'modern-hotel-booking'),
+            'opt_per_adult'                 => __('Per Adult Selection', 'modern-hotel-booking'),
+            'opt_per_child'                 => __('Per Child Selection', 'modern-hotel-booking'),
+            'opt_per_night'                 => __('Nightly Recurring', 'modern-hotel-booking'),
+            'opt_person_night'              => __('Guest Count × Nights', 'modern-hotel-booking'),
+            'opt_adult_night'               => __('Adult Count × Nights', 'modern-hotel-booking'),
+            'opt_child_night'               => __('Child Count × Nights', 'modern-hotel-booking'),
+            'opt_checkbox'                  => __('Selection Toggle (Checkbox)', 'modern-hotel-booking'),
+            'opt_quantity'                  => __('Custom Amount (Quantity)', 'modern-hotel-booking'),
+            'btn_save'                      => __('Save', 'modern-hotel-booking'),
+            'btn_delete'                    => __('Delete', 'modern-hotel-booking'),
+
+            'label_service_fee'             => __('Service Fee', 'modern-hotel-booking'),
+            'label_service_fee_desc'        => __('Use for cleaning fees, resort fees, or any mandatory service charge. The fee will appear as a locked line item on the booking form and in emails.', 'modern-hotel-booking'),
+            'label_public_description'      => __('Public Description', 'modern-hotel-booking'),
+            'label_desc_placeholder'        => __('Detail what is included with this service...', 'modern-hotel-booking'),
+            'label_compulsory_extra'        => __('Automatically add to every booking (not selectable by guest)', 'modern-hotel-booking'),
+            'label_day_mon' => __('Mon', 'modern-hotel-booking'),
+            'label_day_tue' => __('Tue', 'modern-hotel-booking'),
+            'label_day_wed' => __('Wed', 'modern-hotel-booking'),
+            'label_day_thu' => __('Thu', 'modern-hotel-booking'),
+            'label_day_fri' => __('Fri', 'modern-hotel-booking'),
+            'label_day_sat' => __('Sat', 'modern-hotel-booking'),
+            'label_day_sun' => __('Sun', 'modern-hotel-booking'),
+            'msg_invoice_sent' => __('Invoice emailed successfully to the guest.', 'modern-hotel-booking'),
+            'msg_invoice_fail' => __('Failed to email invoice. Guest may not have an email address.', 'modern-hotel-booking'),
+            'label_ready_for_guests' => __('Ready for Guests', 'modern-hotel-booking'),
             'label_custom_rate_active' => __('Custom rate override active for this unit.', 'modern-hotel-booking'),
             'btn_register_new_unit' => __('Register New Unit', 'modern-hotel-booking'),
             'btn_save_unit_data' => __('Save Unit Data', 'modern-hotel-booking'),
@@ -703,29 +754,6 @@ if (!defined('ABSPATH')) {
             'btn_force_sync' => __('Force Global Sync', 'modern-hotel-booking'),
             'btn_cancel_return' => __('Cancel & Return', 'modern-hotel-booking'),
             'msg_confirm_disconnect_ical' => __('Disconnect this calendar? Import of bookings will stop.', 'modern-hotel-booking'),
-            /* Extras (Pro) */
-            'label_extras_addons' => __('Service Extras & Add-ons', 'modern-hotel-booking'),
-            'label_active_addons' => __('Active Add-ons', 'modern-hotel-booking'),
-            'label_configure_services' => __('Configure Available Services', 'modern-hotel-booking'),
-            'label_service_title' => __('Service Title', 'modern-hotel-booking'),
-            'label_service_title_placeholder' => __('e.g. Premium Breakfast Buffet', 'modern-hotel-booking'),
-            'label_base_price' => __('Base Price', 'modern-hotel-booking'),
-            'label_pricing_model' => __('Pricing Model', 'modern-hotel-booking'),
-            'label_booking_input' => __('Booking Input', 'modern-hotel-booking'),
-            'label_public_description' => __('Public Description', 'modern-hotel-booking'),
-            'label_description_placeholder' => __('Detail what is included with this service...', 'modern-hotel-booking'),
-            'label_model_fixed' => __('Fixed One-time Fee', 'modern-hotel-booking'),
-            'label_model_per_night' => __('Nightly Recurring', 'modern-hotel-booking'),
-            'label_model_per_person_per_night' => __('Guest Count × Nights', 'modern-hotel-booking'),
-            'label_model_per_adult_per_night' => __('Adult Count × Nights', 'modern-hotel-booking'),
-            'label_model_per_child_per_night' => __('Child Count × Nights', 'modern-hotel-booking'),
-            'label_input_checkbox' => __('Selection Toggle (Checkbox)', 'modern-hotel-booking'),
-            'label_input_quantity' => __('Custom Amount (Quantity)', 'modern-hotel-booking'),
-            'btn_add_service' => __('Add New Service Add-on', 'modern-hotel-booking'),
-            'btn_save_services' => __('Save All Services', 'modern-hotel-booking'),
-            'btn_remove_service' => __('Remove Service', 'modern-hotel-booking'),
-            'msg_extras_desc' => __('Add breakfast, airport transfers, tour packages, or custom experiences.', 'modern-hotel-booking'),
-            'msg_extras_saved' => __('Extras Saved!', 'modern-hotel-booking'),
             /* Categories & Types */
             'label_manage_categories' => __('Manage Room Categories', 'modern-hotel-booking'),
             'label_new_category' => __('New Category Registration', 'modern-hotel-booking'),
@@ -773,7 +801,7 @@ if (!defined('ABSPATH')) {
             'label_paypal' => __('PayPal', 'modern-hotel-booking'),
             'label_confirm_request' => __('Click below to confirm your booking request.', 'modern-hotel-booking'),
             // translators: %s: tax name (e.g., VAT)
-            'label_tax_breakdown' => __('%s Breakdown', 'modern-hotel-booking'),
+            'label_tax_breakdown' => __('Booking Details', 'modern-hotel-booking'),
             'label_tax_none' => _x('None', 'tax type', 'modern-hotel-booking'),
             'label_tax_none_desc' => __('No tax calculation or display. Prices shown as-is.', 'modern-hotel-booking'),
             // translators: %1$s: tax name, %2$s: tax amount
@@ -789,6 +817,8 @@ if (!defined('ABSPATH')) {
             'label_subtotal' => __('Subtotal', 'modern-hotel-booking'),
             'label_extras' => __('Extras', 'modern-hotel-booking'),
             'label_stay_dates'    => _x('Stay Dates', 'table header', 'modern-hotel-booking'),
+            'email_label_checkin' => __('Arrival Date', 'modern-hotel-booking'),
+            'email_label_checkout' => __('Departure Date', 'modern-hotel-booking'),
             'label_amount' => _x('Amount', 'table header', 'modern-hotel-booking'),
             'label_booking_summary' => __('Booking Summary', 'modern-hotel-booking'),
             'label_accommodation' => __('Accommodation', 'modern-hotel-booking'),
@@ -820,6 +850,7 @@ if (!defined('ABSPATH')) {
             'msg_paypal_required' => __('Please use the PayPal button to complete your payment.', 'modern-hotel-booking'),
             'label_enhance_stay' => __('Enhance Your Stay', 'modern-hotel-booking'),
             'label_per_person' => __('per person', 'modern-hotel-booking'),
+            'general_search_hotel' => __('To use Gutenberg blocks search for "Hotel:" to bring up the available blocks.', 'modern-hotel-booking'),
             
             'label_per_person_per_night' => __('per person / night', 'modern-hotel-booking'),
             
@@ -956,7 +987,125 @@ if (!defined('ABSPATH')) {
             'block_banking_details_desc' => __('Displays bank account information for direct bank transfers.', 'modern-hotel-booking'),
             'block_revolut_details_title' => __('Hotel: Revolut Details', 'modern-hotel-booking'),
             'block_revolut_details_desc' => __('Information for payments via Revolut (RevTag or Link).', 'modern-hotel-booking'),
-            'block_business_card_title' => __('Hotel: Business Card', 'modern-hotel-booking'),
+
+            // --- AI Concierge ---
+            'ai_persona_default'        => __('AI Concierge', 'modern-hotel-booking'),
+            'ai_widget_open'           => __('Open AI Concierge chat', 'modern-hotel-booking'),
+            'ai_widget_close'          => __('Close chat', 'modern-hotel-booking'),
+            'ai_widget_minimize'       => __('Minimize chat', 'modern-hotel-booking'),
+            'ai_widget_send'           => __('Send message', 'modern-hotel-booking'),
+            'ai_widget_input_placeholder' => __('Ask me anything...', 'modern-hotel-booking'),
+            'ai_widget_input_label'    => __('Chat message', 'modern-hotel-booking'),
+            'ai_widget_typing'         => __('AI is typing', 'modern-hotel-booking'),
+            'ai_widget_error_message'  => __('Sorry, something went wrong. Please try again.', 'modern-hotel-booking'),
+            'ai_widget_welcome_message' => __('Hello! I\'m your AI concierge. How can I help you today?', 'modern-hotel-booking'),
+            'ai_widget_sugg_check_avail' => __('Check availability', 'modern-hotel-booking'),
+            'ai_widget_sugg_room_types' => __('What room types do you have?', 'modern-hotel-booking'),
+            'ai_widget_sugg_policies'   => __('What are your policies?', 'modern-hotel-booking'),
+            'ai_widget_dialog_label'    => __('Hotel AI Concierge Chat', 'modern-hotel-booking'),
+            'ai_widget_message_history' => __('Chat messages', 'modern-hotel-booking'),
+            'ai_widget_suggestions'     => __('Quick replies', 'modern-hotel-booking'),
+            'ai_cta_high_intent'        => __('Ready to book?', 'modern-hotel-booking'),
+            'ai_cta_med_intent'         => __('Looks good!', 'modern-hotel-booking'),
+            'ai_cta_book_now'           => __('Book Now', 'modern-hotel-booking'),
+            'ai_cta_dismiss'            => __('Dismiss', 'modern-hotel-booking'),
+            'ai_handoff_intro'          => __('Need more help? Contact us directly:', 'modern-hotel-booking'),
+            'ai_handoff_whatsapp'       => __('WhatsApp', 'modern-hotel-booking'),
+            'ai_handoff_email'          => __('Email', 'modern-hotel-booking'),
+            'ai_handoff_phone'          => __('Call Us', 'modern-hotel-booking'),
+            'ai_status_analyzing'       => __('Analyzing your request...', 'modern-hotel-booking'),
+            'ai_status_refining'        => __('Refining details...', 'modern-hotel-booking'),
+            'ai_error_invalid_nonce'    => __('Invalid nonce.', 'modern-hotel-booking'),
+            'ai_error_rate_limit'       => __('Too many requests. Please wait a moment before sending another message.', 'modern-hotel-booking'),
+            'ai_error_message_too_long' => __('Message must be 1000 characters or fewer.', 'modern-hotel-booking'),
+            'ai_error_empty_response'   => __('The AI did not return a response. Please try again.', 'modern-hotel-booking'),
+            'ai_error_provider_not_configured' => __('AI provider not configured. Please set up your API key in Settings → AI Concierge.', 'modern-hotel-booking'),
+            'ai_error_bad_custom_url'    => __('Custom AI endpoint URL is missing or invalid. Please update it in Settings → AI Concierge.', 'modern-hotel-booking'),
+            'ai_status_cooling_down'    => __('Our AI concierge is currently cooling down due to high demand. Please try again in a moment.', 'modern-hotel-booking'),
+            // translators: %1$d: seconds cooling down
+            'ai_error_cooling_down_seconds' => __('Concierge is cooling down due to high demand. Please try again in %1$ds.', 'modern-hotel-booking'),
+            // translators: %s: provider name
+            'ai_error_unknown_provider' => __('Unknown AI provider: %s', 'modern-hotel-booking'),
+            // translators: %d: HTTP status code
+            'ai_error_bad_json'         => __('Gemini returned non-JSON response (HTTP %d)', 'modern-hotel-booking'),
+            'ai_error_unknown_gemini'    => __('Unknown Gemini error', 'modern-hotel-booking'),
+            'ai_status_thinking_analyzing' => __('Analyzing your request...', 'modern-hotel-booking'),
+            'ai_status_thinking_refining'  => __('Refining details...', 'modern-hotel-booking'),
+            // translators: %d: retry attempt number
+            'ai_status_thinking_retrying'  => __('Model busy, retrying (attempt %d/1)...', 'modern-hotel-booking'),
+            // translators: %s: room type name
+            'ai_suggestion_room_more'      => __('Tell me more about the %s', 'modern-hotel-booking'),
+            'ai_suggestion_rooms_info'     => __('Tell me more about your rooms', 'modern-hotel-booking'),
+            'ai_suggestion_cancellation'   => __('What is your cancellation policy?', 'modern-hotel-booking'),
+            'ai_suggestion_complete_booking' => __('How do I complete my booking?', 'modern-hotel-booking'),
+            'ai_suggestion_check_availability' => __('Check availability for these dates', 'modern-hotel-booking'),
+            'ai_suggestion_amenities'      => __('What amenities does the hotel offer?', 'modern-hotel-booking'),
+            'ai_suggestion_included'       => __('What is included in my stay?', 'modern-hotel-booking'),
+            'ai_suggestion_directions'     => __('How do I get directions to the hotel?', 'modern-hotel-booking'),
+            'ai_suggestion_modify'         => __('Can I modify my booking later?', 'modern-hotel-booking'),
+            'ai_suggestion_new_dates'      => __('Check availability for new dates', 'modern-hotel-booking'),
+            'ai_suggestion_refund'         => __('What is your refund policy?', 'modern-hotel-booking'),
+            'ai_suggestion_availability'   => __('Check room availability', 'modern-hotel-booking'),
+            'ai_suggestion_about_hotel'    => __('Tell me about the hotel', 'modern-hotel-booking'),
+            'ai_suggestion_payment'        => __('How do I pay for my stay?', 'modern-hotel-booking'),
+            'ai_suggestion_payment_options' => __('What are the payment options?', 'modern-hotel-booking'),
+            'ai_suggestion_cancellation_info' => __('Tell me about your cancellation policy', 'modern-hotel-booking'),
+            'ai_suggestion_extras'         => __('Can I add breakfast or other extras?', 'modern-hotel-booking'),
+            'ai_suggestion_room_types'     => __('What are your room types?', 'modern-hotel-booking'),
+
+            // AI Internal: Prompt Rules
+            // translators: %s: language tag (e.g. en_US)
+            'ai_prompt_lang_rule'       => __('- Language: This page is served in language tag "%s". Always reply in that language. If the guest writes in a different language, match their language instead.', 'modern-hotel-booking'),
+            // translators: %s: guest name
+            'ai_prompt_guest_name'      => __('- CURRENT GUEST NAME: %s.', 'modern-hotel-booking'),
+            // translators: %s: guest email
+            'ai_prompt_guest_email'     => __('- CURRENT GUEST EMAIL: %s.', 'modern-hotel-booking'),
+            // translators: %s: guest phone number
+            'ai_prompt_guest_phone'     => __('- CURRENT GUEST PHONE: %s.', 'modern-hotel-booking'),
+            // translators: %1$s: current date, %2$s: day of the week
+            'ai_prompt_date_context'    => __('- CURRENT DATE (Hotel Timezone): %1$s. Today is %2$s. Always use this as the starting point for availability.', 'modern-hotel-booking'),
+            'ai_prompt_scarcity_rule'   => __('- SCARCITY URGENCY: If inventory for a requested date is low (less than 3 units), EXPLICITLY highlight this urgency in your response using bold or ALL CAPS (e.g., "ONLY 2 ROOMS LEFT!").', 'modern-hotel-booking'),
+            // translators: %s: function name
+            'ai_prompt_decisive_rule'   => __('- PROACTIVE MANDATE: If you have the guest\'s name, email, and phone already collected in the context above, YOU MUST call %s immediately for their chosen room. DO NOT WAIT FOR CONFIRMATION.', 'modern-hotel-booking'),
+
+            // AI Internal: Knowledge Base Headers (English by default)
+            'ai_kb_header_hotel_overview' => __('=== HOTEL OVERVIEW ===', 'modern-hotel-booking'),
+            'ai_kb_header_policies'       => __('--- POLICIES ---', 'modern-hotel-booking'),
+            'ai_kb_header_local_guide'    => __('--- LOCAL CONCIERGE GUIDE ---', 'modern-hotel-booking'),
+            // translators: %s: room name
+            'ai_kb_header_rooms'          => __('=== ROOM: %s ===', 'modern-hotel-booking'),
+            'ai_kb_header_extras'         => __('=== EXTRAS & ADD-ONS ===', 'modern-hotel-booking'),
+            'ai_kb_header_pricing'        => __('=== PRICING & TAX RULES ===', 'modern-hotel-booking'),
+            'ai_kb_header_payment'        => __('=== PAYMENT METHODS ===', 'modern-hotel-booking'),
+            'ai_kb_header_contact'        => __('=== WHATSAPP & DIRECT CONTACT ===', 'modern-hotel-booking'),
+            // translators: %s: page title
+            'ai_kb_header_page'           => __('=== PAGE: %s ===', 'modern-hotel-booking'),
+            // translators: %s: post title
+            'ai_kb_header_post'           => __('=== POST: %s ===', 'modern-hotel-booking'),
+            'ai_kb_label_type_id'        => __('Type ID', 'modern-hotel-booking'),
+            'ai_kb_label_base_price'      => __('Base Price per Night', 'modern-hotel-booking'),
+            'ai_kb_label_max_adults'      => __('Max Adults', 'modern-hotel-booking'),
+            'ai_kb_label_max_children'    => __('Max Children', 'modern-hotel-booking'),
+            'ai_kb_label_total_rooms'     => __('Total Rooms Available', 'modern-hotel-booking'),
+            'ai_kb_label_description'     => __('Description', 'modern-hotel-booking'),
+            'ai_kb_label_amenities'       => __('Room Amenities', 'modern-hotel-booking'),
+
+            // AI Internal: Discovery (llms.txt)
+            'ai_discovery_summary_prop_details'     => __('## Core Property Details', 'modern-hotel-booking'),
+            'ai_discovery_summary_rooms_amenities'  => __('## Rooms & Amenities', 'modern-hotel-booking'),
+            'ai_discovery_summary_rooms_amenities_desc' => __('Our property offers various room types optimized for different guest capacities. See the full manifest for specific features.', 'modern-hotel-booking'),
+            'ai_discovery_summary_ai_interaction'   => __('## AI Interaction & Booking', 'modern-hotel-booking'),
+            'ai_discovery_summary_ai_interaction_desc' => __('AI Agents can interact with our concierge and booking engine via the following endpoints:', 'modern-hotel-booking'),
+            'ai_discovery_summary_manifest'         => __('## Full Site Manifest', 'modern-hotel-booking'),
+            'ai_discovery_summary_view_kb'           => __('View Detailed Knowledge Base', 'modern-hotel-booking'),
+            'ai_discovery_summary_welcome_default'  => __('Welcome to our hotel.', 'modern-hotel-booking'),
+
+            'ai_label_settings_title'   => __('AI Concierge Settings', 'modern-hotel-booking'),
+            'ai_label_settings_menu'    => __('AI Concierge', 'modern-hotel-booking'),
+            'ai_mcp_name'               => __('Modern Hotel Booking AI', 'modern-hotel-booking'),
+            'ai_mcp_description'        => __('Real-time hotel availability, policies, and booking assistant.', 'modern-hotel-booking'),
+
+'block_business_card_title' => __('Hotel: Business Card', 'modern-hotel-booking'),
             'block_business_card_desc' => __('A compact summary of your hotel for headers or footers.', 'modern-hotel-booking'),
             /* Settings & Navigation (HIERARCHICAL REFINED 2026) */
             'tab_license' => _x('License', 'settings tab', 'modern-hotel-booking'),
@@ -1085,7 +1234,7 @@ if (!defined('ABSPATH')) {
             'label_col_payment' => __('Payment', 'modern-hotel-booking'),
             'label_col_lang' => __('Lang', 'modern-hotel-booking'),
             'label_col_actions' => __('Actions', 'modern-hotel-booking'),
-            'label_col_id'      => __('ID', 'modern-hotel-booking'),
+            'label_col_id'      => _x('ID', 'column header', 'modern-hotel-booking'),
             'label_col_unit'    => __('Unit #', 'modern-hotel-booking'),
             'label_col_rate'    => __('Daily Rate', 'modern-hotel-booking'),
             'label_col_status'  => __('Status', 'modern-hotel-booking'),
@@ -1243,7 +1392,7 @@ if (!defined('ABSPATH')) {
             'pro_tab_analytics' => __('Analytics', 'modern-hotel-booking'),
             'pro_tab_pricing' => __('Advanced Pricing', 'modern-hotel-booking'),
             'pro_tab_business' => __('Business', 'modern-hotel-booking'),
-            'pro_tab_tax' => __('Tax', 'modern-hotel-booking'),
+            'pro_tab_tax' => _x('Tax', 'settings tab', 'modern-hotel-booking'),
             
             'cat_compliance_ux' => __('Compliance & UX', 'modern-hotel-booking'),
             'cat_developer_platform' => __('Developer Platform', 'modern-hotel-booking'),
@@ -1292,8 +1441,6 @@ if (!defined('ABSPATH')) {
             'msg_no_room_types' => __('No room types defined yet. Create your first category above.', 'modern-hotel-booking'),
             'title_manage_rooms' => __('Manage Rooms', 'modern-hotel-booking'),
             'btn_back_to_rooms' => __('Back to Rooms', 'modern-hotel-booking'),
-            'label_total_units' => __('Total Units', 'modern-hotel-booking'),
-            'label_ready_guests' => __('Ready for Guests', 'modern-hotel-booking'),
             'label_deployment_url' => __('Deployment Export URL', 'modern-hotel-booking'),
             'desc_deployment_url' => __('Provide this URL to external OTAs (Airbnb, Booking.com) to export this room\'s availability.', 'modern-hotel-booking'),
             'btn_copied' => __('Copied!', 'modern-hotel-booking'),
@@ -1411,7 +1558,6 @@ if (!defined('ABSPATH')) {
             'pricing_delete_confirm' => __('Permanently remove this pricing adjustment?', 'modern-hotel-booking'),
             'pricing_msg_added' => __('Pricing rule created successfully.', 'modern-hotel-booking'),
             'pricing_msg_deleted' => __('Pricing rule removed successfully.', 'modern-hotel-booking'),
-            'btn_delete' => __('Delete', 'modern-hotel-booking'),
             
             'pro_api_title' => __('REST API', 'modern-hotel-booking'),
             
@@ -1519,7 +1665,6 @@ if (!defined('ABSPATH')) {
             'email_status_payment'           => __('Payment Confirmation', 'modern-hotel-booking'),
             'email_label_subject'            => __('Subject', 'modern-hotel-booking'),
             'email_label_message'            => __('Message', 'modern-hotel-booking'),
-            'email_placeholders_desc'        => __('Available placeholders: {customer_name}, {customer_email}, {customer_phone}, {site_name}, {booking_id}, {booking_token}, {status}, {check_in}, {check_out}, {check_in_time}, {check_out_time}, {nights}, {total_price}, {guests}, {children}, {children_ages}, {room_name}, {custom_fields}, {booking_extras}, {payment_details}, {tax_breakdown}, {tax_breakdown_text}, {tax_total}, {tax_registration_number}, {company_name}, {company_address}, {company_phone}, {company_email}, {company_website}, {company_registration}, {whatsapp_number}, {whatsapp_link}, {view_url}, {special_requests}, {arrival_time}', 'modern-hotel-booking'),
 
             // GDPR & Privacy
             'gdpr_title'                     => __('GDPR Compliance & Data Privacy (PRO)', 'modern-hotel-booking'),
@@ -1723,8 +1868,22 @@ if (!defined('ABSPATH')) {
             'label_desc_paypal_id_missing'       => __('PayPal ID Missing Error', 'modern-hotel-booking'),
             'label_desc_payment_required'        => __('Payment Required Error', 'modern-hotel-booking'),
             'label_desc_rest_pro_error'          => __('REST Pro Access Error', 'modern-hotel-booking'),
-            'label_desc_invalid_nonce'           => __('Invalid Nonce Error', 'modern-hotel-booking'),
             'label_desc_api_rate_limit'          => __('API Rate Limit Error', 'modern-hotel-booking'),
+            // translators: %d: minimum number of nights
+            'api_err_min_stay'                   => __('Minimum stay is %d nights.', 'modern-hotel-booking'),
+            // translators: %d: maximum number of nights
+            'api_err_max_stay'                   => __('Maximum stay is %d nights.', 'modern-hotel-booking'),
+            // translators: %s: earliest valid checkout date (e.g. "May 29")
+            'min_stay_hint'                      => __('Please select %s or later as your check-out date.', 'modern-hotel-booking'),
+            // translators: %s: latest valid checkout date (e.g. "Jun 2")
+            'max_stay_hint'                      => __('Please select %s or earlier as your check-out date.', 'modern-hotel-booking'),
+            // translators: %d: minimum number of nights (shown in hover tooltip)
+            'tooltip_min_hint'                   => __('⚠ Min stay: %d nights', 'modern-hotel-booking'),
+            // translators: %d: maximum number of nights (shown in hover tooltip)
+            'tooltip_max_hint'                   => __('⚠ Max stay: %d nights', 'modern-hotel-booking'),
+            'api_err_generic'                    => __('Something went wrong. Please try again.', 'modern-hotel-booking'),
+            'api_err_nonce'                      => __('Security check failed. Please refresh the page and try again.', 'modern-hotel-booking'),
+            'api_err_network'                    => __('A network error occurred. Please check your connection and try again.', 'modern-hotel-booking'),
             'label_desc_payment_confirmation'    => __('Email: Payment Confirmation Title', 'modern-hotel-booking'),
             'label_desc_payment_info'            => __('Email: Payment Info Title', 'modern-hotel-booking'),
             'label_desc_pay_on_arrival_email'    => __('Email: Pay on Arrival Detail', 'modern-hotel-booking'),
@@ -1887,14 +2046,8 @@ if (!defined('ABSPATH')) {
             'col_nights' => _x('Nights', 'table column header', 'modern-hotel-booking'),
             'col_guests' => _x('Guests', 'table column header', 'modern-hotel-booking'),
             'col_created' => _x('Created', 'table column header', 'modern-hotel-booking'),
-            
-            /* Status Variations */
-            'status_failed' => __('Failed', 'modern-hotel-booking'),
-            'status_checked_in' => __('Checked In', 'modern-hotel-booking'),
-            'status_checked_out' => __('Checked Out', 'modern-hotel-booking'),
-            'status_no_show' => __('No Show', 'modern-hotel-booking'),
-            
-            /* General Help & Hints */
+
+/* General Help & Hints */
             'help_title' => __('Support & Documentation', 'modern-hotel-booking'),
             'help_desc' => __('Need help with your setup? Check our resources below.', 'modern-hotel-booking'),
             'help_docs' => __('Official Documentation', 'modern-hotel-booking'),
@@ -1921,6 +2074,28 @@ if (!defined('ABSPATH')) {
             'settings_msg_performance_saved' => __('Performance settings saved successfully.', 'modern-hotel-booking'),
             'settings_msg_license_saved' => __('License settings saved successfully.', 'modern-hotel-booking'),
             'settings_msg_deposits_saved' => __('Deposits settings saved successfully.', 'modern-hotel-booking'),
+
+            /* Global Stay Limits (Pro) */
+            'settings_label_global_min_stay' => __('Global Stay Limits', 'modern-hotel-booking'),
+            'settings_label_global_min_nights' => __('Min Nights', 'modern-hotel-booking'),
+            'settings_label_global_max_nights' => __('Max Nights', 'modern-hotel-booking'),
+            'settings_desc_global_stay'      => __('Default minimum and maximum stay length in nights. Enter 0 to disable. Per-room and per-type calendar overrides always take priority. Use Admin Calendar → Bulk Update for seasonal rules (e.g. 7-night minimum in August).', 'modern-hotel-booking'),
+
+            /* Calendar tooltip blocked-date reasons */
+            'calendar_reason_booked'      => __('Booked', 'modern-hotel-booking'),
+            'calendar_reason_manual'      => __('Unavailable', 'modern-hotel-booking'),
+            'calendar_reason_maintenance' => __('Maintenance', 'modern-hotel-booking'),
+
+            /* Admin setup guide */
+            'setup_guide_title'           => __('Shortcode Setup Guide', 'modern-hotel-booking'),
+            'setup_guide_single_room'     => __('Single-room property: Use [mhbo_room_calendar room_id="X"] to display availability for a specific room. Replace X with the Room ID from the table below.', 'modern-hotel-booking'),
+            'setup_guide_multi_room'      => __('Multi-room property: Use [modern_hotel_booking] to display a search form that shows availability across all room types.', 'modern-hotel-booking'),
+            'setup_guide_your_rooms'      => __('Your Configured Rooms', 'modern-hotel-booking'),
+            'setup_guide_col_id'          => __('Room ID', 'modern-hotel-booking'),
+            'setup_guide_col_name'        => __('Room Name', 'modern-hotel-booking'),
+            'setup_guide_col_type'        => __('Room Type', 'modern-hotel-booking'),
+            'setup_guide_col_shortcode'   => __('Shortcode', 'modern-hotel-booking'),
+            'setup_guide_no_rooms'        => __('No rooms configured yet. Add rooms via the Rooms menu.', 'modern-hotel-booking'),
 
             /* Button Labels */
             'settings_btn_save_payments'         => __('Save Payment Settings', 'modern-hotel-booking'),
@@ -2114,12 +2289,7 @@ if (!defined('ABSPATH')) {
             'label_rounding_desc' => __('Per Total: Round tax on final total. Per Line: Round each item\'s tax separately.', 'modern-hotel-booking'),
             'label_decimal_places' => __('Decimal Places', 'modern-hotel-booking'),
             'label_decimal_places_desc' => __('Number of decimal places for tax amounts (usually 2).', 'modern-hotel-booking'),
-            'label_country_tax_ref' => __('Country-Specific VAT Rates Reference', 'modern-hotel-booking'),
-            'col_country' => _x('Country', 'table column header', 'modern-hotel-booking'),
-            'label_standard_rate' => __('Standard Rate', 'modern-hotel-booking'),
-            'label_hotel_rate' => __('Hotel Rate', 'modern-hotel-booking'),
             'label_tax_name' => __('Tax Name', 'modern-hotel-booking'),
-            'label_tax_note_verify' => __('Note: Hotel/accommodation rates may be reduced in some countries. Verify current rates with local tax authorities.', 'modern-hotel-booking'),
             'label_gdpr_retention_desc' => __('Number of days before check-in when the deposit becomes non-refundable (if not already marked as such).', 'modern-hotel-booking'),
             'label_tax_label_desc' => __('Examples: VAT, GST, Sales Tax, IVA, MwSt, TVA', 'modern-hotel-booking'),
 
@@ -2526,7 +2696,7 @@ if (!defined('ABSPATH')) {
             'label_bal_sprintf'                  => __('Bal: %s', 'modern-hotel-booking'),
             // translators: %s: pending amount
             'label_pending_sprintf'              => __('Pending: %s', 'modern-hotel-booking'),
-            'label_status_completed'             => __('Completed', 'modern-hotel-booking'),
+
             'msg_confirm_remove'                 => __('Are you sure?', 'modern-hotel-booking'),
             'msg_room_type_deleted'              => __('Room Type Deleted.', 'modern-hotel-booking'),
             'msg_room_type_updated'              => __('Room Type Updated!', 'modern-hotel-booking'),
@@ -2571,8 +2741,9 @@ if (!defined('ABSPATH')) {
             'msg_stripe_desc'                   => __('Accept payments with Stripe including Apple Pay, Google Pay, and link support.', 'modern-hotel-booking'),
             'label_paypal_integration'          => __('PayPal Integration', 'modern-hotel-booking'),
             'msg_paypal_desc'                   => __('Accept PayPal payments with automatic webhook verification and status updates.', 'modern-hotel-booking'),
-            'label_invoicing_system_soon'       => __('Invoicing System (Coming Soon)', 'modern-hotel-booking'),
-            'msg_invoicing_desc'                => __('Professional PDF invoices generated automatically. (Planned for future release)', 'modern-hotel-booking'),
+            'label_invoicing_system'            => __('Invoicing System', 'modern-hotel-booking'),
+            'msg_invoicing_desc'                => __('Professional PDF invoices generated automatically. Access via booking management.', 'modern-hotel-booking'),
+            'label_invoicing_available'         => __('Available', 'modern-hotel-booking'),
             'label_coming_soon'                 => __('Coming Soon', 'modern-hotel-booking'),
             'label_partial_payments'            => __('Partial Payments', 'modern-hotel-booking'),
             'msg_partial_payments_desc'         => __('Accept deposits or split payments. Complete control over payment thresholds.', 'modern-hotel-booking'),
@@ -2659,7 +2830,17 @@ if (!defined('ABSPATH')) {
             'label_stripe_currency_warnings' => __('Stripe Currency Warnings', 'modern-hotel-booking'),
             'label_ical_module_description'  => __('iCal Module Description', 'modern-hotel-booking'),
             'label_session_timeout_warning'  => __('Session Timeout Warning', 'modern-hotel-booking'),
+
+            /* AI Concierge & Conversational Feedback */
+            'ai_feedback_invalid_email'      => __('The email address you provided doesn\'t look quite right. Could you please double-check it?', 'modern-hotel-booking'),
+            // translators: 1: Room name, 2: Check-in date, 3: Check-out date
+            'ai_feedback_booking_success'    => __('I\'ve successfully booked the %1$s for you from %2$s to %3$s.', 'modern-hotel-booking'),
+            'ai_feedback_error_occurred'     => __('I encountered a slight issue while processing your booking. Let me try that again.', 'modern-hotel-booking'),
         );
+
+$labels['email_placeholders_desc'] = __('Available placeholders: {customer_name}, {customer_email}, {customer_phone}, {site_name}, {booking_id}, {booking_token}, {status}, {check_in}, {check_out}, {check_in_time}, {check_out_time}, {nights}, {total_price}, {guests}, {children}, {children_ages}, {room_name}, {custom_fields}, {booking_extras}, {payment_details}, {tax_breakdown}, {tax_breakdown_text}, {tax_total}, {tax_registration_number}, {company_name}, {company_address}, {company_phone}, {company_email}, {company_website}, {company_registration}, {whatsapp_number}, {whatsapp_link}, {view_url}, {special_requests}, {arrival_time}', 'modern-hotel-booking');
+
+return $labels;
 
     }
 
@@ -2807,7 +2988,7 @@ if (!defined('ABSPATH')) {
             case 'processing':
                 return self::get_label('status_processing');
             case 'completed':
-                return self::get_label('label_paid');
+                return self::get_label('status_completed');
             case 'failed':
                 return self::get_label('status_failed');
             case 'refunded':

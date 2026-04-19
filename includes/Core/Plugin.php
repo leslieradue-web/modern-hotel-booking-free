@@ -16,6 +16,7 @@ use MHBO\Frontend\Calendar;
 use MHBO\Frontend\BookingWidget;
 use MHBO\Frontend\Block;
 use MHBO\Api\RestApi;
+use MHBO\Api\ModalApi;
 use MHBO\Core\Privacy;
 
 class Plugin
@@ -39,6 +40,11 @@ class Plugin
         add_action('rest_api_init', function () {
             $api = new RestApi();
             $api->register_routes();
+
+            if ((int) get_option('mhbo_modal_enabled', 1) === 1) {
+                $modal_api = new ModalApi();
+                $modal_api->register_routes();
+            }
         });
 
         /* ---- Webhook System (Pro-only) ---- */
@@ -53,9 +59,11 @@ class Plugin
 
 if (is_admin()) {
             $this->load_admin();
-        } else {
-            $this->load_frontend();
         }
+
+        // 2026 BP: Always initialize frontend modules that handle AJAX/Form-processing requests.
+        // is_admin() returns true for AJAX, so we must load these even in admin context.
+        $this->load_frontend();
 
         // Always register AJAX handlers (needed because is_admin() is true for AJAX)
         $calendar = new Calendar();

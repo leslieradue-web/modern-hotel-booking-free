@@ -3,9 +3,9 @@ Contributors: leslierad
 Tags: room booking, availability calendar, vacation rental, guesthouse, reservation system
 Requires at least: 6.6
 Tested up to: 6.9
-Stable tag: 2.3.1
+Stable tag: 2.3.5
 Requires PHP: 8.0
-License: GPLv2 or later
+License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Free room booking system for guesthouses, vacation rentals & boutique hotels. Direct bookings. Zero commissions. No setup fees.
@@ -35,7 +35,8 @@ This versatile plugin is perfectly designed for:
 * **7 Native Gutenberg Blocks** — add booking forms, calendars, and business info to any page (Hotel: Booking Form, Room Calendar, Company Profile, etc.).
 * **Mobile-First Design** — fully responsive forms and calendars.
 * **Multilingual Ready** — WPML, Polylang and qTranslate-X compatible.
-* **Zero-Trace Privacy** — No tracking, no analytics, no data collection. Your business stays private.
+* **AI Concierge** — intelligent guest assistant that reads your hotel data.
+* **Zero-Trace Privacy** — No tracking, no analytics, no data collection.
 
 ### 🏆 Pro Version
 
@@ -47,8 +48,8 @@ Need more automation for your **direct booking** business? Upgrade to **Modern H
 * **Advanced Email Templates** — Fully customize guest communication
 * **Deposits & Partial Payments** — Secure revenue upfront
 * **Revenue Analytics Dashboard** — Track your business growth
-* **Developer REST API & Webhooks** — Build custom integrations
 * **Tax Calculations & Extras Pricing** — VAT, Sales tax, and add-on services
+* **Actionable AI Actions** — automated bookings and cancellations via AI
 
 All plans include updates and priority support. Cancel anytime — no forced auto-renewal.
 
@@ -132,6 +133,8 @@ All third-party libraries are bundled locally and are not loaded from external C
 
 Modern Hotel Booking is designed with privacy in mind. This plugin does not collect or transmit any guest or admin data to our servers. All booking details are stored locally in your WordPress database.
 
+This plugin uses **WordPress Transients** to temporarily store guest session data (such as name, email, and phone number) for up to 2 hours. This data is used exclusively to personalize the conversation with the AI Concierge and to pre-fill booking forms for the guest's convenience. This data is never shared with third parties other than the configured AI provider during active chat turns.
+
 If you choose to use the "Powered By" link (disabled by default), a backlink to our website will be displayed on the frontend booking forms. No tracking data is sent.
 
 For more information, please see our [Privacy Policy](https://startmysuccess.com/privacy-policy/).
@@ -144,6 +147,8 @@ This plugin integrates with the following external services to enhance your dire
   * [Privacy Policy](https://www.whatsapp.com/legal/privacy-policy-eea)
 * **Revolut (Payments)** - Facilitates peer-to-peer payments via Revolut.me links and QR codes.
   * [Privacy Policy](https://www.revolut.com/legal/privacy-policy/)
+* **AI Concierge (Gemini / OpenAI)** - If enabled, the plugin sends guest messages and property data to Google (Gemini) or OpenAI to provide automated guest assistance. No data is stored on external servers by this plugin.
+  * [Google Privacy](https://policies.google.com/privacy) | [OpenAI Privacy](https://openai.com/privacy/)
 
 The **Pro version** (available separately) adds connections to:
 
@@ -153,25 +158,36 @@ The **Pro version** (available separately) adds connections to:
 * **StartMySuccess (Maintenance)** - Used for license verification and update checks in the Pro version.
   * [Developer Privacy](https://startmysuccess.com/privacy-policy/)
 
+== Data & Privacy ==
+
+This plugin uses WordPress Transients (temporary server-side storage) for the following purposes:
+
+* **Rate Limiting**: Used to prevent API abuse by temporarily storing anonymized request counts per IP address (2-minute TTL).
+* **AI Concierge Memory**: If the AI Concierge is active, guest conversation context is stored using transients to provide a coherent multi-turn experience. No PII is permanently stored.
+* **Update Checks**: Pro version license status and update availability are cached to ensure optimal admin performance.
+
+All data is stored locally on your WordPress server and is not shared with the developer, except for optional AI processing (Gemini/OpenAI) if explicitly enabled.
+
 == Changelog ==
+
+= 2.3.5 =
+* **New AI Concierge Chatbot** (Free) — Guests can now chat with an intelligent AI receptionist. They can ask questions about your property, check availability, and make reservations directly through text or voice.
+* **Invoicing System** (Free) — Generate beautiful invoices and either print them or email them to guests automatically.
+* **Minimum / Maximum Nights Rules** — Set minimum and maximum stay requirements on both Room Types and individual Rooms.
+* **Pro Updates:**
+  * New multi-select pricing override tool — easily set custom prices by room type or for individual rooms.
+  * Option to add compulsory items (e.g. cleaning fee).
+  * Option to add a compulsory service fee (as a percentage or fixed amount of the total booking).
+
+= 2.3.2 =
+* NEW: AI Concierge — intelligent guest support integrated with hotel data.
+* NEW: Business Card Gutenberg Block — combined WhatsApp/Bank/Contact info.
 
 = 2.3.1 =
 * New: Added interactive business blocks (WhatsApp, Banking, Revolut) for enhanced direct guest communication.
 * Improved: Performance and styling refinements for the Booking Form and Room Calendar blocks.
 * Improved: Complete localization parity for core and Pro features in 15 languages.
 
-
-= 2.3.0 =
-* New (Pro): Added {children_ages} placeholder to booking emails for clearer guest composition.
-* iCal Pro: Added platform Dashicons (Airbnb, Booking.com, Google) to connection rows.
-* iCal Pro: Added "Sync All" bulk action to room editor for immediate full list updates.
-* iCal Pro: Implemented real-time AJAX feedback with spinners and dynamic status text.
-* Improved: Centralized booking flow redirections to ensure a consistent user journey across different page layouts.
-* Improved: Booking Calendar UI updated with diagonal "split-day" gradient designs for check-in/checkout dates.
-* Improved: Admin Layout alignments and responsive architectures for Bookings and Room Types dashboards.
-* Improved: Standardized terminology from "Onsite / Manual" to "Pay on Arrival" across code and translation files.
-
 == Upgrade Notice ==
-
-= 2.3.1 =
-Recommended update for enhanced performance and full localization parity across all modules.
+= 2.3.5 =
+Major new features! Free version now includes an AI Concierge Chatbot, full invoicing, and min/max nights rules. Pro adds advanced pricing tools and compulsory fees. Highly recommended update.

@@ -8,16 +8,16 @@
         return isDebug ? console.error.bind(console, '[MHBO]') : function () { };
     })();
 
-    // Wait for DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', function () {
-        if (typeof mhbo_vars === 'undefined') {
-            debugLog('mhbo_vars is not defined.');
-        }
-
-        /**
-         * Initialize each booking form instance found on the page
-         */
-        document.querySelectorAll('.mhbo-booking-form-wrapper').forEach(function (wrapper) {
+    /**
+     * Initialize a single booking form wrapper instance.
+     * Called on DOMContentLoaded for page-embedded forms and on
+     * mhboModalContent for dynamically injected modal forms.
+     * A data attribute guards against double-initialization.
+     */
+    function initBookingFormWrapper(wrapper) {
+        // Guard: skip if already initialized
+        if (wrapper.dataset.mhboFormInit === '1') return;
+        wrapper.dataset.mhboFormInit = '1';
             const form = wrapper.querySelector('.mhbo-booking-form');
             if (!form) return;
 
@@ -150,6 +150,10 @@
                                 } else {
                                     taxContainer.style.display = 'block';
                                 }
+                                // Re-apply deposit row visibility after HTML replacement —
+                                // the server renders deposit rows hidden by default and relies
+                                // on the client to show them when deposit payment is selected.
+                                updateDepositVisibility();
                             }
 
                             // Update Payment Cards if deposit info returned
@@ -349,7 +353,10 @@
                 wrapper.querySelectorAll('.mhbo-payment-card').forEach(c => c.classList.remove('active'));
                 const card = this.closest('.mhbo-payment-card');
                 if (card) card.classList.add('active');
-                
+
+                // Immediately update deposit row visibility so the summary reflects
+                // the selection before the async recalculate response arrives.
+                updateDepositVisibility();
                 recalculatePrice();
             });
 
@@ -376,9 +383,16 @@
                 }
 
                 const method = form.querySelector('input[name="mhbo_payment_method"]:checked');
-                const methodValue = method ? method.value : '';
+                const methodValue = method ? method.value : 'arrival';
 
-                if (methodValue === 'stripe') return; // Handled by PaymentGateways.js
+                if (methodValue === 'stripe') {
+                    const piInput = form.querySelector('input[name="mhbo_stripe_payment_intent"]');
+                    const isModalCtxStripe = wrapper && wrapper.dataset.modalContext === '1';
+                    if (!isModalCtxStripe || !piInput || !piInput.value) {
+                        return; // Hand off to PaymentGateways.js
+                    }
+                    // PI confirmed in modal — fall through to REST path
+                }
 
                 if (methodValue === 'paypal') {
                     const paypalOrderInput = form.querySelector('input[name="mhbo_paypal_order_id"]');
@@ -387,18 +401,170 @@
                         showInstanceError(mhbo_vars.msg_paypal_required || 'Please use the PayPal button to complete payment.');
                         return;
                     }
+                    const isModalCtxPP = wrapper && wrapper.dataset.modalContext === '1';
+                    if (!isModalCtxPP) {
+                        return; // Standard path: native form POST
+                    }
+                    // Modal context with PayPal order — fall through to REST path
                 }
+
+                // [2026 BP] REST API intercept for all remaining payment methods (arrival, bank transfer, etc.)
+                e.preventDefault();
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = mhbo_vars.processing || 'Processing...';
+                }
+
+                const roomIdInput = form.querySelector('input[name="mhbo_room_id"]');
+                const roomId = roomIdInput ? roomIdInput.value : 0;
+                const typeIdInput = form.querySelector('input[name="mhbo_type_id"]');
+                const typeId = typeIdInput ? typeIdInput.value : 0;
+                const checkInInput = form.querySelector('input[name="check_in"]');
+                const checkIn = checkInInput ? checkInInput.value : '';
+                const checkOutInput = form.querySelector('input[name="check_out"]');
+                const checkOut = checkOutInput ? checkOutInput.value : '';
+                const guests = guestsSelect ? guestsSelect.value : 1;
+                const children = childrenSelect ? childrenSelect.value : 0;
+
+                const extras = {};
+                form.querySelectorAll('.mhbo-extra-input').forEach(function (input) {
+                    let val = 0;
+                    if (input.type === 'checkbox') {
+                        if (input.checked) val = 1;
+                    } else {
+                        val = input.value;
+                    }
+                    if (val && parseFloat(val) > 0) {
+                        const extraId = input.dataset.extraId;
+                        if (extraId) {
+                            extras[extraId] = val;
+                        } else {
+                            const match = input.name.match(/\[(.*?)\]/);
+                            if (match) extras[match[1]] = val;
+                        }
+                    }
+                });
+
+                const paymentTypeInput = form.querySelector('input[name="mhbo_payment_type"]:checked');
+                const paymentType = paymentTypeInput ? paymentTypeInput.value : 'full';
+
+                const childrenAges = [];
+                form.querySelectorAll('input[name="child_ages[]"]').forEach(function (input) {
+                    const v = input.value.trim();
+                    if (v !== '') {
+                        childrenAges.push(parseInt(v, 10));
+                    }
+                });
+
+                const customFields = {};
+                form.querySelectorAll('input[name^="mhbo_custom["], textarea[name^="mhbo_custom["]').forEach(function (input) {
+                    const match = input.name.match(/mhbo_custom\[(.*?)\]/);
+                    if (match) {
+                        customFields[match[1]] = input.value;
+                    }
+                });
+
+                const consentEl = form.querySelector('input[name="mhbo_consent"]');
+                const consent = consentEl ? consentEl.checked : false;
+
+                const body = {
+                    room_id: roomId,
+                    type_id: typeId,
+                    check_in: checkIn,
+                    check_out: checkOut,
+                    customer_name: form.querySelector('input[name="customer_name"]')?.value || '',
+                    customer_email: form.querySelector('input[name="customer_email"]')?.value || '',
+                    customer_phone: form.querySelector('input[name="customer_phone"]')?.value || '',
+                    guests: guests,
+                    children: children,
+                    child_ages: childrenAges,
+                    extras: extras,
+                    payment_method: methodValue,
+                    payment_type: paymentType,
+                    custom_fields: customFields,
+                    admin_notes: form.querySelector('textarea[name="admin_notes"]')?.value || '',
+                    update_id: form.querySelector('input[name="mhbo_update_id"]')?.value || 0,
+                    consent: consent,
+                    booking_language: mhbo_vars.language || 'en',
+                    page_url: window.location.href,
+                    stripe_pi: (function () { const el = form.querySelector('input[name="mhbo_stripe_payment_intent"]'); return el ? el.value : ''; }()),
+                    paypal_order_id: (function () { const el = form.querySelector('input[name="mhbo_paypal_order_id"]'); return el ? el.value : ''; }()),
+                    paypal_capture_id: (function () { const el = form.querySelector('input[name="mhbo_paypal_capture_id"]'); return el ? el.value : ''; }())
+                };
+
+                fetch(mhbo_vars.rest_url + '/booking/complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': mhbo_vars.nonce
+                    },
+                    body: JSON.stringify(body)
+                })
+                .then(function (response) { return response.json(); })
+                .then(function (result) {
+                    // Normalize between legacy AJAX (result.success+result.data) and direct REST response
+                    var successData = (result.success && result.data) ? result.data : result;
+
+                    if (successData.redirect_url) {
+                        const isModalContext = wrapper.dataset.modalContext === '1';
+                        if (isModalContext) {
+                            // Modal path: parse token + status from redirect URL,
+                            // hand to Phase 5 confirmation handler.
+                            var bookingToken = '';
+                            var bookingStatus = 'confirmed';
+                            try {
+                                var u = new URL(successData.redirect_url, window.location.href);
+                                bookingToken  = u.searchParams.get('reference') || '';
+                                bookingStatus = u.searchParams.get('mhbo_status') || 'confirmed';
+                            } catch (_) {}
+                            document.dispatchEvent(new CustomEvent('mhboBookingComplete', {
+                                detail: { booking_token: bookingToken, status: bookingStatus }
+                            }));
+                        } else {
+                            window.location.href = successData.redirect_url;
+                        }
+                    } else {
+                        var msg = successData.message || (mhbo_vars.label_generic_error || 'Booking failed. Please try again.');
+                        showInstanceError(msg);
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = mhbo_vars.confirm || 'Confirm Booking';
+                        }
+                    }
+                })
+                .catch(function (err) {
+                    console.error('[MHBO] REST API Error:', err);
+                    showInstanceError(mhbo_vars.label_network_error || 'A network error occurred. Please try again.');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = mhbo_vars.confirm || 'Confirm Booking';
+                    }
+                });
             });
 
-            function showInstanceError(message) {
-                if (errorBox) {
-                    errorBox.innerHTML = '<div class="mhbo-error-notification"><span class="mhbo-error-icon">⚠️</span> ' + message + '</div>';
-                    errorBox.style.display = 'block';
-                    errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                    alert(message);
-                }
+        function showInstanceError(message) {
+            if (errorBox) {
+                errorBox.innerHTML = '<div class="mhbo-error-notification"><span class="mhbo-error-icon">⚠️</span> ' + message + '</div>';
+                errorBox.style.display = 'block';
+                errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                alert(message);
             }
-        });
+        }
+    } // end initBookingFormWrapper
+
+    // Initialize forms present on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof mhbo_vars === 'undefined') {
+            debugLog('mhbo_vars is not defined.');
+        }
+        document.querySelectorAll('.mhbo-booking-form-wrapper').forEach(initBookingFormWrapper);
     });
+
+    // Re-initialize when the modal injects new booking form content
+    document.addEventListener('mhboModalContent', function () {
+        document.querySelectorAll('.mhbo-booking-form-wrapper').forEach(initBookingFormWrapper);
+    });
+
 })(jQuery);

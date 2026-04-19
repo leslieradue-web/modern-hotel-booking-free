@@ -437,17 +437,45 @@ class Tax
             $total_gross_money = $total_gross_money->add($extras_calc['gross']);
         }
 
+        // Service Fee — taxed at extras rate (Pro, stored separately from extras)
+        $service_fee_net_money = Money::fromCents(0, $currency);
+        $service_fee_tax_money = Money::fromCents(0, $currency);
+        $service_fee_val   = (string) ($booking_data['service_fee'] ?? '0');
+        $service_fee_label = (string) ($booking_data['service_fee_label'] ?? '');
+
+        if ('0' !== $service_fee_val && '0.00' !== $service_fee_val && (float) $service_fee_val > 0) {
+            $service_fee_money_obj = Money::fromDecimal($service_fee_val, $currency);
+            $service_fee_calc = self::calculate_tax_money($service_fee_money_obj, $extras_rate, $mode);
+
+            $result['breakdown']['service_fee'] = [
+                'label'        => $service_fee_label,
+                'gross_amount' => $service_fee_money_obj->toDecimal(),
+                'net'          => $service_fee_calc['net']->toDecimal(),
+                'tax_rate'     => $extras_rate,
+                'tax'          => $service_fee_calc['tax']->toDecimal(),
+                'gross'        => $service_fee_calc['gross']->toDecimal(),
+            ];
+
+            $service_fee_net_money = $service_fee_calc['net'];
+            $service_fee_tax_money = $service_fee_calc['tax'];
+            $total_net_money   = $total_net_money->add($service_fee_calc['net']);
+            $total_tax_money   = $total_tax_money->add($service_fee_calc['tax']);
+            $total_gross_money = $total_gross_money->add($service_fee_calc['gross']);
+        }
+
         // Final totals
         $result['totals'] = [
-            'room_net' => $room_net_money,
-            'room_tax' => $room_tax_money,
-            'children_net' => $children_net_money,
-            'children_tax' => $children_tax_money,
-            'extras_net' => $extras_net_money,
-            'extras_tax' => $extras_tax_money,
-            'subtotal_net' => $total_net_money,
-            'total_tax' => $total_tax_money,
-            'total_gross' => $total_gross_money
+            'room_net'          => $room_net_money,
+            'room_tax'          => $room_tax_money,
+            'children_net'      => $children_net_money,
+            'children_tax'      => $children_tax_money,
+            'extras_net'        => $extras_net_money,
+            'extras_tax'        => $extras_tax_money,
+            'service_fee_net'   => $service_fee_net_money,
+            'service_fee_tax'   => $service_fee_tax_money,
+            'subtotal_net'      => $total_net_money,
+            'total_tax'         => $total_tax_money,
+            'total_gross'       => $total_gross_money,
         ];
 
         return $result;
@@ -484,6 +512,7 @@ class Tax
                 "SELECT tax_breakdown, tax_mode, tax_rate_accommodation, tax_rate_extras,
                         room_total_net, children_total_net, extras_total_net,
                         room_tax, children_tax, extras_tax,
+                        service_fee_amount, service_fee_net, service_fee_tax,
                         subtotal_net, total_tax, total_gross
                  FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
                 $booking_id
@@ -496,53 +525,70 @@ class Tax
         }
 
         // If we have JSON breakdown, use it
-        if (isset($booking['tax_breakdown']) && $booking['tax_breakdown'] !== '') {
-            return json_decode($booking['tax_breakdown'], true);
+        if (isset($booking['tax_breakdown']) && '' !== (string) $booking['tax_breakdown']) {
+            return json_decode((string) $booking['tax_breakdown'], true);
         }
 
         $currency = strtoupper((string) get_option('mhbo_currency_code', 'USD'));
 
         // Otherwise, reconstruct from database columns
-        $room_net = Money::fromDecimal((string) ($booking['room_total_net'] ?? '0'), $currency);
-        $room_tax = Money::fromDecimal((string) ($booking['room_tax'] ?? '0'), $currency);
-        $children_net = Money::fromDecimal((string) ($booking['children_total_net'] ?? '0'), $currency);
-        $children_tax = Money::fromDecimal((string) ($booking['children_tax'] ?? '0'), $currency);
-        $extras_net = Money::fromDecimal((string) ($booking['extras_total_net'] ?? '0'), $currency);
-        $extras_tax = Money::fromDecimal((string) ($booking['extras_tax'] ?? '0'), $currency);
+        $room_net         = Money::fromDecimal((string) ($booking['room_total_net'] ?? '0'), $currency);
+        $room_tax         = Money::fromDecimal((string) ($booking['room_tax'] ?? '0'), $currency);
+        $children_net     = Money::fromDecimal((string) ($booking['children_total_net'] ?? '0'), $currency);
+        $children_tax     = Money::fromDecimal((string) ($booking['children_tax'] ?? '0'), $currency);
+        $extras_net       = Money::fromDecimal((string) ($booking['extras_total_net'] ?? '0'), $currency);
+        $extras_tax       = Money::fromDecimal((string) ($booking['extras_tax'] ?? '0'), $currency);
+        $sf_amount_stored = (string) ($booking['service_fee_amount'] ?? '0');
+        $sf_net           = Money::fromDecimal((string) ($booking['service_fee_net'] ?? '0'), $currency);
+        $sf_tax           = Money::fromDecimal((string) ($booking['service_fee_tax'] ?? '0'), $currency);
 
-        return [
+        $reconstructed = [
             'enabled' => self::MODE_DISABLED !== $booking['tax_mode'],
-            'mode' => $booking['tax_mode'],
-            'rates' => [
+            'mode'    => $booking['tax_mode'],
+            'rates'   => [
                 'accommodation' => floatval($booking['tax_rate_accommodation']),
-                'extras' => floatval($booking['tax_rate_extras'])
+                'extras'        => floatval($booking['tax_rate_extras']),
             ],
             'breakdown' => [
                 'room' => [
-                    'net' => $room_net->toDecimal(),
-                    'tax' => $room_tax->toDecimal(),
-                    'gross' => $room_net->add($room_tax)->toDecimal()
+                    'net'   => $room_net->toDecimal(),
+                    'tax'   => $room_tax->toDecimal(),
+                    'gross' => $room_net->add($room_tax)->toDecimal(),
                 ],
                 'children' => [
-                    'net' => $children_net->toDecimal(),
-                    'tax' => $children_tax->toDecimal(),
-                    'gross' => $children_net->add($children_tax)->toDecimal()
+                    'net'   => $children_net->toDecimal(),
+                    'tax'   => $children_tax->toDecimal(),
+                    'gross' => $children_net->add($children_tax)->toDecimal(),
                 ],
                 'extras' => [
                     [
-                        'name' => I18n::get_label('label_extras'),
-                        'net' => $extras_net->toDecimal(),
-                        'tax' => $extras_tax->toDecimal(),
-                        'gross' => $extras_net->add($extras_tax)->toDecimal()
-                    ]
-                ]
+                        'name'  => I18n::get_label('label_extras'),
+                        'net'   => $extras_net->toDecimal(),
+                        'tax'   => $extras_tax->toDecimal(),
+                        'gross' => $extras_net->add($extras_tax)->toDecimal(),
+                    ],
+                ],
             ],
             'totals' => [
                 'subtotal_net' => Money::fromDecimal((string) ($booking['subtotal_net'] ?? '0'), $currency)->toDecimal(),
-                'total_tax' => Money::fromDecimal((string) ($booking['total_tax'] ?? '0'), $currency)->toDecimal(),
-                'total_gross' => Money::fromDecimal((string) ($booking['total_gross'] ?? '0'), $currency)->toDecimal()
-            ]
+                'total_tax'    => Money::fromDecimal((string) ($booking['total_tax'] ?? '0'), $currency)->toDecimal(),
+                'total_gross'  => Money::fromDecimal((string) ($booking['total_gross'] ?? '0'), $currency)->toDecimal(),
+            ],
         ];
+
+        // Attach service fee if stored
+        if ((float) $sf_amount_stored > 0) {
+            $reconstructed['breakdown']['service_fee'] = [
+                'label'        => get_option('mhbo_service_fee_label', 'Service Fee'),
+                'gross_amount' => $sf_amount_stored,
+                'net'          => $sf_net->toDecimal(),
+                'tax_rate'     => floatval($booking['tax_rate_extras']),
+                'tax'          => $sf_tax->toDecimal(),
+                'gross'        => $sf_net->add($sf_tax)->toDecimal(),
+            ];
+        }
+
+        return $reconstructed;
     }
 
     /**
@@ -637,6 +683,26 @@ class Tax
             }
         }
 
+        // Service Fee (Pro) — shown as its own line after extras, before subtotal
+        if (isset($breakdown['breakdown']['service_fee']) && [] !== $breakdown['breakdown']['service_fee']) {
+            $sf = $breakdown['breakdown']['service_fee'];
+            $sf_label = $sf['label'] ?? '';
+            if ('' === $sf_label) {
+                $sf_label = __('Service Fee', 'modern-hotel-booking');
+            }
+            $formatted['items'][] = [
+                'type'             => 'service_fee',
+                'label'            => $sf_label,
+                'net'              => $sf['net'] ?? 0,
+                'tax_rate'         => $sf['tax_rate'] ?? 0,
+                'tax'              => $sf['tax'] ?? 0,
+                'gross'            => $sf['gross'] ?? $sf['gross_amount'] ?? 0,
+                'net_formatted'    => I18n::format_currency($sf['net'] ?? 0),
+                'tax_formatted'    => I18n::format_currency($sf['tax'] ?? 0),
+                'gross_formatted'  => I18n::format_currency($sf['gross'] ?? $sf['gross_amount'] ?? 0),
+            ];
+        }
+
         // Totals
         $totals = $breakdown['totals'] ?? [];
         $formatted['totals'] = [
@@ -667,7 +733,14 @@ class Tax
     public static function render_breakdown_html(array $breakdown, ?string $language = null, bool $is_email = false, array $meta = [], bool $show_note = true): string
     {
         if (!self::is_enabled() && ($breakdown['enabled'] ?? false) === false) {
-            return '';
+            // Respect admin display settings even when Tax mode is Disabled.
+            // When enabled, renders a "Booking Summary" (fee lines, no tax rows).
+            $display_setting = $is_email
+                ? (bool) get_option('mhbo_tax_display_email', true)
+                : (bool) get_option('mhbo_tax_display_frontend', false);
+            if (!$display_setting) {
+                return '';
+            }
         }
 
         $formatted = self::format_tax_breakdown($breakdown, $language, $meta);
@@ -691,10 +764,13 @@ class Tax
         $accommodation_rate = floatval($rates['accommodation'] ?? self::get_accommodation_rate());
         $extras_rate = floatval($rates['extras'] ?? self::get_extras_rate());
         
-        $room_tax_money = Money::fromDecimal((string) ($totals['room_tax'] ?? '0'), $currency);
-        $children_tax_money = Money::fromDecimal((string) ($totals['children_tax'] ?? '0'), $currency);
-        $extras_tax_money = Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency);
-        
+        $room_tax_money        = Money::fromDecimal((string) ($totals['room_tax'] ?? '0'), $currency);
+        $children_tax_money    = Money::fromDecimal((string) ($totals['children_tax'] ?? '0'), $currency);
+        $extras_tax_money      = Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency);
+        // Service fee is taxed at the extras rate — merge its tax into the extras tax display total
+        $service_fee_tax_money = Money::fromDecimal((string) ($totals['service_fee_tax'] ?? '0'), $currency);
+        $extras_tax_money      = $extras_tax_money->add($service_fee_tax_money);
+
         $accommodation_tax_total_money = $room_tax_money->add($children_tax_money);
         $accommodation_tax_total = floatval($accommodation_tax_total_money->toDecimal());
         $extras_tax = floatval($extras_tax_money->toDecimal());
@@ -827,7 +903,9 @@ class Tax
     public static function render_breakdown_text($breakdown, $language = null, $meta = array())
     {
         if (!self::is_enabled() && ($breakdown['enabled'] ?? false) === false) {
-            return '';
+            if (!(bool) get_option('mhbo_tax_display_email', true)) {
+                return '';
+            }
         }
 
         $formatted = self::format_tax_breakdown($breakdown, $language, $meta);
@@ -853,10 +931,13 @@ class Tax
         $accommodation_rate = floatval($rates['accommodation'] ?? 0);
         $extras_rate = floatval($rates['extras'] ?? 0);
         
-        $room_tax_money = Money::fromDecimal((string) ($totals['room_tax'] ?? '0'), $currency);
-        $children_tax_money = Money::fromDecimal((string) ($totals['children_tax'] ?? '0'), $currency);
-        $extras_tax_money = Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency);
-        
+        $room_tax_money        = Money::fromDecimal((string) ($totals['room_tax'] ?? '0'), $currency);
+        $children_tax_money    = Money::fromDecimal((string) ($totals['children_tax'] ?? '0'), $currency);
+        $extras_tax_money      = Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency);
+        // Service fee is taxed at the extras rate — merge its tax into the extras tax display total
+        $service_fee_tax_money = Money::fromDecimal((string) ($totals['service_fee_tax'] ?? '0'), $currency);
+        $extras_tax_money      = $extras_tax_money->add($service_fee_tax_money);
+
         $accommodation_tax_total_money = $room_tax_money->add($children_tax_money);
         $accommodation_tax_total = floatval($accommodation_tax_total_money->toDecimal());
         $extras_tax = floatval($extras_tax_money->toDecimal());
@@ -918,12 +999,15 @@ class Tax
             'room_tax' => Money::fromDecimal((string) ($totals['room_tax'] ?? $breakdown['room']['tax'] ?? '0'), $currency)->toDecimal(),
             'children_total_net' => Money::fromDecimal((string) ($totals['children_net'] ?? $breakdown['children']['net'] ?? '0'), $currency)->toDecimal(),
             'children_tax' => Money::fromDecimal((string) ($totals['children_tax'] ?? $breakdown['children']['tax'] ?? '0'), $currency)->toDecimal(),
-            'extras_total_net' => Money::fromDecimal((string) ($totals['extras_net'] ?? '0'), $currency)->toDecimal(),
-            'extras_tax' => Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency)->toDecimal(),
-            'subtotal_net' => Money::fromDecimal((string) ($totals['subtotal_net'] ?? '0'), $currency)->toDecimal(),
-            'total_tax' => Money::fromDecimal((string) ($totals['total_tax'] ?? '0'), $currency)->toDecimal(),
-            'total_gross' => Money::fromDecimal((string) ($totals['total_gross'] ?? '0'), $currency)->toDecimal(),
-            'tax_breakdown' => wp_json_encode($tax_breakdown)
+            'extras_total_net'   => Money::fromDecimal((string) ($totals['extras_net'] ?? '0'), $currency)->toDecimal(),
+            'extras_tax'         => Money::fromDecimal((string) ($totals['extras_tax'] ?? '0'), $currency)->toDecimal(),
+            'service_fee_net'    => Money::fromDecimal((string) ($totals['service_fee_net'] ?? '0'), $currency)->toDecimal(),
+            'service_fee_tax'    => Money::fromDecimal((string) ($totals['service_fee_tax'] ?? '0'), $currency)->toDecimal(),
+            'service_fee_amount' => Money::fromDecimal((string) ($breakdown['service_fee']['gross_amount'] ?? '0'), $currency)->toDecimal(),
+            'subtotal_net'       => Money::fromDecimal((string) ($totals['subtotal_net'] ?? '0'), $currency)->toDecimal(),
+            'total_tax'          => Money::fromDecimal((string) ($totals['total_tax'] ?? '0'), $currency)->toDecimal(),
+            'total_gross'        => Money::fromDecimal((string) ($totals['total_gross'] ?? '0'), $currency)->toDecimal(),
+            'tax_breakdown'      => wp_json_encode($tax_breakdown),
         ];
 
         // Fallback for extras if totals not populated (should not happen with latest calculate_booking_tax)
@@ -949,10 +1033,13 @@ class Tax
             '%f', // children_tax
             '%f', // extras_total_net
             '%f', // extras_tax
+            '%f', // service_fee_net
+            '%f', // service_fee_tax
+            '%f', // service_fee_amount
             '%f', // subtotal_net
             '%f', // total_tax
             '%f', // total_gross
-            '%s'  // tax_breakdown
+            '%s', // tax_breakdown
         ];
 
         // RATIONALE: Required to store calculated tax breakdown columns in the custom mhbo_bookings table.

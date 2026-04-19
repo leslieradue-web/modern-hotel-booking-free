@@ -306,6 +306,51 @@
     line-height: 1 !important;
 }
 
+/* --- Stay Restriction Badges (PRO) --- */
+.mhbo-stay-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    align-items: flex-end;
+}
+
+.mhbo-badge-min, .mhbo-badge-max {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.mhbo-badge-min {
+    background: color-mix(in srgb, var(--mhbo-primary), transparent 90%);
+    color: var(--mhbo-primary);
+    border: 1px solid color-mix(in srgb, var(--mhbo-primary), transparent 80%);
+}
+
+.mhbo-badge-max {
+    background: #edf2f7;
+    color: #4a5568;
+    border: 1px solid #e2e8f0;
+}
+
+/* Ensure badges turn white when selected */
+.flatpickr-day.selected .mhbo-badge-min,
+.flatpickr-day.startRange .mhbo-badge-min,
+.flatpickr-day.endRange .mhbo-badge-min,
+.flatpickr-day.selected .mhbo-badge-max,
+.flatpickr-day.startRange .mhbo-badge-max,
+.flatpickr-day.endRange .mhbo-badge-max {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
 .mhbo-calendar-wrapper .mhbo-fp-price {
     font-size: 1rem !important;
     font-weight: 900 !important;
@@ -313,11 +358,11 @@
     text-align: center !important;
     width: 100% !important;
     display: flex !important;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: baseline;
-    gap: 4px;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 2px !important;
     margin-top: auto !important;
     padding-bottom: 5px;
     line-height: 1 !important;
@@ -400,6 +445,15 @@
     color: #c53030 !important;
     font-size: 0.9rem !important;
     display: none; /* Managed by JS */
+}
+
+/* Stay constraint hint — warning tone (amber), not error (red).
+   Displayed persistently until user picks a valid date range. */
+.mhbo-calendar-errors.mhbo-constraint-hint {
+    background: #fffbeb !important;
+    border-color: #f6ad55 !important;
+    color: #92400e !important;
+    font-weight: 500 !important;
 }
 
 /* Prevent empty shell showing */
@@ -619,6 +673,21 @@
     transform: translate(-50%, -100%) translateY(-25px);
 }
 
+/* Tooltip turns amber when the hovered range violates a stay constraint */
+.mhbo-calendar-tooltip.mhbo-tooltip-warn {
+    background: rgba(146, 64, 14, 0.92);
+    border-color: rgba(246, 173, 85, 0.4);
+}
+
+.mhbo-tooltip-constraint {
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.95;
+    letter-spacing: 0.2px;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    padding-left: 10px;
+}
+
 .mhbo-tooltip-nights {
     font-size: 0.9rem;
     letter-spacing: 0.3px;
@@ -655,6 +724,12 @@
     .mhbo-calendar-tooltip {
         padding: 8px 12px;
         font-size: 0.85rem;
+    }
+
+    .mhbo-calendar-wrapper .mhbo-fp-price {
+        font-size: 0.65rem !important;
+        padding-bottom: 2px !important;
+        line-height: 1.1 !important;
     }
 }
 

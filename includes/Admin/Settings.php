@@ -84,11 +84,13 @@ class Settings
         // General Settings
         register_setting('mhbo_settings_group', 'mhbo_checkin_time', array('default' => '14:00', 'sanitize_callback' => 'sanitize_text_field'));
         register_setting('mhbo_settings_group', 'mhbo_checkout_time', array('default' => '11:00', 'sanitize_callback' => 'sanitize_text_field'));
+        
         register_setting('mhbo_settings_group', 'mhbo_notification_email', array('default' => get_option('admin_email'), 'sanitize_callback' => 'sanitize_email'));
+        register_setting('mhbo_settings_group', 'mhbo_modal_enabled', array('default' => 1, 'sanitize_callback' => 'absint'));
         register_setting('mhbo_settings_group', 'mhbo_prevent_same_day_turnover', array('default' => 0, 'sanitize_callback' => 'absint'));
         register_setting('mhbo_settings_group', 'mhbo_children_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
 
-        // Currency Settings
+// Currency Settings
         register_setting('mhbo_settings_group', 'mhbo_currency_code', array('default' => 'USD', 'sanitize_callback' => 'sanitize_text_field'));
         register_setting('mhbo_settings_group', 'mhbo_currency_symbol', array('default' => '$', 'sanitize_callback' => 'sanitize_text_field'));
         register_setting('mhbo_settings_group', 'mhbo_currency_position', array('default' => 'before', 'sanitize_callback' => 'sanitize_text_field'));
@@ -126,8 +128,14 @@ class Settings
         add_settings_field('mhbo_checkin_time', I18n::get_label('settings_label_checkin'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_checkin_time'));
         add_settings_field('mhbo_checkout_time', I18n::get_label('settings_label_checkout'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_checkout_time'));
         add_settings_field('mhbo_notification_email', I18n::get_label('settings_label_notification'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_notification_email'));
+        
         add_settings_field('mhbo_booking_page', I18n::get_label('settings_label_booking_page'), array($this, 'render_page_select_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_booking_page'));
         add_settings_field('mhbo_booking_page_url', I18n::get_label('settings_label_booking_override'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_booking_page_url'));
+        add_settings_field('mhbo_modal_enabled', __('Enable Inline Booking Modal', 'modern-hotel-booking'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
+            'label_for'   => 'mhbo_modal_enabled',
+            'default'     => 1,
+            'description' => __('Open the booking form in a slide-in drawer instead of navigating to a separate booking page.', 'modern-hotel-booking')
+        ));
         add_settings_field('mhbo_prevent_same_day_turnover', I18n::get_label('settings_label_turnover'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
             'label_for'   => 'mhbo_prevent_same_day_turnover',
             'description' => I18n::get_label('settings_desc_turnover')
@@ -136,6 +144,7 @@ class Settings
             'label_for'   => 'mhbo_children_enabled',
             'description' => I18n::get_label('settings_desc_children')
         ));
+        
         add_settings_field('mhbo_custom_fields', I18n::get_label('settings_label_custom_fields'), array($this, 'render_custom_fields_repeater'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_custom_fields'));
         add_settings_field('mhbo_save_data_on_uninstall', I18n::get_label('settings_label_uninstall'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
             'label_for'   => 'mhbo_save_data_on_uninstall',
@@ -196,6 +205,64 @@ class Settings
     }
 
     /**
+     * Render the shortcode setup guide info box at the top of the General tab.
+     */
+    public static function render_shortcode_info(): void
+    {
+        echo '<div class="mhbo-setup-guide" style="margin:20px 0;padding:12px 16px;background:#f0f6fc;border-left:4px solid #2271b1;">';
+        echo '<strong>' . esc_html(I18n::get_label('setup_guide_title')) . '</strong>';
+        echo '<ul style="margin:8px 0 8px 16px;list-style:disc;">';
+        echo '<li>' . esc_html(I18n::get_label('setup_guide_single_room')) . '</li>';
+        echo '<li>' . esc_html(I18n::get_label('setup_guide_multi_room')) . '</li>';
+        echo '</ul>';
+        echo '</div>';
+    }
+
+    /**
+     * Render the configured rooms reference table (shown after Save Changes).
+     */
+    public static function render_rooms_table(): void
+    {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $rooms = $wpdb->get_results(
+            "SELECT r.id, r.room_number, t.name AS type_name
+             FROM {$wpdb->prefix}mhbo_rooms r
+             LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
+             ORDER BY r.id ASC
+             LIMIT 50"
+        );
+
+        if (is_array($rooms) && [] !== $rooms) {
+            echo '<div style="margin-top:20px;">';
+            echo '<details style="margin-top:8px;">';
+            echo '<summary style="cursor:pointer;font-weight:600;">'
+               . esc_html(I18n::get_label('setup_guide_your_rooms')) . '</summary>';
+            echo '<table class="widefat fixed striped" style="margin-top:8px;max-width:640px;">';
+            echo '<thead><tr>';
+            echo '<th style="width:80px;">' . esc_html(I18n::get_label('setup_guide_col_id')) . '</th>';
+            echo '<th>' . esc_html(I18n::get_label('setup_guide_col_name')) . '</th>';
+            echo '<th>' . esc_html(I18n::get_label('setup_guide_col_type')) . '</th>';
+            echo '<th>' . esc_html(I18n::get_label('setup_guide_col_shortcode')) . '</th>';
+            echo '</tr></thead><tbody>';
+            foreach ($rooms as $room) {
+                $room_id   = (int) $room->id;
+                $shortcode = '[mhbo_room_calendar room_id="' . $room_id . '"]';
+                echo '<tr>';
+                echo '<td>' . esc_html((string) $room_id) . '</td>';
+                echo '<td>' . esc_html((string) ($room->room_number ?? '—')) . '</td>';
+                echo '<td>' . esc_html((string) ($room->type_name ?? '—')) . '</td>';
+                echo '<td><code style="user-select:all;">' . esc_html($shortcode) . '</code></td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+            echo '</details>';
+            echo '</div>';
+        }
+    }
+
+    /**
      * Render a standard text input field.
      *
      * @param array{label_for: string, description?: string} $args Field arguments.
@@ -208,7 +275,7 @@ class Settings
         echo '<input type="text" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($value) . '" class="regular-text">';
     }
 
-    /**
+/**
      * Render a standard textarea field.
      *
      * @param array{label_for: string, description?: string} $args Field arguments.
@@ -269,6 +336,7 @@ class Settings
     {
         $default = isset($args['default']) ? $args['default'] : 0;
         $option = get_option($args['label_for'], $default);
+        echo '<input type="hidden" name="' . esc_attr($args['label_for']) . '" value="0">';
         echo '<input type="checkbox" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="1" ' . checked(1, $option, false) . '>';
         if (isset($args['description'])) {
             echo '<p class="description">' . esc_html($args['description']) . '</p>';
@@ -395,7 +463,6 @@ class Settings
                 
                 <a href="?page=mhbo-settings&tab=general"
                     class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_general'); ?></a>
-                
                 <a href="?page=mhbo-settings&tab=emails"
                     class="nav-tab <?php echo 'emails' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_emails'); ?></a>
                 <a href="?page=mhbo-settings&tab=labels"
@@ -456,7 +523,12 @@ if ($show_save) {
                         submit_button();
                     }
 
-                    ?>
+                    if ('general' === $active_tab) {
+                        self::render_shortcode_info();
+                        self::render_rooms_table();
+                    }
+
+?>
                 </form>
             <?php AdminUI::render_card_end(); ?>
         </div>
@@ -1076,16 +1148,25 @@ switch ($tab) {
             update_option('mhbo_booking_page_url', esc_url_raw($raw_url));
         }
 
+        if (isset($data['mhbo_hotel_timezone'])) {
+            // 2026 BP: Rule 11 - Individual extraction then sanitization.
+            $raw_tz = wp_unslash($data['mhbo_hotel_timezone']);
+            update_option('mhbo_hotel_timezone', sanitize_text_field($raw_tz));
+        }
+
         // Boolean Fields
         $bool_fields = [
+            'mhbo_modal_enabled',
             'mhbo_prevent_same_day_turnover',
             'mhbo_children_enabled',
+            'mhbo_calendar_show_decimals',
             'mhbo_powered_by_link',
             'mhbo_save_data_on_uninstall'
         ];
 
         foreach ($bool_fields as $field) {
-            $val = (isset($data[$field]) && '1' === sanitize_text_field(wp_unslash($data[$field]))) ? 1 : 0;
+            $raw_val = isset($data[$field]) ? (string) wp_unslash($data[$field]) : '0';
+            $val = ('1' === $raw_val) ? 1 : 0;
             update_option($field, $val);
         }
 
@@ -1130,7 +1211,7 @@ switch ($tab) {
             update_option('mhbo_currency_position', sanitize_text_field($raw_position));
         }
 
-        add_settings_error('mhbo_settings', 'saved', I18n::get_label('msg_general_saved'), 'success');
+add_settings_error('mhbo_settings', 'saved', I18n::get_label('msg_general_saved'), 'success');
     }
 
 public static function render_pro_page(): void

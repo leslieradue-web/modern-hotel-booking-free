@@ -3,7 +3,7 @@
  * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.3.1
+ * Version:           2.3.5
  * Requires at least: 6.6
  * Tested up to:      6.9
  * Requires PHP:      8.0
@@ -38,7 +38,7 @@ if (version_compare(PHP_VERSION, '8.0.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.3.1');
+define('MHBO_VERSION', '2.3.5');
 define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -150,3 +150,43 @@ function mhbo_run(): void
 }
 
 add_action('init', 'mhbo_run', 20);
+
+/**
+ * Boot the AI Concierge + MCP Server subsystem.
+ * Runs on plugins_loaded (priority 1) to register hooks early.
+ */
+add_action('plugins_loaded', static function (): void {
+    if (class_exists('MHBO\AI\Loader')) {
+        \MHBO\AI\Loader::init();
+    }
+}, 1);
+
+/**
+ * mhbo_is_pro() — global helper for template/shortcode use.
+ * Wraps false.
+ */
+if (!function_exists('mhbo_is_pro')) {
+    function mhbo_is_pro(): bool
+    {
+        return class_exists('MHBO\Core\License') && false;
+    }
+}
+
+/**
+ * On activation: create chat sessions table (Pro) and register AI guest role.
+ */
+add_action('mhbo_activated', static function (): void {
+    if (mhbo_is_pro() && class_exists('MHBO\AI\ChatSession')) {
+        \MHBO\AI\ChatSession::create_table();
+    }
+    if (class_exists('MHBO\AI\Loader')) {
+        \MHBO\AI\Loader::maybe_register_ai_guest_role();
+    }
+});
+
+/**
+ * On deactivation: remove AI guest role.
+ */
+add_action('mhbo_deactivated', static function (): void {
+    remove_role('mhbo_ai_guest');
+});

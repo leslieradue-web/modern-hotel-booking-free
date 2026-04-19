@@ -11,14 +11,14 @@
     'use strict';
 
     $(function() {
-        $('.mhbo-upload-btn').on('click', function(e) {
+        $('.mhbo-upload-btn, .mhbo-upload-button').on('click', function(e) {
             e.preventDefault();
 
             var button = $(this);
-            var id_target = $('#' + button.data('target-id'));
-            var url_target = $('#' + button.data('target-url'));
-            var preview = $('#' + button.data('preview'));
-            var title = button.data('title');
+            var id_target = button.data('target-id') ? $('#' + button.data('target-id')) : null;
+            var url_target = button.data('target-url') ? $('#' + button.data('target-url')) : (button.data('target') ? $(button.data('target')) : null);
+            var preview = button.data('preview') ? $('#' + button.data('preview')) : null;
+            var title = button.data('title') || 'Select Image';
 
             var frame = wp.media({
                 title: title,
@@ -30,10 +30,12 @@
 
             frame.on('select', function() {
                 var attachment = frame.state().get('selection').first().toJSON();
-                id_target.val(attachment.id);
-                url_target.val(attachment.url);
+                if (id_target) id_target.val(attachment.id);
+                if (url_target) url_target.val(attachment.url);
 
-                preview.html('<img src="' + attachment.url + '" alt="" style="max-width:200px;height:auto;" />').show();
+                if (preview && preview.length) {
+                    preview.html('<img src="' + attachment.url + '" alt="" style="max-width:200px;height:auto;" />').show();
+                }
                 button.siblings('.mhbo-remove-btn').show();
             });
 

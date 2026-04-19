@@ -143,8 +143,14 @@ class Money implements \JsonSerializable
     public function add(self $other): self
     {
         $this->ensure_same_currency($other);
-        $res = bcadd($this->amount_in_cents, $other->getAmount(), 0);
-        return new self($res, $this->currency);
+
+        if ( ! function_exists( 'bcadd' ) ) {
+            $res = (string) ( (int) $this->amount_in_cents + (int) $other->getAmount() );
+            return new self( $res, $this->currency );
+        }
+
+        $res = bcadd( $this->amount_in_cents, $other->getAmount(), 0 );
+        return new self( $res, $this->currency );
     }
 
     /**
@@ -156,8 +162,14 @@ class Money implements \JsonSerializable
     public function subtract(self $other): self
     {
         $this->ensure_same_currency($other);
-        $res = bcsub($this->amount_in_cents, $other->getAmount(), 0);
-        return new self($res, $this->currency);
+
+        if ( ! function_exists( 'bcsub' ) ) {
+            $res = (string) ( (int) $this->amount_in_cents - (int) $other->getAmount() );
+            return new self( $res, $this->currency );
+        }
+
+        $res = bcsub( $this->amount_in_cents, $other->getAmount(), 0 );
+        return new self( $res, $this->currency );
     }
 
     /**
@@ -327,7 +339,10 @@ class Money implements \JsonSerializable
      */
     public function isZero(): bool
     {
-        return 0 === bccomp($this->amount_in_cents, '0', 0);
+        if ( ! function_exists( 'bccomp' ) ) {
+            return (int) $this->amount_in_cents === 0;
+        }
+        return 0 === bccomp( $this->amount_in_cents, '0', 0 );
     }
 
     /**
@@ -337,7 +352,10 @@ class Money implements \JsonSerializable
      */
     public function isPositive(): bool
     {
-        return bccomp($this->amount_in_cents, '0', 0) > 0;
+        if ( ! function_exists( 'bccomp' ) ) {
+            return (int) $this->amount_in_cents > 0;
+        }
+        return bccomp( $this->amount_in_cents, '0', 0 ) > 0;
     }
 
     /**
@@ -347,7 +365,10 @@ class Money implements \JsonSerializable
      */
     public function isNegative(): bool
     {
-        return bccomp($this->amount_in_cents, '0', 0) < 0;
+        if ( ! function_exists( 'bccomp' ) ) {
+            return (int) $this->amount_in_cents < 0;
+        }
+        return bccomp( $this->amount_in_cents, '0', 0 ) < 0;
     }
 
     /**
@@ -365,7 +386,14 @@ class Money implements \JsonSerializable
     public function compare(self $other): int
     {
         $this->ensure_same_currency($other);
-        return bccomp($this->amount_in_cents, $other->getAmount(), 0);
+
+        if ( ! function_exists( 'bccomp' ) ) {
+            $a = (int) $this->amount_in_cents;
+            $b = (int) $other->getAmount();
+            return $a <=> $b;
+        }
+
+        return bccomp( $this->amount_in_cents, $other->getAmount(), 0 );
     }
 
     /**

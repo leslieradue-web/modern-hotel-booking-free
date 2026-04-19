@@ -56,7 +56,6 @@ class RestApi
             'methods' => 'GET',
             'callback' => array($this, 'get_availability'),
             'permission_callback' => function ($request) {
-                
                 return $this->check_read_access($request);
             },
             'args' => array(
@@ -80,15 +79,24 @@ register_rest_route($namespace, '/bookings', array(
             'args' => array(
                 'status' => array(
                     'required' => false,
-                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => function ($value) {
+                        return '' === $value || in_array($value, ['pending', 'confirmed', 'cancelled', 'completed', 'deposit_paid', 'refunded'], true);
+                    },
+                    'sanitize_callback' => 'sanitize_key',
                 ),
                 'per_page' => array(
                     'required' => false,
+                    'validate_callback' => function ($value) {
+                        return is_numeric($value) && (int) $value >= 1 && (int) $value <= 100;
+                    },
                     'sanitize_callback' => 'absint',
                     'default' => 20,
                 ),
                 'page' => array(
                     'required' => false,
+                    'validate_callback' => function ($value) {
+                        return is_numeric($value) && (int) $value >= 1;
+                    },
                     'sanitize_callback' => 'absint',
                     'default' => 1,
                 ),
@@ -194,7 +202,73 @@ register_rest_route($namespace, '/bookings', array(
             ),
         ));
 
-}
+// 2026 BP: Modernized public booking completion endpoint.
+        // Replaces legacy admin-ajax.php logic to ensure output isolation and performance.
+        register_rest_route($namespace, '/booking/complete', array(
+            'methods'  => 'POST',
+            'callback' => array($this, 'handle_public_booking_submission'),
+            'permission_callback' => function ($request) {
+                return $this->check_read_access($request);
+            },
+            'args' => array(
+                'room_id' => array(
+                    'required' => true,
+                    'validate_callback' => function ($value) {
+                        return is_numeric($value) && intval($value) > 0;
+                    },
+                    'sanitize_callback' => 'absint',
+                ),
+                'check_in' => array(
+                    'required' => true,
+                    'validate_callback' => array($this, 'validate_date'),
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'check_out' => array(
+                    'required' => true,
+                    'validate_callback' => array($this, 'validate_date'),
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'customer_name' => array(
+                    'required' => true,
+                    'validate_callback' => function ($value) {
+                        return is_string($value) && mb_strlen(trim($value)) > 0 && mb_strlen($value) <= 100;
+                    },
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'customer_email' => array(
+                    'required' => true,
+                    'validate_callback' => function ($value) {
+                        return is_email($value);
+                    },
+                    'sanitize_callback' => 'sanitize_email',
+                ),
+                'customer_phone' => array(
+                    'required' => true,
+                    'validate_callback' => function ($value) {
+                        return is_string($value) && mb_strlen($value) <= 30;
+                    },
+                    'sanitize_callback' => 'sanitize_text_field',
+                ),
+                'guests' => array(
+                    'required' => false,
+                    'validate_callback' => function ($value) {
+                        return is_numeric($value) && (int) $value >= 1;
+                    },
+                    'sanitize_callback' => 'absint',
+                    'default' => 1,
+                ),
+                'payment_method' => array(
+                    'required' => false,
+                    'validate_callback' => function ($value) {
+                        return in_array($value, ['arrival', 'stripe', 'paypal'], true);
+                    },
+                    'sanitize_callback' => 'sanitize_key',
+                    'default' => 'arrival',
+                ),
+            ),
+        ));
+
+    }
 
     /**
      * Validate a date string (Y-m-d).
@@ -519,7 +593,11 @@ if ($check_in >= $check_out) {
             }
         }
 
-        // Generate data for 12 months (1 year) starting from the requested month
+        // Hoist options that are loop-invariant out of the per-date iteration.
+        $prevent_turnover = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
+        $show_decimals    = (int) get_option('mhbo_calendar_show_decimals', 0) === 1;
+
+// Generate data for 12 months (1 year) starting from the requested month
         $data = [];
         try {
             $start_date = new \DateTime("$year-$month-01");
@@ -536,20 +614,17 @@ if ($check_in >= $check_out) {
                 // For calendar, we check if the room can be booked STARTING on this date
                 // However, the calendar usually shows "booked" if any part of the day is occupied.
                 // To match user expectations: a date is "booked" if it's already reserved.
-                $is_booked = isset($booked_dates[$date_str]);
+                $is_booked         = isset($booked_dates[$date_str]);
+                $is_manual_block   = false;
 
-                // Check "Prevent Same-day Turnover" for check-in availability
+// Check "Prevent Same-day Turnover" for check-in availability
                 // If the date is a check-out date of an existing booking, it's only available if turnover is allowed.
                 $is_check_out_day = in_array($date_str, $check_outs, true);
-                
+
                 // Also check if the NEXT day is a check-in day
-                $next_day = new \DateTime($date_str);
-                $next_day->modify('+1 day');
-                $next_day_str = $next_day->format('Y-m-d');
+                $next_day_str = gmdate('Y-m-d', strtotime($date_str . ' +1 day'));
                 $next_day_is_check_in = in_array($next_day_str, $check_ins, true);
 
-                $prevent_turnover = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
-                
                 $can_check_in = true;
                 if ($is_booked) {
                     $can_check_in = false;
@@ -578,23 +653,36 @@ if ($check_in >= $check_out) {
                      $b_status = $checkout_booking_status[$date_str];
                 }
 
-                $show_decimals = (int) get_option('mhbo_calendar_show_decimals', 0) === 1;
+// Determine the reason a date is blocked (null = available).
+                $reason = null;
+                if ($is_manual_block) {
+                    $reason = 'manual';
+                } elseif ($is_booked) {
+                    $reason = 'booked';
+                } elseif ('available' !== $room_status) {
+                    $reason = 'maintenance';
+                }
+
                 $data[] = [
                     'date' => $date_str,
                     'status' => $final_status,
                     'booking_status' => $b_status,
                     'is_checkin' => in_array($date_str, $check_ins, true),
                     'is_checkout' => $is_check_out_day,
-                    'can_check_in' => $can_check_in, // Add hint for frontend
+                    'can_check_in' => $can_check_in,
                     'price' => $price,
-                    'price_formatted' => $price_money->format(false, $show_decimals ? null : 0)
+                    'price_formatted' => $price_money->format(false, $show_decimals ? null : 0),
+                    'reason' => $reason,
+                    
                 ];
             }
         } catch (\Exception $e) {
             return new \WP_Error('mhbo_calendar_error', I18n::get_label('api_err_calendar_gen'), array('status' => 500));
         }
 
-        return rest_ensure_response($data);
+        $response = rest_ensure_response($data);
+        
+        return $response;
     }
 
     /**
@@ -813,7 +901,8 @@ if ($check_in >= $check_out) {
         $check_out       = sanitize_text_field($request->get_param('check_out'));
         $guests          = absint($request->get_param('guests') ?: 1);
         $children        = absint($request->get_param('children') ?: 0);
-        $child_ages      = is_array($request->get_param('child_ages')) ? array_map('absint', $request->get_param('child_ages')) : array();
+        $child_ages_raw  = $request->get_param('child_ages') ?: $request->get_param('children_ages');
+        $child_ages      = is_array($child_ages_raw) ? array_map('absint', $child_ages_raw) : array();
         // Rule 11: sanitize extras map at input boundary (key → sanitize_key, value → sanitize_text_field)
         $extras_raw      = is_array($request->get_param('extras')) ? $request->get_param('extras') : array();
         $extras          = array();
@@ -878,8 +967,10 @@ $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) 
             $tax_data['remaining_balance'] = (float)$calc['remaining_money']->toDecimal();
         }
 
+        // payable_now reflects what the guest actually pays at checkout — only switch to
+        // deposit amount when the guest has explicitly selected the deposit payment option.
         $payable_now = $calc['total'];
-        if (isset($calc['deposit_money'])) {
+        if ('deposit' === $payment_type && isset($calc['deposit_money'])) {
             $payable_now = $calc['deposit_money'];
         }
 
@@ -908,12 +999,13 @@ $calc = Pricing::calculate_booking_money($room_id, $check_in, $check_out, (int) 
                     'pricing_type'        => $item['pricing_type'] ?? 'fixed',
                     'name'                => $item['name'],
                     'quantity'            => $item['quantity'],
+                    'compulsory'          => ( $item['compulsory'] ?? false ) ? 1 : 0,
                 );
                 return $carry;
             }, array()),
             'breakdown' => $calc,
             'tax' => $tax_data,
-            'tax_breakdown_html' => (Tax::is_enabled() && get_option('mhbo_tax_display_frontend', 1)) ? Tax::render_breakdown_html($tax_data, null, false, array(), false) : '',
+            'tax_breakdown_html' => get_option('mhbo_tax_display_frontend', false) ? Tax::render_breakdown_html($tax_data, null, false, ['payment_type' => $payment_type], false) : '',
         ));
 
 return $response;
@@ -1002,4 +1094,35 @@ return $response;
         return $response_data;
     }
 
+/**
+     * Handle public booking submission from the frontend.
+     * 2026 Modernized Flow: Replaces legacy AJAX with clean REST API.
+     *
+     * @param \WP_REST_Request $request Request object.
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function handle_public_booking_submission(\WP_REST_Request $request): \WP_REST_Response|\WP_Error
+    {
+        // 1. Prepare data for processor
+        $params = $request->get_params();
+        
+        // 2. Delegate to central processor
+        $result = \MHBO\Core\BookingProcessor::process($params);
+
+        if (is_wp_error($result)) {
+            // Map common error codes to HTTP statuses
+            $status = 400;
+            switch ($result->get_error_code()) {
+                case 'mhbo_lock_failed':
+                    $status = 409;
+                    break;
+                case 'mhbo_unauthorized':
+                    $status = 403;
+                    break;
+            }
+            return new \WP_Error($result->get_error_code(), $result->get_error_message(), array('status' => $status));
+        }
+
+        return rest_ensure_response($result);
+    }
 }

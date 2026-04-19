@@ -72,9 +72,9 @@ class Email
      * @param string $status     The booking status.
      * @return bool True if email was sent successfully, false on failure.
      */
-    public static function send_email(int $booking_id, string $status): bool
+    public static function send_email(int $booking_id, string $status, bool $force = false): bool
     {
-        return self::send_booking_email($booking_id, $status);
+        return self::send_booking_email($booking_id, $status, $force);
     }
 
     /**
@@ -85,7 +85,7 @@ class Email
      * @param string $status     The booking status.
      * @return bool True if email was sent successfully, false on failure.
      */
-    public static function send_booking_email(int $booking_id, string $status): bool
+    public static function send_booking_email(int $booking_id, string $status, bool $force = false): bool
     {
         global $wpdb;
 
@@ -118,8 +118,8 @@ class Email
         $payment_status = isset($booking->payment_status) ? $booking->payment_status : 'pending';
         $payment_method = isset($booking->payment_method) ? $booking->payment_method : 'arrival';
 
-        // DEDUPLICATION: Prevent duplicate confirmation emails
-        if (isset($booking->email_sent) && (int) $booking->email_sent === 1 && 'confirmed' === $status) {
+        // DEDUPLICATION: Prevent duplicate confirmation emails unless explicitly forced (manual resend)
+        if (!$force && isset($booking->email_sent) && (int) $booking->email_sent === 1 && 'confirmed' === $status) {
             return false;
         }
 
@@ -235,58 +235,7 @@ class Email
         $tax_total = '';
         $tax_registration_number = '';
 
-        if ( '' !== (string) ($booking->tax_breakdown ?? '') ) {
-            $tax_data = json_decode($booking->tax_breakdown, true);
-            if ($tax_data && (isset($tax_data['enabled']) && $tax_data['enabled'])) {
-                // Use the new consolidated rendering methods
-                $meta = [
-                    'guests' => $booking->guests,
-                    'children' => $booking->children,
-                ];
-                
-                $tax_breakdown_html = Tax::render_breakdown_html($tax_data, $lang, true, $meta);
-                $tax_breakdown_text = Tax::render_breakdown_text($tax_data, $lang, $meta);
-
-                // Set individual placeholders for backward compatibility or custom templates
-                $totals = $tax_data['totals'] ?? [];
-                $tax_total = I18n::format_currency($totals['total_tax'] ?? 0);
-                $tax_registration_number = $tax_data['registration_number'] ?? Tax::get_registration_number();
-            }
-        }
-
-        // If tax is enabled but no breakdown stored (fallback), show basic info
-        if ( '' === (string) ($tax_breakdown_html ?? '') && Tax::is_enabled() ) {
-            $tax_label = Tax::get_label($lang);
-            $tax_mode = Tax::get_mode();
-            $reg_number = Tax::get_registration_number();
-            $accommodation_rate = Tax::get_accommodation_rate();
-            $extras_rate = Tax::get_extras_rate();
-
-            $tax_breakdown_html = '<div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px; font-family: Arial, sans-serif;">';
-            if (Tax::MODE_VAT === $tax_mode) {
-                if ($accommodation_rate === $extras_rate) {
-                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('label_price_includes_tax'), $tax_label, $accommodation_rate)) . '</p>';
-                } else {
-                    /* translators: %1$s: tax label (e.g., VAT), %2$s: accommodation tax rate, %3$s: extras tax rate */
-                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('email_tax_includes_split'), $tax_label, $accommodation_rate, $extras_rate)) . '</p>';
-                }
-            } elseif (Tax::MODE_SALES_TAX === $tax_mode) {
-                if ($accommodation_rate === $extras_rate) {
-                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('label_tax_added_at_checkout'), $tax_label, $accommodation_rate)) . '</p>';
-                } else {
-                    /* translators: %1$s: tax label (e.g., Sales Tax), %2$s: accommodation tax rate, %3$s: extras tax rate */
-                    $tax_breakdown_html .= '<p style="margin: 0; font-size: 14px; color: #666;">' . esc_html(sprintf(I18n::get_label('email_tax_added_split'), $tax_label, $accommodation_rate, $extras_rate)) . '</p>';
-                }
-            }
-            if ( '' !== (string) ($reg_number ?? '') ) {
-                $tax_breakdown_html .= '<p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">' . esc_html(sprintf(I18n::get_label('label_tax_registration'), $reg_number)) . '</p>';
-            }
-            $tax_breakdown_html .= '</div>';
-
-            $tax_registration_number = $reg_number;
-        }
-
-        // Format extras
+// Format extras
         $booking_extras_html = self::format_extras($booking, $lang, 'html');
         $booking_extras_text = self::format_extras($booking, $lang, 'text');
 
@@ -425,23 +374,7 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
         $tax_total = '';
         $tax_registration_number = '';
 
-        if ('' !== (string) ($booking->tax_breakdown ?? '')) {
-            $tax_data = json_decode($booking->tax_breakdown, true);
-            if ($tax_data && ($tax_data['enabled'] ?? false)) {
-                $meta = [
-                    'guests' => $booking->guests,
-                    'children' => $booking->children,
-                ];
-                
-                $tax_breakdown_html = Tax::render_breakdown_html($tax_data, $lang, true, $meta);
-                $tax_breakdown_text = Tax::render_breakdown_text($tax_data, $lang, $meta);
-                $totals = $tax_data['totals'] ?? [];
-                $tax_total = I18n::format_currency($totals['total_tax'] ?? 0);
-                $tax_registration_number = $tax_data['registration_number'] ?? Tax::get_registration_number();
-            }
-        }
-
-        // Format Custom Fields for placeholder
+// Format Custom Fields for placeholder
         $custom_fields_formatted = '';
         if ( '' !== (string) ($booking->custom_fields ?? '') ) {
             $custom_data = json_decode((string) $booking->custom_fields, true);
@@ -488,7 +421,8 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             'tax_total' => $tax_total,
             'tax_registration_number' => $tax_registration_number,
             'room_name' => $room_name,
-            'payment_details' => $payment_details
+            'payment_details' => $payment_details,
+            
         ]);
 
         // Check for placeholders BEFORE replacement (replacement removes the literal tokens).
@@ -524,25 +458,90 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
     }
 
     /**
+     * Send a verification code email for identity verification.
+     * 2026 BP: Premium centered OTP block for guest-facing security.
+     *
+     * @param string $to   Guest email.
+     * @param string $code 6-digit verification code.
+     * @return bool
+     */
+    public static function send_verification_email( string $to, string $code ): bool {
+        $site_name = get_bloginfo( 'name' );
+        $subject   = sprintf(
+            // translators: %s: site name
+            __( 'Verify your identity - %s', 'modern-hotel-booking' ),
+            $site_name
+        );
+
+        $message = '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1b;">';
+        $message .= '<h2 style="color: #2e7d32; text-align: center;">' . esc_html( __( 'Verify Your Identity', 'modern-hotel-booking' ) ) . '</h2>';
+        $message .= '<p style="font-size: 16px; line-height: 1.5; text-align: center;">' . esc_html( __( 'Please use the following code to confirm your identity with our AI concierge. This code will expire in 20 minutes.', 'modern-hotel-booking' ) ) . '</p>';
+        
+        $message .= '<div style="margin: 30px auto; padding: 20px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; text-align: center; max-width: 200px;">';
+        $message .= '<span style="font-size: 32px; font-weight: 700; letter-spacing: 5px; color: #1a1a1b; display: block; font-family: monospace;">' . esc_html( $code ) . '</span>';
+        $message .= '</div>';
+
+        $message .= '<p style="font-size: 14px; color: #6c757d; text-align: center;">' . esc_html( __( 'If you did not request this code, please ignore this email.', 'modern-hotel-booking' ) ) . '</p>';
+        $message .= '<hr style="border: 0; border-top: 1px solid #e9ecef; margin: 30px 0;">';
+        $message .= '<p style="font-size: 12px; color: #adb5bd; text-align: center;">&copy; ' . gmdate( 'Y' ) . ' ' . esc_html( $site_name ) . '</p>';
+        $message .= '</div>';
+
+        $admin_email = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
+        $headers     = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $site_name . ' <' . $admin_email . '>',
+            'Reply-To: ' . $admin_email,
+        ];
+
+        return (bool) wp_mail( $to, (string) $subject, (string) $message, $headers );
+    }
+
+    /**
      * Generate a simple ICS file for email attachments.
+     * Use explicit UTC times matching the hotel check-in/out timezone configuration.
      *
      * @param object $booking The booking object.
      * @return string ICS file content.
      */
     private static function generate_simple_ics(object $booking): string
     {
-        $dtstart = wp_date('Ymd', strtotime((string)($booking->check_in ?? '')));
-        $dtend = wp_date('Ymd', strtotime((string)($booking->check_out ?? '')));
         $now = wp_date('Ymd\THis\Z');
+        $check_in_date  = (string)($booking->check_in ?? '');
+        $check_out_date = (string)($booking->check_out ?? '');
+        
+        if ('' === $check_in_date || '' === $check_out_date) {
+            return '';
+        }
+
+        try {
+            // Respect the dedicated Hotel Timezone setting first, fallback to WP default
+            $tz_string = (string) get_option('mhbo_hotel_timezone');
+            if ('' === $tz_string) {
+                $tz_string = wp_timezone_string();
+            }
+            $tz = new \DateTimeZone($tz_string);
+            
+            $start_dt = new \DateTime($check_in_date . ' ' . get_option('mhbo_check_in_time', '14:00'), $tz);
+            $start_dt->setTimezone(new \DateTimeZone('UTC'));
+            $dtstart = "DTSTART:" . $start_dt->format('Ymd\THis\Z');
+
+            $end_dt = new \DateTime($check_out_date . ' ' . get_option('mhbo_check_out_time', '11:00'), $tz);
+            $end_dt->setTimezone(new \DateTimeZone('UTC'));
+            $dtend = "DTEND:" . $end_dt->format('Ymd\THis\Z');
+        } catch (\Exception $e) {
+            // Fallback to all-day events if parsing fails
+            $dtstart = "DTSTART;VALUE=DATE:" . wp_date('Ymd', strtotime($check_in_date));
+            $dtend   = "DTEND;VALUE=DATE:" . wp_date('Ymd', strtotime($check_out_date));
+        }
 
         return "BEGIN:VCALENDAR\r\n" .
             "VERSION:2.0\r\n" .
             "PRODID:-//Modern Hotel Booking//EN\r\n" .
             "BEGIN:VEVENT\r\n" .
             "UID:mhbo-booking-{$booking->id}\r\n" .
-            "DTSTAMP:$now\r\n" .
-            "DTSTART;VALUE=DATE:$dtstart\r\n" .
-            "DTEND;VALUE=DATE:$dtend\r\n" .
+            "DTSTAMP:{$now}\r\n" .
+            "{$dtstart}\r\n" .
+            "{$dtend}\r\n" .
             "SUMMARY:" . sprintf(I18n::get_label('label_hotel_booking_id'), $booking->id) . "\r\n" .
             "END:VEVENT\r\n" .
             "END:VCALENDAR";
@@ -570,7 +569,8 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             $placeholders['{company_registration}'] = $company['registration_number'] ?? '';
             $placeholders['{whatsapp_number}']      = $whatsapp['phone_number'] ?? '';
             $placeholders['{whatsapp_link}']        = '' !== (string) ($whatsapp['phone_number'] ?? '') ? 'https://wa.me/' . preg_replace('/[^0-9]/', '', (string) $whatsapp['phone_number']) : '';
-        }
+
+}
 
         return $placeholders;
     }
@@ -798,4 +798,5 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
 
         return implode(', ', array_map('absint', $ages));
     }
+
 }

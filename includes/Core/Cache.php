@@ -39,6 +39,7 @@ class Cache
 	const TABLE_PRICING_RULES = 'pricing_rules';
 	const TABLE_ICAL_CONNECTIONS = 'ical_connections';
 	const TABLE_SETTINGS = 'settings';
+	const TABLE_CALENDAR_OVERRIDES = 'calendar_overrides';
 
 	/**
 	 * Get the current version of a data table.
@@ -91,6 +92,7 @@ class Cache
 	public static function flush_all(): bool
 	{
 		$tables = [
+			self::TABLE_CALENDAR_OVERRIDES,
 			self::TABLE_BOOKINGS,
 			self::TABLE_ROOM_TYPES,
 			self::TABLE_ROOMS,
@@ -103,7 +105,34 @@ class Cache
 			self::bump($table);
 		}
 
+		self::clear_dashboard_transients();
+
 		return true;
+	}
+
+	/**
+	 * Rule 13: Clear all dashboard and analytics transients.
+	 * 
+	 * @since 2.4.0
+	 */
+	public static function clear_dashboard_transients(): void
+	{
+		$today = wp_date('Y-m-d');
+		
+		// Dashboard Widget Transients
+		delete_transient('mhbo_widget_batch_counts');
+		delete_transient('mhbo_widget_today_bookings_' . $today);
+		
+		// Full Dashboard Stats
+		delete_transient('mhbo_dashboard_stats_' . $today);
+
+		// Legacy transients (Cleanup)
+		delete_transient('mhbo_widget_total_bookings');
+		delete_transient('mhbo_widget_pending_bookings');
+		delete_transient('mhbo_dashboard_total_bookings');
+		delete_transient('mhbo_dashboard_pending_bookings');
+		delete_transient('mhbo_dashboard_earned_revenue_' . $today);
+		delete_transient('mhbo_dashboard_future_revenue_' . $today);
 	}
 
 	/**
@@ -253,6 +282,14 @@ class Cache
 	{
 		self::bump(self::TABLE_PRICING_RULES);
 		wp_cache_delete('mhbo_pricing_rules_all', 'mhbo');
+	}
+
+	/**
+	 * Invalidate calendar overrides cache.
+	 */
+	public static function invalidate_calendar_overrides(): void
+	{
+		self::bump(self::TABLE_CALENDAR_OVERRIDES);
 	}
 
 	/**

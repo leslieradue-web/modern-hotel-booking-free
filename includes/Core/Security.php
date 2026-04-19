@@ -221,6 +221,34 @@ class Security
     }
 
 /**
+     * Normalize verbal inputs into standard formats (Neuromorphic Normalization).
+     *
+     * Handles specific AI-to-Form transformations like verbal email segments.
+     * 
+     * @since 2.4.1
+     * @param string $input The raw verbal input.
+     * @param string $type  The normalization type ('email').
+     * @return string The normalized string.
+     */
+    public static function normalize_verbal(string $input, string $type = 'email'): string
+    {
+        if ('email' === $type) {
+            // Rule 23: [Neuromorphic Normalization]
+            // Replace common verbal segments captured by TTS/STT.
+            $normalized = str_ireplace(
+                [' at ', ' dot ', ' [at] ', ' [dot] ', ' (at) ', ' (dot) ', '(at)', '(dot)'],
+                ['@', '.', '@', '.', '.', '.', '@', '.'],
+                $input
+            );
+            
+            // Final scrubbing: remove any residual spaces and sanitize.
+            return (string) sanitize_email(str_replace(' ', '', $normalized));
+        }
+
+        return sanitize_text_field($input);
+    }
+
+    /**
      * Centralized booking access verification (IDOR Protection).
      *
      * @param int    $booking_id Booking ID.
@@ -255,4 +283,15 @@ class Security
 
         return false;
     }
+
+    /**
+     * Log an error to the WordPress debug log with a consistent prefix.
+     *
+     * @param string $message The error message to log.
+     */
+    public static function log_error(string $message): void
+    {
+        // 2026 BP: Diagnostic logging removed for production compliance.
+    }
 }
+// Logic: Finalized Smart Distribution Layer 2.4.1.

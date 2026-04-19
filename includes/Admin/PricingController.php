@@ -16,7 +16,7 @@ use MHBO\Core\I18n;
 use MHBO\Core\Money;
 use MHBO\Core\Pricing;
 
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
@@ -95,17 +95,23 @@ class PricingController
         }
 
         // 2. DELETE RULE
-        if (isset($_GET['action']) && 'delete' === $_GET['action'] && isset($_GET['id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- wp_verify_nonce() called inside this block
-            $id = absint($_GET['id']);
-            if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_pricing_' . $id)) {
-                wp_die(esc_html(I18n::get_label('msg_security_fail')));
-            }
+        if (isset($_GET['action'])) {
+            if ('delete' === $_GET['action']) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- wp_verify_nonce() called immediately inside
+                $id = isset($_GET['id']) ? absint($_GET['id']) : 0;
+                if (0 === $id) {
+                    return;
+                }
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-            $wpdb->delete($table, array('id' => $id));
-            Cache::invalidate_pricing();
-            
-            add_settings_error('mhbo_settings', 'rule_deleted', I18n::get_label('pricing_msg_deleted'), 'success');
+                if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['_wpnonce'])), 'mhbo_delete_pricing_' . $id)) {
+                    wp_die(esc_html(I18n::get_label('msg_security_fail')));
+                }
+
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                $wpdb->delete($table, array('id' => $id));
+                Cache::invalidate_pricing();
+                
+                add_settings_error('mhbo_settings', 'rule_deleted', I18n::get_label('pricing_msg_deleted'), 'success');
+            }
         }
     }
 
@@ -121,9 +127,9 @@ class PricingController
         $table_types = $wpdb->prefix . 'mhbo_room_types';
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-        $rules = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", "{$wpdb->prefix}mhbo_pricing_rules"));
+        $rules = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i", $table_rules ) );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-        $types = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i", "{$wpdb->prefix}mhbo_room_types"));
+        $types = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i", $table_types ) );
 
         ?>
         <div class="wrap mhbo-admin-wrap">

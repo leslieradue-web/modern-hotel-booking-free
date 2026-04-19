@@ -32,6 +32,11 @@ class Deactivator
 
         // Flush rewrite rules
         flush_rewrite_rules();
+
+        // AI Discovery cleanup - remove llms.txt if exists
+        if ( class_exists( '\MHBO\AI\LlmFile' ) ) {
+            \MHBO\AI\LlmFile::cleanup();
+        }
     }
 
     /**

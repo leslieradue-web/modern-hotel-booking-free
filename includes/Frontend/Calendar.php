@@ -86,6 +86,45 @@ class Calendar
             wp_enqueue_script('mhbo-calendar-js');
         }
 
+        // Enqueue booking modal assets when modal mode is enabled
+        if ((int) get_option('mhbo_modal_enabled', 1) === 1) {
+            if (!wp_style_is('mhbo-booking-modal-css', 'registered')) {
+                wp_register_style(
+                    'mhbo-booking-modal-css',
+                    MHBO_PLUGIN_URL . 'assets/css/mhbo-booking-modal.css',
+                    ['mhbo-style'],
+                    MHBO_VERSION
+                );
+            }
+            if (!wp_script_is('mhbo-booking-modal-js', 'registered')) {
+                wp_register_script(
+                    'mhbo-booking-modal-js',
+                    MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-modal.js',
+                    [],
+                    MHBO_VERSION,
+                    true
+                );
+            }
+            if (!wp_style_is('mhbo-booking-modal-css', 'enqueued')) {
+                wp_enqueue_style('mhbo-booking-modal-css');
+            }
+            if (!wp_script_is('mhbo-booking-modal-js', 'enqueued')) {
+                wp_enqueue_script('mhbo-booking-modal-js');
+                Shortcode::enqueue_for_modal();
+                wp_add_inline_script(
+                    'mhbo-booking-modal-js',
+                    'window.mhboModalI18n = ' . wp_json_encode([
+                        'bookNow'      => I18n::get_label('btn_book_now'),
+                        'loading'      => I18n::get_label('label_loading'),
+                        'close'        => __('Close', 'modern-hotel-booking'),
+                        'errorLoading'       => __('Could not load booking form. Please try again.', 'modern-hotel-booking'),
+                        'confirming'         => __('Confirming your booking', 'modern-hotel-booking'),
+                        'errorConfirmation'  => __('Your booking was received but we could not load the confirmation. Please check your email.', 'modern-hotel-booking'),
+                    ]) . ';'
+                );
+            }
+        }
+
         // Inject theme styles if available (must be after enqueueing styles)
         if (class_exists('MHBO\\Frontend\\Shortcode')) {
             Shortcode::inject_theme_styles();
@@ -162,6 +201,9 @@ class Calendar
                     'nights' => I18n::get_label('label_nights'),
                     'checkout_only_error' => I18n::get_label('label_checkout_only'),
                     'checkin_only_error' => I18n::get_label('label_checkin_only'),
+                    'api_err_min_stay'   => I18n::get_label('api_err_min_stay'),
+                    'api_err_max_stay'   => I18n::get_label('api_err_max_stay'),
+                    
                 ],
                 'current_lang' => $current_lang
             ]);
@@ -213,7 +255,8 @@ class Calendar
         $show_pricing = ($room_id > 0);
         ?>
         <div class="mhbo-calendar-container mhbo-calendar-wrapper" data-room-id="<?php echo esc_attr((string) $room_id); ?>"
-            data-show-price="<?php echo esc_attr($show_pricing ? '1' : '0'); ?>">
+            data-show-price="<?php echo esc_attr($show_pricing ? '1' : '0'); ?>"
+            data-modal-mode="<?php echo esc_attr(($room_id > 0 && (int) get_option('mhbo_modal_enabled', 1) === 1) ? '1' : '0'); ?>">
             <div class="mhbo-calendar-guide">
                 <?php echo esc_html(I18n::get_label('label_select_check_in')); ?>
             </div>

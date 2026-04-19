@@ -10,7 +10,7 @@ jQuery(document).ready(function ($) {
     // Create shared tooltip element (2026 BP: Single tooltip per page for performance)
     let $tooltip = $('.mhbo-calendar-tooltip');
     if (!$tooltip.length) {
-        $tooltip = $('<div class="mhbo-calendar-tooltip"><span class="mhbo-tooltip-nights"></span><span class="mhbo-tooltip-price"></span></div>').appendTo('body');
+        $tooltip = $('<div class="mhbo-calendar-tooltip"><span class="mhbo-tooltip-nights"></span><span class="mhbo-tooltip-price"></span><span class="mhbo-tooltip-constraint" style="display:none"></span></div>').appendTo('body');
     }
 
     function initAllCalendars() {
@@ -35,11 +35,16 @@ jQuery(document).ready(function ($) {
             let bookingStatusData = {}; // Track booking status per date
             let changeoverData = {}; // Track changeover status (checkin/checkout/both)
             let eligibilityData = {}; // Track selection eligibility (can_checkin/can_checkout)
+            let minStayData = {}; // PRO: Track minimum stay per check-in date
+            let maxStayData = {}; // PRO: Track maximum stay per check-in date
+            let reasonData = {}; // Track block reason per disabled date (booked/manual/maintenance)
+            let pendingCheckIn = null; // Track the first date clicked to detect backwards selection
 
             function showInlineError(message) {
                 if ($errorBox.length) {
-                    $errorBox.text(message).addClass('mhbo-visible').fadeIn();
-                    // Auto-hide after 5s
+                    $errorBox.removeClass('mhbo-constraint-hint')
+                             .text(message).addClass('mhbo-visible').fadeIn();
+                    // Auto-hide after 5s for generic errors
                     setTimeout(() => {
                         $errorBox.fadeOut(() => {
                             $errorBox.removeClass('mhbo-visible').text('');
@@ -47,6 +52,25 @@ jQuery(document).ready(function ($) {
                     }, 5000);
                 } else {
                     console.error('[MHBO] Validation Error:', message);
+                }
+            }
+
+            // Persistent hint for min/max stay violations — stays visible until user corrects
+            // their selection. Styled differently (warning, not error) so it reads as guidance.
+            function showConstraintHint(message) {
+                if ($errorBox.length) {
+                    $errorBox.addClass('mhbo-constraint-hint')
+                             .text(message).addClass('mhbo-visible').stop(true).fadeIn();
+                } else {
+                    console.warn('[MHBO] Stay constraint:', message);
+                }
+            }
+
+            function hideConstraintHint() {
+                if ($errorBox.length && $errorBox.hasClass('mhbo-constraint-hint')) {
+                    $errorBox.fadeOut(() => {
+                        $errorBox.removeClass('mhbo-visible mhbo-constraint-hint').text('');
+                    });
                 }
             }
 
@@ -69,6 +93,10 @@ jQuery(document).ready(function ($) {
                     success: function (data) {
                         if (data && Array.isArray(data)) {
                             processCalendarData(data);
+                            // Expose stay-restriction maps to the submit handler (which runs
+                            // outside this closure) so it can perform a final validation guard.
+                            $wrapper.data('mhbo-min-stay-data', minStayData);
+                            $wrapper.data('mhbo-max-stay-data', maxStayData);
                             renderFlatpickr();
                         }
                     },
@@ -105,7 +133,8 @@ jQuery(document).ready(function ($) {
                         checkin: item.can_checkin !== false,
                         checkout: item.can_checkout !== false
                     };
-                });
+
+});
             }
 
             function renderFlatpickr() {
@@ -134,16 +163,32 @@ jQuery(document).ready(function ($) {
 
                         const dateStrClicked = selectedDates.length > 0 ? instance.formatDate(selectedDates[selectedDates.length - 1], "Y-m-d") : null;
 
-                        // 1. Guard: Check-In Eligibility
-                        if (selectedDates.length === 1 && dateStrClicked && eligibilityData[dateStrClicked]) {
-                            if (!eligibilityData[dateStrClicked].checkin) {
-                                showInlineError(mhbo_calendar.i18n.checkout_only_error || 'This date is restricted to check-outs only.');
-                                instance.clear();
+                        // Backwards-selection guard: flatpickr range mode auto-sorts selected dates,
+                        // so clicking a date BEFORE the current check-in swaps it into position [0].
+                        // This would shift the check-in to an earlier date with a different (possibly
+                        // lower) min-stay rule, bypassing the rule for the originally intended check-in.
+                        // Fix: detect the swap and restart selection from the earlier date, requiring
+                        // the user to pick a new checkout — min-stay always applies to the real check-in.
+                        if (selectedDates.length === 2 && pendingCheckIn) {
+                            if (selectedDates[0].getTime() !== pendingCheckIn.getTime()) {
+                                // Earlier date was clicked — treat it as a fresh check-in
+                                pendingCheckIn = selectedDates[0];
+                                instance.setDate([selectedDates[0]], true); // re-fires onChange with length=1
                                 return;
                             }
                         }
 
-                        // 2. Guard: Check-Out Eligibility 
+                        // 1. Guard: Check-In Eligibility
+                        if (selectedDates.length === 1 && dateStrClicked && eligibilityData[dateStrClicked]) {
+                            if (!eligibilityData[dateStrClicked].checkin) {
+                                showInlineError(mhbo_calendar.i18n.checkout_only_error || 'This date is restricted to check-outs only.');
+                                return;
+                            }
+                        }
+
+                        // 3. Guard: Min/Max Stay Enforcement (PRO)
+
+// 2. Guard: Check-Out Eligibility 
                         if (selectedDates.length === 2 && dateStrClicked && eligibilityData[dateStrClicked]) {
                             if (!eligibilityData[dateStrClicked].checkout) {
                                 showInlineError(mhbo_calendar.i18n.checkin_only_error || 'This date is restricted to check-ins only.');
@@ -155,6 +200,7 @@ jQuery(document).ready(function ($) {
 
                         // dynamically allow the next booked date to be a checkout date
                         if (selectedDates.length === 1) {
+                            pendingCheckIn = selectedDates[0]; // record intended check-in for backwards guard
                             const checkIn = selectedDates[0];
                             let firstBookedAfter = null;
                             let minDiff = Infinity;
@@ -192,6 +238,7 @@ jQuery(document).ready(function ($) {
                             }
                         }
                         else if (selectedDates.length === 2) {
+                            pendingCheckIn = null; // valid forward range completed
                             // Reset maxDate limit once range is selected or auto-advanced
                             instance.set('maxDate', new Date().fp_incr(365));
 
@@ -222,6 +269,7 @@ jQuery(document).ready(function ($) {
                         }
                         else {
                             // length 0 or cleared
+                            pendingCheckIn = null;
                             instance.set('maxDate', new Date().fp_incr(365));
                             instance.set('disable', disabledDates);
                             $selectionBox.removeClass('mhbo-visible').hide();
@@ -274,7 +322,8 @@ jQuery(document).ready(function ($) {
                             $(dayElem).append($priceTag);
                             $(dayElem).addClass('has-price');
                         }
-                    }
+
+}
                 });
 
                 // ATTACH INSTANCE TO WRAPPER (CRITICAL FOR HARDENING)
@@ -282,7 +331,8 @@ jQuery(document).ready(function ($) {
 
                 // --- INTERACTIVE PRICE-ON-HOVER (2026 BP) ---
                 $wrapper.on('mousemove', '.flatpickr-day', function (e) {
-                    if (!picker || picker.selectedDates.length !== 1) {
+
+if (!picker || picker.selectedDates.length !== 1) {
                         $tooltip.removeClass('mhbo-visible');
                         $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
                         return;
@@ -339,14 +389,14 @@ jQuery(document).ready(function ($) {
 
                     // Update and position tooltip
                     $tooltip.find('.mhbo-tooltip-nights').text(nightsFull);
-                    
+
                     if (showPrice && total > 0) {
                         $tooltip.find('.mhbo-tooltip-price').text(formattedTotal).show();
                     } else {
                         $tooltip.find('.mhbo-tooltip-price').hide();
                     }
-                    
-                    // Use clientX/Y for position:fixed elements to avoid scroll offsets
+
+// Use clientX/Y for position:fixed elements to avoid scroll offsets
                     $tooltip.css({
                         left: e.clientX,
                         top: e.clientY
@@ -354,7 +404,8 @@ jQuery(document).ready(function ($) {
                 });
 
                 $wrapper.on('mouseleave', '.mhbo-calendar-inline', function () {
-                    $tooltip.removeClass('mhbo-visible');
+                    $tooltip.removeClass('mhbo-visible mhbo-tooltip-warn');
+                    $tooltip.find('.mhbo-tooltip-constraint').hide();
                     $wrapper.find('.mhbo-range-hover').removeClass('mhbo-range-hover');
                 });
             }
@@ -478,12 +529,26 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
+// Modal mode: dispatch event instead of submitting the form
+            const modalMode = $wrapper.data('modal-mode') === '1' || $wrapper.data('modal-mode') === 1;
+            if (modalMode && typeof window.MhboModal !== 'undefined') {
+                document.dispatchEvent(new CustomEvent('mhboBookNow', {
+                    detail: {
+                        room_id:     roomId,
+                        check_in:    checkIn,
+                        check_out:   checkOut,
+                        total_price: totalPrice
+                    }
+                }));
+                return;
+            }
+
             // Sync values to the form's hidden inputs before submitting
             if ($form.length) {
                 $form.find('input[name="check_in"]').val(checkIn);
                 $form.find('input[name="check_out"]').val(checkOut);
                 $form.find('input[name="total_price"]').val(totalPrice);
-                
+
                 // Native form submission will automatically include type_id and guests
                 $form[0].submit();
             } else {

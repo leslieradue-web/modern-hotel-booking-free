@@ -94,4 +94,5 @@ class Booking_Query {
 
         return $row ?: null;
     }
+
 }

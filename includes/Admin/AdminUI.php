@@ -90,15 +90,21 @@ class AdminUI
      * @param array<string, string> $tabs Associative array of tabs [ 'slug' => 'Label' ].
      * @param string $active_tab The slug of the currently active tab.
      * @param string $base_url   The base URL for the tab links.
+     * @param array<string, string> $icons Optional mapping of tab slugs to Dashicons [ 'slug' => 'dashicons-...' ].
      */
-    public static function render_tabs(array $tabs, string $active_tab, string $base_url): void
+    public static function render_tabs(array $tabs, string $active_tab, string $base_url, array $icons = []): void
     {
         ?>
         <nav class="nav-tab-wrapper wp-clearfix" style="border-bottom: 2px solid #dcdcde; margin-bottom: 30px; display: flex; gap: 5px;">
             <?php foreach ($tabs as $slug => $label): ?>
+                <?php $has_icon = isset( $icons[ $slug ] ) && '' !== $icons[ $slug ]; ?>
                 <a href="<?php echo esc_url(add_query_arg('tab', $slug, $base_url)); ?>" 
-                   class="nav-tab <?php echo esc_attr($active_tab === $slug ? 'nav-tab-active' : ''); ?>">
-                    <?php echo esc_html($label); ?>
+                   class="nav-tab <?php echo esc_attr($active_tab === $slug ? 'nav-tab-active' : ''); ?>"
+                   style="display: flex; align-items: center; gap: 8px;">
+                    <?php if ( $has_icon ) : ?>
+                        <span class="dashicons <?php echo esc_attr( $icons[ $slug ] ); ?>" style="font-size: 18px; width: 18px; height: 18px;"></span>
+                    <?php endif; ?>
+                    <span><?php echo esc_html($label); ?></span>
                 </a>
             <?php endforeach; ?>
         </nav>

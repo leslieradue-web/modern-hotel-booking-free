@@ -40,6 +40,7 @@ class Activator
 			room_number varchar(50) NOT NULL,
 			status varchar(20) DEFAULT 'available',
 			custom_price decimal(19,4) DEFAULT NULL,
+			image_url varchar(255) DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY type_id (type_id)
 		) $charset_collate;";
@@ -99,6 +100,11 @@ class Activator
 			total_tax decimal(19,4) DEFAULT 0.0000,
 			total_gross decimal(19,4) DEFAULT 0.0000,
 			tax_breakdown text DEFAULT NULL,
+			service_fee_amount decimal(19,4) DEFAULT NULL,
+			service_fee_net decimal(19,4) DEFAULT 0.0000,
+			service_fee_tax decimal(19,4) DEFAULT 0.0000";
+
+$sql_bookings .= ",
 			PRIMARY KEY  (id),
 			KEY room_id (room_id),
 			KEY ical_uid (ical_uid),
@@ -149,7 +155,31 @@ class Activator
 			KEY rule_lookup (type_id, room_id, start_date, end_date)
 		) $charset_collate;";
 		dbDelta($sql_pricing);
-		
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared -- Necessary for plugin tables
+		$sql_calendar_overrides = "CREATE TABLE {$wpdb->prefix}mhbo_calendar_overrides (
+			id mediumint(9) NOT NULL AUTO_INCREMENT,
+			scope varchar(10) NOT NULL DEFAULT 'type',
+			type_id mediumint(9) DEFAULT NULL,
+			room_id mediumint(9) DEFAULT NULL,
+			date date NOT NULL,
+			price decimal(19,4) DEFAULT NULL,
+			availability tinyint(1) DEFAULT NULL,
+			min_stay tinyint(4) DEFAULT NULL,
+			max_stay tinyint(4) DEFAULT NULL,
+			cta tinyint(1) DEFAULT NULL,
+			ctd tinyint(1) DEFAULT NULL,
+			note varchar(255) DEFAULT NULL,
+			source varchar(20) DEFAULT 'admin_manual',
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY scope_type_date (scope, type_id, room_id, date),
+			KEY type_date (type_id, date),
+			KEY room_date (room_id, date)
+		) $charset_collate;";
+		dbDelta($sql_calendar_overrides);
+
 		// Rule 13: Idempotency table for REST API reliable execution (2026 Standard).
 		$sql_idempotency = "CREATE TABLE {$wpdb->prefix}mhbo_idempotency (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -177,14 +207,14 @@ class Activator
 
 		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
 
-		// Rule 13: Initialize versions for caching
-		foreach (['bookings', 'rooms', 'room_types', 'pricing_rules', 'ical_connections', 'settings'] as $table) {
+// Rule 13: Initialize versions for caching
+		foreach (['bookings', 'rooms', 'room_types', 'pricing_rules', 'ical_connections', 'settings', 'calendar_overrides'] as $table) {
 			if (false === get_option("mhbo_v_{$table}")) {
 				add_option("mhbo_v_{$table}", 1);
 			}
 		}
 
-		// Tax System Options
+// Tax System Options
 		add_option('mhbo_tax_mode', 'disabled');
 		add_option('mhbo_tax_rate_accommodation', 0.00);
 		add_option('mhbo_tax_rate_extras', 0.00);
@@ -225,7 +255,7 @@ class Activator
 		// Run activate to ensure all tables and columns are up to date via dbDelta
 		self::activate();
 
-		// Add tax options if they don't exist
+// Add tax options if they don't exist
 		add_option('mhbo_tax_mode', 'disabled');
 		add_option('mhbo_tax_rate_accommodation', 0.00);
 		add_option('mhbo_tax_rate_extras', 0.00);
@@ -252,7 +282,7 @@ class Activator
 		add_option('mhbo_ical_sync_lock_timeout', 30);
 		add_option('mhbo_powered_by_link', 0); // Default OFF per WP.org Guideline 10 - requires user opt-in
 
-		// Default Amenities (for migration)
+// Default Amenities (for migration)
 		if (false === get_option('mhbo_amenities_list')) {
 			$default_amenities = [
 				'wifi'      => I18n::get_label('amenity_free_wifi'),
@@ -298,41 +328,44 @@ class Activator
 	private static function migrate_ical_feeds_to_connections(): void
 	{
 		global $wpdb;
+
+		// 2026 BP: MySQL-only existence check via information_schema (no sqlite_master).
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$old_exists = $wpdb->get_var($wpdb->prepare(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name = %s UNION SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = %s LIMIT 1",
-			"{$wpdb->prefix}mhbo_ical_feeds",
+		$old_exists = $wpdb->get_var( $wpdb->prepare(
+			"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s LIMIT 1",
+			DB_NAME,
 			"{$wpdb->prefix}mhbo_ical_feeds"
-		));
-		if (!$old_exists) {
+		) );
+
+		if ( ! $old_exists ) {
 			return;
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$new_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_ical_connections");
-		if (0 < (int) $new_count) {
-			return; // Already migrated
+		$new_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_ical_connections" );
+		if ( 0 < (int) $new_count ) {
+			return; // Already migrated.
 		}
 
-		// Migrate data
+		// Migrate data.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema migration
-		$feeds = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}mhbo_ical_feeds");
-		foreach ($feeds as $feed) {
+		$feeds = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}mhbo_ical_feeds" );
+		foreach ( $feeds as $feed ) {
 			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Schema migration
 				"{$wpdb->prefix}mhbo_ical_connections",
 				[
-					'room_id' => $feed->room_id,
-					'platform' => $feed->platform ?? 'custom',
-					'name' => $feed->feed_name ?? '',
-					'ical_url' => $feed->feed_url,
+					'room_id'        => $feed->room_id,
+					'platform'       => $feed->platform ?? 'custom',
+					'name'           => $feed->feed_name ?? '',
+					'ical_url'       => $feed->feed_url,
 					'sync_direction' => 'import',
-					'last_sync' => $feed->last_synced,
-					'sync_status' => $feed->last_error ? 'failed' : 'pending',
-					'last_error' => $feed->last_error,
-					'created_at' => current_time('mysql'),
-					'events_count' => $feed->events_count ?? 0,
+					'last_sync'      => $feed->last_synced,
+					'sync_status'    => $feed->last_error ? 'failed' : 'pending',
+					'last_error'     => $feed->last_error,
+					'created_at'     => current_time( 'mysql' ),
+					'events_count'   => $feed->events_count ?? 0,
 				],
-				['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d']
+				[ '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d' ]
 			);
 		}
 	}
@@ -340,49 +373,62 @@ class Activator
 	/**
 	 * Add performance indexes to existing tables.
 	 * Called during migration to improve query performance.
+	 *
+	 * 2026 BP: Uses MySQL SHOW INDEX to check for existing indexes
+	 * and plain CREATE INDEX (no IF NOT EXISTS) for cross-version
+	 * MySQL / MariaDB compatibility.
 	 */
 	private static function add_performance_indexes(): void
 	{
 		global $wpdb;
 
-		// Add composite index for booking date range queries
-		// 2026 BP: Database-agnostic index existence check
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$index_check = $wpdb->get_var($wpdb->prepare(
-			"SELECT name FROM sqlite_master WHERE type='index' AND name = %s UNION SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_NAME = %s AND INDEX_NAME = %s LIMIT 1",
-			'idx_check_in_out',
-			"{$wpdb->prefix}mhbo_bookings",
-			'idx_check_in_out'
-		));
-		if ( null === $index_check ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable
-			$wpdb->query("CREATE INDEX IF NOT EXISTS idx_check_in_out ON {$wpdb->prefix}mhbo_bookings (check_in, check_out)");
-		}
+		$indexes = [
+			[
+				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'name'  => 'idx_check_in_out',
+				'cols'  => '(check_in, check_out)',
+			],
+			[
+				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'name'  => 'idx_status_payment',
+				'cols'  => '(status, payment_status)',
+			],
+			[
+				'table' => "{$wpdb->prefix}mhbo_pricing_rules",
+				'name'  => 'idx_dates',
+				'cols'  => '(start_date, end_date)',
+			],
+		];
 
-		// Add composite index for status/payment filtering
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$index_check = $wpdb->get_var($wpdb->prepare(
-			"SELECT name FROM sqlite_master WHERE type='index' AND name = %s UNION SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_NAME = %s AND INDEX_NAME = %s LIMIT 1",
-			'idx_status_payment',
-			"{$wpdb->prefix}mhbo_bookings",
-			'idx_status_payment'
-		));
-		if ( null === $index_check ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable
-			$wpdb->query("CREATE INDEX IF NOT EXISTS idx_status_payment ON {$wpdb->prefix}mhbo_bookings (status, payment_status)");
-		}
+		foreach ( $indexes as $idx ) {
+			if ( self::index_exists( $idx['table'], $idx['name'] ) ) {
+				continue;
+			}
 
-		// Add index for pricing rules date queries
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$index_check = $wpdb->get_var($wpdb->prepare(
-			"SELECT name FROM sqlite_master WHERE type='index' AND name = %s UNION SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_NAME = %s AND INDEX_NAME = %s LIMIT 1",
-			'idx_dates',
-			"{$wpdb->prefix}mhbo_pricing_rules",
-			'idx_dates'
-		));
-		if ( null === $index_check ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable
-			$wpdb->query("CREATE INDEX IF NOT EXISTS idx_dates ON {$wpdb->prefix}mhbo_pricing_rules (start_date, end_date)");
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema operation, caching not applicable; table/index names are hardcoded above.
+			$wpdb->query( "CREATE INDEX {$idx['name']} ON {$idx['table']} {$idx['cols']}" );
 		}
+	}
+
+	/**
+	 * Check whether a named index exists on a table.
+	 *
+	 * 2026 BP: Uses SHOW INDEX which works on MySQL 5.7+, 8.x, and MariaDB 10.x+.
+	 *
+	 * @param string $table Full table name (with prefix).
+	 * @param string $index Index name to look for.
+	 * @return bool True if the index already exists.
+	 */
+	private static function index_exists( string $table, string $index ): bool
+	{
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL introspection, not cacheable.
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			'SHOW INDEX FROM `' . esc_sql( $table ) . '` WHERE Key_name = %s',
+			$index
+		) );
+
+		return ! empty( $rows );
 	}
 }
