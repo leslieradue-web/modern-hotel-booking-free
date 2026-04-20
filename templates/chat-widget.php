@@ -23,7 +23,7 @@ $mhbo_position     = (string) get_option( 'mhbo_ai_widget_position', 'bottom-rig
 $mhbo_welcome      = (string) get_option( 'mhbo_ai_welcome_message', '' );
 $mhbo_theme        = (string) get_option( 'mhbo_ai_theme', '' );
 
-$mhbo_theme_class  = $mhbo_theme ? ' mhbo-theme-' . esc_attr( $mhbo_theme ) : '';
+$mhbo_theme_class  = $mhbo_theme ? ' mhbo-theme-' . sanitize_html_class( $mhbo_theme ) : '';
 
 $mhbo_booking_page_url = get_permalink( get_option( 'mhbo_booking_page', 0 ) ) ?: home_url( '/' );
 
@@ -47,7 +47,6 @@ $mhbo_schema = [
     data-position="<?php echo esc_attr( $mhbo_position ); ?>"
     data-variant="floating"
     <?php if ( $mhbo_welcome ) : ?>data-welcome-message="<?php echo esc_attr( $mhbo_welcome ); ?>"<?php endif; ?>
-    <?php if ( $mhbo_theme ) : ?>data-theme="<?php echo esc_attr( $mhbo_theme ); ?>"<?php endif; ?>
     role="complementary"
     aria-label="<?php esc_attr_e( 'AI Concierge Chat', 'modern-hotel-booking' ); ?>"
 >
@@ -66,5 +65,5 @@ $mhbo_schema = [
 </div>
 
 <script type="application/ld+json">
-<?php echo wp_json_encode( $mhbo_schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php echo wp_json_encode( $mhbo_schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_HEX_TAG ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode with JSON_HEX_TAG is safe in script context ?>
 </script>

@@ -7,11 +7,26 @@
     "category": "hotel-booking",
     "icon": "format-chat",
     "description": "Embed the AI Concierge chat widget anywhere on your site.",
-    "keywords": ["chat", "ai", "concierge", "booking", "hotel"],
+    "keywords": [
+        "hotel",
+        "ai",
+        "artificial intelligence",
+        "concierge",
+        "chat",
+        "assistant",
+        "booking",
+        "widget",
+        "support"
+    ],
     "textdomain": "modern-hotel-booking",
-    "editorScript": "file:./index.js",
-    "editorStyle": "file:./editor.css",
-    "style": "mhbo-chat-widget",
+    "example": {
+        "viewportWidth": 800,
+        "attributes": {
+            "variant": "inline",
+            "position": "bottom-right",
+            "welcomeMessage": ""
+        }
+    },
     "attributes": {
         "variant": {
             "type": "string",
@@ -34,13 +49,22 @@
     },
     "supports": {
         "html": false,
+        "anchor": true,
         "align": ["wide", "full"],
         "color": {
             "background": true,
             "text": false
         },
+        "typography": {
+            "fontSize": false,
+            "lineHeight": false
+        },
         "spacing": {
+            "margin": true,
             "padding": true
         }
-    }
+    },
+    "editorScript": "file:./index.js",
+    "editorStyle": "file:./editor.css",
+    "style": "mhbo-chat-widget"
 }

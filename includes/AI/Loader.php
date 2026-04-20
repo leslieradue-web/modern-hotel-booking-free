@@ -44,6 +44,11 @@ class Loader {
             add_action( 'admin_menu', [ self::class, 'register_admin_menu' ], 20 );
         }
 
+        // Block and shortcode must register unconditionally so the block always
+        // appears in the inserter regardless of widget-enabled settings.
+        add_action( 'init', [ self::class, 'register_block' ],     10 );
+        add_action( 'init', [ self::class, 'register_shortcode' ], 10 );
+
         $widget_enabled = (int) get_option( 'mhbo_ai_widget_enabled', 1 );
 
         if ( ! $enabled || ! $widget_enabled ) {
@@ -62,11 +67,9 @@ class Loader {
             add_action( 'wp_abilities_api_init', [ self::class, 'register_abilities' ] );
         }
 
-        add_action( 'rest_api_init',   [ ChatRest::class, 'register' ] );
+        add_action( 'rest_api_init',      [ ChatRest::class, 'register' ] );
         add_action( 'wp_enqueue_scripts', [ self::class, 'enqueue_frontend' ] );
-        add_action( 'wp_footer',       [ self::class, 'render_widget_template' ] );
-        add_action( 'init',            [ self::class, 'register_block' ], 10 );
-        add_action( 'init',            [ self::class, 'register_shortcode' ], 10 );
+        add_action( 'wp_footer',          [ self::class, 'render_widget_template' ] );
 
         // Site Scanner hooks (auto-invalidate KB on content save).
         SiteScanner::register_hooks();
@@ -373,17 +376,21 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 1 );
      * @return string
      */
     private static function render_widget_div( array $attrs ): string {
-        $variant  = esc_attr( (string) ($attrs['variant'] ?? 'floating') );
-        $position = esc_attr( (string) ($attrs['position'] ?? 'bottom-right') );
-        $welcome  = esc_attr( (string) ($attrs['welcomeMessage'] ?? '') );
-        
-        $theme = $attrs['theme'] ?? '';
-        if ( '' === (string) ( $theme ?? '' ) ) {
-            $theme = get_option( 'mhbo_ai_theme', '' );
-        }
-        $theme = esc_attr( (string) $theme );
+        $allowed_variants  = [ 'floating', 'inline' ];
+        $allowed_positions = [ 'bottom-right', 'bottom-left' ];
 
-        $theme_class = $theme ? ' mhbo-theme-' . $theme : '';
+        $raw_variant  = (string) ( $attrs['variant']  ?? 'floating' );
+        $raw_position = (string) ( $attrs['position'] ?? 'bottom-right' );
+
+        $variant  = esc_attr( in_array( $raw_variant,  $allowed_variants,  true ) ? $raw_variant  : 'floating'      );
+        $position = esc_attr( in_array( $raw_position, $allowed_positions, true ) ? $raw_position : 'bottom-right' );
+        $welcome  = esc_attr( (string) ( $attrs['welcomeMessage'] ?? '' ) );
+
+        $theme = (string) ( $attrs['theme'] ?? '' );
+        if ( '' === $theme ) {
+            $theme = (string) get_option( 'mhbo_ai_theme', '' );
+        }
+        $theme_class = $theme ? ' mhbo-theme-' . sanitize_html_class( $theme ) : '';
 
         $data  = 'data-variant="' . $variant . '"';
         $data .= ' data-position="' . $position . '"';
