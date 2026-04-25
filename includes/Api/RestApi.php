@@ -760,7 +760,7 @@ if ($check_in >= $check_out) {
             ];
         }
 
-        $data = [];
+$data = [];
         $start_date = new \DateTime($start_str);
         $end_date = new \DateTime($end_str);
         $period = new \DatePeriod($start_date, new \DateInterval('P1D'), $end_date);
@@ -881,6 +881,7 @@ if ($check_in >= $check_out) {
                 'is_checkout' => $is_checkout,
                 'can_checkin' => $rooms_free_pm > 0,
                 'can_checkout' => $rooms_free_am > 0,
+                
             ];
         }
 

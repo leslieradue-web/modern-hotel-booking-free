@@ -11,10 +11,23 @@ declare(strict_types=1);
 namespace MHBO\AI;
 
 use MHBO\Business\Info;
-use MHBO\Core\License;
 use MHBO\Core\I18n;
+use MHBO\Core\License;
+use MHBO\Core\Money;
+use MHBO\Core\Pricing;
 
-if ( ! defined( 'ABSPATH' ) ) {
+use function __;
+use function esc_url;
+use function get_bloginfo;
+use function get_option;
+use function get_permalink;
+use function home_url;
+use function sprintf;
+use function gmdate;
+use function number_format;
+use function defined;
+
+if ( ! \defined( 'ABSPATH' ) ) {
     exit;
 }
 
@@ -68,7 +81,7 @@ $rules_text   = self::get_instruction_rules();
      * @return string
      */
     private static function get_instruction_rules(): string {
-        $today        = gmdate( 'Y-m-d' );
+        $today        = \gmdate( 'Y-m-d' );
         $booking_url  = self::get_booking_url();
         $booking_line = $booking_url ? "- BOOKING LINKS: Use the PRE-FILLED booking_url returned by tools (e.g. check_availability). Never provide a naked link like {$booking_url} if a specific tool result is available." : '';
         $deposit_line = self::get_deposit_prompt_line();
@@ -84,12 +97,19 @@ $rules_text   = self::get_instruction_rules();
                "\n" .
                "   FREE PROTOCOL:\n" .
                "   a. After availability results, collect guest Name, Email, and Phone conversationally.\n" .
-               "   b. Call `create_booking_link` with the guest's chosen room and details.\n" .
-               "   c. Present the pre-filled booking URL with the full price summary.\n" .
+               "   b. SINGLE ROOM: Call `create_booking_link` once with the chosen room_id, adults, and children.\n" .
+               "   b-MULTI-ROOM: If check_availability returns a result where is_multi_room is true and a distribution array is present:\n" .
+               "     1. Explain to the guest: 'Your group of [N] guests requires [X] rooms of type [name] (max [cap] guests each). I will need your Full Name, Email, and Phone to prepare the individual booking cards for you.'\n" .
+               "     2. Generate ONLY ONE create_booking_link call for the FIRST entry in the distribution (room_id, adults, children from distribution[0]). Include multi_room_index=1 and multi_room_total=[X] in the call.\n" .
+               "     3. After the card appears, tell the guest: 'This is booking 1 of [X]. Once you complete this reservation, PLEASE COME BACK TO THIS CHAT and say \"next room\" or \"continue\" so I can prepare the next booking card for you. I have [X-1] more rooms to book for your group.'\n" .
+               "     4. For subsequent rooms (when the system injects MULTI-ROOM BOOKING IN PROGRESS context), generate ONE create_booking_link for the specified room only.\n" .
+               "     5. After the final room card, tell the guest: 'All [X] bookings are now prepared! Please ensure you have completed every reservation using the cards above.'\n" .
+               "     6. NEVER generate multiple create_booking_link calls in the same turn for multi-room bookings.\n" .
+               "\n" .
+               "   c. Present the pre-filled booking card with the full price summary.\n" .
                "   d. Present deposit amount and payment method details from the link response.\n" .
                "   e. If bank transfer or Revolut is available, present payment details with reference info.\n" .
-               "   f. Tell the guest: \"Click the link above to complete your reservation — all details are pre-filled for you!\"\n" .
-               "   g. For booking changes or cancellations, call `get_business_card` and provide contact information.\n" .
+               "   f. For booking changes or cancellations, call `get_business_card` and provide contact information.\n" .
                "\n" .
                "   \n" .
                "\n" .
@@ -340,15 +360,17 @@ return $tools;
                 'parameters'  => [
                     'type'       => 'object',
                     'properties' => [
-                        'room_id'    => [ 'type' => 'integer', 'description' => 'Room ID from the availability check.' ],
-                        'type_id'    => [ 'type' => 'integer', 'description' => 'Room type ID from the availability check.' ],
-                        'check_in'   => [ 'type' => 'string', 'format' => 'date', 'description' => 'Check-in date.' ],
-                        'check_out'  => [ 'type' => 'string', 'format' => 'date', 'description' => 'Check-out date.' ],
-                        'adults'     => [ 'type' => 'integer', 'minimum' => 1, 'default' => 2, 'description' => 'Number of adults.' ],
-                        'children'   => [ 'type' => 'integer', 'minimum' => 0, 'default' => 0, 'description' => 'Number of children.' ],
-                        'guest_name' => [ 'type' => 'string', 'description' => 'Full name of the primary guest.' ],
-                        'guest_email'=> [ 'type' => 'string', 'format' => 'email', 'description' => 'Guest email address.' ],
-                        'guest_phone'=> [ 'type' => 'string', 'description' => 'Guest phone number.' ],
+                        'room_id'          => [ 'type' => 'integer', 'description' => 'Room ID from the availability check.' ],
+                        'type_id'          => [ 'type' => 'integer', 'description' => 'Room type ID from the availability check.' ],
+                        'check_in'         => [ 'type' => 'string', 'format' => 'date', 'description' => 'Check-in date.' ],
+                        'check_out'        => [ 'type' => 'string', 'format' => 'date', 'description' => 'Check-out date.' ],
+                        'adults'           => [ 'type' => 'integer', 'minimum' => 1, 'default' => 2, 'description' => 'Number of adults.' ],
+                        'children'         => [ 'type' => 'integer', 'minimum' => 0, 'default' => 0, 'description' => 'Number of children.' ],
+                        'guest_name'       => [ 'type' => 'string', 'description' => 'Full name of the primary guest.' ],
+                        'guest_email'      => [ 'type' => 'string', 'format' => 'email', 'description' => 'Guest email address.' ],
+                        'guest_phone'      => [ 'type' => 'string', 'description' => 'Guest phone number.' ],
+                        'multi_room_index' => [ 'type' => 'integer', 'description' => 'Sequential room number (1-based) in a multi-room group. REQUIRED for multi-room bookings.' ],
+                        'multi_room_total' => [ 'type' => 'integer', 'description' => 'Total rooms required in the multi-room group. REQUIRED for multi-room bookings.' ],
                     ],
                     'required' => [ 'room_id', 'check_in', 'check_out', 'adults', 'guest_name', 'guest_email', 'guest_phone' ],
                 ],

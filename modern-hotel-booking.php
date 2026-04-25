@@ -3,7 +3,7 @@
  * Plugin Name:       Modern Hotel Booking
  * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel Booking System for WordPress. Manage rooms, reservations and availability.
- * Version:           2.3.5
+ * Version:           2.3.7
  * Requires at least: 6.6
  * Tested up to:      6.9
  * Requires PHP:      8.0
@@ -38,7 +38,7 @@ if (version_compare(PHP_VERSION, '8.0.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.3.5');
+define('MHBO_VERSION', '2.3.7');
 define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -109,6 +109,15 @@ register_deactivation_hook(__FILE__, 'mhbo_deactivate');
  */
 function mhbo_run(): void
 {
+    // Guard against double-execution within the same request.
+    // WP 6.9 can trigger init callbacks more than once in edge cases,
+    // causing fatal PUC slug conflicts and duplicate block registration.
+    static $did_run = false;
+    if ($did_run) {
+        return;
+    }
+    $did_run = true;
+
     try {
         if (!class_exists('MHBO\Core\Plugin')) {
             return;

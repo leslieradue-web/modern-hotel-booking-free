@@ -12,6 +12,7 @@ use MHBO\Core\Email;
 use MHBO\Core\I18n;
 use MHBO\Core\ICal;
 use MHBO\Core\License;
+use MHBO\Core\Security;
 use MHBO\Core\Money;
 use MHBO\Core\Pricing;
 use MHBO\Core\Tax;
@@ -770,7 +771,8 @@ $edit_mode = false;
 
         $all_rooms = wp_cache_get('mhbo_all_rooms', 'mhbo_rooms');
         if (false === $all_rooms) {
-            $all_rooms = $wpdb->get_results("SELECT r.id, r.room_number, t.name as type_name, t.base_price FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id ORDER BY r.room_number ASC"); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, admin-only query
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table name placeholders.
+            $all_rooms = $wpdb->get_results($wpdb->prepare("SELECT r.id, r.room_number, t.name as type_name, t.base_price FROM %i r JOIN %i t ON r.type_id = t.id ORDER BY r.room_number ASC", $wpdb->prefix . 'mhbo_rooms', $wpdb->prefix . 'mhbo_room_types'));
             wp_cache_set('mhbo_all_rooms', $all_rooms, 'mhbo_rooms', HOUR_IN_SECONDS);
         }
 
@@ -1787,10 +1789,10 @@ if ($ex['control_type'] === 'quantity') {
 $is_pro_active = false;
 
 global $wpdb;
-        $t_rooms = $wpdb->prefix . 'mhbo_rooms';
-        $t_types = $wpdb->prefix . 'mhbo_room_types';
-        $new_ical_table = $wpdb->prefix . 'mhbo_ical_connections';
-        $legacy_ical_table = $wpdb->prefix . 'mhbo_ical_feeds';
+        $t_rooms = esc_sql( $wpdb->prefix . 'mhbo_rooms' );
+        $t_types = esc_sql( $wpdb->prefix . 'mhbo_room_types' );
+        $new_ical_table = esc_sql( $wpdb->prefix . 'mhbo_ical_connections' );
+        $legacy_ical_table = esc_sql( $wpdb->prefix . 'mhbo_ical_feeds' );
         $new_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $new_ical_table)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- SHOW TABLES is a schema query; caching would give stale results after migrations
         $t_ical = $new_exists ? $new_ical_table : $legacy_ical_table;
 
@@ -1822,7 +1824,8 @@ global $wpdb;
 
         // iCal Mode
         if ('ical' === $action && $get_id > 0) {
-            if (!$nonce || !wp_verify_nonce($nonce, 'mhbo_ical_room_' . $get_id)) {
+            // Sub-actions (delete_feed, sync_now) carry their own nonces — skip page-level check for them.
+            if (empty($sub_action) && (!$nonce || !wp_verify_nonce($nonce, 'mhbo_ical_room_' . $get_id))) {
                 wp_die(esc_html(I18n::get_label('msg_security_check_failed')));
             }
 
@@ -1848,45 +1851,66 @@ if ($submit_ical_feed) {
                 }
 
                 $feed_name = isset($_POST['feed_name']) ? sanitize_text_field(wp_unslash($_POST['feed_name'])) : '';
-                $feed_url = isset($_POST['feed_url']) ? esc_url_raw(wp_unslash($_POST['feed_url'])) : '';
-                
-                if ($new_exists) {
-                    $wpdb->insert($t_ical, array( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
-                        'room_id' => $get_id,
-                        'name' => $feed_name,
-                        'ical_url' => $feed_url,
-                        'platform' => 'custom',
-                        'sync_direction' => 'import',
-                        'sync_status' => 'pending',
-                        'created_at' => current_time('mysql'),
-                    ));
-                    Cache::invalidate_rooms();
+                $feed_url  = isset($_POST['feed_url'])  ? esc_url_raw(wp_unslash($_POST['feed_url'])) : '';
+
+                if ('' === $feed_url || !wp_http_validate_url($feed_url)) {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Invalid feed URL. Please provide a valid HTTPS address.', 'modern-hotel-booking') . '</p></div>';
+                } elseif (!Security::is_safe_url($feed_url)) {
+                    echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('Feed URL is not permitted for security reasons (internal addresses are blocked).', 'modern-hotel-booking') . '</p></div>';
                 } else {
-                    $wpdb->insert($t_ical, array( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
-                        'room_id' => $get_id,
-                        'feed_name' => $feed_name,
-                        'feed_url' => $feed_url,
-                    ));
+                    // Auto-detect platform from URL so the main iCal manager shows the right icon.
+                    $url_lower = strtolower($feed_url);
+                    if (strpos($url_lower, 'airbnb.com') !== false) {
+                        $platform = 'airbnb';
+                    } elseif (strpos($url_lower, 'booking.com') !== false || strpos($url_lower, 'admin.booking') !== false) {
+                        $platform = 'booking.com';
+                    } elseif (strpos($url_lower, 'google.com') !== false || strpos($url_lower, 'calendar.google') !== false) {
+                        $platform = 'google_calendar';
+                    } else {
+                        $platform = 'custom';
+                    }
+
+                    if ($new_exists) {
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
+                        $wpdb->insert($t_ical, array(
+                            'room_id'        => $get_id,
+                            'name'           => $feed_name,
+                            'ical_url'       => $feed_url,
+                            'platform'       => $platform,
+                            'sync_direction' => 'import',
+                            'sync_status'    => 'pending',
+                            'created_at'     => current_time('mysql'),
+                        ), array('%d', '%s', '%s', '%s', '%s', '%s', '%s'));
+                    } else {
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Legacy table
+                        $wpdb->insert($t_ical, array(
+                            'room_id'   => $get_id,
+                            'feed_name' => $feed_name,
+                            'feed_url'  => $feed_url,
+                        ), array('%d', '%s', '%s'));
+                    }
                     Cache::invalidate_rooms();
+                    echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(I18n::get_label('msg_feed_added')) . '</p></div>';
                 }
-                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(I18n::get_label('msg_feed_added')) . '</p></div>';
             }
 
             if ('delete_feed' === $sub_action && $get_feed_id > 0) {
                 check_admin_referer('mhbo_delete_feed_' . $get_feed_id);
-                $wpdb->delete($t_ical, array('id' => $get_feed_id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+                // Scope delete to room_id so a user can't delete another room's feed by guessing IDs.
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $wpdb->delete($t_ical, array('id' => $get_feed_id, 'room_id' => $get_id), array('%d', '%d'));
             }
 
-            if ('sync_now' === $sub_action) {
+if ('sync_now' === $sub_action) {
                 check_admin_referer('mhbo_sync_now_' . $get_id);
                 ICal::sync_external_calendars();
                 echo '<div class="notice notice-success is-dismissible"><p>' . esc_html(I18n::get_label('msg_sync_completed')) . '</p></div>';
             }
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
-            $ical_feeds = $wpdb->get_results($wpdb->prepare("SELECT * FROM `{$t_ical}` WHERE room_id = %d", $get_id));
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name safely constructed from $wpdb->prefix, admin-only query
-            $room_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$t_rooms}` WHERE id = %d", $get_id));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table name placeholder.
+            $ical_feeds = $wpdb->get_results($wpdb->prepare("SELECT * FROM %i WHERE room_id = %d", $t_ical, $get_id));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table name placeholder.
+            $room_info = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id = %d", $t_rooms, $get_id));
         }
 
         // Edit Room Action
@@ -1895,7 +1919,7 @@ if ($submit_ical_feed) {
                 wp_die(esc_html(I18n::get_label('msg_security_check_failed')));
             }
             $edit_mode = true;
-            $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM `{$t_rooms}` WHERE id = %d", $get_id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table names safely constructed from $wpdb->prefix literal, admin-only query
+            $edit_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM %i WHERE id = %d", $t_rooms, $get_id)); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table name placeholder.
         }
 
         // Save Room Action

@@ -723,8 +723,11 @@ $localized_data = [
         $this->ensure_assets_loaded();
 
         $atts = shortcode_atts(array(
-            'room_id' => 0,
+            'room_id'       => 0,
+            'show_calendar' => 'no',
         ), $atts, 'modern_hotel_booking');
+
+        $show_calendar = (strtolower((string)$atts['show_calendar']) === 'yes' || (bool)$atts['show_calendar']);
 
         ob_start();
         echo '<div class="mhbo-wrapper mhbo-booking-form-wrapper" data-instance-id="' . esc_attr((string) self::$instance_count) . '">';
@@ -737,6 +740,11 @@ $localized_data = [
         $nonce_valid = false;
         if ($is_success) {
             $nonce_valid = wp_verify_nonce($success_nonce, 'mhbo_success_display');
+        }
+
+        if ($show_calendar && (int)$atts['room_id'] > 0 && !$is_success) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- HTML is safely constructed and escaped within the Calendar component.
+            echo Calendar::render_unified_view((int)$atts['room_id']);
         }
 
         if ($is_success && $nonce_valid) {
@@ -1183,7 +1191,7 @@ wp_safe_redirect($redirect_url);
             wp_cache_set($cache_key, $available_rooms, 'mhbo_bookings', 300); // Cache for 5 minutes
         }
 
-        echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_in, $check_out)) . '</h3>';
+echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_in, $check_out)) . '</h3>';
         if ([] === $available_rooms) {
             echo '<p>' . esc_html(I18n::get_label('label_no_rooms')) . '</p>';
             $this->render_search_form();
@@ -1307,7 +1315,7 @@ wp_safe_redirect($redirect_url);
             return;
         }
 
-        $cache_key = 'mhbo_room_details_' . md5((string)$room_id);
+$cache_key = 'mhbo_room_details_' . md5((string)$room_id);
         $room = wp_cache_get($cache_key, 'mhbo_bookings');
         if (false === $room) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table

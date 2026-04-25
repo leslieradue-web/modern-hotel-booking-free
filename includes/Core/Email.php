@@ -20,6 +20,10 @@ class Email
         add_action('mhbo_booking_created', [self::class, 'handle_booking_created'], 20);
         // phpstan-ignore-next-line return.void
         add_action('mhbo_booking_cancelled', [self::class, 'handle_booking_cancelled'], 20);
+        // phpstan-ignore-next-line return.void
+        add_action('mhbo_booking_created', [self::class, 'handle_admin_notification_created'], 25);
+        // phpstan-ignore-next-line return.void
+        add_action('mhbo_booking_confirmed', [self::class, 'handle_admin_notification_confirmed'], 25);
     }
 
     /**
@@ -63,6 +67,176 @@ class Email
         if (in_array($booking->payment_method, ['arrival', 'onsite'], true)) {
             self::send_email($booking_id, (string) $booking->status);
         }
+    }
+
+    /**
+     * Handler: send admin notification when a new booking is created.
+     *
+     * @param int $booking_id The booking ID.
+     */
+    public static function handle_admin_notification_created(int $booking_id): void
+    {
+        self::send_admin_notification($booking_id);
+    }
+
+    /**
+     * Handler: send admin notification when a booking is confirmed (payment verified).
+     * Only fires for Stripe/PayPal bookings that were pending at creation time.
+     *
+     * @param int $booking_id The booking ID.
+     */
+    public static function handle_admin_notification_confirmed(int $booking_id): void
+    {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT payment_method FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
+            $booking_id
+        ));
+
+        // For arrival/onsite the admin notification already fired on creation; skip duplicate.
+        if ($booking && in_array($booking->payment_method, ['arrival', 'onsite'], true)) {
+            return;
+        }
+
+        self::send_admin_notification($booking_id);
+    }
+
+    /**
+     * Send a dedicated admin notification email with full guest and booking details.
+     * Sends to the configured notification email and any additional CC address.
+     *
+     * @param int $booking_id The booking ID.
+     * @return bool True if sent successfully.
+     */
+    public static function send_admin_notification(int $booking_id): bool
+    {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $booking = $wpdb->get_row($wpdb->prepare(
+            "SELECT b.*, t.name as room_name
+             FROM {$wpdb->prefix}mhbo_bookings b
+             LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
+             LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
+             WHERE b.id = %d",
+            $booking_id
+        ));
+
+        if (!$booking) {
+            return false;
+        }
+
+        $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
+        if (!is_email($admin_email)) {
+            return false;
+        }
+
+        $lang          = I18n::get_current_language();
+        $site_name     = get_bloginfo('name');
+        $status_label  = I18n::translate_status((string) ($booking->status ?? 'pending'));
+        $check_in      = '' !== (string) ($booking->check_in ?? '') ? date_i18n(get_option('date_format'), strtotime((string) $booking->check_in)) : '--';
+        $check_out     = '' !== (string) ($booking->check_out ?? '') ? date_i18n(get_option('date_format'), strtotime((string) $booking->check_out)) : '--';
+        $room_name     = I18n::decode((string) ($booking->room_name ?? ''), $lang);
+        $payment_label = I18n::translate_payment_method((string) ($booking->payment_method ?? 'arrival'));
+        $total_price   = I18n::format_currency(Money::fromDecimal((string) ($booking->total_price ?? 0)));
+
+        $admin_url = admin_url('admin.php?page=mhbo-bookings&action=view&id=' . $booking_id);
+
+        // Build admin notification email HTML
+        $body  = '<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#222;">';
+        $body .= '<h2 style="background:#2563eb;color:#fff;padding:16px 20px;margin:0;border-radius:6px 6px 0 0;">';
+        $body .= esc_html__('New Booking Received', 'modern-hotel-booking') . ' &mdash; ' . esc_html($site_name) . '</h2>';
+        $body .= '<div style="border:1px solid #d1d5db;border-top:none;border-radius:0 0 6px 6px;padding:20px;">';
+
+        // Status badge
+        $badge_color = ('confirmed' === $booking->status) ? '#16a34a' : '#d97706';
+        $body .= '<p style="margin:0 0 16px 0;">';
+        $body .= '<span style="background:' . $badge_color . ';color:#fff;padding:4px 10px;border-radius:4px;font-size:13px;">' . esc_html($status_label) . '</span>';
+        $body .= '</p>';
+
+        // Guest details
+        $body .= '<h3 style="margin:0 0 8px 0;font-size:15px;border-bottom:1px solid #e5e7eb;padding-bottom:6px;">' . esc_html__('Guest Details', 'modern-hotel-booking') . '</h3>';
+        $body .= '<table style="width:100%;border-collapse:collapse;margin-bottom:16px;">';
+        $body .= self::admin_row(__('Name', 'modern-hotel-booking'), esc_html((string) ($booking->customer_name ?? '')));
+        $body .= self::admin_row(__('Email', 'modern-hotel-booking'), '<a href="mailto:' . esc_attr((string) ($booking->customer_email ?? '')) . '">' . esc_html((string) ($booking->customer_email ?? '')) . '</a>');
+        $body .= self::admin_row(__('Phone', 'modern-hotel-booking'), esc_html((string) ($booking->customer_phone ?? '')));
+        if ('' !== (string) ($booking->special_requests ?? '')) {
+            $body .= self::admin_row(__('Special Requests', 'modern-hotel-booking'), esc_html((string) $booking->special_requests));
+        }
+        // Custom fields
+        if ('' !== (string) ($booking->custom_fields ?? '')) {
+            $custom_data = json_decode((string) $booking->custom_fields, true);
+            $custom_defn = get_option('mhbo_custom_fields', []);
+            if (is_array($custom_data) && is_array($custom_defn)) {
+                foreach ($custom_defn as $defn) {
+                    if (isset($custom_data[$defn['id']]) && '' !== (string) $custom_data[$defn['id']]) {
+                        $f_label = I18n::decode(I18n::encode($defn['label']), $lang);
+                        $body .= self::admin_row(esc_html($f_label), esc_html((string) $custom_data[$defn['id']]));
+                    }
+                }
+            }
+        }
+        $body .= '</table>';
+
+        // Booking details
+        $body .= '<h3 style="margin:0 0 8px 0;font-size:15px;border-bottom:1px solid #e5e7eb;padding-bottom:6px;">' . esc_html__('Booking Details', 'modern-hotel-booking') . '</h3>';
+        $body .= '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">';
+        $body .= self::admin_row(__('Booking ID', 'modern-hotel-booking'), '#' . (int) $booking->id);
+        $body .= self::admin_row(__('Room', 'modern-hotel-booking'), esc_html($room_name));
+        $body .= self::admin_row(__('Check-in', 'modern-hotel-booking'), $check_in);
+        $body .= self::admin_row(__('Check-out', 'modern-hotel-booking'), $check_out);
+        $body .= self::admin_row(__('Guests', 'modern-hotel-booking'), (string) ((int) ($booking->guests ?? 1)));
+        $body .= self::admin_row(__('Total Price', 'modern-hotel-booking'), '<strong>' . $total_price . '</strong>');
+        $body .= self::admin_row(__('Payment Method', 'modern-hotel-booking'), esc_html($payment_label));
+        $body .= '</table>';
+
+        // CTA button
+        $body .= '<p style="text-align:center;margin:20px 0 0 0;">';
+        $body .= '<a href="' . esc_url($admin_url) . '" style="background:#2563eb;color:#fff;padding:10px 24px;border-radius:5px;text-decoration:none;font-weight:bold;">';
+        $body .= esc_html__('View Booking in Dashboard', 'modern-hotel-booking');
+        $body .= '</a></p>';
+
+        $body .= '</div></div>';
+
+        $subject = sprintf(
+            /* translators: 1: booking ID, 2: guest name */
+            __('[%1$s] New Booking #%2$d from %3$s', 'modern-hotel-booking'),
+            $site_name,
+            (int) $booking->id,
+            esc_html((string) ($booking->customer_name ?? ''))
+        );
+
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $site_name . ' <' . $admin_email . '>',
+        ];
+
+        // CC additional notification email if configured
+        $additional_email = get_option('mhbo_additional_notification_email', '');
+        if (is_email((string) $additional_email)) {
+            $headers[] = 'Cc: ' . sanitize_email((string) $additional_email);
+        }
+
+        return (bool) wp_mail($admin_email, $subject, $body, $headers);
+    }
+
+    /**
+     * Helper: render a two-column table row for the admin notification email.
+     *
+     * @param string $label The row label.
+     * @param string $value The row value (may contain safe HTML).
+     * @return string HTML table row.
+     */
+    private static function admin_row(string $label, string $value): string
+    {
+        if ('' === $value) {
+            return '';
+        }
+        return '<tr>'
+            . '<td style="padding:6px 8px;color:#6b7280;width:38%;vertical-align:top;">' . $label . '</td>'
+            . '<td style="padding:6px 8px;vertical-align:top;">' . $value . '</td>'
+            . '</tr>';
     }
 
     /**
@@ -270,8 +444,14 @@ $admin_email = get_option('mhbo_notification_email', get_option('admin_email'));
             'Content-Type: text/html; charset=UTF-8',
             'From: ' . $site_name . ' <' . $admin_email . '>',
             'Reply-To: ' . $admin_email,
-            'Bcc: ' . $admin_email
         ];
+
+        // BCC additional notification email on customer emails if configured
+        $additional_email = get_option('mhbo_additional_notification_email', '');
+        if (is_email((string) $additional_email)) {
+            $headers[] = 'Bcc: ' . sanitize_email((string) $additional_email);
+        }
+
         $attachments = [];
 
         // Add iCal attachment for confirmed bookings

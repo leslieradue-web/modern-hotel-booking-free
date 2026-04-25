@@ -102,14 +102,18 @@ class Block
                 '4.6.13'
             );
 
-            // Register Bridge Module for blocks to interact with legacy jQuery logic safely
-            /** @var array<int, string> $deps */
-            $deps = ['@wordpress/interactivity'];
+            // Register Block View Modules
             wp_register_script_module(
-                'mhbo-bridge-module',
-                MHBO_PLUGIN_URL . 'assets/js/mhbo-bridge.js',
-                /** @phpstan-ignore argument.type */
-                $deps,
+                'mhbo-booking-form-view',
+                MHBO_PLUGIN_URL . 'build/block-booking-form-view.js',
+                ['@wordpress/interactivity'],
+                MHBO_VERSION
+            );
+
+            wp_register_script_module(
+                'mhbo-room-calendar-view',
+                MHBO_PLUGIN_URL . 'build/block-room-calendar-view.js',
+                ['@wordpress/interactivity'],
                 MHBO_VERSION
             );
         }

@@ -1,14 +1,15 @@
-=== Modern Hotel Booking — AI Concierge & Commission-Free Reservations ===
+=== Modern Hotel Booking ===
 Contributors: leslierad
-Tags: guesthouse, vacation rental, bed and breakfast, direct booking, ai concierge
+Donate link: https://startmysuccess.com/
+Tags: hotel booking, vacation rental, bed and breakfast, reservation, availability calendar
 Requires at least: 6.6
 Tested up to: 6.9
-Stable tag: 2.3.5
+Stable tag: 2.3.7
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Free booking plugin for guesthouses, vacation rentals & B&Bs. Includes a FREE AI Concierge Receptionist, professional invoicing & zero-commission direct bookings.
+Free booking plugin for guesthouses, B&Bs & vacation rentals. AI Concierge, invoicing & zero-commission direct bookings.
 
 == Description ==
 
@@ -36,65 +37,64 @@ No other free WordPress accommodation plugin offers this. Your AI receptionist i
 
 Stop answering the same guest questions every day. Your AI concierge handles them around the clock.
 
----
-
 ### 💰 Keep 100% of Your Revenue — Zero Commission, Forever
 
-| | Modern Hotel Booking | Airbnb / Booking |
-|---|---|---|
-| Commission per booking | **0%** | 15–25% |
-| Guest data ownership | ✅ Yours forever | ❌ Theirs |
-| AI Concierge Receptionist | ✅ **Free** | ❌ Not available |
-| Professional Invoicing | ✅ **Pro** | ❌ Not available |
-| iCal sync back to OTAs | ✅ Pro version | Built-in |
-| Setup fees | **None** | None |
+**Modern Hotel Booking vs Airbnb / Booking.com:**
 
-
----
+* **Commission per booking:** 0% vs 15–25%
+* **Guest data ownership:** ✅ Yours forever vs ❌ Theirs
+* **AI Concierge Receptionist:** ✅ Free vs ❌ Not available
+* **Professional Invoicing:** ✅ Pro vs ❌ Not available
+* **iCal Sync to OTAs:** ✅ Pro version vs Built-in
+* **Setup fees:** None vs None
 
 ### 📋 Complete Free Feature Set
 
 **Room & Property Management**
+
 * Unlimited Room Types — capacity, base pricing, descriptions, amenities, and images
 * Unlimited Individual Rooms — assign to types, set custom prices or override availability per room
 * Min/Max Night Stay Rules — enforce minimum and maximum stay lengths per room type, per room or globally
 * Same-Day Turnover Logic — configure check-in and check-out times
 
 **Booking Engine**
+
 * Real-Time Availability Calendar — interactive, colour-coded visual calendar always reflecting live inventory
 * AJAX-Powered Booking Form — instant price calculation as guests select dates and room types
 * Race Condition Protection — prevents double-bookings even when multiple guests submit simultaneously
 * Automated Email Notifications — fully customisable templates for Pending, Confirmed, and Cancelled
 
 **Guest Communication & Offline Payments**
+
 * WhatsApp Integration — floating button, inline button, or text link with pre-filled guest message
 * Bank Transfer Support — IBAN, SWIFT/BIC, and custom reference number prefixes
 * Revolut Payments — Revolut.me link plus your QR code displayed to guests
 * Company Profile Block — display your logo, address, and registration details anywhere on your site
 
 **8 Native Gutenberg Blocks + Shortcodes + Sidebar Widget**
-* `Hotel: Booking Form` — full reservation form with live price calculator
-* `Hotel: Room Calendar` — per-room read-only availability calendar
-* `Hotel: Company Profile` — your property identity and details
-* `Hotel: Chat on WhatsApp` — styled WhatsApp call-to-action button
-* `Hotel: Bank Transfer Details` — payment information card for guests
-* `Hotel: Pay via Revolut` — Revolut payment card with QR code
-* `Hotel: Business Contact Card` — combined contact and payment block
+
+* Hotel: Booking Form — full reservation form with live price calculator
+* Hotel: Room Calendar — per-room read-only availability calendar
+* Hotel: Company Profile — your property identity and details
+* Hotel: Chat on WhatsApp — styled WhatsApp call-to-action button
+* Hotel: Bank Transfer Details — payment information card for guests
+* Hotel: Pay via Revolut — Revolut payment card with QR code
+* Hotel: Business Contact Card — combined contact and payment block
 * Shortcodes: `[mhbo_booking_form]`, `[mhbo_room_calendar room_id="1"]`, `[mhbo_whatsapp]`, and more
 * Sidebar Widget — compact search box that redirects to your main booking page
 
 **Privacy, Performance & Multilingual**
+
 * Zero-Trace Architecture — no tracking, no analytics, no data sent to our servers
 * WPML, Polylang & qTranslate-X compatible — fully translated in 15 languages
 * Mobile-First Design — fully responsive booking experience across all devices
 * Granular Staff Permissions — delegate booking management without granting admin access
 * REST API — create and retrieve bookings from external applications
 
----
-
 ### 🏆 Modern Hotel Booking Pro
 
 **Online Payments**
+
 * Stripe — credit cards, Apple Pay, Google Pay, full 3D Secure support
 * PayPal — Sandbox and live modes with server-side verification
 * Deposits & Partial Payments — collect a fixed amount, percentage, or first-night rate upfront
@@ -102,11 +102,13 @@ Stop answering the same guest questions every day. Your AI concierge handles the
 * Compulsory Service Fee — auto-added as a fixed amount or percentage of the total
 
 **OTA Distribution & Sync**
-* Two-Way iCal Sync — automatic sync with Airbnb, Booking.com, VRBO, and Google Calendar
-* Fully automatic double-booking prevention
+
+* Two-Way iCal Sync — automatic sync with Airbnb, Booking.com via NoBeds, VRBO and Google Calendar
+* Automatic double-booking prevention
 * Visual platform badges for each connected OTA
 
 **Advanced Pricing**
+
 * Seasonal Pricing Rules — fixed or percentage adjustments for any date range
 * Weekend Multipliers — automatic Friday, Saturday, Sunday price modifier
 * Holiday Pricing — custom rates for specific dates
@@ -114,25 +116,26 @@ Stop answering the same guest questions every day. Your AI concierge handles the
 * Global Stay Limits — property-wide minimum and maximum night constraints
 
 **Tax & Compliance**
+
 * VAT Inclusive and Sales Tax Exclusive modes
 * Separate configurable rates for accommodation and extras
 * GDPR Suite — consent checkbox, automated PII erasure, data retention policies
 
 **Analytics & Business Intelligence**
+
 * ADR, RevPAR, Occupancy Rate, Lead Time KPIs
 * Revenue Trend Charts and Occupancy Heatmap
 * 30-Day Predictive Revenue Forecast
 * Financial CSV, Tax Report, and Occupancy Report exports
 
 **Pro AI Concierge Extras**
+
 * Session Logs — review anonymised conversation transcripts
 * Booking Conversion Tracking from AI chat sessions
 * Sentiment Analysis on guest interactions
 * AI Discovery Manifests — llms.txt and llms-full.txt for visibility in AI-powered search
 
-[View Pro Features & Pricing](https://startmysuccess.com/modern-hotel-booking) | [Privacy Policy](https://startmysuccess.com/privacy) | [GitHub](https://github.com/leslieradue-web/modern-hotel-booking-free)
-
----
+[View Pro Features & Pricing](https://startmysuccess.com/) | [Privacy Policy](https://startmysuccess.com/privacy-policy/) | [GitHub](https://github.com/)
 
 ### 🏡 Built for Independent Properties
 
@@ -144,84 +147,107 @@ Stop answering the same guest questions every day. Your AI concierge handles the
 * **Holiday Apartments** — GDPR compliance, VAT invoicing, multilingual support
 * **Short-Term Rentals** — direct booking website, no platform fees, full guest data ownership
 
----
-
 == Installation ==
 
-Go to Plugins > Add New in your WordPress admin.
-Search for "Modern Hotel Booking".
-Click Install Now and then Activate.
+1. Go to Plugins > Add New in your WordPress admin.
+2. Search for "Modern Hotel Booking".
+3. Click Install Now and then Activate.
 
 == Quick Start in 5 Steps ==
 
 1. **Hotel Booking > Room Types** — Create your room or unit categories with base price and capacity
 2. **Hotel Booking > Rooms** — Add individual rooms or units and assign each to a Room Type
 3. **Hotel Booking > Settings > General** — Select your Booking Page from the dropdown *(essential — the plugin cannot route guests without this)*
-4. **Edit any page** — Add the `Hotel: Booking Form` Gutenberg block, or use the shortcode `[mhbo_booking_form]`
+4. **Edit any page** — Add the Hotel: Booking Form Gutenberg block, or use the shortcode `[mhbo_booking_form]`
 5. *(Optional)* **Hotel Booking > Settings > AI** — Paste your free Google Gemini API key to activate your AI Concierge instantly
 
 == Frequently Asked Questions ==
 
 = Is this plugin completely free? =
+
 Yes. The entire core system — AI Concierge, unlimited room management, real-time availability calendar, email notifications and all 8 Gutenberg blocks — are 100% free. No limits on bookings, rooms or guests. No hidden transaction fees.
 
 = How does the AI Concierge work? =
+
 The AI reads the data you enter in your Room Types and Settings — prices, amenities, check-in times, house rules — and uses it to answer guest questions in real time via a chat widget on your site. Guests can type or speak. The AI checks live availability and guides guests through the full reservation process. You connect your own free Google Gemini or OpenAI API key in the plugin settings. No coding required.
 
 = Can I take direct bookings without Airbnb or Booking.com? =
+
 Yes. Modern Hotel Booking is built specifically for the direct booking model. Guests book on your WordPress site and you keep 100% of the revenue with zero commission. The Pro version adds optional two-way iCal sync so you can maintain OTA listings while using your own site as the primary booking channel.
 
 = Does it work for a vacation rental or cabin? =
+
 Yes — it is designed for exactly this use case. Each property or unit is set up as a Room with its own availability calendar, custom pricing, and stay rules. The AI Concierge can answer questions specific to your property. Seasonal pricing and min-stay rules are included.
 
 = Does it work for a small guesthouse with only 1 or 2 rooms? =
+
 Absolutely. Modern Hotel Booking works perfectly for properties of any size, from a single vacation rental to a multi-room boutique hotel. There are no minimum room requirements.
 
 = Can guests use voice to talk to the AI receptionist? =
+
 Yes. The AI Concierge widget supports both text and voice input. Guests speak their question and the AI reads responses aloud using advanced text-to-speech synthesis.
 
 = Can I generate and email invoices to guests? =
-Yes. From any booking in your admin, The Pro version allows you to generate a professional invoice and either print it or email it to the guest with one click. Invoices automatically include your logo, address, tax details and payment instructions.
+
+Yes. From any booking in your admin, the Pro version allows you to generate a professional invoice and either print it or email it to the guest with one click. Invoices automatically include your logo, address, tax details and payment instructions.
 
 = Can I set a minimum nights stay? =
+
 Yes. Set minimum and maximum night requirements at the Room Type level, on individual rooms, or globally. Pro users can also enforce these on specific calendar dates using the visual pricing editor.
 
 = Does it prevent double-bookings with Airbnb? =
+
 The free version supports manual date blocking. The Pro version adds automatic two-way iCal sync with Airbnb, Booking.com, VRBO, Google Calendar, and any iCal-compatible platform — fully automatic double-booking prevention.
 
 = Can I add a cleaning fee or service charge? =
+
 Yes, in the Pro version. Add a compulsory fixed cleaning fee and/or a service fee as a fixed amount or percentage of the total — automatically included in every booking.
 
 = How do I accept online payments? =
+
 The free version supports Bank Transfer (IBAN/SWIFT), Revolut and Pay on Arrival. The Pro version adds Stripe (including Apple Pay and Google Pay) and PayPal with 3D Secure and deposit support.
 
 = Is it mobile-friendly? =
+
 Yes. The booking form, availability calendar, AI chat widget, and invoices are all fully responsive across all major mobile browsers and devices.
 
 = Does it support multiple languages? =
+
 Yes. Fully translated into 15 languages. Compatible with WPML, Polylang, and qTranslate-X. The AI Concierge automatically detects and replies in the guest's language.
 
 = Does it work with my theme? =
+
 Yes. Standard WordPress Gutenberg blocks, compatible with all themes including Full Site Editing block themes.
 
 = Is guest data private? =
+
 Yes. No guest data is transmitted to our servers. All bookings are stored in your WordPress database. AI conversation context is stored temporarily as WordPress Transients (2-hour TTL) then automatically deleted. During active chat, messages go only to your configured AI provider (Google or OpenAI).
 
 = Where do I get the Pro version? =
-Visit [StartMySuccess.com](https://startmysuccess.com/modern-hotel-booking) for all Pro features, pricing, and licensing. All plans include updates and priority support.
+
+Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pricing, and licensing. All plans include updates and priority support.
 
 == Screenshots ==
 
-Responsive Booking Form — Clean interface with date selection and real-time availability.
-Admin Dashboard — Overview of upcoming bookings and revenue.
-Room Management — Easy setup for room types, capacity, and base pricing.
-Availability Calendar — Interactive visual booking calendar for checking room status.
-Settings Panel — Extensive configuration for emails, currencies and rules.
-
+1. Hotel Booking Form — Responsive, mobile-friendly design with real-time availability and live price calculation.
+2. Booking Dashboard — Complete overview of upcoming reservations, revenue, and guest management.
+3. Room & Property Management — Configure unlimited room types, capacity, pricing, and availability rules.
+4. Real-Time Availability Calendar — Colour-coded interactive calendar showing live room availability and bookings.
+5. Plugin Settings Panel — Full configuration for email notifications, currencies, booking rules, and AI Concierge setup.
 
 == Changelog ==
 
+= 2.3.7 =
+* **NEW (Free): AI Concierge Shortcode** — Embed the virtual assistant on any page via `[mhbo_ai_concierge]`.
+* **NEW (Free): Booking Form Calendar Integration** — Added `show_calendar` attribute to `[mhbo_booking_form]` for automatic availability display.
+* **NEW (Free): Intelligent Room Splitting** — AI Concierge now handles multi-room requests with a guided, sequential selection flow.
+* **FIX**: Resolved Stripe/PayPal initialization conflicts within the dynamic booking modal.
+* **FIX**: Restructured iCal synchronization engine for improved reliability and faster processing.
+* **FIX**: Updated all 15 supported locales with 100% semantic parity (replaced [TRANS:locale] placeholders).
+* Bug fixes and performance optimizations.
+
 = 2.3.5 =
+
 * **NEW (Free): AI Concierge** — Intelligent 24/7 virtual receptionist for guest Q&A and complete reservations via text or voice. Supports Google Gemini and OpenAI. Includes OTP-secured booking access, persistent guest memory, and 15-language auto-detection.
 * **NEW (Free): Professional Invoicing** — Generate, print, and email invoices to guests directly from the bookings admin. Smart layout adapts based on payment status.
 * **NEW (Free): Min/Max Night Stay Rules** — Set minimum and maximum consecutive night requirements on Room Types, Individual Rooms, or globally.
@@ -229,27 +255,19 @@ Settings Panel — Extensive configuration for emails, currencies and rules.
 * **PRO: Compulsory Items** — Mandatory fixed-price items (e.g. cleaning fee) auto-added to every booking.
 * **PRO: Compulsory Service Fee** — Mandatory service charge as a fixed amount or percentage of the total.
 
-= 2.3.2 =
-* NEW: AI Concierge — initial integration with Google Gemini and OpenAI.
-* NEW: Business Card Gutenberg Block.
-
-= 2.3.1 =
-* NEW: WhatsApp, Bank Transfer, and Revolut business blocks.
-* Improved: Performance and styling for Booking Form and Room Calendar blocks.
-* Improved: Full localisation across 15 languages.
 
 == Upgrade Notice ==
 
-= 2.3.5 =
-Major update. Free version now includes AI Concierge, professional invoicing, and min/max stay rules. Pro gains multi-select pricing and compulsory fee management. Recommended for all users.
+= 2.3.7 =
+Minor update but recommended for all users.
 
 == Credits ==
 
 Open-source libraries bundled locally — no external CDN requests:
 
-* **FullCalendar** v6.1.20 — MIT License — https://fullcalendar.io
-* **Chart.js** v4.5.1 — MIT License — https://www.chartjs.org
-* **Flatpickr** v4.6.13 — MIT License — https://flatpickr.js.org
+* **FullCalendar** v6.1.20 — MIT License — [https://fullcalendar.io](https://fullcalendar.io)
+* **Chart.js** v4.5.1 — MIT License — [https://www.chartjs.org](https://www.chartjs.org)
+* **Flatpickr** v4.6.13 — MIT License — [https://flatpickr.js.org](https://flatpickr.js.org)
 
 == Privacy Policy ==
 
@@ -259,7 +277,7 @@ Modern Hotel Booking does not collect or transmit guest or admin data to our ser
 
 **Rate Limiting:** Anonymised per-IP request counts are stored as Transients (2-minute TTL) to prevent abuse. No IP addresses are permanently saved.
 
-See our full [Privacy Policy](https://startmysuccess.com/privacy).
+See our full [Privacy Policy](https://startmysuccess.com/privacy-policy/).
 
 == External Services ==
 
@@ -270,7 +288,8 @@ All connections are optional and only active when configured by the administrato
 * **Google Gemini / OpenAI** — AI Concierge responses during active chat only. [Google Privacy](https://policies.google.com/privacy) | [OpenAI Privacy](https://openai.com/privacy)
 
 **Pro version only:**
+
 * **Stripe** — Card, Apple Pay, Google Pay processing. [Privacy Policy](https://stripe.com/privacy)
 * **PayPal** — Account payment processing. [Privacy Policy](https://www.paypal.com/webapps/mpp/ua/privacy-full)
 * **iCal Sync** — Reads public calendar feeds. No data sent to our servers.
-* **StartMySuccess** — License verification and Pro updates. [Privacy Policy](https://startmysuccess.com/privacy)
+* **StartMySuccess** — License verification and Pro updates. [Privacy Policy](https://startmysuccess.com/privacy-policy/)

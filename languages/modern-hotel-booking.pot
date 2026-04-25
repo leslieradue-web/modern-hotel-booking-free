@@ -2,14 +2,14 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Modern Hotel Booking 2.3.5\n"
+"Project-Id-Version: Modern Hotel Booking 2.3.6\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-04-19T19:20:18+00:00\n"
+"POT-Creation-Date: 2026-04-25T13:42:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: modern-hotel-booking\n"
@@ -65,8 +65,8 @@ msgstr ""
 
 #: includes/Admin/AiSettings.php:297
 #: includes/Admin/AiSettings.php:347
-#: includes/AI/KnowledgeBase.php:40
-#: includes/AI/Loader.php:543
+#: includes/AI/KnowledgeBase.php:54
+#: includes/AI/Loader.php:550
 #: includes/Core/I18n.php:1023
 #: includes/Core/I18n.php:1135
 msgid "AI Concierge"
@@ -485,20 +485,19 @@ msgid "Uncheck to only show the AI via Shortcode or Gutenberg Block."
 msgstr ""
 
 #: includes/Admin/AiSettings.php:780
-#: blocks/ai-concierge/index.js:39
-#: blocks/ai-concierge/index.js:72
+#: blocks/ai-concierge/index.js:78
 msgid "Position"
 msgstr ""
 
 #: includes/Admin/AiSettings.php:783
 #: includes/Core/I18n.php:2260
-#: blocks/ai-concierge/index.js:42
+#: blocks/ai-concierge/index.js:55
 msgid "Bottom Right"
 msgstr ""
 
 #: includes/Admin/AiSettings.php:784
 #: includes/Core/I18n.php:2261
-#: blocks/ai-concierge/index.js:43
+#: blocks/ai-concierge/index.js:56
 msgid "Bottom Left"
 msgstr ""
 
@@ -756,237 +755,237 @@ msgstr ""
 msgid "Creating…"
 msgstr ""
 
-#: includes/Admin/Menu.php:72
+#: includes/Admin/Menu.php:73
 msgid "Modern Hotel Booking:"
 msgstr ""
 
-#: includes/Admin/Menu.php:73
+#: includes/Admin/Menu.php:74
 msgid "No booking page is configured. Booking forms will not process correctly until you set one or Enable Inline Booking Modal."
 msgstr ""
 
-#: includes/Admin/Menu.php:75
+#: includes/Admin/Menu.php:76
 msgid "Fix in Settings → General"
 msgstr ""
 
-#: includes/Admin/Menu.php:372
+#: includes/Admin/Menu.php:373
 msgid "Edit Day"
 msgstr ""
 
-#: includes/Admin/Menu.php:373
+#: includes/Admin/Menu.php:374
 msgid "Bulk Edit"
 msgstr ""
 
-#: includes/Admin/Menu.php:374
+#: includes/Admin/Menu.php:375
 msgid "Price"
 msgstr ""
 
-#: includes/Admin/Menu.php:375
+#: includes/Admin/Menu.php:376
 msgid "Availability"
 msgstr ""
 
-#: includes/Admin/Menu.php:376
+#: includes/Admin/Menu.php:377
 msgid "Min nights"
 msgstr ""
 
-#: includes/Admin/Menu.php:377
+#: includes/Admin/Menu.php:378
 msgid "Max nights"
 msgstr ""
 
-#: includes/Admin/Menu.php:378
+#: includes/Admin/Menu.php:379
 msgid "CTA (closed to arrival)"
 msgstr ""
 
-#: includes/Admin/Menu.php:379
+#: includes/Admin/Menu.php:380
 msgid "CTD (closed to departure)"
 msgstr ""
 
-#: includes/Admin/Menu.php:380
+#: includes/Admin/Menu.php:381
 msgid "Admin note"
 msgstr ""
 
-#: includes/Admin/Menu.php:381
-#: includes/Admin/Menu.php:386
+#: includes/Admin/Menu.php:382
+#: includes/Admin/Menu.php:387
 msgid "Blocked"
 msgstr ""
 
-#: includes/Admin/Menu.php:382
+#: includes/Admin/Menu.php:383
 msgid "Apply to days:"
 msgstr ""
 
-#: includes/Admin/Menu.php:383
+#: includes/Admin/Menu.php:384
 msgid "— inherit —"
 msgstr ""
 
-#: includes/Admin/Menu.php:384
+#: includes/Admin/Menu.php:385
 msgid "— no change —"
 msgstr ""
 
-#: includes/Admin/Menu.php:385
+#: includes/Admin/Menu.php:386
 msgid "Open"
 msgstr ""
 
-#: includes/Admin/Menu.php:387
+#: includes/Admin/Menu.php:388
 #: includes/Pro/Invoice.php:272
 #: includes/Pro/Invoice.php:280
 msgid "Yes"
 msgstr ""
 
-#: includes/Admin/Menu.php:388
+#: includes/Admin/Menu.php:389
 #: includes/Pro/Invoice.php:280
 msgid "No"
 msgstr ""
 
-#: includes/Admin/Menu.php:389
+#: includes/Admin/Menu.php:390
 msgid "inherit"
 msgstr ""
 
-#: includes/Admin/Menu.php:390
+#: includes/Admin/Menu.php:391
 msgid "no change"
 msgstr ""
 
-#: includes/Admin/Menu.php:391
-#: includes/Admin/Menu.php:485
-#: includes/Admin/Menu.php:3048
+#: includes/Admin/Menu.php:392
+#: includes/Admin/Menu.php:486
+#: includes/Admin/Menu.php:3171
 #: includes/Core/I18n.php:722
 #: includes/Core/I18n.php:2041
 msgid "Save"
 msgstr ""
 
-#: includes/Admin/Menu.php:392
+#: includes/Admin/Menu.php:393
 msgid "Apply to Range"
 msgstr ""
 
-#: includes/Admin/Menu.php:393
+#: includes/Admin/Menu.php:394
 msgid "Clear override"
 msgstr ""
 
-#: includes/Admin/Menu.php:394
+#: includes/Admin/Menu.php:395
 #: includes/Core/I18n.php:2042
 msgid "Cancel"
 msgstr ""
 
-#: includes/Admin/Menu.php:395
+#: includes/Admin/Menu.php:396
 msgid "Confirm Import"
 msgstr ""
 
-#: includes/Admin/Menu.php:396
+#: includes/Admin/Menu.php:397
 msgid "Remove override for this day?"
 msgstr ""
 
-#: includes/Admin/Menu.php:397
+#: includes/Admin/Menu.php:398
 msgid "Import Preview"
 msgstr ""
 
-#: includes/Admin/Menu.php:398
+#: includes/Admin/Menu.php:399
 msgid "New records"
 msgstr ""
 
-#: includes/Admin/Menu.php:399
+#: includes/Admin/Menu.php:400
 msgid "Conflicts"
 msgstr ""
 
-#: includes/Admin/Menu.php:400
+#: includes/Admin/Menu.php:401
 msgid "Errors"
 msgstr ""
 
-#: includes/Admin/Menu.php:401
+#: includes/Admin/Menu.php:402
 msgid "Skipped records:"
 msgstr ""
 
-#: includes/Admin/Menu.php:402
+#: includes/Admin/Menu.php:403
 msgid "For each conflict, choose which version to keep:"
 msgstr ""
 
-#: includes/Admin/Menu.php:403
+#: includes/Admin/Menu.php:404
 msgid "No conflicts. All records will be imported."
 msgstr ""
 
-#: includes/Admin/Menu.php:404
+#: includes/Admin/Menu.php:405
 msgid "Import complete"
 msgstr ""
 
-#: includes/Admin/Menu.php:405
+#: includes/Admin/Menu.php:406
 msgid "Keep existing"
 msgstr ""
 
-#: includes/Admin/Menu.php:406
+#: includes/Admin/Menu.php:407
 msgid "Use incoming"
 msgstr ""
 
-#: includes/Admin/Menu.php:407
+#: includes/Admin/Menu.php:408
 msgid "Date"
 msgstr ""
 
-#: includes/Admin/Menu.php:408
+#: includes/Admin/Menu.php:409
 msgid "Existing"
 msgstr ""
 
-#: includes/Admin/Menu.php:409
+#: includes/Admin/Menu.php:410
 msgid "Incoming"
 msgstr ""
 
-#: includes/Admin/Menu.php:410
+#: includes/Admin/Menu.php:411
 msgid "Changed fields"
 msgstr ""
 
-#: includes/Admin/Menu.php:411
+#: includes/Admin/Menu.php:412
 msgid "Keep"
 msgstr ""
 
-#: includes/Admin/Menu.php:412
-#: includes/Admin/Menu.php:487
+#: includes/Admin/Menu.php:413
+#: includes/Admin/Menu.php:488
 msgid "Saved"
 msgstr ""
 
-#: includes/Admin/Menu.php:413
+#: includes/Admin/Menu.php:414
 msgid "day(s)"
 msgstr ""
 
-#: includes/Admin/Menu.php:414
+#: includes/Admin/Menu.php:415
 msgid "record(s) written."
 msgstr ""
 
-#: includes/Admin/Menu.php:415
+#: includes/Admin/Menu.php:416
 msgid "An error occurred."
 msgstr ""
 
-#: includes/Admin/Menu.php:416
+#: includes/Admin/Menu.php:417
 msgid "Network error. Please try again."
 msgstr ""
 
-#: includes/Admin/Menu.php:417
+#: includes/Admin/Menu.php:418
 msgid "Invalid JSON file."
 msgstr ""
 
-#: includes/Admin/Menu.php:418
+#: includes/Admin/Menu.php:419
 msgid "Leave all unchecked to apply to every day in range."
 msgstr ""
 
-#: includes/Admin/Menu.php:419
+#: includes/Admin/Menu.php:420
 msgid "n"
 msgstr ""
 
-#: includes/Admin/Menu.php:420
+#: includes/Admin/Menu.php:421
 msgid "Current effective price:"
 msgstr ""
 
-#: includes/Admin/Menu.php:486
+#: includes/Admin/Menu.php:487
 msgid "Saving…"
 msgstr ""
 
-#: includes/Admin/Menu.php:488
+#: includes/Admin/Menu.php:489
 #: includes/Admin/Menu.php:2433
-#: includes/Admin/Menu.php:3049
+#: includes/Admin/Menu.php:3172
 #: includes/Core/I18n.php:723
 #: includes/Core/I18n.php:2040
 msgid "Delete"
 msgstr ""
 
-#: includes/Admin/Menu.php:489
+#: includes/Admin/Menu.php:490
 msgid "Deleting…"
 msgstr ""
 
-#: includes/Admin/Menu.php:490
+#: includes/Admin/Menu.php:491
 msgid "Error — try again"
 msgstr ""
 
@@ -1008,7 +1007,8 @@ msgid "Guest"
 msgstr ""
 
 #: includes/Admin/Menu.php:1995
-#: includes/Frontend/Shortcode.php:1753
+#: includes/Core/Email.php:186
+#: includes/Frontend/Shortcode.php:1789
 #: includes/Pro/Invoice.php:175
 msgid "Room"
 msgstr ""
@@ -1023,6 +1023,7 @@ msgid "Total"
 msgstr ""
 
 #: includes/Admin/Menu.php:2039
+#: includes/Admin/Menu.php:2752
 #: includes/Core/I18n.php:1286
 #: includes/Core/I18n.php:2443
 #: includes/Core/I18n.php:2695
@@ -1040,7 +1041,7 @@ msgid "Lang"
 msgstr ""
 
 #: includes/Admin/Menu.php:2061
-#: includes/Admin/Menu.php:2700
+#: includes/Admin/Menu.php:2754
 #: includes/Core/I18n.php:1282
 #: includes/Core/I18n.php:1682
 msgid "Actions"
@@ -1144,7 +1145,7 @@ msgid "Featured Image"
 msgstr ""
 
 #: includes/Admin/Menu.php:2322
-#: includes/Admin/Menu.php:2818
+#: includes/Admin/Menu.php:2941
 #: includes/Core/I18n.php:1483
 msgid "Select"
 msgstr ""
@@ -1155,7 +1156,7 @@ msgid "Standard Amenities"
 msgstr ""
 
 #: includes/Admin/Menu.php:2357
-#: includes/Admin/Menu.php:2834
+#: includes/Admin/Menu.php:2957
 #: includes/Core/I18n.php:744
 msgid "Discard Changes"
 msgstr ""
@@ -1190,7 +1191,7 @@ msgid "Edit"
 msgstr ""
 
 #: includes/Admin/Menu.php:2428
-#: includes/Admin/Menu.php:2907
+#: includes/Admin/Menu.php:3030
 msgid "Calendar Pricing"
 msgstr ""
 
@@ -1198,397 +1199,481 @@ msgstr ""
 msgid "Are you sure you want to delete this room type? This may affect existing rooms."
 msgstr ""
 
-#: includes/Admin/Menu.php:2522
+#: includes/Admin/Menu.php:2523
 #: includes/Core/I18n.php:1488
 msgid "Manage Rooms"
 msgstr ""
 
-#: includes/Admin/Menu.php:2528
+#: includes/Admin/Menu.php:2529
 #: includes/Core/I18n.php:1489
 #: includes/Pro/AdminCalendar.php:1429
 msgid "Back to Rooms"
 msgstr ""
 
-#: includes/Admin/Menu.php:2660
+#: includes/Admin/Menu.php:2550
+msgid "Invalid feed URL. Please provide a valid HTTPS address."
+msgstr ""
+
+#: includes/Admin/Menu.php:2552
+msgid "Feed URL is not permitted for security reasons (internal addresses are blocked)."
+msgstr ""
+
+#: includes/Admin/Menu.php:2704
 #: includes/Core/I18n.php:704
 msgid "Total Units"
 msgstr ""
 
-#: includes/Admin/Menu.php:2664
+#: includes/Admin/Menu.php:2708
 #: includes/Core/I18n.php:739
 msgid "Ready for Guests"
 msgstr ""
 
-#: includes/Admin/Menu.php:2668
-#: includes/Admin/Menu.php:2894
+#: includes/Admin/Menu.php:2712
+#: includes/Admin/Menu.php:3017
 #: includes/Core/I18n.php:703
 msgid "Out of Service"
 msgstr ""
 
-#: includes/Admin/Menu.php:2683
+#: includes/Admin/Menu.php:2727
 #: includes/Core/I18n.php:1323
 #: includes/Core/I18n.php:1490
 msgid "Deployment Export URL"
 msgstr ""
 
-#: includes/Admin/Menu.php:2684
+#: includes/Admin/Menu.php:2728
 #: includes/Core/I18n.php:1324
 #: includes/Core/I18n.php:1491
 msgid "Provide this URL to external OTAs (Airbnb, Booking.com) to export this room's availability."
 msgstr ""
 
-#: includes/Admin/Menu.php:2687
+#: includes/Admin/Menu.php:2740
 #: includes/Core/I18n.php:1492
 msgid "Copied!"
 msgstr ""
 
-#: includes/Admin/Menu.php:2687
+#: includes/Admin/Menu.php:2740
 #: includes/Core/I18n.php:1493
 msgid "Copy URL"
 msgstr ""
 
-#: includes/Admin/Menu.php:2692
+#: includes/Admin/Menu.php:2745
 #: includes/Core/I18n.php:1494
 msgid "Import External Calendars"
 msgstr ""
 
-#: includes/Admin/Menu.php:2697
-#: includes/Core/I18n.php:1495
-msgid "Service / Feed Name"
+#: includes/Admin/Menu.php:2750
+msgid "Platform"
 msgstr ""
 
-#: includes/Admin/Menu.php:2698
-#: includes/Core/I18n.php:1496
-msgid "Feed URL"
+#: includes/Admin/Menu.php:2751
+#: includes/Core/I18n.php:2621
+msgid "Connection Name"
 msgstr ""
 
-#: includes/Admin/Menu.php:2699
-#: includes/Core/I18n.php:1497
-msgid "Last Heartbeat"
+#: includes/Admin/Menu.php:2753
+msgid "Last Sync"
 msgstr ""
 
-#: includes/Admin/Menu.php:2705
+#: includes/Admin/Menu.php:2759
 #: includes/Core/I18n.php:1498
 msgid "No external feeds connected yet."
 msgstr ""
 
-#: includes/Admin/Menu.php:2715
-#: includes/Core/I18n.php:751
-msgid "Pending Sync"
+#: includes/Admin/Menu.php:2823
+#: includes/Core/I18n.php:2771
+msgid "ago"
 msgstr ""
 
-#: includes/Admin/Menu.php:2721
+#. translators: %d: number of calendar events
+#: includes/Admin/Menu.php:2828
+#, php-format
+msgid "%d event"
+msgid_plural "%d events"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/Menu.php:2833
+#: includes/Core/I18n.php:2550
+msgid "Never synced"
+msgstr ""
+
+#: includes/Admin/Menu.php:2837
+msgid "Sync now"
+msgstr ""
+
+#: includes/Admin/Menu.php:2841
 #: includes/Core/I18n.php:758
 msgid "Disconnect this calendar? Import of bookings will stop."
 msgstr ""
 
-#: includes/Admin/Menu.php:2735
+#: includes/Admin/Menu.php:2842
+msgid "Disconnect"
+msgstr ""
+
+#: includes/Admin/Menu.php:2858
 #: includes/Core/I18n.php:752
 msgid "Connection Label"
 msgstr ""
 
-#: includes/Admin/Menu.php:2736
+#: includes/Admin/Menu.php:2859
 #: includes/Core/I18n.php:753
 msgid "e.g. Airbnb, Booking.com"
 msgstr ""
 
-#: includes/Admin/Menu.php:2739
+#: includes/Admin/Menu.php:2862
 #: includes/Core/I18n.php:754
 #: includes/Core/I18n.php:1499
 msgid "iCal Feed URL (HTTPS)"
 msgstr ""
 
-#: includes/Admin/Menu.php:2743
+#: includes/Admin/Menu.php:2866
 #: includes/Core/I18n.php:755
 msgid "Connect Calendar"
 msgstr ""
 
-#: includes/Admin/Menu.php:2752
+#: includes/Admin/Menu.php:2875
 #: includes/Core/I18n.php:756
 #: includes/Core/I18n.php:1500
 msgid "Force Global Sync"
 msgstr ""
 
-#: includes/Admin/Menu.php:2754
+#: includes/Admin/Menu.php:2877
 #: includes/Core/I18n.php:757
 msgid "Cancel & Return"
 msgstr ""
 
-#: includes/Admin/Menu.php:2771
+#: includes/Admin/Menu.php:2894
 #: includes/Core/I18n.php:694
 #: includes/Core/I18n.php:1501
 msgid "Classification / Type"
 msgstr ""
 
-#: includes/Admin/Menu.php:2774
+#: includes/Admin/Menu.php:2897
 #: includes/Core/I18n.php:695
 msgid "— Select Room Type —"
 msgstr ""
 
-#: includes/Admin/Menu.php:2784
+#: includes/Admin/Menu.php:2907
 #: includes/Core/I18n.php:1502
 msgid "Room Number / Identifier"
 msgstr ""
 
-#: includes/Admin/Menu.php:2786
+#: includes/Admin/Menu.php:2909
 #: includes/Core/I18n.php:696
 msgid "e.g. Room 101, Junior Suite A"
 msgstr ""
 
-#: includes/Admin/Menu.php:2790
+#: includes/Admin/Menu.php:2913
 #: includes/Core/I18n.php:697
 msgid "Override Daily Rate"
 msgstr ""
 
-#: includes/Admin/Menu.php:2791
+#: includes/Admin/Menu.php:2914
 #: includes/Core/I18n.php:698
 #: includes/Core/I18n.php:1503
 msgid "Specific price for this unit. Leave at 0 to use the category default."
 msgstr ""
 
-#: includes/Admin/Menu.php:2802
+#: includes/Admin/Menu.php:2925
 #: includes/Core/I18n.php:699
 msgid "Operational Status"
 msgstr ""
 
-#: includes/Admin/Menu.php:2805
+#: includes/Admin/Menu.php:2928
 #: includes/Core/I18n.php:700
 msgid "Live & Reservable"
 msgstr ""
 
-#: includes/Admin/Menu.php:2806
+#: includes/Admin/Menu.php:2929
 #: includes/Core/I18n.php:701
 msgid "Inactive / Maintenance"
 msgstr ""
 
-#: includes/Admin/Menu.php:2811
+#: includes/Admin/Menu.php:2934
 #: includes/Core/I18n.php:842
 msgid "Room Image"
 msgstr ""
 
-#: includes/Admin/Menu.php:2821
+#: includes/Admin/Menu.php:2944
 msgid "Optional. Overrides the room type image for this specific unit on the frontend."
 msgstr ""
 
-#: includes/Admin/Menu.php:2843
+#: includes/Admin/Menu.php:2966
 #: includes/Core/I18n.php:692
 #: includes/Core/I18n.php:1504
 msgid "Full Unit Inventory"
 msgstr ""
 
-#: includes/Admin/Menu.php:2850
+#: includes/Admin/Menu.php:2973
 msgid "Image"
 msgstr ""
 
-#: includes/Admin/Menu.php:2860
+#: includes/Admin/Menu.php:2983
 #: includes/Core/I18n.php:748
 msgid "Inventory is completely empty."
 msgstr ""
 
-#: includes/Admin/Menu.php:2882
+#: includes/Admin/Menu.php:3005
 #: includes/Core/I18n.php:740
 msgid "Custom rate override active for this unit."
 msgstr ""
 
-#: includes/Admin/Menu.php:2889
+#: includes/Admin/Menu.php:3012
 #: includes/Core/I18n.php:702
 msgid "Receiving Bookings"
 msgstr ""
 
-#: includes/Admin/Menu.php:2901
+#: includes/Admin/Menu.php:3024
 #: includes/Core/I18n.php:745
 #: includes/Core/I18n.php:1505
 msgid "Edit Details"
 msgstr ""
 
-#: includes/Admin/Menu.php:2905
+#: includes/Admin/Menu.php:3028
 #: includes/Core/I18n.php:746
 #: includes/Core/I18n.php:1506
 msgid "iCal Connections"
 msgstr ""
 
-#: includes/Admin/Menu.php:2912
+#: includes/Admin/Menu.php:3035
 #: includes/Core/I18n.php:747
 msgid "Permanently remove this unit from inventory?"
 msgstr ""
 
-#: includes/Admin/Menu.php:2979
+#: includes/Admin/Menu.php:3102
 #: includes/Core/I18n.php:1507
 msgid "Service Extras & Add-ons"
 msgstr ""
 
-#: includes/Admin/Menu.php:2984
+#: includes/Admin/Menu.php:3107
 msgid "Active Add-ons"
 msgstr ""
 
-#: includes/Admin/Menu.php:2991
+#: includes/Admin/Menu.php:3114
 #: includes/Core/I18n.php:1508
 msgid "Configure Available Services"
 msgstr ""
 
-#: includes/Admin/Menu.php:3155
+#: includes/Admin/Menu.php:3278
 msgid "Compulsory Fee"
 msgstr ""
 
 #: includes/Admin/Settings.php:194
+msgid "Additional Notification Email"
+msgstr ""
+
+#: includes/Admin/Settings.php:196
 msgid "Hotel Timezone"
 msgstr ""
 
-#: includes/Admin/Settings.php:198
+#: includes/Admin/Settings.php:200
 msgid "Enable Inline Booking Modal"
 msgstr ""
 
-#: includes/Admin/Settings.php:201
+#: includes/Admin/Settings.php:203
 msgid "Open the booking form in a slide-in drawer instead of navigating to a separate booking page."
 msgstr ""
 
+#: includes/Admin/Settings.php:356
+msgid "Optional. An extra address that will be copied (CC) on every admin booking notification."
+msgstr ""
+
 #. translators: %s: WordPress site timezone string (e.g. UTC, Europe/London)
-#: includes/Admin/Settings.php:355
+#: includes/Admin/Settings.php:370
 #, php-format
 msgid "— Same as WordPress site (%s) —"
 msgstr ""
 
-#: includes/Admin/Settings.php:360
+#: includes/Admin/Settings.php:375
 msgid "All calendar dates, pricing rules, and iCal events use this timezone. Leave blank to inherit the WordPress site timezone."
 msgstr ""
 
-#: includes/Admin/Settings.php:3348
+#: includes/Admin/Settings.php:3361
 msgid "Service Fee (Pro)"
 msgstr ""
 
-#: includes/Admin/Settings.php:3349
+#: includes/Admin/Settings.php:3362
 msgid "Add an optional fixed or percentage-based service fee to every booking. The fee appears as its own line item in the booking breakdown and is taxable when tax is enabled."
 msgstr ""
 
-#: includes/Admin/Settings.php:3354
+#: includes/Admin/Settings.php:3367
 msgid "Enable Service Fee"
 msgstr ""
 
-#: includes/Admin/Settings.php:3357
+#: includes/Admin/Settings.php:3370
 msgid "Charge a service fee on all bookings"
 msgstr ""
 
-#: includes/Admin/Settings.php:3362
+#: includes/Admin/Settings.php:3375
 msgid "Fee Label"
 msgstr ""
 
-#: includes/Admin/Settings.php:3364
+#: includes/Admin/Settings.php:3377
 msgid "Label shown to guests in the booking breakdown (e.g. \"Service Fee\", \"Resort Fee\")."
 msgstr ""
 
-#: includes/Admin/Settings.php:3371
+#: includes/Admin/Settings.php:3384
 msgid "Fee Type"
 msgstr ""
 
-#: includes/Admin/Settings.php:3375
+#: includes/Admin/Settings.php:3388
 msgid "Fixed amount"
 msgstr ""
 
-#: includes/Admin/Settings.php:3381
+#: includes/Admin/Settings.php:3394
 msgid "Percentage (%)"
 msgstr ""
 
-#: includes/Admin/Settings.php:3385
+#: includes/Admin/Settings.php:3398
 msgid "Fixed: flat fee per booking. Percentage: % of subtotal (room + extras, pre-tax)."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:38
+#: includes/AI/Abilities/CheckAvailability.php:71
 msgid "Check Room Availability"
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:39
+#: includes/AI/Abilities/CheckAvailability.php:72
 msgid "Check real-time room availability for specific dates and guest count. Returns available room types with pricing."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:117
-#: includes/AI/Abilities/CreateBookingLink.php:102
+#: includes/AI/Abilities/CheckAvailability.php:150
+#: includes/AI/Abilities/CreateBookingLink.php:127
 #: includes/AI/Abilities/Pro/ModifyBooking.php:120
 #: includes/Core/I18n.php:887
 #: includes/Core/I18n.php:1579
 msgid "Check-in date cannot be in the past."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:120
+#: includes/AI/Abilities/CheckAvailability.php:153
 #: includes/Api/ModalApi.php:129
 msgid "Check-out must be after check-in."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:127
+#: includes/AI/Abilities/CheckAvailability.php:160
 msgid "Invalid date format."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:133
+#: includes/AI/Abilities/CheckAvailability.php:166
 msgid "Stay cannot exceed 365 nights."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:153
+#: includes/AI/Abilities/CheckAvailability.php:186
 msgid "No rooms found."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:306
+#. translators: %d: age
+#: includes/AI/Abilities/CheckAvailability.php:398
+#, php-format
+msgid " (Children aged %d and under stay free)"
+msgstr ""
+
+#: includes/AI/Abilities/CheckAvailability.php:399
+msgid " (Babies aged 0 stay free)"
+msgstr ""
+
+#. translators: 1: room name, 2: max adults, 3: max children, 4: total capacity, 5: age policy
+#: includes/AI/Abilities/CheckAvailability.php:403
+#, php-format
+msgid "- %1$s: Max Adults %2$d, Max Children %3$d. Total: %4$d%5$s"
+msgstr ""
+
+#: includes/AI/Abilities/CheckAvailability.php:415
 msgid "No rooms available for the selected dates and guest count."
 msgstr ""
 
-#: includes/AI/Abilities/CheckAvailability.php:306
+#: includes/AI/Abilities/CheckAvailability.php:415
 msgid "Capacity Guidelines:"
 msgstr ""
 
 #. translators: %1$d number of rooms, %2$d nights
-#: includes/AI/Abilities/CheckAvailability.php:309
+#: includes/AI/Abilities/CheckAvailability.php:418
 #, php-format
 msgid "%1$d room type available for %2$d night."
 msgid_plural "%1$d room types available for %2$d nights."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/AI/Abilities/CheckAvailability.php:315
+#: includes/AI/Abilities/CheckAvailability.php:425
+msgid "Note: some options require multiple rooms to accommodate your group."
+msgstr ""
+
+#. translators: This is an internal instruction for the AI model to handle multiple room reservations.
+#: includes/AI/Abilities/CheckAvailability.php:427
+msgid "IMPORTANT: For multi-room options, I must create INDIVIDUAL booking cards for each room. I need the guest's Full Name, Email, and Phone to prepare these cards. Once they provide these details, I will generate the FIRST card and instruct them to return here for the next one."
+msgstr ""
+
+#: includes/AI/Abilities/CheckAvailability.php:429
 msgid "Guests can book directly using the provided room links or view all options here: "
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:40
+#: includes/AI/Abilities/CreateBookingLink.php:61
 msgid "Create Booking Link"
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:41
-msgid "Generate a pre-filled booking link for a guest with full pricing, deposit, and payment details. Use this when the guest has confirmed their room choice, dates, and guest count. ALWAYS include guest_name, guest_email, and guest_phone if they have been previously shared or collected during the session. IMPORTANT: Do NOT include the booking URL as a hyperlink or plain text in your reply — the booking UI card is displayed automatically and contains the link. Only summarise the booking details in plain text (room, dates, total, deposit)."
+#: includes/AI/Abilities/CreateBookingLink.php:62
+msgid "Generate a pre-filled booking link for a guest with full pricing, deposit, and payment details. Use this when the guest has confirmed their room choice, dates, and guest count. ALWAYS include guest_name, guest_email, and guest_phone if collected. CRITICAL RESPONSE RULES after calling this tool: (1) Do NOT include the URL anywhere in your reply — not as a hyperlink, not as plain text, not as \"click here\". (2) Do NOT say \"use the link below\", \"click the link\", or \"booking link\". (3) Reply with 1–2 sentences ONLY: confirm the room name, dates, and total price. The booking card with the button is shown to the guest automatically."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:82
+#: includes/AI/Abilities/CreateBookingLink.php:107
 msgid "The email address provided is not valid. Please ask the guest to provide a valid email address (e.g. name@example.com)."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:90
+#: includes/AI/Abilities/CreateBookingLink.php:115
 msgid "Check-in and check-out dates are required."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:97
+#: includes/AI/Abilities/CreateBookingLink.php:122
 msgid "Invalid date range. Check-out must be after check-in."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:106
+#: includes/AI/Abilities/CreateBookingLink.php:131
 msgid "A valid room ID is required."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:123
+#: includes/AI/Abilities/CreateBookingLink.php:171
 msgid "Room not found."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:130
+#: includes/AI/Abilities/CreateBookingLink.php:178
 #: includes/Core/I18n.php:835
 msgid "Room not Available"
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:141
+#: includes/AI/Abilities/CreateBookingLink.php:189
 msgid "Unable to calculate pricing for this room and dates."
 msgstr ""
 
 #. translators: %1$s room name, %2$s formatted price
-#: includes/AI/Abilities/CreateBookingLink.php:272
+#: includes/AI/Abilities/CreateBookingLink.php:321
 #, php-format
-msgid "Your booking summary for %1$s at %2$s is ready. Click the link below to complete your reservation — all details are pre-filled for you."
+msgid "[SYSTEM] Booking card displayed to guest for %1$s at %2$s. Reply with 1–2 sentences ONLY: confirm room name, dates, and total. Do NOT mention a URL, do NOT say \"click the link\" or \"use the link below\" — the interactive card is already visible and contains the button."
 msgstr ""
 
-#: includes/AI/Abilities/CreateBookingLink.php:362
+#. translators: 1: room index, 2: total rooms
+#: includes/AI/Abilities/CreateBookingLink.php:329
+#, php-format
+msgid "Room %1$d of %2$d"
+msgstr ""
+
+#. translators: 1: room index, 2: remaining count, 3: "room" or "rooms" label, 4: total rooms
+#: includes/AI/Abilities/CreateBookingLink.php:335
+#, php-format
+msgid "[SYSTEM] Booking card generated for room %1$d. INSTRUCT THE GUEST: \"This is booking %1$d of %4$d. Once you complete this reservation, PLEASE COME BACK TO THIS CHAT and say 'next room' so I can prepare the remaining %2$d %3$s for you.\""
+msgstr ""
+
+#: includes/AI/Abilities/CreateBookingLink.php:338
+msgid "room"
+msgid_plural "rooms"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: room index, 2: total rooms
+#: includes/AI/Abilities/CreateBookingLink.php:344
+#, php-format
+msgid "[SYSTEM] Final booking card generated (%1$d of %2$d). INSTRUCT THE GUEST: \"All rooms are now ready! Please ensure you have completed every reservation using the cards above.\""
+msgstr ""
+
+#: includes/AI/Abilities/CreateBookingLink.php:436
 #: includes/AI/Abilities/GetBusinessCard.php:154
 msgid "First night's rate"
 msgstr ""
@@ -1884,32 +1969,44 @@ msgstr ""
 msgid "Room type not found."
 msgstr ""
 
+#: includes/AI/ChatRest.php:517
+msgid "Book next room"
+msgstr ""
+
+#: includes/AI/ChatRest.php:518
+msgid "Change room type"
+msgstr ""
+
+#: includes/AI/ChatRest.php:519
+msgid "Contact hotel"
+msgstr ""
+
 #. translators: %1$s: optional refund policy note e.g. " (non-refundable)"
-#: includes/AI/KnowledgeBase.php:209
+#: includes/AI/KnowledgeBase.php:230
 #, php-format
 msgid "- A deposit of your first night's rate is required at booking time%1$s."
 msgstr ""
 
 #. translators: %1$s: deposit amount, %2$s: currency symbol, %3$s: optional refund policy note
-#: includes/AI/KnowledgeBase.php:216
+#: includes/AI/KnowledgeBase.php:237
 #, php-format
 msgid "- A deposit of %1$s %2$s is required at booking time%3$s."
 msgstr ""
 
 #. translators: %1$d: deposit percentage, %2$s: optional refund policy note
-#: includes/AI/KnowledgeBase.php:225
-#: includes/AI/KnowledgeBase.php:232
+#: includes/AI/KnowledgeBase.php:246
+#: includes/AI/KnowledgeBase.php:253
 #, php-format
 msgid "- A deposit of %1$d%% of the total is required at booking time%2$s."
 msgstr ""
 
-#: includes/AI/KnowledgeBase.php:236
+#: includes/AI/KnowledgeBase.php:257
 msgid "Inform guests when discussing pricing."
 msgstr ""
 
-#: includes/AI/LlmFile.php:36
-#: includes/AI/LlmFile.php:60
-#: includes/AI/Loader.php:148
+#: includes/AI/LlmFile.php:39
+#: includes/AI/LlmFile.php:63
+#: includes/AI/Loader.php:151
 #: includes/Core/I18n.php:600
 #: includes/Core/I18n.php:1409
 #: includes/Core/I18n.php:2116
@@ -1918,19 +2015,19 @@ msgstr ""
 msgid "Insufficient permissions."
 msgstr ""
 
-#: includes/AI/LlmFile.php:47
+#: includes/AI/LlmFile.php:50
 msgid "AI Discovery files published successfully."
 msgstr ""
 
-#: includes/AI/LlmFile.php:50
+#: includes/AI/LlmFile.php:53
 msgid "Failed to write files to site root. Please check permissions."
 msgstr ""
 
-#: includes/AI/LlmFile.php:68
+#: includes/AI/LlmFile.php:71
 msgid "AI Discovery files removed."
 msgstr ""
 
-#: includes/AI/Loader.php:560
+#: includes/AI/Loader.php:567
 msgid "Hotel AI Guest"
 msgstr ""
 
@@ -2027,21 +2124,106 @@ msgstr ""
 msgid "Pay via Revolut.me"
 msgstr ""
 
+#: includes/Core/Email.php:149
+msgid "New Booking Received"
+msgstr ""
+
+#: includes/Core/Email.php:159
+#: includes/Pro/Invoice.php:165
+msgid "Guest Details"
+msgstr ""
+
+#: includes/Core/Email.php:161
+msgid "Name"
+msgstr ""
+
+#: includes/Core/Email.php:162
+#: includes/Core/I18n.php:1045
+#: includes/Core/I18n.php:1302
+#: includes/Core/I18n.php:2221
+msgid "Email"
+msgstr ""
+
+#: includes/Core/Email.php:163
+#: includes/Core/I18n.php:583
+msgid "Phone"
+msgstr ""
+
+#: includes/Core/Email.php:165
+msgid "Special Requests"
+msgstr ""
+
+#. translators: %s: tax name (e.g., VAT)
+#: includes/Core/Email.php:183
+#: includes/Core/I18n.php:806
+#: includes/Core/I18n.php:2410
+#: includes/Pro/Invoice.php:171
+msgid "Booking Details"
+msgstr ""
+
+#: includes/Core/Email.php:185
+#: includes/Core/I18n.php:985
+#: includes/Core/I18n.php:2438
+msgid "Booking ID"
+msgstr ""
+
+#: includes/Core/Email.php:187
+#: includes/Core/I18n.php:547
+#: includes/Pro/Invoice.php:173
+#: assets/block/booking-form/block.js:44
+msgid "Check-in"
+msgstr ""
+
+#: includes/Core/Email.php:188
+#: includes/Core/I18n.php:548
+#: includes/Pro/Invoice.php:174
+#: assets/block/booking-form/block.js:48
+msgid "Check-out"
+msgstr ""
+
+#: includes/Core/Email.php:189
+#: includes/Core/I18n.php:553
+#: includes/Pro/Invoice.php:176
+#: assets/block/booking-form/block.js:52
+msgid "Guests"
+msgstr ""
+
+#: includes/Core/Email.php:190
+#: includes/Core/I18n.php:1295
+#: includes/Core/I18n.php:2442
+msgid "Total Price"
+msgstr ""
+
+#: includes/Core/Email.php:191
+#: includes/Core/I18n.php:1297
+msgid "Payment Method"
+msgstr ""
+
+#: includes/Core/Email.php:197
+msgid "View Booking in Dashboard"
+msgstr ""
+
+#. translators: 1: booking ID, 2: guest name
+#: includes/Core/Email.php:204
+#, php-format
+msgid "[%1$s] New Booking #%2$d from %3$s"
+msgstr ""
+
 #. translators: %s: site name
-#: includes/Core/Email.php:565
+#: includes/Core/Email.php:745
 #, php-format
 msgid "Verify your identity - %s"
 msgstr ""
 
-#: includes/Core/Email.php:570
+#: includes/Core/Email.php:750
 msgid "Verify Your Identity"
 msgstr ""
 
-#: includes/Core/Email.php:571
+#: includes/Core/Email.php:751
 msgid "Please use the following code to confirm your identity with our AI concierge. This code will expire in 20 minutes."
 msgstr ""
 
-#: includes/Core/Email.php:577
+#: includes/Core/Email.php:757
 msgid "If you did not request this code, please ignore this email."
 msgstr ""
 
@@ -2066,18 +2248,6 @@ msgstr ""
 msgid "Search Rooms"
 msgstr ""
 
-#: includes/Core/I18n.php:547
-#: includes/Pro/Invoice.php:173
-#: assets/block/booking-form/block.js:44
-msgid "Check-in"
-msgstr ""
-
-#: includes/Core/I18n.php:548
-#: includes/Pro/Invoice.php:174
-#: assets/block/booking-form/block.js:48
-msgid "Check-out"
-msgstr ""
-
 #. translators: %s: check-in time (e.g., 14:00)
 #: includes/Core/I18n.php:550
 #, php-format
@@ -2088,12 +2258,6 @@ msgstr ""
 #: includes/Core/I18n.php:552
 #, php-format
 msgid "by %s"
-msgstr ""
-
-#: includes/Core/I18n.php:553
-#: includes/Pro/Invoice.php:176
-#: assets/block/booking-form/block.js:52
-msgid "Guests"
 msgstr ""
 
 #: includes/Core/I18n.php:554
@@ -2203,10 +2367,6 @@ msgstr ""
 #: includes/Core/I18n.php:582
 #: includes/Core/I18n.php:2444
 msgid "Customer Name"
-msgstr ""
-
-#: includes/Core/I18n.php:583
-msgid "Phone"
 msgstr ""
 
 #: includes/Core/I18n.php:585
@@ -2692,7 +2852,7 @@ msgstr ""
 
 #: includes/Core/I18n.php:725
 #: includes/Core/Tax.php:695
-#: includes/Pro/PaymentGateways.php:1556
+#: includes/Pro/PaymentGateways.php:1594
 msgid "Service Fee"
 msgstr ""
 
@@ -2768,6 +2928,10 @@ msgstr ""
 #: includes/Core/I18n.php:1256
 #: includes/Core/I18n.php:1434
 msgid "iCal Sync"
+msgstr ""
+
+#: includes/Core/I18n.php:751
+msgid "Pending Sync"
 msgstr ""
 
 #: includes/Core/I18n.php:760
@@ -2930,13 +3094,6 @@ msgstr ""
 
 #: includes/Core/I18n.php:804
 msgid "Click below to confirm your booking request."
-msgstr ""
-
-#. translators: %s: tax name (e.g., VAT)
-#: includes/Core/I18n.php:806
-#: includes/Core/I18n.php:2410
-#: includes/Pro/Invoice.php:171
-msgid "Booking Details"
 msgstr ""
 
 #: includes/Core/I18n.php:807
@@ -3539,11 +3696,6 @@ msgstr ""
 msgid "Common causes:"
 msgstr ""
 
-#: includes/Core/I18n.php:985
-#: includes/Core/I18n.php:2438
-msgid "Booking ID"
-msgstr ""
-
 #: includes/Core/I18n.php:986
 msgid "Reference Number"
 msgstr ""
@@ -3760,12 +3912,6 @@ msgstr ""
 #: includes/Core/I18n.php:1044
 #: includes/Core/I18n.php:2207
 msgid "WhatsApp"
-msgstr ""
-
-#: includes/Core/I18n.php:1045
-#: includes/Core/I18n.php:1302
-#: includes/Core/I18n.php:2221
-msgid "Email"
 msgstr ""
 
 #: includes/Core/I18n.php:1046
@@ -4056,7 +4202,7 @@ msgid "Welcome to our hotel."
 msgstr ""
 
 #: includes/Core/I18n.php:1134
-#: blocks/ai-concierge/index.js:26
+#: blocks/ai-concierge/index.js:38
 msgid "AI Concierge Settings"
 msgstr ""
 
@@ -4546,17 +4692,8 @@ msgstr ""
 msgid "No extras configured."
 msgstr ""
 
-#: includes/Core/I18n.php:1295
-#: includes/Core/I18n.php:2442
-msgid "Total Price"
-msgstr ""
-
 #: includes/Core/I18n.php:1296
 msgid "Deposit Amount"
-msgstr ""
-
-#: includes/Core/I18n.php:1297
-msgid "Payment Method"
 msgstr ""
 
 #: includes/Core/I18n.php:1298
@@ -5076,6 +5213,18 @@ msgstr ""
 #: includes/Core/I18n.php:2321
 #: includes/Core/I18n.php:2843
 msgid "Disabled"
+msgstr ""
+
+#: includes/Core/I18n.php:1495
+msgid "Service / Feed Name"
+msgstr ""
+
+#: includes/Core/I18n.php:1496
+msgid "Feed URL"
+msgstr ""
+
+#: includes/Core/I18n.php:1497
+msgid "Last Heartbeat"
 msgstr ""
 
 #: includes/Core/I18n.php:1509
@@ -8281,10 +8430,6 @@ msgstr ""
 msgid "Synced %s ago"
 msgstr ""
 
-#: includes/Core/I18n.php:2550
-msgid "Never synced"
-msgstr ""
-
 #: includes/Core/I18n.php:2551
 msgid "+ Add Connection"
 msgstr ""
@@ -8499,10 +8644,6 @@ msgstr ""
 
 #: includes/Core/I18n.php:2618
 msgid "Modern concrete and charcoal for city lofts."
-msgstr ""
-
-#: includes/Core/I18n.php:2621
-msgid "Connection Name"
 msgstr ""
 
 #: includes/Core/I18n.php:2625
@@ -8933,10 +9074,6 @@ msgstr ""
 msgid "Add breakfast, airport transfers, tour packages, or custom experiences."
 msgstr ""
 
-#: includes/Core/I18n.php:2771
-msgid "ago"
-msgstr ""
-
 #: includes/Core/I18n.php:2773
 msgid "New Room Registration"
 msgstr ""
@@ -9130,11 +9267,11 @@ msgstr ""
 msgid "Your booking was received but we could not load the confirmation. Please check your email."
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:1748
+#: includes/Frontend/Shortcode.php:1784
 msgid "Item"
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:1749
+#: includes/Frontend/Shortcode.php:1785
 msgid "Amount"
 msgstr ""
 
@@ -9262,10 +9399,6 @@ msgstr ""
 msgid "—"
 msgstr ""
 
-#: includes/Pro/Invoice.php:165
-msgid "Guest Details"
-msgstr ""
-
 #: includes/Pro/Invoice.php:172
 msgid "Ref"
 msgstr ""
@@ -9289,7 +9422,7 @@ msgid "INVOICE"
 msgstr ""
 
 #: modern-hotel-booking.php:30
-#: modern-hotel-booking.php:146
+#: modern-hotel-booking.php:155
 msgid "Modern Hotel Booking Error"
 msgstr ""
 
@@ -9299,7 +9432,7 @@ msgstr ""
 msgid "This plugin requires PHP 8.0 or higher. You are running PHP %s. Please upgrade your PHP version."
 msgstr ""
 
-#: modern-hotel-booking.php:147
+#: modern-hotel-booking.php:156
 msgid "An error occurred while loading the plugin. Please check the debug log for details."
 msgstr ""
 
@@ -9313,17 +9446,17 @@ msgstr ""
 msgid "Real-time AI chat assistant for room availability, policies, and booking support."
 msgstr ""
 
-#: templates/chat-widget.php:52
+#: templates/chat-widget.php:51
 msgid "AI Concierge Chat"
 msgstr ""
 
 #. translators: %s: booking page URL
-#: templates/chat-widget.php:60
+#: templates/chat-widget.php:59
 #, php-format
 msgid "JavaScript is required for the AI Concierge. You can also %s."
 msgstr ""
 
-#: templates/chat-widget.php:61
+#: templates/chat-widget.php:60
 msgid "book directly here"
 msgstr ""
 
@@ -9508,36 +9641,40 @@ msgstr ""
 msgid "The message shown to the guest when they start the chat."
 msgstr ""
 
-#: blocks/ai-concierge/index.js:30
+#: blocks/ai-concierge/index.js:42
 msgid "Widget Variant"
 msgstr ""
 
-#: blocks/ai-concierge/index.js:33
+#: blocks/ai-concierge/index.js:45
 msgid "Floating (FAB button)"
 msgstr ""
 
-#: blocks/ai-concierge/index.js:34
+#: blocks/ai-concierge/index.js:46
 msgid "Inline (embedded)"
 msgstr ""
 
-#: blocks/ai-concierge/index.js:48
+#: blocks/ai-concierge/index.js:52
+msgid "Position (floating only)"
+msgstr ""
+
+#: blocks/ai-concierge/index.js:62
 msgid "Welcome Message"
 msgstr ""
 
-#: blocks/ai-concierge/index.js:50
+#: blocks/ai-concierge/index.js:64
 msgid "Leave blank to use the global setting."
 msgstr ""
 
-#: blocks/ai-concierge/index.js:68
+#: blocks/ai-concierge/index.js:73
 msgid "Hotel: AI Concierge"
 msgstr ""
 
-#: blocks/ai-concierge/index.js:70
-msgid "The chat widget will appear on the frontend."
+#: blocks/ai-concierge/index.js:76
+msgid "Variant"
 msgstr ""
 
-#: blocks/ai-concierge/index.js:71
-msgid "Variant"
+#: blocks/ai-concierge/index.js:82
+msgid "Chat widget renders on the frontend."
 msgstr ""
 
 #: assets/block/banking-details/block.json
@@ -9719,5 +9856,25 @@ msgstr ""
 
 #: blocks/ai-concierge/block.json
 msgctxt "block keyword"
+msgid "artificial intelligence"
+msgstr ""
+
+#: blocks/ai-concierge/block.json
+msgctxt "block keyword"
 msgid "concierge"
+msgstr ""
+
+#: blocks/ai-concierge/block.json
+msgctxt "block keyword"
+msgid "assistant"
+msgstr ""
+
+#: blocks/ai-concierge/block.json
+msgctxt "block keyword"
+msgid "widget"
+msgstr ""
+
+#: blocks/ai-concierge/block.json
+msgctxt "block keyword"
+msgid "support"
 msgstr ""
