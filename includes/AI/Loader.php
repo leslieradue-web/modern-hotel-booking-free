@@ -71,6 +71,7 @@ class Loader {
         // Hooks that must fire early.
         // WP 7.0+ Abilities API fallback guard.
         if ( function_exists( 'wp_register_ability' ) ) {
+            add_action( 'wp_abilities_api_categories_init', [ self::class, 'register_ability_categories' ] );
             add_action( 'wp_abilities_api_init', [ self::class, 'register_abilities' ] );
         }
 
@@ -150,6 +151,23 @@ class Loader {
     // -------------------------------------------------------------------------
     // Abilities
     // -------------------------------------------------------------------------
+
+    /**
+     * Register WP Ability Categories (WP 7.0+) if the API is available.
+     */
+    public static function register_ability_categories(): void {
+        if ( function_exists( 'wp_register_ability_category' ) ) {
+            wp_register_ability_category( 'hotel-information', [
+                'label' => __( 'Hotel Information', 'modern-hotel-booking' ),
+            ] );
+            wp_register_ability_category( 'booking-management', [
+                'label' => __( 'Booking Management', 'modern-hotel-booking' ),
+            ] );
+            wp_register_ability_category( 'guest-services', [
+                'label' => __( 'Guest Services', 'modern-hotel-booking' ),
+            ] );
+        }
+    }
 
     /**
      * Register WP Abilities (WP 7.0+) if the API is available.

@@ -29,7 +29,9 @@ class HotelInfo {
     public static function get_definition(): array {
         return [
             'name'               => __( 'Get Hotel Information', 'modern-hotel-booking' ),
+            'label'              => __( 'Get Hotel Information', 'modern-hotel-booking' ),
             'description'        => __( 'Returns the hotel name, description, location, contact details, amenities, and basic policies.', 'modern-hotel-booking' ),
+            'category'           => 'hotel-information',
             'input_schema'       => [ 'type' => 'object', 'properties' => (object) [], 'required' => [] ],
             'output_schema'      => [
                 'type'       => 'object',
@@ -48,7 +50,10 @@ class HotelInfo {
             ],
             'permission_callback' => '__return_true',
             'execute_callback'    => [ self::class, 'execute' ],
-            'meta'               => [ 'mcp' => [ 'public' => true ] ],
+            'meta'               => [
+                'mcp'          => [ 'public' => true ],
+                'show_in_rest' => true,
+            ],
         ];
     }
 

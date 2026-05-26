@@ -68,7 +68,9 @@ class CheckAvailability {
     public static function get_definition(): array {
         return [
             'name'        => \__( 'Check Room Availability', 'modern-hotel-booking' ),
+            'label'       => \__( 'Check Room Availability', 'modern-hotel-booking' ),
             'description' => \__( 'Check real-time room availability for specific dates and guest count. Returns available room types with pricing.', 'modern-hotel-booking' ),
+            'category'    => 'booking-management',
             'input_schema' => [
                 'type'       => 'object',
                 'properties' => [
@@ -109,7 +111,10 @@ class CheckAvailability {
             ],
             'permission_callback' => '__return_true',
             'execute_callback'    => [ self::class, 'execute' ],
-            'meta'                => [ 'mcp' => [ 'public' => true ] ],
+            'meta'                => [
+                'mcp'          => [ 'public' => true ],
+                'show_in_rest' => true,
+            ],
         ];
     }
 

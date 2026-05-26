@@ -36,7 +36,9 @@ class Policies {
     public static function get_definition(): array {
         return [
             'name'        => __( 'Get Hotel Policies', 'modern-hotel-booking' ),
+            'label'       => __( 'Get Hotel Policies', 'modern-hotel-booking' ),
             'description' => __( 'Retrieve hotel policies including cancellation, check-in/out, pets, smoking, and payment terms.', 'modern-hotel-booking' ),
+            'category'    => 'hotel-information',
             'input_schema' => [
                 'type'       => 'object',
                 'properties' => [
@@ -57,7 +59,10 @@ class Policies {
             ],
             'permission_callback' => '__return_true',
             'execute_callback'    => [ self::class, 'execute' ],
-            'meta'                => [ 'mcp' => [ 'public' => true ] ],
+            'meta'                => [
+                'mcp'          => [ 'public' => true ],
+                'show_in_rest' => true,
+            ],
         ];
     }
 

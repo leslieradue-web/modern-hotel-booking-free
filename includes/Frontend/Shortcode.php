@@ -1196,15 +1196,14 @@ $localized_data = [
         }
 
 echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_in, $check_out)) . '</h3>';
-        if ([] === $available_rooms) {
+        if (!is_array($available_rooms) || [] === $available_rooms) {
             echo '<p>' . esc_html(I18n::get_label('label_no_rooms')) . '</p>';
             $this->render_search_form();
             return;
         }
 
         echo '<div class="mhbo-rooms-grid">';
-        if (is_array($available_rooms) && [] !== $available_rooms) {
-            foreach ($available_rooms as $room) {
+        foreach ($available_rooms as $room) {
             $start_date = new \DateTime($check_in);
             $end_date = new \DateTime($check_out);
             $interval = new \DateInterval('P1D');
@@ -1285,7 +1284,6 @@ echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_
             
             echo '<button type="submit" class="mhbo-btn">' . esc_html(I18n::get_label('btn_book_now')) . '</button>';
             echo '</form></div></div>';
-        }
         }
         echo '</div>';
     }

@@ -28,7 +28,9 @@ class LocalTips {
     public static function get_definition(): array {
         return [
             'name'        => __( 'Get Local Concierge Tips', 'modern-hotel-booking' ),
+            'label'       => __( 'Get Local Concierge Tips', 'modern-hotel-booking' ),
             'description' => __( 'Retrieve recommendations for nearby restaurants, attractions, and local travel tips.', 'modern-hotel-booking' ),
+            'category'    => 'hotel-information',
             'input_schema' => [
                 'type'       => 'object',
                 'properties' => [
@@ -48,7 +50,10 @@ class LocalTips {
             ],
             'permission_callback' => '__return_true',
             'execute_callback'    => [ self::class, 'execute' ],
-            'meta'                => [ 'mcp' => [ 'public' => true ] ],
+            'meta'                => [
+                'mcp'          => [ 'public' => true ],
+                'show_in_rest' => true,
+            ],
         ];
     }
 

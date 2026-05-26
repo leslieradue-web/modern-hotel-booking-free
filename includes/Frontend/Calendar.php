@@ -228,6 +228,12 @@ class Calendar
 
     private static $calendar_instance_rendered = false;
 
+    /**
+     * Render the shortcode.
+     *
+     * @param array<string, mixed>|string|false $atts Shortcode attributes.
+     * @return string
+     */
     public function render_shortcode(array|string|false $atts): string
     {
         $atts = shortcode_atts(['room_id' => 0], $atts);

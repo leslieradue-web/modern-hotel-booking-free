@@ -129,21 +129,6 @@ class AiSettings {
     }
 
 /**
-     * REST endpoint to create the analytics database table.
-     *
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public static function rest_create_analytics_table( WP_REST_Request $request ): WP_REST_Response {
-        try {
-            ChatSession::create_table();
-            return new WP_REST_Response( [ 'success' => true, 'message' => __( 'Analytics table created successfully!', 'modern-hotel-booking' ) ], 200 );
-        } catch ( \Throwable $e ) {
-            return new WP_REST_Response( [ 'success' => false, 'message' => 'FATAL: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() ], 500 );
-        }
-    }
-
-    /**
      * REST Callback: Clear Lock.
      */
     public static function rest_clear_lock( WP_REST_Request $request ): WP_REST_Response {
@@ -151,10 +136,14 @@ class AiSettings {
         \delete_transient( 'mhbo_ai_error_score' );
 
         // Clear model-specific failure flags — must match get_dynamic_fallback_chain() list.
+        // May 2026: gemini-3.1-flash-lite-preview is EOL (May 25). Replaced with GA models.
         $models_to_clear = [
-            'gemini-3.1-flash-lite-preview', // Primary preview
-            'gemini-3-flash-preview',           // Secondary preview (Corrected ID)
-            'gemini-3.1-pro-preview',        // Emergency preview
+            'gemini-3.5-flash',              // GA primary (May 2026)
+            'gemini-3.1-flash-lite',         // GA stable (May 2026)
+            'gemini-3-flash-preview',        // Preview (Computer Use)
+            'gemini-3.1-pro-preview',        // Preview flagship
+            'gemini-2.5-flash-lite',         // GA stable safety net
+            'gemini-2.5-flash',              // GA stable last resort
         ];
         foreach ( $models_to_clear as $m ) {
             \delete_transient( "mhbo_ai_model_fail_{$m}" );
@@ -250,7 +239,7 @@ class AiSettings {
 
         $provider      = (string) get_option( 'mhbo_ai_provider', 'gemini' );
         $api_key       = (string) get_option( 'mhbo_ai_api_key', '' );
-        $model         = (string) get_option( 'mhbo_ai_model', 'gemini-3.1-flash-lite-preview' );
+        $model         = (string) get_option( 'mhbo_ai_model', 'gemini-3.5-flash' );
         
         /* BUILD_FREE_START
         $reasoning_effort = 'none';
@@ -487,9 +476,12 @@ $is_pro = false;
                                         <td>
                                             <div id="mhbo_gemini_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'gemini' ) ? 'block' : 'none'; ?>;">
                                                 <?php
+                                                // May 2026: gemini-3.1-flash-lite-preview is EOL (shutdown May 25, 2026).
+                                                // New recommended: gemini-3.5-flash (GA May 19, 2026).
                                                 $gemini_models = [
-                                                    'gemini-3.1-flash-lite-preview' => \__( 'Gemini 3.1 Flash-Lite Preview ⚡ Recommended', 'modern-hotel-booking' ),
-                                                    'gemini-3.1-flash-preview'      => \__( 'Gemini 3.1 Flash Preview (Balanced)', 'modern-hotel-booking' ),
+                                                    'gemini-3.5-flash'              => \__( 'Gemini 3.5 Flash ⚡ Recommended (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3.1-flash-lite'         => \__( 'Gemini 3.1 Flash-Lite — Stable (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3-flash-preview'        => \__( 'Gemini 3 Flash Preview (Computer Use)', 'modern-hotel-booking' ),
                                                     'gemini-3.1-pro-preview'        => \__( 'Gemini 3.1 Pro Preview (Flagship)', 'modern-hotel-booking' ),
                                                     'gemini-2.5-flash'              => \__( 'Gemini 2.5 Flash — Stable', 'modern-hotel-booking' ),
                                                     'gemini-2.5-flash-lite'         => \__( 'Gemini 2.5 Flash-Lite — Stable (Lightest)', 'modern-hotel-booking' ),
@@ -509,12 +501,13 @@ $is_pro = false;
 
                                             <div id="mhbo_openai_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'openai' ) ? 'block' : 'none'; ?>;">
                                                 <?php
+                                                // May 2026: GPT-5.5 / GPT-5.5 Instant now available (April–May 2026).
                                                 $openai_models = [
-                                                    'gpt-5.4-mini' => \__( 'GPT-5.4 Mini ⚡ (Fast & Smart)', 'modern-hotel-booking' ),
+                                                    'gpt-5.4-mini'    => \__( 'GPT-5.4 Mini ⚡ (Fast & Smart)', 'modern-hotel-booking' ),
                                                     
-                                                    'gpt-4o'       => \__( 'GPT-4o (Legacy Stable)', 'modern-hotel-booking' ),
-                                                    'gpt-4o-mini'  => \__( 'GPT-4o Mini (Legacy Budget)', 'modern-hotel-booking' ),
-                                                    'custom'       => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
+                                                    'gpt-4o'          => \__( 'GPT-4o (Legacy Stable)', 'modern-hotel-booking' ),
+                                                    'gpt-4o-mini'     => \__( 'GPT-4o Mini (Legacy Budget)', 'modern-hotel-booking' ),
+                                                    'custom'          => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
                                                 ];
                                                 $is_openai_preset = array_key_exists( $model, $openai_models ) && $model !== 'custom';
                                                 $openai_preset_val = $is_openai_preset ? $model : 'custom';
@@ -528,9 +521,12 @@ $is_pro = false;
 
                                             <div id="mhbo_anthropic_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'anthropic' ) ? 'block' : 'none'; ?>;">
                                                 <?php
+                                                // May 2026: claude-sonnet-4-7 does NOT exist. Latest Sonnet is 4.6.
+                                                // Claude Opus 4.7 is available. Claude Haiku 4.5 added as budget.
                                                 $anthropic_models = [
-                                                    'claude-sonnet-4-7' => \__( 'Claude Sonnet 4.7 (Most Balanced)', 'modern-hotel-booking' ),
+                                                    'claude-sonnet-4-6' => \__( 'Claude Sonnet 4.6 (Most Balanced)', 'modern-hotel-booking' ),
                                                     
+                                                    'claude-haiku-4-5'           => \__( 'Claude Haiku 4.5 (Budget, Fast)', 'modern-hotel-booking' ),
                                                     'claude-3-5-sonnet-20240620' => \__( 'Claude 3.5 Sonnet (Legacy)', 'modern-hotel-booking' ),
                                                     'custom'            => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
                                                 ];
@@ -814,7 +810,7 @@ $is_pro = false;
             return;
         }
 
-        $active_tab = isset( $_POST['active_tab'] ) ? sanitize_key( $_POST['active_tab'] ) : '';
+        $active_tab = isset( $_POST['active_tab'] ) ? sanitize_key( wp_unslash( $_POST['active_tab'] ) ) : '';
 
         // Emergency Recovery: If everything got disabled, turn it back on.
         if ( ! get_option( 'mhbo_ai_enabled' ) && ! get_option( 'mhbo_ai_show_globally' ) ) {

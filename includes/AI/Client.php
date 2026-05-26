@@ -128,7 +128,9 @@ class Client {
 
                 // @phpstan-ignore function.notFound (WP 7.0 Core function; guarded by function_exists above)
                 $builder = \wp_ai_client_prompt( $prompt_text )
-                    ->using_system_instruction( $system_prompt );
+                    ->using_system_instruction( $system_prompt )
+                    ->using_max_tokens( 2048 )
+                    ->using_temperature( 0.7 );
 
                 // Attach conversation history for multi-turn context.
                 if ( [] !== $history_slice ) {
@@ -247,10 +249,10 @@ class Client {
         }
 
         return match ( $provider ) {
-            self::PROVIDER_GEMINI    => self::http_gemini( $api_key, $model ?: 'gemini-3.1-flash-lite-preview', $messages, $system_prompt, $tools ),
+            self::PROVIDER_GEMINI    => self::http_gemini( $api_key, $model ?: 'gemini-3.5-flash', $messages, $system_prompt, $tools ),
             self::PROVIDER_OPENAI    => self::http_openai( $api_key, $model ?: 'gpt-5.4-mini', $messages, $system_prompt, $tools, ( str_contains( $model, 'gpt-5' ) ) ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions' ),
             self::PROVIDER_OPENROUTER => self::http_openai( $api_key, $model, $messages, $system_prompt, $tools, 'https://openrouter.ai/api/v1/chat/completions' ),
-            self::PROVIDER_ANTHROPIC => self::http_anthropic( $api_key, $model ?: 'claude-sonnet-4-7', $messages, $system_prompt, $tools ),
+            self::PROVIDER_ANTHROPIC => self::http_anthropic( $api_key, $model ?: 'claude-sonnet-4-6', $messages, $system_prompt, $tools ),
             self::PROVIDER_OLLAMA    => self::http_openai( '', $model ?: 'llama3', $messages, $system_prompt, $tools, (string) get_option( self::OPT_PREFIX . 'fallback_custom_url', 'http://localhost:11434/v1/chat/completions' ) ),
             self::PROVIDER_CUSTOM    => self::http_openai( $api_key, $model, $messages, $system_prompt, $tools, (string) get_option( self::OPT_PREFIX . 'fallback_custom_url', '' ) ),
             default                  => [ 'content' => '', 'tool_calls' => [], 'finish_reason' => 'error', 'error' => \MHBO\Core\I18n::get_label( 'ai_error_unknown_fallback' ) ],
@@ -261,32 +263,7 @@ class Client {
     // Private Helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Build a payload for the standalone wordpress/ai-client SDK (Path 2).
-     *
-     * @param array<mixed> $messages
-     * @param string       $system_prompt
-     * @param array<mixed> $tools
-     * @return array<mixed>
-     */
-    private static function build_native_payload( array $messages, string $system_prompt, array $tools ): array {
-        $payload = [
-            'messages' => array_merge(
-                [ [ 'role' => 'system', 'content' => $system_prompt ] ],
-                $messages
-            ),
-        ];
-        if ( [] !== $tools ) {
-            $payload['tools'] = $tools;
-        }
-        $model = (string) get_option( self::OPT_PREFIX . 'model', '' );
-        if ( $model ) {
-            $payload['model'] = $model;
-        }
-        return $payload;
-    }
-
-    /**
+/**
      * Parse a plain text response from the WP 7.0 native prompt builder
      * into our standard response array.
      *
@@ -365,7 +342,7 @@ class Client {
  
         switch ( $provider ) {
             case self::PROVIDER_GEMINI:
-                return self::http_gemini( $api_key, $model ?: 'gemini-3.1-flash-lite-preview', $messages, $system_prompt, $tools );
+                return self::http_gemini( $api_key, $model ?: 'gemini-3.5-flash', $messages, $system_prompt, $tools );
  
             case self::PROVIDER_OPENAI:
                 $endpoint = ( str_contains( $model, 'gpt-5' ) ) ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions';
@@ -375,7 +352,7 @@ class Client {
                 return self::http_openai( $api_key, $model, $messages, $system_prompt, $tools, 'https://openrouter.ai/api/v1/chat/completions' );
  
             case self::PROVIDER_ANTHROPIC:
-                return self::http_anthropic( $api_key, $model ?: 'claude-sonnet-4-7', $messages, $system_prompt, $tools );
+                return self::http_anthropic( $api_key, $model ?: 'claude-sonnet-4-6', $messages, $system_prompt, $tools );
  
             case self::PROVIDER_OLLAMA:
                 // Ollama is local-only by design; localhost is intentional.
@@ -418,10 +395,11 @@ class Client {
      * v1beta itself is NOT deprecated (April 2026 verified).
      *
      * Verified Fallback Chain (April 2026):
-     *   gemini-3.1-flash-lite-preview → gemini-3.1-flash-preview → gemini-2.5-flash
-     *   → gemini-2.5-pro → gemini-3.1-pro-preview (last resort, most expensive)
+     *   gemini-3.5-flash → gemini-3.1-flash-lite → gemini-3-flash-preview → gemini-2.5-flash
+     *   → gemini-2.5-flash-lite → gemini-3.1-pro-preview (last resort, most expensive)
      *
-     * EOL models removed: gemini-2.5-flash-lite-preview (shut down 2026-03-31),
+     * EOL models removed: gemini-3.1-flash-lite-preview (shut down 2026-05-25),
+     *                      gemini-2.5-flash-lite-preview (shut down 2026-03-31),
      *                      gemini-1.5-flash (shut down 2026-03-31).
      *
      * @param string       $api_key
@@ -433,25 +411,26 @@ class Client {
      */
     private static function http_gemini( string $api_key, string $model, array $messages, string $system_prompt, array $tools ): array {
         // Normalize retired model names to stable 2026 equivalents.
-        // Retired as of March 31, 2026: gemini-1.5-*, gemini-2.0-*, gemini-2.5-flash-lite-preview.
-        $model = str_replace( '-latest', '', $model ?: 'gemini-2.5-flash' );
+        // Retired: gemini-1.5-*, gemini-2.0-*, gemini-2.5-flash-lite-preview, gemini-3.1-flash-lite-preview.
+        $model = str_replace( '-latest', '', $model ?: 'gemini-3.5-flash' );
 
         $retired_prefixes = [
             'gemini-1.5',
             'gemini-2.0',
         ];
         $retired_exact = [
+            'gemini-3.1-flash-lite-preview', // EOL: 2026-05-25
             'gemini-2.5-flash-lite-preview', // EOL: 2026-03-31
             'gemini-1.5-flash',              // EOL: 2026-03-31
             'gemini-1.5-pro',                // EOL: 2026-03-31
         ];
 
         if ( in_array( $model, $retired_exact, true ) ) {
-            self::log_error( "Model {$model} is EOL. Auto-migrating to gemini-2.5-flash." );
-            $model = 'gemini-2.5-flash';
+            self::log_error( "Model {$model} is EOL. Auto-migrating to gemini-3.5-flash." );
+            $model = 'gemini-3.5-flash';
         } elseif ( [] !== array_filter( $retired_prefixes, fn( $p ) => str_starts_with( $model, $p ) ) ) {
-            self::log_error( "Model {$model} uses a retired prefix. Auto-migrating to gemini-2.5-flash." );
-            $model = 'gemini-2.5-flash';
+            self::log_error( "Model {$model} uses a retired prefix. Auto-migrating to gemini-3.5-flash." );
+            $model = 'gemini-3.5-flash';
         }
 
         // Build the Gemini-format contents array (OpenAI → Gemini conversion).
@@ -529,16 +508,20 @@ class Client {
     /**
      * Return the model fallback chain starting from the requested model.
      *
-     * 2026.4 BP: Dynamic chain – models that failed in the last 5 minutes are deprioritized.
+     * 2026.5 BP: Dynamic chain – models that failed in the last 5 minutes are deprioritized.
      * Note: This cascade prioritizes "Service Continuity" (ensuring the guest gets a response)
      * over "Absolute Minimum Cost". If the cheapest model is busy, the system will try
      * more available tiers in the ecosystem.
      *
-     * April 2026 Verified Active Models (v1beta endpoint):
-     *   PREVIEW  : gemini-3.1-flash-lite-preview ($0.25/M), gemini-3-flash-preview ($0.50/M), gemini-3.1-pro-preview ($2-4/M)
-     *   STABLE GA: gemini-2.5-flash-lite ($0.10/M) — cheapest stable fallback
-     *              gemini-2.5-flash ($0.30/M) — balanced stable fallback
-     * EOL (DO NOT USE): gemini-3.1-flash-preview (404), gemini-2.5-flash-lite-preview (retired), gemini-1.5-*, gemini-3-pro-preview (v1)
+     * May 2026 Verified Active Models (v1beta endpoint):
+     *   GA       : gemini-3.5-flash ($0.15/M) — best value, newest GA
+     *              gemini-3.1-flash-lite ($0.075/M) — cheapest stable
+     *              gemini-2.5-flash ($0.30/M) — proven stable
+     *              gemini-2.5-flash-lite ($0.10/M) — ultralight stable
+     *   PREVIEW  : gemini-3-flash-preview ($0.50/M) — Computer Use support
+     *              gemini-3.1-pro-preview ($2-4/M) — flagship preview
+     * EOL (DO NOT USE): gemini-3.1-flash-lite-preview (May 25), gemini-2.5-flash-lite-preview (Mar 31),
+     *                   gemini-1.5-*, gemini-2.0-*, gemini-3-pro-preview (Mar 9)
      *
      * @param string $primary
      * @return list<string>
@@ -546,9 +529,9 @@ class Client {
     private static function get_dynamic_fallback_chain( string $primary ): array {
         // Alias map: allow shorthand admin selections to resolve to real model IDs.
         $blanket_map = [
-            'gemini-stable-primary' => 'gemini-3-flash-preview',
+            'gemini-stable-primary' => 'gemini-3.5-flash',
             'gemini-stable-high'    => 'gemini-3.1-pro-preview',
-            'gemini-flash-latest'   => 'gemini-3.1-flash-lite-preview',
+            'gemini-flash-latest'   => 'gemini-3.5-flash',
             'gemini-pro-latest'     => 'gemini-3.1-pro-preview',
         ];
 
@@ -556,16 +539,16 @@ class Client {
             $primary = $blanket_map[ $primary ];
         }
 
-        // April 2026 Economic Cascade — ordered by cost (cheapest first), all verified active.
-        // Source: https://ai.google.dev/gemini-api/docs/pricing (April 2026)
-        // Preview models tried first (better capability); stable GA models are the safety net
-        // when all previews are simultaneously at capacity (503).
+        // May 2026 Economic Cascade — ordered by cost (cheapest first), all verified active.
+        // Source: https://ai.google.dev/gemini-api/docs/pricing (May 2026)
+        // GA models tried first (most reliable); preview models are the capability safety net.
         $default_models = [
-            'gemini-3.1-flash-lite-preview', // Preview : $0.25–0.50/M input  — cheapest preview
-            'gemini-3-flash-preview',        // Preview : $0.50/M input        — balanced preview
-            'gemini-3.1-pro-preview',        // Preview : $2–4/M input         — most capable preview
-            'gemini-2.5-flash-lite',         // GA/Stable: $0.10–0.30/M input — stable safety net
-            'gemini-2.5-flash',              // GA/Stable: $0.30–1.00/M input — stable last resort
+            'gemini-3.5-flash',              // GA      : $0.15/M input — newest, best value
+            'gemini-3.1-flash-lite',         // GA      : $0.075/M input — cheapest stable
+            'gemini-3-flash-preview',        // Preview : $0.50/M input — Computer Use support
+            'gemini-3.1-pro-preview',        // Preview : $2–4/M input — most capable preview
+            'gemini-2.5-flash-lite',         // GA      : $0.10/M input — ultralight safety net
+            'gemini-2.5-flash',              // GA      : $0.30/M input — proven last resort
         ];
 
         // Separation: Reliable vs Unreliable (recently failed in last 5 min)

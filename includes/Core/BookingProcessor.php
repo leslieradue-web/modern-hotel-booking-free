@@ -55,14 +55,11 @@ class BookingProcessor
      * }
      * }
      * @param array<string, mixed> $data
-     * @return array<string, mixed>|\WP_Error Result array on success, WP_Error on failure.
-     */
-    /**
-     * @param array<string, mixed> $data
      * @param bool $bypass_lock When true the caller already holds all advisory locks
      *                          for this room and is responsible for releasing them.
      *                          MUST only be set via this parameter — never via $data —
      *                          to prevent HTTP clients from bypassing concurrency guards.
+     * @return array<string, mixed>|\WP_Error Result array on success, WP_Error on failure.
      */
     public static function process(array $data, bool $bypass_lock = false): array|\WP_Error
     {

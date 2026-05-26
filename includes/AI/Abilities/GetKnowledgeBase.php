@@ -29,7 +29,9 @@ class GetKnowledgeBase {
     public static function get_definition(): array {
         return [
             'name'        => __( 'Get Knowledge Base', 'modern-hotel-booking' ),
-            'description' => __( 'Returns the full hotel knowledge base. Optionally filter by a search query to retrieve relevant sections.', 'modern-hotel-booking' ),
+            'label'       => __( 'Get Knowledge Base', 'modern-hotel-booking' ),
+            'description' => __( 'Returns the hotel knowledge base. Optionally filter by a search query to retrieve relevant sections.', 'modern-hotel-booking' ),
+            'category'    => 'hotel-information',
             'input_schema' => [
                 'type'       => 'object',
                 'properties' => [
@@ -47,7 +49,10 @@ class GetKnowledgeBase {
             ],
             'permission_callback' => '__return_true',
             'execute_callback'    => [ self::class, 'execute' ],
-            'meta'                => [ 'mcp' => [ 'public' => true ] ],
+            'meta'                => [
+                'mcp'          => [ 'public' => true ],
+                'show_in_rest' => true,
+            ],
         ];
     }
 

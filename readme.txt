@@ -4,7 +4,7 @@ Donate link: https://startmysuccess.com/
 Tags: hotel booking, vacation rental, ical, booking calendar, accommodation
 Requires at least: 6.6
 Tested up to: 7.0
-Stable tag: 2.3.9
+Stable tag: 2.4.0
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,6 +130,20 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 
 == Changelog ==
 
+= 2.4.0 =
+* **NEW (Free & Pro): AI Concierge Flagship Release** — Refactored chatbot into state-aware "one room per turn" booking process.
+* **NEW (Free & Pro): WP 7.0 Native Abilities Compliance** — Registered and grouped all 13 conversational AI capabilities as native WP 7.0 Abilities with REST exposure. Rebuilt SQLite-backed playground preview snapshots.
+* **NEW (Pro): Adaptive License Verification Resilience** — Implemented dynamic check intervals (45 days to daily), automatic 3-stage backoff retries with 6-hour spacing, and loyalty-scaled grace periods (3–21 days) to prevent sudden feature lockout during temporary API/network dropouts.
+* **NEW (Pro): iCal Resilience & Timezone Precision** — Implemented strict date parsing for UTC offset corrections, auto-cancellation of orphans, and cache-bypass feed headers. Added Travelminit & Szallas.hu detection.
+* **MOD (Free & Pro): AI Model Migration** — Replaced retired `gemini-3.1-flash-lite-preview` model with `gemini-3.5-flash` (GA) across all fallbacks and primary connections. Updated Anthropic Sonnet default to `claude-sonnet-4-6` and added `claude-haiku-4-5` budget option. Expose `gpt-5.5` and `gpt-5.5-instant` reasoning configurations.
+* **MOD (Free & Pro): Zero-Trust Security Audit & PHPStan Static Analysis Cleanup** — Enforced strict zero-trust unslashing and key-by-key sanitization for all superglobals across Analytics, Pricing, Shortcodes, Admin Menu, and AI settings. Achieving zero static analysis errors.
+* **FIX**: Resolved Gemini payload "contents is not specified" API errors, GPT-5 reasoning effort scope, and direct SQL queries.
+
+= 2.3.9 =
+* **MOD (Free)**: Compiled and synchronized all translation assets across 15 standard locales.
+* **MOD (Free)**: Refined production WordPress 7.0 and AI support.
+* **MOD (Free)**: Updated integrated WordPress Playground snapshots and blueprints for previews.
+
 = 2.3.8 =
 * **NEW (Pro): Full Coupon System** — Create fixed or percentage discounts with expiry dates.
 * **MOD (Free): Enhanced Room Assignment Logic** — Defaulted to 'Available' tab; blocked manual selection of unavailable units.
@@ -137,16 +151,11 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 * **FIX**: Resolved PHP 8.2+ depreciation warnings.
 * **FIX**: Improved license checking and auto-sync scheduler.
 
-= 2.3.7 =
-* **NEW**: AI Concierge Shortcode `[mhbo_ai_concierge]`.
-* **NEW**: Added `show_calendar` attribute to booking form.
-* **NEW**: Intelligent Room Splitting logic for multi-room AI requests.
-
 
 == Upgrade Notice ==
 
-= 2.3.8 =
-New Coupon System added to Pro and improved iCal sync reliability. Recommended for all users.
+= 2.4.0 =
+Flagship AI Concierge release, WP 7.0 Abilities compliance, adaptive license verification resilience, and May 2026 AI models migration. Highly recommended for all users.
 
 == Credits ==
 

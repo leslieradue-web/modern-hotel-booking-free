@@ -513,7 +513,7 @@ class ChatRest {
         foreach ( $tool_calls_log as $tc_entry ) {
             if (
                 \in_array( $tc_entry['tool'], $card_tools, true ) &&
-                isset( $tc_entry['result'] ) &&
+                \is_array( $tc_entry['result'] ) &&
                 ! isset( $tc_entry['result']['error'] )
             ) {
                 $card_created = true;
@@ -1001,7 +1001,7 @@ class ChatRest {
         global $wpdb;
 
         // Collect room_ids already in the distribution.
-        $used_ids = \array_filter( \array_map( fn( $s ) => (int) ( $s['room_id'] ?? 0 ), $distribution ) );
+        $used_ids = \array_filter( \array_map( fn( $s ) => (int) ( $s['room_id'] ?? 0 ), $distribution ), fn( $id ) => 0 !== $id );
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Rationale: Real-time availability swap for multi-room flow; must be live.
         $candidates = $wpdb->get_col(

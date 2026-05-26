@@ -33,7 +33,9 @@ class GetBusinessCard {
     public static function get_definition(): array {
         return [
             'name'         => __( 'Get Business Card', 'modern-hotel-booking' ),
+            'label'        => __( 'Get Business Card', 'modern-hotel-booking' ),
             'description'  => __( 'Get hotel contact details, payment methods, banking info, Revolut, WhatsApp, and deposit policy. Use when guests ask about paying, contacting the hotel, or need business details.', 'modern-hotel-booking' ),
+            'category'     => 'hotel-information',
             'input_schema' => [
                 'type'       => 'object',
                 'properties' => [
@@ -45,6 +47,12 @@ class GetBusinessCard {
                     ],
                 ],
                 'required'   => [],
+            ],
+            'permission_callback' => '__return_true',
+            'execute_callback'    => [ self::class, 'execute' ],
+            'meta'                => [
+                'mcp'          => [ 'public' => true ],
+                'show_in_rest' => true,
             ],
         ];
     }

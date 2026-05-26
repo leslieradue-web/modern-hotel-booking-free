@@ -2378,7 +2378,7 @@ public function display_extras_page()
     public function fix_hidden_page_titles(string $admin_title, string $title): string
     {
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $page = isset($_GET['page']) ? sanitize_key($_GET['page']) : '';
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
         if (str_starts_with($page, 'mhbo-pro-')) {
             $slug = str_replace('mhbo-pro-', '', $page);
             $titles = array(
