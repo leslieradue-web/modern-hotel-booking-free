@@ -1418,8 +1418,8 @@ $deposit_data = null;
                     $ci_date  = \DateTime::createFromFormat('Y-m-d', $check_in);
                     $co_date  = \DateTime::createFromFormat('Y-m-d', $check_out);
                     $nights   = ($ci_date && $co_date) ? max(1, $ci_date->diff($co_date)->days) : 1;
-                    $ci_time  = get_option('mhbo_check_in_time', '14:00');
-                    $co_time  = get_option('mhbo_check_out_time', '11:00');
+                    $ci_time  = get_option('mhbo_checkin_time', '14:00');
+                    $co_time  = get_option('mhbo_checkout_time', '11:00');
                     ?>
                     
                     <div class="mhbo-booking-dates" style="border:1px solid var(--mhbo-border); border-radius:12px; padding:16px; display:flex; justify-content:space-between; margin-bottom:32px; background:var(--mhbo-bg, #fff);">

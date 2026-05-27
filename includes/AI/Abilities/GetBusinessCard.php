@@ -178,8 +178,8 @@ class GetBusinessCard {
 
         // ── Meta ────────────────────────────────────────────────────
         $result['currency'] = Pricing::get_currency_code();
-        $result['check_in_time']  = (string) get_option( 'mhbo_check_in_time', '14:00' );
-        $result['check_out_time'] = (string) get_option( 'mhbo_check_out_time', '11:00' );
+        $result['check_in_time']  = (string) get_option( 'mhbo_checkin_time', '14:00' );
+        $result['check_out_time'] = (string) get_option( 'mhbo_checkout_time', '11:00' );
 
         return $result;
     }

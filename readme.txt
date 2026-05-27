@@ -4,7 +4,7 @@ Donate link: https://startmysuccess.com/
 Tags: hotel booking, vacation rental, ical, booking calendar, accommodation
 Requires at least: 6.6
 Tested up to: 7.0
-Stable tag: 2.4.0
+Stable tag: 2.4.1
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,6 +130,9 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 
 == Changelog ==
 
+= 2.4.1 =
+* **FIX (Free & Pro): Check-in/Check-out Time Consistency** — Resolved an issue where admin-configured check-in and check-out times from Settings > General were not reflected in guest emails, iCal (.ics) calendar attachments, the booking form summary panel, and AI Concierge responses. All surfaces now consistently read the saved settings instead of falling back to defaults.
+
 = 2.4.0 =
 * **NEW (Free & Pro): AI Concierge Flagship Release** — Refactored chatbot into state-aware "one room per turn" booking process.
 * **NEW (Free & Pro): WP 7.0 Native Abilities Compliance** — Registered and grouped all 13 conversational AI capabilities as native WP 7.0 Abilities with REST exposure. Rebuilt SQLite-backed playground preview snapshots.
@@ -144,18 +147,11 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 * **MOD (Free)**: Refined production WordPress 7.0 and AI support.
 * **MOD (Free)**: Updated integrated WordPress Playground snapshots and blueprints for previews.
 
-= 2.3.8 =
-* **NEW (Pro): Full Coupon System** — Create fixed or percentage discounts with expiry dates.
-* **MOD (Free): Enhanced Room Assignment Logic** — Defaulted to 'Available' tab; blocked manual selection of unavailable units.
-* **MOD (Free): Improved iCal Reliability** — Enhanced CSV parsing and timezone handling.
-* **FIX**: Resolved PHP 8.2+ depreciation warnings.
-* **FIX**: Improved license checking and auto-sync scheduler.
-
 
 == Upgrade Notice ==
 
-= 2.4.0 =
-Flagship AI Concierge release, WP 7.0 Abilities compliance, adaptive license verification resilience, and May 2026 AI models migration. Highly recommended for all users.
+= 2.4.1 =
+Fixes check-in/check-out time consistency across emails, iCal attachments, booking form, and AI Concierge. Recommended for all users.
 
 == Credits ==
 
