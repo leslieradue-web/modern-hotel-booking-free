@@ -1,10 +1,10 @@
-=== Hotel Booking — Modern Vacation Rental System with AI Concierge & Stripe ===
+=== Modern Hotel Booking — AI Concierge & Direct Bookings ===
 Contributors: leslierad
 Donate link: https://startmysuccess.com/
 Tags: hotel booking, vacation rental, ical, booking calendar, accommodation
 Requires at least: 6.6
 Tested up to: 7.0
-Stable tag: 2.4.1
+Stable tag: 2.4.4
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -130,6 +130,20 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 
 == Changelog ==
 
+= 2.4.4 =
+* **NEW (Free & Pro)**: Atomic Availability Locking using MySQL native locks (`GET_LOCK`) for high-concurrency booking environments.
+* **MOD (Free & Pro)**: Improved mobile responsiveness and styling for the Booking Modal (Coupon Section and Tax Breakdown Table).
+* **MOD (Free & Pro)**: Updated bundled FullCalendar library to v7.0.0.
+* **FIX (Free & Pro)**: AI Concierge: Abilities API Category Description Fix to prevent PHP notices when registering categories on WP 6.9+.
+* **FIX (Free & Pro)**: AI Concierge: Abilities API Callback Self-Containment to prevent client integration breakage on WP 7.0+.
+* **FIX (Free & Pro)**: AI Concierge: Chat REST API Tool Call Array Safety to prevent PHP warnings.
+* **FIX (Free & Pro)**: AI Concierge: Reset Engine Transients parity to clear dynamic fallback model chains.
+* **FIX (Free & Pro)**: Frontend: Avoid printing empty grid container divs on room search results when there are no rooms.
+* **FIX (Pro)**: iCal High-precision parsing to ensure dates never shift in positive UTC offsets.
+
+= 2.4.2 =
+* **FIX (Free & Pro): Abilities Explorer Visibility** — Resolved an issue with the Abilities Explorer not showing AI Abilities. The internal name of registered abilities is no longer corrupted by the 'name' property override in the WordPress 7.0+ Abilities API.
+
 = 2.4.1 =
 * **FIX (Free & Pro): Check-in/Check-out Time Consistency** — Resolved an issue where admin-configured check-in and check-out times from Settings > General were not reflected in guest emails, iCal (.ics) calendar attachments, the booking form summary panel, and AI Concierge responses. All surfaces now consistently read the saved settings instead of falling back to defaults.
 
@@ -150,14 +164,14 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 
 == Upgrade Notice ==
 
-= 2.4.1 =
-Fixes check-in/check-out time consistency across emails, iCal attachments, booking form, and AI Concierge. Recommended for all users.
+= 2.4.4 =
+Improved mobile responsiveness for the Booking Modal, AI model updates and connections, updated FullCalendar v7.0.0. Recommended for all users.
 
 == Credits ==
 
 Open-source libraries bundled locally — no external CDN requests:
 
-* **FullCalendar** v6.1.20 — MIT License — [https://fullcalendar.io](https://fullcalendar.io)
+* **FullCalendar** v7.0.0 — MIT License — [https://fullcalendar.io](https://fullcalendar.io)
 * **Chart.js** v4.5.1 — MIT License — [https://www.chartjs.org](https://www.chartjs.org)
 * **Flatpickr** v4.6.13 — MIT License — [https://flatpickr.js.org](https://flatpickr.js.org)
 

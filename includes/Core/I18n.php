@@ -895,6 +895,7 @@ if (!defined('ABSPATH')) {
             // translators: %d: Maximum number of children
             'label_max_children_error' => __('Error: Maximum children for this room is %d.', 'modern-hotel-booking'),
             'label_price_calc_error' => __('Error calculating price. Please check dates.', 'modern-hotel-booking'),
+            'label_invalid_price' => __('Bookings cannot be placed because no valid price has been set for these dates.', 'modern-hotel-booking'),
             'label_fill_all_fields' => __('Please fill in all required fields.', 'modern-hotel-booking'),
             'label_invalid_email' => __('Please provide a valid email address.', 'modern-hotel-booking'),
             // translators: %s: Field name

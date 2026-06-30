@@ -32,7 +32,6 @@ class GetBusinessCard {
      */
     public static function get_definition(): array {
         return [
-            'name'         => __( 'Get Business Card', 'modern-hotel-booking' ),
             'label'        => __( 'Get Business Card', 'modern-hotel-booking' ),
             'description'  => __( 'Get hotel contact details, payment methods, banking info, Revolut, WhatsApp, and deposit policy. Use when guests ask about paying, contacting the hotel, or need business details.', 'modern-hotel-booking' ),
             'category'     => 'hotel-information',
@@ -209,6 +208,6 @@ class GetBusinessCard {
         if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        wp_register_ability( 'mhbo/get-business-card', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/get-business-card', self::get_definition() );
     }
 }

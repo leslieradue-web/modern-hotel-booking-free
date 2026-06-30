@@ -462,7 +462,7 @@ $is_pro = false;
                                                 <input type="checkbox" name="mhbo_ai_streaming_enabled" value="1" <?php checked( get_option( 'mhbo_ai_streaming_enabled', '1' ), '1' ); ?>>
                                                 <span class="mhbo-ai-toggle-slider"></span>
                                             </label>
-                                            <p class="description"><?php esc_html_e( 'Enable SSE to show "typing" and "thinking" in real-time. (April 2026 BP).', 'modern-hotel-booking' ); ?></p>
+                                            <p class="description"><?php esc_html_e( 'Enable SSE to show "typing" and "thinking" in real-time. (May 2026 BP).', 'modern-hotel-booking' ); ?></p>
                                         </td>
                                     </tr>
                                     <tr>
@@ -483,9 +483,9 @@ $is_pro = false;
                                                     'gemini-3.1-flash-lite'         => \__( 'Gemini 3.1 Flash-Lite — Stable (GA)', 'modern-hotel-booking' ),
                                                     'gemini-3-flash-preview'        => \__( 'Gemini 3 Flash Preview (Computer Use)', 'modern-hotel-booking' ),
                                                     'gemini-3.1-pro-preview'        => \__( 'Gemini 3.1 Pro Preview (Flagship)', 'modern-hotel-booking' ),
-                                                    'gemini-2.5-flash'              => \__( 'Gemini 2.5 Flash — Stable', 'modern-hotel-booking' ),
-                                                    'gemini-2.5-flash-lite'         => \__( 'Gemini 2.5 Flash-Lite — Stable (Lightest)', 'modern-hotel-booking' ),
-                                                    'gemini-2.5-pro'                => \__( 'Gemini 2.5 Pro — Stable (Highest Quality)', 'modern-hotel-booking' ),
+                                                    'gemini-2.5-flash'              => \__( 'Gemini 2.5 Flash — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
+                                                    'gemini-2.5-flash-lite'         => \__( 'Gemini 2.5 Flash-Lite — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
+                                                    'gemini-2.5-pro'                => \__( 'Gemini 2.5 Pro — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
                                                     'custom'                        => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
                                                 ];
                                                 // Determine if current model is in presets.
@@ -526,8 +526,7 @@ $is_pro = false;
                                                 $anthropic_models = [
                                                     'claude-sonnet-4-6' => \__( 'Claude Sonnet 4.6 (Most Balanced)', 'modern-hotel-booking' ),
                                                     
-                                                    'claude-haiku-4-5'           => \__( 'Claude Haiku 4.5 (Budget, Fast)', 'modern-hotel-booking' ),
-                                                    'claude-3-5-sonnet-20240620' => \__( 'Claude 3.5 Sonnet (Legacy)', 'modern-hotel-booking' ),
+                                                    'claude-haiku-4-5'  => \__( 'Claude Haiku 4.5 (Budget, Fast)', 'modern-hotel-booking' ),
                                                     'custom'            => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
                                                 ];
                                                 $is_anthropic_preset = array_key_exists( $model, $anthropic_models ) && $model !== 'custom';

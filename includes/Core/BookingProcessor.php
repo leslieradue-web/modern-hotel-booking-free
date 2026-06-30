@@ -144,6 +144,11 @@ $children      = 0;
             $privileged_sources = ['admin', 'ical', 'airbnb', 'booking_com'];
             $is_privileged      = in_array($source, $privileged_sources, true);
 
+            // 2026 BP: Ensure public/chatbot bookings cannot be placed for free/0 if no price has been set.
+            if (!$is_privileged && ($calc['room_total']->isZero() || $calc['room_total']->isNegative())) {
+                return new \WP_Error('mhbo_invalid_price', I18n::get_label('label_invalid_price'));
+            }
+
             // Allow manual price override ONLY for privileged/internal sources (admin, iCal, OTA).
             // 2026 BP: Public bookings MUST always use server-recalculated pricing to prevent
             // URL/POST price tampering.

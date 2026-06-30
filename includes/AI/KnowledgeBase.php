@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Knowledge Base — assembles the AI system prompt and tool definitions.
  *
@@ -9,6 +10,10 @@
 declare(strict_types=1);
 
 namespace MHBO\AI;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 use MHBO\Business\Info;
 use MHBO\Core\I18n;

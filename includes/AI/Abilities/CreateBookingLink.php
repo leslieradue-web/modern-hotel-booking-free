@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Ability: Create Booking Link
  *
@@ -16,6 +17,10 @@
 declare(strict_types=1);
 
 namespace MHBO\AI\Abilities;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 use MHBO\AI\KnowledgeBase;
 use MHBO\Business\Info;
@@ -57,7 +62,6 @@ class CreateBookingLink {
      */
     public static function get_definition(): array {
         return [
-            'name'         => \__( 'Create Booking Link', 'modern-hotel-booking' ),
             'label'        => \__( 'Create Booking Link', 'modern-hotel-booking' ),
             'description'  => \__( 'Generate a pre-filled booking link for a guest with full pricing, deposit, and payment details. Use this when the guest has confirmed their room choice, dates, and guest count. ALWAYS include guest_name, guest_email, and guest_phone if collected. CRITICAL RESPONSE RULES after calling this tool: (1) Do NOT include the URL anywhere in your reply — not as a hyperlink, not as plain text, not as "click here". (2) Do NOT say "use the link below", "click the link", or "booking link". (3) Reply with 1–2 sentences ONLY: confirm the room name, dates, and total price. The booking card with the button is shown to the guest automatically.', 'modern-hotel-booking' ),
             'category'     => 'booking-management',
@@ -430,6 +434,6 @@ class CreateBookingLink {
         if ( ! \function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        \wp_register_ability( 'mhbo/create-booking-link', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/create-booking-link', self::get_definition() );
     }
 }

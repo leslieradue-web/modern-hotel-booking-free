@@ -31,7 +31,6 @@ class RoomDetails {
      */
     public static function get_definition(): array {
         return [
-            'name'        => __( 'Get Room Details', 'modern-hotel-booking' ),
             'label'       => __( 'Get Room Details', 'modern-hotel-booking' ),
             'description' => __( 'Get detailed information about a room type including amenities, capacity, and pricing.', 'modern-hotel-booking' ),
             'category'    => 'hotel-information',
@@ -152,6 +151,6 @@ class RoomDetails {
         if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        wp_register_ability( 'mhbo/get-room-details', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/get-room-details', self::get_definition() );
     }
 }

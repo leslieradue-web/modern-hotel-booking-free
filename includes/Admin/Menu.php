@@ -136,7 +136,14 @@ public function add_dashboard_widgets(): void
         wp_enqueue_script('mhbo-admin-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-admin.js', array('jquery'), MHBO_VERSION, true);
 
 if (false !== strpos($hook, 'mhbo-bookings')) {
-            wp_enqueue_script('fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.global.min.js', array(), '6.1.20', true);
+            // FullCalendar V7: CSS must be loaded separately (skeleton + classic theme + palette).
+            wp_enqueue_style('fullcalendar-skeleton', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-skeleton.min.css', [], '7.0.0');
+            wp_enqueue_style('fullcalendar-classic-theme-css', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-theme.min.css', ['fullcalendar-skeleton'], '7.0.0');
+            wp_enqueue_style('fullcalendar-classic-palette', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-palette.min.css', ['fullcalendar-classic-theme-css'], '7.0.0');
+
+            // FullCalendar V7: main bundle + classic theme plugin.
+            wp_enqueue_script('fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.global.min.js', array(), '7.0.0', true);
+            wp_enqueue_script('fullcalendar-classic-theme', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar-classic-theme.global.min.js', array('fullcalendar'), '7.0.0', true);
 
             // Enqueue admin bookings script
             wp_enqueue_script(

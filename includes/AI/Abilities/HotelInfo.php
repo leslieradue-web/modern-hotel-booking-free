@@ -28,7 +28,6 @@ class HotelInfo {
      */
     public static function get_definition(): array {
         return [
-            'name'               => __( 'Get Hotel Information', 'modern-hotel-booking' ),
             'label'              => __( 'Get Hotel Information', 'modern-hotel-booking' ),
             'description'        => __( 'Returns the hotel name, description, location, contact details, amenities, and basic policies.', 'modern-hotel-booking' ),
             'category'           => 'hotel-information',
@@ -113,6 +112,6 @@ class HotelInfo {
             return;
         }
         $def = self::get_definition();
-        wp_register_ability( 'mhbo/get-hotel-info', $def );
+        call_user_func( 'wp_register_ability', 'mhbo/get-hotel-info', $def );
     }
 }

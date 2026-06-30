@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 /**
- * Plugin Name:       Hotel Booking — Modern Vacation Rental System with AI Concierge & Stripe
+ * Plugin Name:       Modern Hotel Booking — AI Concierge & Direct Bookings
  * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel booking system for vacation rentals, B&Bs and cabins. Includes iCal sync for Airbnb, Stripe payments and a built-in AI Concierge.
- * Version:           2.4.1
+ * Version:           2.4.4
  * Requires at least: 6.6
  * Tested up to:      7.0
  * Requires PHP:      8.0
@@ -36,7 +36,7 @@ if (version_compare(PHP_VERSION, '8.0.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.4.1');
+define('MHBO_VERSION', '2.4.4');
 define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));

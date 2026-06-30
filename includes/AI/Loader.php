@@ -63,7 +63,7 @@ class Loader {
         // See: https://make.wordpress.org/core/2026/03/24/introducing-the-ai-client-in-wordpress-7-0/
         $autoload = MHBO_PLUGIN_DIR . 'vendor/autoload.php';
         if ( file_exists( $autoload ) ) {
-            if ( ! function_exists( 'wp_get_wp_version' ) || version_compare( wp_get_wp_version(), '7.0', '<' ) ) {
+            if ( ! function_exists( 'wp_get_wp_version' ) || version_compare( call_user_func( 'wp_get_wp_version' ), '7.0', '<' ) ) {
                 require_once $autoload;
             }
         }
@@ -157,14 +157,17 @@ class Loader {
      */
     public static function register_ability_categories(): void {
         if ( function_exists( 'wp_register_ability_category' ) ) {
-            wp_register_ability_category( 'hotel-information', [
-                'label' => __( 'Hotel Information', 'modern-hotel-booking' ),
+            call_user_func( 'wp_register_ability_category', 'hotel-information', [
+                'label'       => __( 'Hotel Information', 'modern-hotel-booking' ),
+                'description' => __( 'Governs queries regarding hotel properties, room details, local tips, policies, and contact information.', 'modern-hotel-booking' ),
             ] );
-            wp_register_ability_category( 'booking-management', [
-                'label' => __( 'Booking Management', 'modern-hotel-booking' ),
+            call_user_func( 'wp_register_ability_category', 'booking-management', [
+                'label'       => __( 'Booking Management', 'modern-hotel-booking' ),
+                'description' => __( 'Allows looking up availability, creating and modifying bookings, and cancellation.', 'modern-hotel-booking' ),
             ] );
-            wp_register_ability_category( 'guest-services', [
-                'label' => __( 'Guest Services', 'modern-hotel-booking' ),
+            call_user_func( 'wp_register_ability_category', 'guest-services', [
+                'label'       => __( 'Guest Services', 'modern-hotel-booking' ),
+                'description' => __( 'Handles applying promotional codes and looking up guest history details.', 'modern-hotel-booking' ),
             ] );
         }
     }

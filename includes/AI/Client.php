@@ -423,6 +423,7 @@ class Client {
             'gemini-2.5-flash-lite-preview', // EOL: 2026-03-31
             'gemini-1.5-flash',              // EOL: 2026-03-31
             'gemini-1.5-pro',                // EOL: 2026-03-31
+            'gemini-3-pro-preview',          // EOL: 2026-03-09
         ];
 
         if ( in_array( $model, $retired_exact, true ) ) {
@@ -451,7 +452,7 @@ class Client {
         $fallback_chain  = self::get_dynamic_fallback_chain( $model );
         $last_result     = [ 'content' => '', 'tool_calls' => [], 'finish_reason' => 'error', 'error' => 'No models available.' ];
         $cascade_start   = \microtime( true );
-        $cascade_budget  = 26.0; // Hard wall: entire cascade must finish within 26 s to stay under typical 30 s proxy timeouts.
+        $cascade_budget  = 40.0; // 2026.6 BP: Increased from 26s. Per-model timeout is now 12s, so 3-4 models fit within budget. PHP set_time_limit(180) covers this.
 
         foreach ( $fallback_chain as $idx => $try_model ) {
             // Abort if we are already close to the proxy timeout wall.
@@ -489,10 +490,10 @@ class Client {
                 return $last_result; 
             }
 
-            // Exponential backoff with Jitter for transient errors (capped at 3s total per step for sync safety).
-            // 2026 BP: Randomizing the sleep (jitter) prevents 'Thundering Herd' synchronized retries.
-            $base_backoff = (int) \min( 2, \pow( 2, $idx ) );
-            $jitter_ms    = \wp_rand( 0, 500 * 1000 ); // Up to 0.5s jitter
+            // 2026.6 BP: Reduced backoff (max 1s + 0.25s jitter) to maximize models tried within cascade budget.
+            // Previous 2s + 0.5s ate too much time, preventing fallback models from being reached.
+            $base_backoff = (int) \min( 1, \pow( 2, $idx ) );
+            $jitter_ms    = \wp_rand( 0, 250 * 1000 ); // Up to 0.25s jitter
             self::log_error( "Gemini model {$try_model} error (transient) — marking as busy and moving to next in chain (" . ( $base_backoff + ( $jitter_ms / 1000000 ) ) . "s)." );
             
             if ( $base_backoff > 0 ) {
@@ -642,6 +643,9 @@ class Client {
      * @return bool
      */
     private static function is_transient_gemini_error( string $error_message ): bool {
+        // 2026.6 BP: Added cURL timeout/network phrases. Without these, cURL error 28
+        // ("Operation timed out") was classified as permanent, aborting the cascade
+        // immediately instead of trying fallback models.
         $transient_phrases = [
             'high demand',
             'temporarily unavailable',
@@ -655,6 +659,13 @@ class Client {
             '503',
             '504',
             '429',
+            'curl error',
+            'timed out',
+            'timeout',
+            'operation timed out',
+            'connection reset',
+            'could not resolve',
+            'name resolution',
         ];
         $lower = \strtolower( $error_message );
         foreach ( $transient_phrases as $phrase ) {
@@ -675,8 +686,8 @@ class Client {
      */
     private static function http_gemini_request( string $url, array $body, string $model ): array {
         $response = wp_remote_post( $url, [
-            'timeout'        => 22, // Must stay under server proxy timeout (typically 30s).
-            'connecttimeout' => 8,
+            'timeout'        => 12, // 2026.6 BP: Reduced from 22s. Flash models respond in 2-5s; 12s is generous. Allows 3-4 models within cascade budget.
+            'connecttimeout' => 5,  // 2026.6 BP: Reduced from 8s. If TCP connect takes >5s, the endpoint is unreachable.
             'sslverify'      => true,
             'headers'        => [ 'Content-Type' => 'application/json' ],
             'body'           => wp_json_encode( $body ),
@@ -944,8 +955,8 @@ class Client {
         }
 
         $args = [
-            'timeout'        => 22, // Must stay under server proxy timeout (typically 30s).
-            'connecttimeout' => 8,
+            'timeout'        => 12, // 2026.6 BP: Reduced from 22s for consistency with Gemini cascade timing.
+            'connecttimeout' => 5,  // 2026.6 BP: Reduced from 8s.
             'sslverify'      => true,
             'headers'        => $headers,
             'body'           => wp_json_encode( $body ),
@@ -1063,6 +1074,17 @@ class Client {
      * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null}
      */
     private static function http_anthropic( string $api_key, string $model, array $messages, string $system_prompt, array $tools ): array {
+        $model = $model ?: 'claude-sonnet-4-6';
+        if ( 'claude-3-5-sonnet-20240620' === $model ) {
+            self::log_error( "Model claude-3-5-sonnet-20240620 is EOL. Auto-migrating to claude-sonnet-4-6." );
+            $model = 'claude-sonnet-4-6';
+        }
+        // 2026.6 BP: Anthropic deprecated claude-opus-4-7 on June 15, 2026. Current flagship is 4.8.
+        if ( 'claude-opus-4-7' === $model ) {
+            self::log_error( "Model claude-opus-4-7 is deprecated (June 2026). Auto-migrating to claude-opus-4-8." );
+            $model = 'claude-opus-4-8';
+        }
+
         $body = [
             'model'      => $model,
             'max_tokens' => 4096, // 2026 BP: increased for reasoning models
@@ -1091,9 +1113,10 @@ if ( [] !== $tools ) {
         }
 
         $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
-            'timeout'   => 22, // Must stay under server proxy timeout (typically 30s).
-            'sslverify' => true,
-            'headers'   => [
+            'timeout'        => 12, // 2026.6 BP: Reduced from 22s for consistency with cascade timing.
+            'connecttimeout' => 5,  // 2026.6 BP: Fast-fail on unreachable endpoint.
+            'sslverify'      => true,
+            'headers'        => [
                 'x-api-key'         => $api_key,
                 'anthropic-version' => '2023-06-01',
                 'Content-Type'      => 'application/json',

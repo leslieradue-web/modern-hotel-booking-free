@@ -28,7 +28,6 @@ class GetKnowledgeBase {
      */
     public static function get_definition(): array {
         return [
-            'name'        => __( 'Get Knowledge Base', 'modern-hotel-booking' ),
             'label'       => __( 'Get Knowledge Base', 'modern-hotel-booking' ),
             'description' => __( 'Returns the hotel knowledge base. Optionally filter by a search query to retrieve relevant sections.', 'modern-hotel-booking' ),
             'category'    => 'hotel-information',
@@ -122,6 +121,6 @@ class GetKnowledgeBase {
         if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        wp_register_ability( 'mhbo/get-knowledge-base', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/get-knowledge-base', self::get_definition() );
     }
 }

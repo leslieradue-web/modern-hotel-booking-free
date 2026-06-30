@@ -35,7 +35,6 @@ class Policies {
      */
     public static function get_definition(): array {
         return [
-            'name'        => __( 'Get Hotel Policies', 'modern-hotel-booking' ),
             'label'       => __( 'Get Hotel Policies', 'modern-hotel-booking' ),
             'description' => __( 'Retrieve hotel policies including cancellation, check-in/out, pets, smoking, and payment terms.', 'modern-hotel-booking' ),
             'category'    => 'hotel-information',
@@ -119,6 +118,6 @@ class Policies {
         if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        wp_register_ability( 'mhbo/get-policies', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/get-policies', self::get_definition() );
     }
 }

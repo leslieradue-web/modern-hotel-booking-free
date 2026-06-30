@@ -602,12 +602,12 @@ if ($check_in >= $check_out) {
         $prevent_turnover = (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1;
         $show_decimals    = (int) get_option('mhbo_calendar_show_decimals', 0) === 1;
 
-// Generate data for 12 months (1 year) starting from the requested month
+// Generate data for 13 months starting from the requested month
         $data = [];
         try {
             $start_date = new \DateTime("$year-$month-01");
             $end_date = clone $start_date;
-            $end_date->modify('+12 months');
+            $end_date->modify('+13 months');
 
             $period = new \DatePeriod($start_date, new \DateInterval('P1D'), $end_date);
             foreach ($period as $dt) {
@@ -652,7 +652,7 @@ if ($check_in >= $check_out) {
                     $final_status = 'unbookable';
                 }
 
-                $b_status = $is_booked ? $booked_dates[$date_str] : null;
+                $b_status = $is_booked ? ( $booked_dates[ $date_str ] ?? null ) : null;
                 // Provide booking status for checkout dates so the UI renders half-day colors
                 if (!$is_booked && $is_check_out_day && isset($checkout_booking_status[$date_str])) {
                      $b_status = $checkout_booking_status[$date_str];
@@ -693,7 +693,7 @@ if ($check_in >= $check_out) {
     /**
      * Get aggregated calendar data for all rooms.
      */
-    private function get_aggregated_calendar_data($start_str, $end_str)
+    private function get_aggregated_calendar_data(string $start_str, string $end_str)
     {
         global $wpdb;
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Chat REST Endpoint
  *
@@ -15,6 +16,10 @@
 declare(strict_types=1);
 
 namespace MHBO\AI;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 use MHBO\AI\Abilities\CheckAvailability;
 use MHBO\AI\Abilities\CreateBookingLink;
@@ -128,7 +133,7 @@ class ChatRest {
         // 0. Ensure PHP has enough time for slow AI models (2026 BP).
         if ( \function_exists( 'set_time_limit' ) ) {
             // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
-            @\set_time_limit( 120 );
+            @\set_time_limit( 180 ); // 2026.6 BP: Increased from 120s to accommodate longer cascade budget (40s) + cross-provider fallback.
         }
         // 1. Nonce verification.
         $nonce = (string) ( $request->get_param( 'nonce' ) ?? $request->get_header( 'X-WP-Nonce' ) ?? '' );
@@ -359,7 +364,14 @@ class ChatRest {
                     ], 200 );
                 }
 
-                return new WP_Error( 'mhbo_ai_error', (string) $ai_response['error'], [ 'status' => 502 ] );
+                // 2026.6 BP: Never expose raw AI errors to guests. Always return a friendly
+                // cooling message. The original 502 WP_Error leaked internal API error details
+                // (e.g. "cURL error 28: Operation timed out") into the chat widget.
+                return new WP_REST_Response( [
+                    'response'    => I18n::get_label( 'ai_status_cooling_down' ),
+                    'session_id'  => $session_id,
+                    'suggestions' => [],
+                ], 200 );
             }
 
             $tool_calls = $ai_response['tool_calls'] ?? [];
@@ -593,10 +605,15 @@ class ChatRest {
      * Whether an AI error string represents a transient (retryable) failure.
      */
     private static function is_transient_error( string $error ): bool {
+        // 2026.6 BP: Added 'curl error', 'timed out', 'timeout', 'connection reset', '502', '429'.
+        // Without these, cURL error 28 ("Operation timed out") was misclassified as permanent,
+        // causing a raw 502 WP_Error to be surfaced to guests in the chat widget.
         $phrases = [
             'cooling', 'quota', '503', '504', 'demand', 'overloaded',
             'capacity', 'retry', 'limit', 'busy', 'unavailable',
             'no models', 'available', 'high demand',
+            'curl error', 'timed out', 'timeout', 'connection reset',
+            '502', '429',
         ];
         $lower = \strtolower( $error );
         foreach ( $phrases as $p ) {

@@ -27,7 +27,6 @@ class LocalTips {
      */
     public static function get_definition(): array {
         return [
-            'name'        => __( 'Get Local Concierge Tips', 'modern-hotel-booking' ),
             'label'       => __( 'Get Local Concierge Tips', 'modern-hotel-booking' ),
             'description' => __( 'Retrieve recommendations for nearby restaurants, attractions, and local travel tips.', 'modern-hotel-booking' ),
             'category'    => 'hotel-information',
@@ -92,6 +91,6 @@ class LocalTips {
         if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        wp_register_ability( 'mhbo/get-local-tips', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/get-local-tips', self::get_definition() );
     }
 }

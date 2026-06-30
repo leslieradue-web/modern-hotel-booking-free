@@ -195,6 +195,7 @@ class Calendar
                     'select_checkout' => I18n::get_label('label_select_check_out'),
                     'dates_selected' => I18n::get_label('label_dates_selected'),
                     'select_dates_error' => I18n::get_label('label_select_dates_error'),
+                    'invalid_price'      => I18n::get_label('label_invalid_price'),
                     'check_in_from' => I18n::get_label('label_check_in_from'),
                     'check_out_by' => I18n::get_label('label_check_out_by'),
                     'continue_booking' => I18n::get_label('label_continue_booking'),

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Ability: Check Room Availability
  *
@@ -12,6 +13,10 @@
 declare(strict_types=1);
 
 namespace MHBO\AI\Abilities;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 use MHBO\AI\KnowledgeBase;
 use MHBO\Core\Pricing;
@@ -67,7 +72,6 @@ class CheckAvailability {
      */
     public static function get_definition(): array {
         return [
-            'name'        => \__( 'Check Room Availability', 'modern-hotel-booking' ),
             'label'       => \__( 'Check Room Availability', 'modern-hotel-booking' ),
             'description' => \__( 'Check real-time room availability for specific dates and guest count. Returns available room types with pricing.', 'modern-hotel-booking' ),
             'category'    => 'booking-management',
@@ -449,6 +453,6 @@ $child_ages = [];
         if ( ! \function_exists( 'wp_register_ability' ) ) {
             return;
         }
-        \wp_register_ability( 'mhbo/check-availability', self::get_definition() );
+        call_user_func( 'wp_register_ability', 'mhbo/check-availability', self::get_definition() );
     }
 }
