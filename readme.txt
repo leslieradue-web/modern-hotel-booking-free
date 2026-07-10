@@ -3,7 +3,7 @@ Contributors: leslierad
 Donate link: https://startmysuccess.com/
 Tags: hotel booking, vacation rental, ical, booking calendar, accommodation
 Requires at least: 6.6
-Tested up to: 7.0
+Tested up to: 7.0.1
 Stable tag: 2.4.4
 Requires PHP: 8.0
 License: GPL-2.0-or-later
