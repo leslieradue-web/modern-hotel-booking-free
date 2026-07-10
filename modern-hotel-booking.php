@@ -5,7 +5,7 @@
  * Description:       Hotel booking system for vacation rentals, B&Bs and cabins. Includes iCal sync for Airbnb, Stripe payments and a built-in AI Concierge.
  * Version:           2.4.4
  * Requires at least: 6.6
- * Tested up to:      7.0
+ * Tested up to:      7.0.1
  * Requires PHP:      8.0
  * Author:            StartMySuccess
  * Author URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
