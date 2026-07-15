@@ -130,6 +130,9 @@ Visit [StartMySuccess.com](https://startmysuccess.com/) for all Pro features, pr
 
 == Changelog ==
 
+= 2.4.5 =
+* **MOD (Free & Pro)**: Improved translation plugin compatibility WPML, Polylang and added Bogo translate compatibility.
+
 = 2.4.4 =
 * **NEW (Free & Pro)**: Atomic Availability Locking using MySQL native locks (`GET_LOCK`) for high-concurrency booking environments.
 * **MOD (Free & Pro)**: Improved mobile responsiveness and styling for the Booking Modal (Coupon Section and Tax Breakdown Table).
