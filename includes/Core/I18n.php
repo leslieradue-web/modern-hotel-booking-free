@@ -34,6 +34,35 @@ if (!defined('ABSPATH')) {
     class I18n
     {
     /**
+     * Language override for REST/AJAX contexts where multilingual plugins
+     * cannot detect the visitor's language (e.g. Polylang on REST requests).
+     *
+     * @var string|null 2-letter language code, or null to use auto-detection.
+     */
+    private static ?string $language_override = null;
+
+    /**
+     * Force all subsequent get_current_language() calls to return the given code.
+     *
+     * Intended for REST/AJAX endpoints that receive a `lang` parameter from
+     * the frontend.  Must be called **before** any I18n::get_label() output.
+     *
+     * @param string $lang 2-letter ISO 639-1 language code.
+     */
+    public static function set_language_override(string $lang): void
+    {
+        self::$language_override = sanitize_key(substr($lang, 0, 5));
+    }
+
+    /**
+     * Remove any active language override (restore auto-detection).
+     */
+    public static function clear_language_override(): void
+    {
+        self::$language_override = null;
+    }
+
+    /**
      * Initialize translation filters.
      *
      * @return void
@@ -41,8 +70,92 @@ if (!defined('ABSPATH')) {
     public static function init(): void
     {
         // WordPress 4.6+ auto-loads translations for plugins hosted on WP.org.
-        // load_plugin_textdomain() is no longer required and is discouraged by Plugin Check.
         add_filter('gettext_modern-hotel-booking', array(self::class, 'filter_gettext'), 10, 3);
+
+        // 1. Dynamic REST API override passed from JS (e.g. Polylang/WPML modal requests).
+        // Hooked at init to switch the global locale before REST callbacks fire.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $mhbo_locale = isset($_REQUEST['mhbo_locale']) ? sanitize_text_field(wp_unslash($_REQUEST['mhbo_locale'])) : '';
+        if ('' !== $mhbo_locale && preg_match('/^[a-zA-Z_]{2,10}$/', $mhbo_locale) && self::is_frontend_request()) {
+            $lang_slug = substr($mhbo_locale, 0, 2);
+            self::set_language_override($lang_slug);
+
+            // Force Polylang to switch its internal current language for registered string translation.
+            if (function_exists('PLL')) {
+                /** @phpstan-ignore argument.type */
+                $pll = call_user_func('PLL');
+                if (is_object($pll) && isset($pll->model) && method_exists($pll->model, 'get_language')) {
+                    $desired_lang = $pll->model->get_language($lang_slug);
+                    if (false !== $desired_lang) {
+                        $pll->curlang = $desired_lang;
+                    }
+                }
+            }
+
+            if (function_exists('switch_to_locale')) {
+                switch_to_locale($mhbo_locale);
+            }
+
+            // Force WPML to switch its internal language.
+            // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML API hook.
+            do_action('wpml_switch_language', $lang_slug);
+            
+            // switch_to_locale does not automatically unload/reload plugin textdomains.
+            // We must explicitly do it to purge any JIT-loaded English translations.
+            unload_textdomain('modern-hotel-booking');
+            $mofile = MHBO_PLUGIN_DIR . 'languages/modern-hotel-booking-' . $mhbo_locale . '.mo';
+            load_textdomain('modern-hotel-booking', $mofile);
+        }
+
+        // 2. Allow admins to force a specific locale on the public frontend via settings.
+        add_filter('plugin_locale', array(self::class, 'maybe_force_site_locale'), 10, 2);
+
+        // If a forced locale is set via settings, explicitly load the text domain
+        if (self::is_frontend_request()) {
+            $forced = (string) get_option('mhbo_force_frontend_locale', '');
+            if ('' !== $forced && 'en_US' !== $forced) {
+                // Clear any JIT translations
+                unload_textdomain('modern-hotel-booking');
+                // Explicitly load the bundled language file
+                $mofile = MHBO_PLUGIN_DIR . 'languages/modern-hotel-booking-' . $forced . '.mo';
+                load_textdomain('modern-hotel-booking', $mofile);
+            }
+        }
+    }
+
+    /**
+     * Check if we are currently serving a public frontend request.
+     *
+     * @return bool
+     */
+    public static function is_frontend_request(): bool
+    {
+        if (wp_doing_ajax()) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only routing check, not processing data.
+            $action = isset($_REQUEST['action']) ? sanitize_text_field(wp_unslash($_REQUEST['action'])) : '';
+            $frontend_actions = array(
+                'mhbo_process_booking',
+                'mhbo_create_payment_intent',
+                'mhbo_create_paypal_order',
+                'mhbo_capture_paypal_order',
+                'mhbo_validate_coupon'
+            );
+            if (in_array($action, $frontend_actions, true)) {
+                return true;
+            }
+            
+            $referer = wp_get_referer();
+            return $referer && false === strpos((string) $referer, '/wp-admin/');
+        }
+        
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $route = sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']));
+            if (strpos($route, '/wp-json/mhbo/') !== false || strpos($route, '?rest_route=/mhbo/') !== false) {
+                return true;
+            }
+        }
+
+        return !is_admin();
     }
 
     /**
@@ -61,7 +174,89 @@ if (!defined('ABSPATH')) {
         if ('' === trim($translated)) {
             return $text;
         }
+
+        // If a forced frontend locale is active and we're on the public frontend,
+        // ensure the original (English) string is returned when en_US is forced.
+        // This guards against the .mo file being loaded before our plugin_locale filter.
+        if (self::is_frontend_request()) {
+            // Cache the option value per-request for performance (gettext fires hundreds of times).
+            static $forced_locale = null;
+            if (null === $forced_locale) {
+                $forced_locale = (string) get_option('mhbo_force_frontend_locale', '');
+            }
+            if ('en_US' === $forced_locale) {
+                return $text;
+            }
+        }
+
         return $translated;
+    }
+
+    /**
+     * Force the plugin locale on the public frontend when a specific language is configured.
+     *
+     * Hooked to the `plugin_locale` filter. Only applies to our text domain and only on
+     * non-admin requests. When set to empty (default), existing behaviour is preserved.
+     *
+     * @param string $locale The determined locale.
+     * @param string $domain The text domain.
+     * @return string
+     */
+    public static function maybe_force_site_locale(string $locale, string $domain): string
+    {
+        if ('modern-hotel-booking' !== $domain) {
+            return $locale;
+        }
+
+        // 1. Dynamic REST API override passed from JS (e.g. Polylang/WPML modal requests)
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $mhbo_locale = isset($_REQUEST['mhbo_locale']) ? sanitize_text_field(wp_unslash($_REQUEST['mhbo_locale'])) : '';
+        if ('' !== $mhbo_locale && self::is_frontend_request()) {
+            return $mhbo_locale;
+        }
+
+        // 2. Static admin option override
+        $forced = (string) get_option('mhbo_force_frontend_locale', '');
+        if ('' === $forced) {
+            return $locale; // Disabled — preserve default WP behaviour.
+        }
+
+        // Only override on the public frontend (not wp-admin, not AJAX, not REST).
+        if (!self::is_frontend_request()) {
+            return $locale;
+        }
+
+        return $forced;
+    }
+
+    /**
+     * Get the list of locales supported by the plugin's translation files.
+     *
+     * Returns an associative array of locale code => native name.
+     * Used by the Settings dropdown for the "Force Frontend Language" option.
+     *
+     * @return array<string, string>
+     */
+    public static function get_supported_locales(): array
+    {
+        return array(
+            'en_US' => 'English',
+            'cs_CZ' => 'Čeština',
+            'da_DK' => 'Dansk',
+            'de_DE' => 'Deutsch',
+            'el'    => 'Ελληνικά',
+            'es_ES' => 'Español',
+            'fr_FR' => 'Français',
+            'hu_HU' => 'Magyar',
+            'it_IT' => 'Italiano',
+            'nb_NO' => 'Norsk Bokmål',
+            'nl_NL' => 'Nederlands',
+            'pl_PL' => 'Polski',
+            'pt_BR' => 'Português (Brasil)',
+            'ro_RO' => 'Română',
+            'ru_RU' => 'Русский',
+            'sv_SE' => 'Svenska',
+        );
     }
 
     /**
@@ -74,11 +269,17 @@ if (!defined('ABSPATH')) {
         if (defined('QTX_VERSION') || function_exists('qtranxf_getLanguage')) {
             return 'qtranslate';
         }
+        // Check Polylang BEFORE WPML — Polylang Pro ships a WPML compatibility
+        // layer that defines ICL_SITEPRESS_VERSION, which would cause
+        // misdetection if the WPML check came first.
+        if (function_exists('pll_current_language') || defined('POLYLANG_VERSION')) {
+            return 'polylang';
+        }
         if (defined('ICL_SITEPRESS_VERSION') || function_exists('icl_get_languages')) {
             return 'wpml';
         }
-        if (function_exists('pll_current_language') || defined('POLYLANG_VERSION')) {
-            return 'polylang';
+        if (defined('BOGO_VERSION') || function_exists('bogo_get_post_translations')) {
+            return 'bogo';
         }
         return 'none';
     }
@@ -90,6 +291,12 @@ if (!defined('ABSPATH')) {
      */
     private static function locale_code(): string
     {
+        if (self::is_frontend_request()) {
+            $forced = (string) get_option('mhbo_force_frontend_locale', '');
+            if ('' !== $forced) {
+                return substr($forced, 0, 2);
+            }
+        }
         return substr(get_locale(), 0, 2);
     }
 
@@ -100,6 +307,11 @@ if (!defined('ABSPATH')) {
      */
     public static function get_current_language(): string
     {
+        // REST/AJAX language override (set by endpoints that receive a `lang` param).
+        if (null !== self::$language_override && '' !== self::$language_override) {
+            return self::$language_override;
+        }
+
         // Handle admin side language selection via URL param (e.g., ?lang=ro).
         // Uses filter_input() to avoid nonce-verification warnings — this is a
         // read-only display parameter that does not change state.
@@ -112,10 +324,13 @@ if (!defined('ABSPATH')) {
             case 'qtranslate':
                 return function_exists('qtranxf_getLanguage') ? call_user_func('qtranxf_getLanguage') : self::locale_code();
             case 'wpml':
-                return apply_filters('wpml_current_language', self::locale_code()); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML hook
+                $wpml_lang = apply_filters('wpml_current_language', self::locale_code()); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML hook
+                return is_string($wpml_lang) && '' !== $wpml_lang ? $wpml_lang : self::locale_code();
             case 'polylang':
                 $lang = function_exists('pll_current_language') ? call_user_func('pll_current_language') : self::locale_code();
                 return $lang ? $lang : self::locale_code();
+            case 'bogo':
+                return substr(get_locale(), 0, 2);
             default:
                 return self::locale_code();
         }
@@ -135,7 +350,11 @@ if (!defined('ABSPATH')) {
             case 'wpml':
                 return apply_filters('wpml_default_language', 'en'); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML hook
             case 'polylang':
-                return function_exists('pll_default_language') ? call_user_func('pll_default_language') : 'en';
+                $pll_default = function_exists('pll_default_language') ? call_user_func('pll_default_language') : false;
+                return is_string($pll_default) && '' !== $pll_default ? $pll_default : 'en';
+            case 'bogo':
+                $default_locale = get_option('WPLANG', 'en_US');
+                return substr((string) ($default_locale ?: 'en_US'), 0, 2);
             default:
                 return 'en';
         }
@@ -1182,6 +1401,7 @@ if (!defined('ABSPATH')) {
             'settings_label_custom_fields' => __('Guest Reservation Fields', 'modern-hotel-booking'),
             'settings_label_uninstall' => __('Save Data on Uninstall', 'modern-hotel-booking'),
             'settings_label_powered_by' => __('Powered By Link', 'modern-hotel-booking'),
+            'settings_label_force_frontend_locale' => __('Force Frontend Language', 'modern-hotel-booking'),
             'settings_label_proxies' => __('Trusted Proxies', 'modern-hotel-booking'),
             'settings_label_currency_code' => __('Currency Code (ISO)', 'modern-hotel-booking'),
             'settings_label_currency_symbol' => __('Currency Symbol', 'modern-hotel-booking'),
@@ -1192,6 +1412,8 @@ if (!defined('ABSPATH')) {
             'settings_desc_children' => __('Enable children counting and age-based pricing tiers.', 'modern-hotel-booking'),
             'settings_desc_uninstall' => __('If unchecked, all plugin data and settings will be deleted when the plugin is uninstalled.', 'modern-hotel-booking'),
             'settings_desc_powered_by' => __('Show a small "Powered by MHBO" link in the booking footer.', 'modern-hotel-booking'),
+            'settings_desc_force_frontend_locale' => __('Override the plugin language on the public frontend. When set, the booking calendar and forms will always display in the chosen language, regardless of logged-in users\' profile language. Leave on "Auto" to use the default WordPress behaviour.', 'modern-hotel-booking'),
+            'settings_opt_locale_auto' => __('— Auto (visitor / profile language) —', 'modern-hotel-booking'),
             'settings_desc_proxies' => __('Enter IP addresses of trusted proxies (one per line) for accurate IP detection.', 'modern-hotel-booking'),
             'settings_desc_decimals' => __('If unchecked, prices will be rounded to the nearest whole number.', 'modern-hotel-booking'),
             'settings_desc_booking_shortcode' => __('The page containing the [hotel_booking] shortcode. This is used for generating booking links.', 'modern-hotel-booking'),
@@ -3075,6 +3297,69 @@ return $labels;
             default:
                 return ucfirst($status);
         }
+    }
+
+    /**
+     * Get the translated ID for a given WordPress Page ID based on the current language context.
+     * Supports WPML and Polylang via `wpml_object_id` filter and `pll_get_post`.
+     *
+     * @param int $page_id The original Page ID.
+     * @return int The translated Page ID, or the original if no translation is found.
+     */
+    public static function get_translated_page_id(int $page_id): int
+    {
+        if ($page_id <= 0) {
+            return 0;
+        }
+
+        $current_lang = self::get_current_language();
+
+        // 0. Explicit per-language booking page setting override
+        if ($current_lang !== self::get_default_language()) {
+            $lang_specific_page = (int) get_option('mhbo_booking_page_' . $current_lang, 0);
+            if ($lang_specific_page > 0) {
+                return $lang_specific_page;
+            }
+        }
+
+        // 1. WPML / Polylang compatibility layer
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML API hook.
+        if (has_filter('wpml_object_id')) {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML API hook.
+            $translated_id = apply_filters('wpml_object_id', $page_id, 'page', true, $current_lang);
+            if ($translated_id && is_numeric($translated_id)) {
+                return (int) $translated_id;
+            }
+        }
+
+        // 2. Polylang native (fallback)
+        if (function_exists('pll_get_post')) {
+            /** @phpstan-ignore argument.type */
+            $translated_id = call_user_func('pll_get_post', $page_id, $current_lang);
+            if ($translated_id && is_numeric($translated_id)) {
+                return (int) $translated_id;
+            }
+        }
+
+        // 3. Bogo native compatibility
+        if (function_exists('bogo_get_post_translations')) {
+            /** @var array<string, \WP_Post>|false $translations */
+            /** @phpstan-ignore argument.type */
+            $translations = call_user_func('bogo_get_post_translations', $page_id);
+            if (is_array($translations)) {
+                $current_locale = get_locale();
+                if (isset($translations[$current_locale])) {
+                    return (int) $translations[$current_locale]->ID;
+                }
+                foreach ($translations as $locale_key => $trans_post) {
+                    if (substr($locale_key, 0, 2) === $current_lang) {
+                        return (int) $trans_post->ID;
+                    }
+                }
+            }
+        }
+
+        return $page_id;
     }
 
     /**

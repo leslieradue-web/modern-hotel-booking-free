@@ -313,46 +313,61 @@ class Shortcode
         }
 
 // Add localization data (only once)
-        if (!wp_script_is('mhbo-frontend', 'done')) {
-            $localized_data = array(
-                'pay_confirm' => I18n::get_label('btn_pay_confirm'),
-                'confirm' => I18n::get_label('btn_confirm_booking'),
-                'processing' => I18n::get_label('btn_processing'),
-                'loading' => I18n::get_label('label_loading'),
-                'to' => I18n::get_label('label_to'),
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'rest_url' => get_rest_url(null, 'mhbo/v1'),
-                'nonce' => wp_create_nonce('wp_rest'),
-                'label_child_n_age' => I18n::get_label('label_child_n_age'),
-                'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
-                'currency_pos' => get_option('mhbo_currency_position', 'before'),
-                'msg_gdpr_required' => I18n::get_label('msg_gdpr_required'),
-                'msg_paypal_required' => I18n::get_label('msg_paypal_required'),
-                'tax_enabled' => Tax::is_enabled(),
-                'tax_mode' => Tax::get_mode(),
-                'tax_label' => Tax::get_label(),
-                'tax_rate_accommodation' => Tax::get_accommodation_rate(),
-                'tax_rate_extras' => Tax::get_extras_rate(),
-                'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
-                'checkout_time' => get_option('mhbo_checkout_time', '11:00'),
-                'auto_nonce' => wp_create_nonce('mhbo_auto_action'),
-                'label_setup_failed' => I18n::get_label('label_setup_failed'),
-                'label_payment_already_confirmed' => I18n::get_label('label_payment_already_confirmed'),
-                'label_finalizing' => I18n::get_label('label_finalizing'),
-                'label_gateway_not_ready' => I18n::get_label('label_gateway_not_ready'),
-                'label_payment_success_form_fail' => I18n::get_label('label_payment_success_form_fail'),
-                'label_payment_cancelled' => I18n::get_label('label_payment_cancelled'),
-                'label_redirecting' => I18n::get_label('label_redirecting'),
-                'label_loading_payment' => I18n::get_label('label_loading_payment'),
-                'label_payment_capture_failed' => I18n::get_label('label_payment_capture_failed'),
-                'label_generic_error' => I18n::get_label('api_err_generic'),
-                'label_network_error' => I18n::get_label('api_err_network'),
-                'inline_modal'        => (int) get_option('mhbo_modal_enabled', 1) === 1,
-            );
+        self::localize_frontend_assets();
+    }
 
-            $localized_data = apply_filters('mhbo_frontend_localized_data', $localized_data);
-            wp_add_inline_script('mhbo-frontend', 'var mhbo_vars = ' . wp_json_encode($localized_data) . ';');
+    /**
+     * Localize frontend script with required variables (shared by shortcode and block/modal paths).
+     * 
+     * @return void
+     */
+    public static function localize_frontend_assets(): void
+    {
+        if (wp_script_is('mhbo-frontend', 'done')) {
+            return;
         }
+
+        $localized_data = array(
+            'pay_confirm' => I18n::get_label('btn_pay_confirm'),
+            'confirm' => I18n::get_label('btn_confirm_booking'),
+            'processing' => I18n::get_label('btn_processing'),
+            'loading' => I18n::get_label('label_loading'),
+            'to' => I18n::get_label('label_to'),
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'rest_url' => get_rest_url(null, 'mhbo/v1'),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'prevent_turnover' => (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1,
+            'label_child_n_age' => I18n::get_label('label_child_n_age'),
+            'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
+            'currency_pos' => get_option('mhbo_currency_position', 'before'),
+            'msg_gdpr_required' => I18n::get_label('msg_gdpr_required'),
+            'msg_paypal_required' => I18n::get_label('msg_paypal_required'),
+            'tax_enabled' => Tax::is_enabled(),
+            'tax_mode' => Tax::get_mode(),
+            'tax_label' => Tax::get_label(),
+            'tax_rate_accommodation' => Tax::get_accommodation_rate(),
+            'tax_rate_extras' => Tax::get_extras_rate(),
+            'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
+            'checkout_time' => get_option('mhbo_checkout_time', '11:00'),
+            'auto_nonce' => wp_create_nonce('mhbo_auto_action'),
+            'nonce_confirm' => wp_create_nonce('mhbo_confirm_action'),
+            'label_setup_failed' => I18n::get_label('label_setup_failed'),
+            'label_payment_already_confirmed' => I18n::get_label('label_payment_already_confirmed'),
+            'label_finalizing' => I18n::get_label('label_finalizing'),
+            'label_gateway_not_ready' => I18n::get_label('label_gateway_not_ready'),
+            'label_payment_success_form_fail' => I18n::get_label('label_payment_success_form_fail'),
+            'label_payment_cancelled' => I18n::get_label('label_payment_cancelled'),
+            'label_redirecting' => I18n::get_label('label_redirecting'),
+            'label_loading_payment' => I18n::get_label('label_loading_payment'),
+            'label_payment_capture_failed' => I18n::get_label('label_payment_capture_failed'),
+            'label_generic_error' => I18n::get_label('api_err_generic'),
+            'label_network_error' => I18n::get_label('api_err_network'),
+            'inline_modal'        => (int) get_option('mhbo_modal_enabled', 1) === 1,
+            'locale'              => get_locale(),
+        );
+
+        $localized_data = apply_filters('mhbo_frontend_localized_data', $localized_data);
+        wp_add_inline_script('mhbo-frontend', 'var mhbo_vars = ' . wp_json_encode($localized_data) . ';');
     }
 
     /**
@@ -369,7 +384,7 @@ class Shortcode
             has_shortcode($post->post_content, 'modern_hotel_booking')
         );
         $has_block = is_a($post, 'WP_Post') && has_block('modern-hotel-booking/booking-form', $post->post_content);
-        $is_booking_page = is_a($post, 'WP_Post') && ((int) get_option('mhbo_booking_page') === $post->ID);
+        $is_booking_page = is_a($post, 'WP_Post') && self::is_mhbo_booking_page($post->ID);
 
         // If not on booking page, no shortcode, and no block, don't enqueue
         if (!$has_shortcode && !$has_block && !$is_booking_page) {
@@ -413,48 +428,7 @@ class Shortcode
         wp_enqueue_script('mhbo-booking-form', MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-form.js', ['jquery', 'mhbo-frontend'], MHBO_VERSION, true);
 
 // Localize script for JS strings
-        $localized_data = array(
-            'pay_confirm' => I18n::get_label('btn_pay_confirm'),
-            'confirm' => I18n::get_label('btn_confirm_booking'),
-            'processing' => I18n::get_label('btn_processing'),
-            'loading' => I18n::get_label('label_loading'),
-            'to' => I18n::get_label('label_to'),
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'rest_url' => get_rest_url(null, 'mhbo/v1'),
-            'nonce' => wp_create_nonce('wp_rest'),
-            'prevent_turnover' => (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1,
-            'label_child_n_age' => I18n::get_label('label_child_n_age'),
-            'currency_symbol' => get_option('mhbo_currency_symbol', '$'),
-            'currency_pos' => get_option('mhbo_currency_position', 'before'),
-            'msg_gdpr_required' => I18n::get_label('msg_gdpr_required'),
-            'msg_paypal_required' => I18n::get_label('msg_paypal_required'),
-            // Tax settings for frontend
-            'tax_enabled' => Tax::is_enabled(),
-            'tax_mode' => Tax::get_mode(),
-            'tax_label' => Tax::get_label(),
-            'tax_rate_accommodation' => Tax::get_accommodation_rate(),
-            'tax_rate_extras' => Tax::get_extras_rate(),
-            'checkin_time' => get_option('mhbo_checkin_time', '14:00'),
-            'checkout_time' => get_option('mhbo_checkout_time', '11:00'),
-            'auto_nonce' => wp_create_nonce('mhbo_auto_action'),
-            'nonce_confirm' => wp_create_nonce('mhbo_confirm_action'),
-            'label_setup_failed' => I18n::get_label('label_setup_failed'),
-            'label_payment_already_confirmed' => I18n::get_label('label_payment_already_confirmed'),
-            'label_finalizing' => I18n::get_label('label_finalizing'),
-            'label_gateway_not_ready' => I18n::get_label('label_gateway_not_ready'),
-            'label_payment_success_form_fail' => I18n::get_label('label_payment_success_form_fail'),
-            'label_payment_cancelled' => I18n::get_label('label_payment_cancelled'),
-            'label_redirecting' => I18n::get_label('label_redirecting'),
-            'label_loading_payment' => I18n::get_label('label_loading_payment'),
-            'label_payment_capture_failed' => I18n::get_label('label_payment_capture_failed'),
-            'label_generic_error' => I18n::get_label('api_err_generic'),
-            'label_network_error' => I18n::get_label('api_err_network'),
-        );
-
-        $localized_data = apply_filters('mhbo_frontend_localized_data', $localized_data);
-
-        // SECURITY: Use wp_json_encode for proper escaping and WordPress consistency
-        wp_add_inline_script('mhbo-frontend', 'var mhbo_vars = ' . wp_json_encode($localized_data) . ';');
+        self::localize_frontend_assets();
     }
 
     /**
@@ -492,6 +466,7 @@ class Shortcode
             MHBO_VERSION,
             true
         );
+        self::localize_frontend_assets();
         wp_enqueue_script(
             'mhbo-booking-form',
             MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-form.js',
@@ -500,46 +475,7 @@ class Shortcode
             true
         );
 
-$localized_data = [
-            'pay_confirm'                        => I18n::get_label('btn_pay_confirm'),
-            'confirm'                            => I18n::get_label('btn_confirm_booking'),
-            'processing'                         => I18n::get_label('btn_processing'),
-            'loading'                            => I18n::get_label('label_loading'),
-            'to'                                 => I18n::get_label('label_to'),
-            'ajax_url'                           => admin_url('admin-ajax.php'),
-            'rest_url'                           => get_rest_url(null, 'mhbo/v1'),
-            'nonce'                              => wp_create_nonce('wp_rest'),
-            'prevent_turnover'                   => (int) get_option('mhbo_prevent_same_day_turnover', 0) === 1,
-            'label_child_n_age'                  => I18n::get_label('label_child_n_age'),
-            'currency_symbol'                    => get_option('mhbo_currency_symbol', '$'),
-            'currency_pos'                       => get_option('mhbo_currency_position', 'before'),
-            'msg_gdpr_required'                  => I18n::get_label('msg_gdpr_required'),
-            'msg_paypal_required'                => I18n::get_label('msg_paypal_required'),
-            'tax_enabled'                        => Tax::is_enabled(),
-            'tax_mode'                           => Tax::get_mode(),
-            'tax_label'                          => Tax::get_label(),
-            'tax_rate_accommodation'             => Tax::get_accommodation_rate(),
-            'tax_rate_extras'                    => Tax::get_extras_rate(),
-            'checkin_time'                       => get_option('mhbo_checkin_time', '14:00'),
-            'checkout_time'                      => get_option('mhbo_checkout_time', '11:00'),
-            'auto_nonce'                         => wp_create_nonce('mhbo_auto_action'),
-            'nonce_confirm'                      => wp_create_nonce('mhbo_confirm_action'),
-            'label_setup_failed'                 => I18n::get_label('label_setup_failed'),
-            'label_payment_already_confirmed'    => I18n::get_label('label_payment_already_confirmed'),
-            'label_finalizing'                   => I18n::get_label('label_finalizing'),
-            'label_gateway_not_ready'            => I18n::get_label('label_gateway_not_ready'),
-            'label_payment_success_form_fail'    => I18n::get_label('label_payment_success_form_fail'),
-            'label_payment_cancelled'            => I18n::get_label('label_payment_cancelled'),
-            'label_redirecting'                  => I18n::get_label('label_redirecting'),
-            'label_loading_payment'              => I18n::get_label('label_loading_payment'),
-            'label_payment_capture_failed'       => I18n::get_label('label_payment_capture_failed'),
-            'label_generic_error'                => I18n::get_label('api_err_generic'),
-            'label_network_error'                => I18n::get_label('api_err_network'),
-        ];
-
-        $localized_data = apply_filters('mhbo_frontend_localized_data', $localized_data);
-        wp_add_inline_script('mhbo-frontend', 'var mhbo_vars = ' . wp_json_encode($localized_data) . ';');
-    }
+}
 
     /**
      * Render the booking form HTML as a string for the inline modal.
@@ -1799,7 +1735,15 @@ wp_add_inline_style('mhbo-frontend', '
     {
         $booking_page_id = (int) get_option('mhbo_booking_page');
         $booking_page_url = get_option('mhbo_booking_page_url');
-        
+
+        // 2026 BP: Resolve the translated page ID for Polylang/WPML when no
+        // manual URL override is set.  This is the single fix that ensures
+        // every PHP redirect, form action, and JS config value points to the
+        // language-correct booking page throughout the entire booking flow.
+        if (('' === (string) $booking_page_url || false === $booking_page_url) && $booking_page_id > 0) {
+            $booking_page_id = I18n::get_translated_page_id($booking_page_id);
+        }
+
         $url = '';
         if (is_string($booking_page_url) && '' !== $booking_page_url) {
             $url = $booking_page_url;
@@ -1833,6 +1777,33 @@ wp_add_inline_style('mhbo-frontend', '
         }
 
         return esc_url_raw((string)$url);
+    }
+
+    /**
+     * Check if a given page ID is the booking page or a translation of it.
+     *
+     * Supports Polylang and WPML where translated pages have different IDs.
+     * Uses I18n::get_translated_page_id() to resolve language-specific pages.
+     *
+     * @since 2.4.4.2
+     * @param int $page_id The page ID to check.
+     * @return bool
+     */
+    public static function is_mhbo_booking_page(int $page_id): bool
+    {
+        $booking_page_id = (int) get_option('mhbo_booking_page');
+        if ($booking_page_id <= 0) {
+            return false;
+        }
+        // Direct match (default language or no translation plugin).
+        if ($booking_page_id === $page_id) {
+            return true;
+        }
+        // 2026 BP: Check if this page is a translation of the booking page.
+        // I18n::get_translated_page_id() handles Polylang (pll_get_post),
+        // WPML (wpml_object_id), and per-language overrides (mhbo_booking_page_{lang}).
+        $translated_id = I18n::get_translated_page_id($booking_page_id);
+        return $translated_id === $page_id;
     }
 
     /**

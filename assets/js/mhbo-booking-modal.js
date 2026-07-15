@@ -274,6 +274,7 @@
 			customer_name: d.customer_name || '',
 			customer_email: d.customer_email || '',
 			customer_phone: d.customer_phone || '',
+			mhbo_locale: (window.mhbo_vars && window.mhbo_vars.locale) || '',
 		} );
 
 		/* 2026 BP: Public endpoint (permission_callback => __return_true) — do NOT
