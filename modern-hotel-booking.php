@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 /**
  * Plugin Name:       Modern Hotel Booking — AI Concierge & Direct Bookings
- * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
+ * Plugin URI:        https://modernhotelwp.com/
  * Description:       Hotel booking system for vacation rentals, B&Bs and cabins. Includes iCal sync for Airbnb, Stripe payments and a built-in AI Concierge.
  * Version:           2.4.5
  * Requires at least: 6.6
  * Tested up to:      7.0.1
  * Requires PHP:      8.0
  * Author:            StartMySuccess
- * Author URI:        https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/
+ * Author URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       modern-hotel-booking
