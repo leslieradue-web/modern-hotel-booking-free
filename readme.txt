@@ -78,7 +78,7 @@ The first **hotel booking** plugin to offer a built-in **AI Concierge**. Your vi
 *   **GDPR Suite**: Consent checkboxes and automated PII erasure tools
 *   **AI Logs**: Review anonymised conversation transcripts and sentiment analysis
 
-[View Pro Features & Pricing](https://startmysuccess.com/) | [Privacy Policy](https://startmysuccess.com/privacy-policy/) | [GitHub](https://github.com/)
+[View Pro Features & Pricing](https://modernhotelwp.com/) | [Privacy Policy](https://startmysuccess.com/privacy-policy/) | [GitHub](https://github.com/leslieradue-web/modern-hotel-booking-free)
 
 ### 🏡 Built for Independent Properties
 
