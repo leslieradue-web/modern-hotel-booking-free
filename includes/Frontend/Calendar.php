@@ -244,6 +244,14 @@ class Calendar
             return '<p>' . esc_html(I18n::get_label('label_calendar_no_id')) . '</p>';
         }
 
+        // 2026 BP: If page reloaded after a successful booking redirect, delegate to Shortcode success receipt renderer
+        // so that room calendar blocks on the page display the confirmation receipt instead of a calendar!
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (isset($_GET['mhbo_success'])) {
+            $shortcode = new Shortcode();
+            return $shortcode->render_shortcode(['room_id' => $room_id, 'show_calendar' => 'no']);
+        }
+
         return self::render_unified_view($room_id);
     }
 
@@ -384,7 +392,7 @@ class Calendar
 
             <?php if (get_option('mhbo_powered_by_link', 0)): ?>
                 <div class="mhbo-powered-by" style="text-align: right; margin-top: 10px; font-size: 11px; opacity: 0.7;">
-                    <a href="<?php echo esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'); ?>"
+                    <a href="<?php echo esc_url('https://modernhotelwp.com/'); ?>"
                         target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">
                         <?php echo esc_html(I18n::get_label('powered_by')); ?> <strong><?php echo esc_html(I18n::get_label('label_plugin_name')); ?></strong>
                     </a>

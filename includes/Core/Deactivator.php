@@ -50,6 +50,12 @@ class Deactivator
             'mhbo_hourly_sync',
             'mhbo_daily_maintenance',
             'mhbo_ical_scheduled_sync',
+            'mhbo_ical_scheduled_sync_single',
+            'mhbo_license_revalidation',
+            'mhbo_license_retry_check',
+            'mhbo_ai_weekly_deep_sync',
+            'check_updates-modern-hotel-booking',
+            'check_updates-modern-hotel-booking-pro'
         ];
 
         foreach ($crons as $cron_hook) {

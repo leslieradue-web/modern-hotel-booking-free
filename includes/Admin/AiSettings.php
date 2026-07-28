@@ -138,12 +138,14 @@ class AiSettings {
         // Clear model-specific failure flags — must match get_dynamic_fallback_chain() list.
         // May 2026: gemini-3.1-flash-lite-preview is EOL (May 25). Replaced with GA models.
         $models_to_clear = [
-            'gemini-3.5-flash',              // GA primary (May 2026)
-            'gemini-3.1-flash-lite',         // GA stable (May 2026)
+            'gemini-3.6-flash',              // GA primary (July 2026)
+            'gemini-3.5-flash',              // GA fast
+            'gemini-3.5-flash-lite',         // GA ultralight (July 2026)
+            'gemini-3.1-flash-lite',         // GA stable
             'gemini-3-flash-preview',        // Preview (Computer Use)
             'gemini-3.1-pro-preview',        // Preview flagship
-            'gemini-2.5-flash-lite',         // GA stable safety net
-            'gemini-2.5-flash',              // GA stable last resort
+            'gemini-2.5-flash-lite',         // GA safety net
+            'gemini-2.5-flash',              // GA last resort
         ];
         foreach ( $models_to_clear as $m ) {
             \delete_transient( "mhbo_ai_model_fail_{$m}" );
@@ -239,7 +241,7 @@ class AiSettings {
 
         $provider      = (string) get_option( 'mhbo_ai_provider', 'gemini' );
         $api_key       = (string) get_option( 'mhbo_ai_api_key', '' );
-        $model         = (string) get_option( 'mhbo_ai_model', 'gemini-3.5-flash' );
+        $model         = (string) get_option( 'mhbo_ai_model', 'gemini-3.6-flash' );
         
         /* BUILD_FREE_START
         $reasoning_effort = 'none';
@@ -447,9 +449,9 @@ $is_pro = false;
                                             <select name="mhbo_ai_provider" id="mhbo_ai_provider" style="width: 100%;">
                                                 <option value=""><?php esc_html_e( '— Select —', 'modern-hotel-booking' ); ?></option>
                                                 <option value="gemini"    <?php selected( $provider, 'gemini' ); ?>><?php esc_html_e( 'Google Gemini', 'modern-hotel-booking' ); ?></option>
-                                                <option value="openai"    <?php selected( $provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI (GPT-5.4)', 'modern-hotel-booking' ); ?></option>
+                                                <option value="openai"    <?php selected( $provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI (GPT-5.6)', 'modern-hotel-booking' ); ?></option>
                                                 <option value="openrouter" <?php selected( $provider, 'openrouter' ); ?>><?php esc_html_e( 'OpenRouter.ai', 'modern-hotel-booking' ); ?></option>
-                                                <option value="anthropic" <?php selected( $provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic (Claude 4.6)', 'modern-hotel-booking' ); ?></option>
+                                                <option value="anthropic" <?php selected( $provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic (Claude 5)', 'modern-hotel-booking' ); ?></option>
                                                 <option value="ollama"    <?php selected( $provider, 'ollama' ); ?>><?php esc_html_e( 'Ollama (local)', 'modern-hotel-booking' ); ?></option>
                                                 <option value="custom"    <?php selected( $provider, 'custom' ); ?>><?php esc_html_e( 'Custom (OpenAI-compatible)', 'modern-hotel-booking' ); ?></option>
                                             </select>
@@ -476,16 +478,16 @@ $is_pro = false;
                                         <td>
                                             <div id="mhbo_gemini_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'gemini' ) ? 'block' : 'none'; ?>;">
                                                 <?php
-                                                // May 2026: gemini-3.1-flash-lite-preview is EOL (shutdown May 25, 2026).
-                                                // New recommended: gemini-3.5-flash (GA May 19, 2026).
+                                                // July 2026: Gemini 3.6 Flash & 3.5 Flash-Lite GA (July 21, 2026).
                                                 $gemini_models = [
-                                                    'gemini-3.5-flash'              => \__( 'Gemini 3.5 Flash ⚡ Recommended (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3.6-flash'              => \__( 'Gemini 3.6 Flash ⚡ Recommended (GA July 2026)', 'modern-hotel-booking' ),
+                                                    'gemini-3.5-flash'              => \__( 'Gemini 3.5 Flash — High Performance (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3.5-flash-lite'         => \__( 'Gemini 3.5 Flash-Lite — Ultra Budget (GA July 2026)', 'modern-hotel-booking' ),
                                                     'gemini-3.1-flash-lite'         => \__( 'Gemini 3.1 Flash-Lite — Stable (GA)', 'modern-hotel-booking' ),
                                                     'gemini-3-flash-preview'        => \__( 'Gemini 3 Flash Preview (Computer Use)', 'modern-hotel-booking' ),
                                                     'gemini-3.1-pro-preview'        => \__( 'Gemini 3.1 Pro Preview (Flagship)', 'modern-hotel-booking' ),
                                                     'gemini-2.5-flash'              => \__( 'Gemini 2.5 Flash — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
                                                     'gemini-2.5-flash-lite'         => \__( 'Gemini 2.5 Flash-Lite — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
-                                                    'gemini-2.5-pro'                => \__( 'Gemini 2.5 Pro — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
                                                     'custom'                        => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
                                                 ];
                                                 // Determine if current model is in presets.
@@ -501,9 +503,9 @@ $is_pro = false;
 
                                             <div id="mhbo_openai_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'openai' ) ? 'block' : 'none'; ?>;">
                                                 <?php
-                                                // May 2026: GPT-5.5 / GPT-5.5 Instant now available (April–May 2026).
+                                                // July 2026: GPT-5.6 family (Sol, Terra, Luna) released GA (July 9, 2026).
                                                 $openai_models = [
-                                                    'gpt-5.4-mini'    => \__( 'GPT-5.4 Mini ⚡ (Fast & Smart)', 'modern-hotel-booking' ),
+                                                    'gpt-5.6-luna'    => \__( 'GPT-5.6 Luna ⚡ (Fast & Budget - GA July 2026)', 'modern-hotel-booking' ),
                                                     
                                                     'gpt-4o'          => \__( 'GPT-4o (Legacy Stable)', 'modern-hotel-booking' ),
                                                     'gpt-4o-mini'     => \__( 'GPT-4o Mini (Legacy Budget)', 'modern-hotel-booking' ),
@@ -521,10 +523,9 @@ $is_pro = false;
 
                                             <div id="mhbo_anthropic_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'anthropic' ) ? 'block' : 'none'; ?>;">
                                                 <?php
-                                                // May 2026: claude-sonnet-4-7 does NOT exist. Latest Sonnet is 4.6.
-                                                // Claude Opus 4.7 is available. Claude Haiku 4.5 added as budget.
+                                                // July 2026: Claude Sonnet 5 & Opus 5 released GA (June-July 2026).
                                                 $anthropic_models = [
-                                                    'claude-sonnet-4-6' => \__( 'Claude Sonnet 4.6 (Most Balanced)', 'modern-hotel-booking' ),
+                                                    'claude-sonnet-5'  => \__( 'Claude Sonnet 5 ⚡ Recommended (GA June 2026)', 'modern-hotel-booking' ),
                                                     
                                                     'claude-haiku-4-5'  => \__( 'Claude Haiku 4.5 (Budget, Fast)', 'modern-hotel-booking' ),
                                                     'custom'            => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),

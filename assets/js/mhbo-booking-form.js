@@ -621,11 +621,27 @@
 				if ( ! isModalCtxPP ) {
 					return; // Standard path: native form POST
 				}
-				// Modal context with PayPal order — fall through to REST path
+			}
+
+			if ( methodValue === 'braintree' ) {
+				e.preventDefault();
+				if ( typeof e.stopPropagation === 'function' ) {
+					e.stopPropagation();
+				}
+				return; // Hand off exclusively to PaymentGateways.js
 			}
 
 			// [2026 BP] REST API intercept for all remaining payment methods (arrival, bank transfer, etc.)
 			e.preventDefault();
+
+			// Clear ALL previous error boxes in wrapper/form/modal before processing
+			const searchCtx = ( typeof form.closest === 'function' ? form.closest( '.mhbo-booking-form-wrapper' ) : null ) || ( typeof document.querySelector === 'function' ? document : null );
+			if ( searchCtx && searchCtx.querySelectorAll ) {
+				searchCtx.querySelectorAll( '#mhbo-booking-error, .mhbo-booking-error, .mhbo-error-notification, .mhbo-booking-errors, .mhbo-inline-errors, .mhbo-message.mhbo-error' ).forEach( function ( box ) {
+					box.style.display = 'none';
+					box.innerHTML = '';
+				} );
+			}
 
 			if ( submitBtn ) {
 				submitBtn.disabled = true;

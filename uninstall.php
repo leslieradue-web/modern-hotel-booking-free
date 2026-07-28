@@ -24,6 +24,12 @@ if (0 !== $mhbo_save_data) {
         'mhbo_hourly_sync',
         'mhbo_daily_maintenance',
         'mhbo_ical_scheduled_sync',
+        'mhbo_ical_scheduled_sync_single',
+        'mhbo_license_revalidation',
+        'mhbo_license_retry_check',
+        'mhbo_ai_weekly_deep_sync',
+        'check_updates-modern-hotel-booking',
+        'check_updates-modern-hotel-booking-pro'
     );
 
     foreach ($mhbo_cron_hooks as $mhbo_hook) {
@@ -42,7 +48,11 @@ $mhbo_tables = array(
     $wpdb->prefix . 'mhbo_bookings',
     $wpdb->prefix . 'mhbo_ical_feeds',
     $wpdb->prefix . 'mhbo_ical_connections',
+    $wpdb->prefix . 'mhbo_ical_logs',
     $wpdb->prefix . 'mhbo_pricing_rules',
+    $wpdb->prefix . 'mhbo_calendar_overrides',
+    $wpdb->prefix . 'mhbo_idempotency',
+    $wpdb->prefix . 'mhbo_coupons',
 );
 
 foreach ($mhbo_tables as $mhbo_table) {
@@ -60,6 +70,12 @@ $mhbo_cron_hooks = array(
     'mhbo_hourly_sync',
     'mhbo_daily_maintenance',
     'mhbo_ical_scheduled_sync',
+    'mhbo_ical_scheduled_sync_single',
+    'mhbo_license_revalidation',
+    'mhbo_license_retry_check',
+    'mhbo_ai_weekly_deep_sync',
+    'check_updates-modern-hotel-booking',
+    'check_updates-modern-hotel-booking-pro'
 );
 
 foreach ($mhbo_cron_hooks as $mhbo_hook) {
@@ -71,3 +87,30 @@ foreach ($mhbo_cron_hooks as $mhbo_hook) {
 $wpdb->query(
     "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mhbo_%' OR option_name LIKE '_site_transient_mhbo_%'"
 );
+
+// Clean up roles and capabilities
+global $wp_roles;
+if (isset($wp_roles)) {
+    $capabilities = array(
+        'mhbo_manage_bookings',
+        'mhbo_view_analytics',
+        'mhbo_manage_settings',
+        'mhbo_create_booking'
+    );
+
+    foreach ($wp_roles->roles as $role_name => $role_info) {
+        $role = get_role($role_name);
+        if ($role) {
+            foreach ($capabilities as $cap) {
+                if ($role->has_cap($cap)) {
+                    $role->remove_cap($cap);
+                }
+            }
+        }
+    }
+}
+
+// Remove custom Pro AI role completely
+if (get_role('mhbo_ai_guest')) {
+    remove_role('mhbo_ai_guest');
+}

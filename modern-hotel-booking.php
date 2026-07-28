@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 /**
- * Plugin Name:       Modern Hotel Booking — AI Concierge & Direct Bookings
- * Plugin URI:        https://modernhotelwp.com/
+ * Plugin Name:       Modern Hotel Booking — Direct Booking Engine & Availability Calendar
+ * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
  * Description:       Hotel booking system for vacation rentals, B&Bs and cabins. Includes iCal sync for Airbnb, Stripe payments and a built-in AI Concierge.
- * Version:           2.4.5
+ * Version:           2.4.8
  * Requires at least: 6.6
- * Tested up to:      7.0.1
+ * Tested up to:      7.0.2
  * Requires PHP:      8.0
  * Author:            StartMySuccess
- * Author URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
+ * Author URI:        https://modernhotelwp.com/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       modern-hotel-booking
@@ -36,7 +36,7 @@ if (version_compare(PHP_VERSION, '8.0.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.4.5');
+define('MHBO_VERSION', '2.4.8');
 define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -167,6 +167,23 @@ add_action('plugins_loaded', static function (): void {
         \MHBO\AI\Loader::init();
     }
 }, 1);
+
+/**
+ * Boot the Elementor Integration.
+ */
+add_action('elementor/elements/categories_registered', static function ($elements_manager): void {
+    if (class_exists('MHBO\Integrations\Elementor')) {
+        $elementor = new \MHBO\Integrations\Elementor();
+        $elementor->register_categories($elements_manager);
+    }
+});
+
+add_action('elementor/widgets/register', static function ($widgets_manager): void {
+    if (class_exists('MHBO\Integrations\Elementor')) {
+        $elementor = new \MHBO\Integrations\Elementor();
+        $elementor->register_widgets($widgets_manager);
+    }
+});
 
 /**
  * mhbo_is_pro() — global helper for template/shortcode use.

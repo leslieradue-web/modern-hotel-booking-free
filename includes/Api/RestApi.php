@@ -36,7 +36,8 @@ use MHBO\Core\Tax;
  */
 class RestApi
 {
-    /**
+
+/**
      * Register REST routes.
      */
     public function register_routes(): void
@@ -124,7 +125,7 @@ register_rest_route($namespace, '/bookings', array(
         register_rest_route($namespace, '/calendar-data', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_calendar_data'),
-            'permission_callback' => array($this, 'check_read_access'),
+            'permission_callback' => array($this, 'check_public_read_access'),
             'args' => array(
                 'room_id' => array(
                     'required' => true,
@@ -265,7 +266,7 @@ register_rest_route($namespace, '/bookings', array(
                 'payment_method' => array(
                     'required' => false,
                     'validate_callback' => function ($value) {
-                        return in_array($value, ['arrival', 'stripe', 'paypal'], true);
+                        return in_array($value, ['arrival', 'stripe', 'paypal', 'braintree'], true);
                     },
                     'sanitize_callback' => 'sanitize_key',
                     'default' => 'arrival',
@@ -306,18 +307,45 @@ register_rest_route($namespace, '/bookings', array(
      */
     public function check_read_access($request = null)
     {
-        // Require nonce for protection against CSRF
+        // If a nonce is supplied in header or query parameter, verify it
         if ($request !== null) {
             $nonce = $request->get_header('X-WP-Nonce');
-            if ('' === (string) ($nonce ?? '') || !wp_verify_nonce((string) $nonce, 'wp_rest')) {
-                return new \WP_Error(
-                    'mhbo_unauthorized',
-                    esc_html(I18n::get_label('label_invalid_nonce')),
-                    array('status' => 403)
-                );
+            if (null === $nonce || '' === (string) $nonce) {
+                $nonce = $request->get_param('_wpnonce') ?? $request->get_param('nonce');
+            }
+            if (null !== $nonce && '' !== (string) $nonce) {
+                $nonce_str = (string) $nonce;
+                $valid_rest = wp_verify_nonce($nonce_str, 'wp_rest');
+                $valid_front = wp_verify_nonce($nonce_str, 'mhbo_frontend');
+                if (false === $valid_rest && false === $valid_front) {
+                    return new \WP_Error(
+                        'mhbo_unauthorized',
+                        esc_html(I18n::get_label('label_invalid_nonce')),
+                        array('status' => 403)
+                    );
+                }
             }
         }
 
+        // Apply rate limiting for public endpoints
+        $rate_limit = $this->check_rate_limit();
+        if (is_wp_error($rate_limit)) {
+            return $rate_limit;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check access for public read endpoints (e.g. calendar data, countries).
+     * Bypasses strict nonce validation because aggressive page caching can cause 
+     * frontend JS to send stale nonces for public guests. 
+     *
+     * @param \WP_REST_Request $request Request object.
+     * @return bool|\WP_Error True if allowed, WP_Error otherwise.
+     */
+    public function check_public_read_access($request = null)
+    {
         // Apply rate limiting for public endpoints
         $rate_limit = $this->check_rate_limit();
         if (is_wp_error($rate_limit)) {

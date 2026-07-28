@@ -137,13 +137,13 @@ public function add_dashboard_widgets(): void
 
 if (false !== strpos($hook, 'mhbo-bookings')) {
             // FullCalendar V7: CSS must be loaded separately (skeleton + classic theme + palette).
-            wp_enqueue_style('fullcalendar-skeleton', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-skeleton.min.css', [], '7.0.0');
-            wp_enqueue_style('fullcalendar-classic-theme-css', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-theme.min.css', ['fullcalendar-skeleton'], '7.0.0');
-            wp_enqueue_style('fullcalendar-classic-palette', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-palette.min.css', ['fullcalendar-classic-theme-css'], '7.0.0');
+            wp_enqueue_style('fullcalendar-skeleton', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-skeleton.min.css', [], '7.0.2');
+            wp_enqueue_style('fullcalendar-classic-theme-css', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-theme.min.css', ['fullcalendar-skeleton'], '7.0.2');
+            wp_enqueue_style('fullcalendar-classic-palette', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-palette.min.css', ['fullcalendar-classic-theme-css'], '7.0.2');
 
             // FullCalendar V7: main bundle + classic theme plugin.
-            wp_enqueue_script('fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.global.min.js', array(), '7.0.0', true);
-            wp_enqueue_script('fullcalendar-classic-theme', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar-classic-theme.global.min.js', array('fullcalendar'), '7.0.0', true);
+            wp_enqueue_script('fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.global.min.js', array(), '7.0.2', true);
+            wp_enqueue_script('fullcalendar-classic-theme', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar-classic-theme.global.min.js', array('fullcalendar'), '7.0.2', true);
 
             // Enqueue admin bookings script
             wp_enqueue_script(
@@ -458,7 +458,7 @@ $is_pro_active = false;
                             <a href="<?php echo esc_url('https://github.com/leslieradue-web/modern-hotel-booking-free/issues'); ?>"
                                 target="_blank" class="button button-link"
                                 style="padding:0; text-align: left;"><?php echo esc_html(I18n::get_label('pro_report_issues')); ?></a>
-                            <a href="<?php echo esc_url('https://startmysuccess.com/shop/wordpress-plugins/hotel-booking-wordpress-plugin/'); ?>"
+                            <a href="<?php echo esc_url('https://modernhotelwp.com/'); ?>"
                                 target="_blank" class="button button-link"
                                 style="padding:0; text-align: left; color:#c5a059; font-weight:bold;"><?php echo esc_html(I18n::get_label('pro_get_version')); ?></a>
                         </div>
@@ -796,6 +796,13 @@ $edit_mode = false;
                 'url' => html_entity_decode(wp_nonce_url(admin_url('admin.php?page=mhbo-bookings&action=edit&id=' . $b->id), 'mhbo_edit_booking_' . $b->id)),
             );
         }
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Self-healing normalization for legacy deposit bookings.
+        $wpdb->query(
+            "UPDATE {$wpdb->prefix}mhbo_bookings 
+             SET deposit_received = 1, payment_received = 0, payment_status = 'deposit_paid', balance_status = 'pending' 
+             WHERE payment_type = 'deposit' AND (deposit_received = 0 OR deposit_received IS NULL) AND remaining_balance > 0 AND (payment_amount > 0 OR payment_status = 'completed' OR payment_status = 'deposit_paid')"
+        );
         ?>
         <div class="wrap mhbo-admin-wrap">
             <?php 
@@ -1224,6 +1231,9 @@ if ($ex['control_type'] === 'quantity') {
                                             </option>
                                             <option value="paypal" <?php selected($edit_data->payment_method ?? '', 'paypal'); ?>>
                                                 <?php echo esc_html(I18n::get_label('gateway_paypal')); ?>
+                                            </option>
+                                            <option value="braintree" <?php selected($edit_data->payment_method ?? '', 'braintree'); ?>>
+                                                <?php echo esc_html(I18n::get_label('label_braintree')); ?>
                                             </option>
                                         <?php endif; ?>
                                     </select>

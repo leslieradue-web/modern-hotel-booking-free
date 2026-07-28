@@ -249,9 +249,12 @@
 									// Only subtract deposit if Deposit Received checkbox is checked
 									if ( depositReceived ) {
 										outstanding = outstanding - deposit;
+										if ( paymentAmount > deposit ) {
+											outstanding = outstanding - ( paymentAmount - deposit );
+										}
+									} else {
+										outstanding = outstanding - paymentAmount;
 									}
-									// Subtract manually entered payment amount (partial payment)
-									outstanding = outstanding - paymentAmount;
 									outstandingInput.value = Math.max(
 										0,
 										outstanding

@@ -41,6 +41,9 @@ class Shortcode
         add_shortcode('mhbo_booking_form', [$this, 'render_shortcode']);
         // Backward compatibility
         add_shortcode('modern_hotel_booking', [$this, 'render_shortcode']);
+        
+        // Elementor Room Grid shortcode
+        add_shortcode('mhbo_rooms', [$this, 'render_rooms_grid_shortcode']);
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         
@@ -670,13 +673,34 @@ class Shortcode
         echo '<div class="mhbo-wrapper mhbo-booking-form-wrapper" data-instance-id="' . esc_attr((string) self::$instance_count) . '">';
         
         // Show success message if redirected (nonce-secured)
-        $nonce_val = filter_input(INPUT_GET, 'mhbo_success_nonce');
-        $success_nonce = $nonce_val ? sanitize_key(wp_unslash($nonce_val)) : '';
+        $nonce_val = isset($_GET['mhbo_success_nonce']) ? sanitize_key(wp_unslash($_GET['mhbo_success_nonce'])) : '';
+        $success_nonce = $nonce_val;
 
         $is_success = isset($_GET['mhbo_success']);
         $nonce_valid = false;
         if ($is_success) {
             $nonce_valid = wp_verify_nonce($success_nonce, 'mhbo_success_display');
+            
+            // Secure fallback: If nonce verification fails (e.g. due to session/login sync differences 
+            // between AJAX and redirect), check if we have a valid unguessable 32-character booking token.
+            if (!$nonce_valid && isset($_GET['reference']) && '' !== $_GET['reference']) {
+                $ref = sanitize_text_field(wp_unslash($_GET['reference']));
+                if (strlen($ref) >= 32 && preg_match('/^[a-zA-Z0-9]{32,64}$/', $ref)) {
+                    global $wpdb;
+                    $cache_key = 'mhbo_booking_ref_' . md5($ref);
+                    $booking = wp_cache_get($cache_key, 'mhbo_bookings');
+                    if (false === $booking) {
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                        $booking = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE booking_token = %s", $ref));
+                        if ($booking) {
+                            wp_cache_set($cache_key, $booking, 'mhbo_bookings', 300);
+                        }
+                    }
+                    if ($booking) {
+                        $nonce_valid = true;
+                    }
+                }
+            }
         }
 
         if ($show_calendar && (int)$atts['room_id'] > 0 && !$is_success) {
@@ -1830,5 +1854,84 @@ wp_add_inline_style('mhbo-frontend', '
                 }
             }
         }
+    }
+
+    /**
+     * Render the mhbo_rooms grid shortcode.
+     *
+     * @param array<string, mixed>|string|false $atts Shortcode attributes.
+     * @return string The rendered HTML.
+     */
+    public function render_rooms_grid_shortcode(array|string|false $atts): string
+    {
+        // Enqueue styles
+        $this->ensure_assets_loaded();
+
+        $atts = shortcode_atts(array(
+            'columns' => 3,
+            'limit'   => 6,
+        ), $atts, 'mhbo_rooms');
+
+        $columns = absint(is_array($atts) && isset($atts['columns']) ? $atts['columns'] : 3);
+        $limit   = absint(is_array($atts) && isset($atts['limit']) ? $atts['limit'] : 6);
+
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Safe interpolations for table names. Limit is safely cast to integer.
+        $room_types = $wpdb->get_results($wpdb->prepare("SELECT id, name, description, image_url, base_price, max_adults, amenities FROM {$wpdb->prefix}mhbo_room_types WHERE 1=1 ORDER BY id DESC LIMIT %d", $limit));
+
+        ob_start();
+        echo '<div class="mhbo-wrapper mhbo-room-grid-shortcode" data-columns="' . esc_attr((string)$columns) . '">';
+        
+        if (is_array($room_types) && [] !== $room_types) {
+            echo '<div class="mhbo-rooms-grid" style="grid-template-columns: repeat(' . esc_attr((string)$columns) . ', 1fr);">';
+            foreach ($room_types as $type) {
+                $img_style = '';
+                if (isset($type->image_url) && '' !== (string) $type->image_url) {
+                    $img_style = 'background:url(' . esc_url($type->image_url) . ') center/cover;';
+                } else {
+                    $img_style = 'background: linear-gradient(135deg, var(--mhbo-primary) 0%, var(--mhbo-accent) 100%); opacity: 0.8;';
+                }
+
+                echo '<div class="mhbo-room-card">';
+                echo '<div class="mhbo-room-image" style="height:200px; ' . esc_attr((string)$img_style) . '"></div>';
+                echo '<div class="mhbo-room-content">';
+                echo '<h4 class="mhbo-room-title">' . esc_html(I18n::decode($type->name)) . '</h4>';
+
+                $desc = I18n::decode($type->description);
+                if ('' !== $desc) {
+                    echo '<p class="mhbo-room-description" style="font-size:0.9rem; color:#666; margin-bottom:15px;">' . esc_html(wp_trim_words((string)$desc, 20)) . '</p>';
+                }
+
+                echo '<div class="mhbo-room-price">' . esc_html(I18n::format_currency((float)$type->base_price)) . ' <span>' . esc_html(I18n::get_label('label_per_night')) . '</span></div>';
+
+                $amenities = $type->amenities ? json_decode((string)$type->amenities) : [];
+                if (is_array($amenities) && [] !== $amenities) {
+                    echo '<div class="mhbo-amenities" style="margin-bottom:10px; font-size:0.85rem; color:#666;">';
+                    foreach ($amenities as $am) {
+                        echo '<span style="display:inline-block; background:#eee; padding:2px 8px; border-radius:12px; margin-right:5px; margin-bottom:5px;">' . esc_html(ucfirst((string)I18n::decode($am))) . '</span>';
+                    }
+                    echo '</div>';
+                }
+
+                echo '<div class="mhbo-room-details">';
+                echo '<p>' . esc_html(sprintf(I18n::get_label('label_max_guests'), $type->max_adults)) . '</p>';
+                echo '</div>';
+
+                $checkout_url = $this->get_booking_page_url();
+                $clean_checkout_url = $this->remove_mhbo_query_args($checkout_url);
+                
+                echo '<form method="get" action="' . esc_url($clean_checkout_url) . '">';
+                self::render_url_hidden_inputs($clean_checkout_url);
+                echo '<input type="hidden" name="type_id" value="' . esc_attr((string)$type->id) . '">';
+                echo '<button type="submit" class="mhbo-btn">' . esc_html(I18n::get_label('btn_view_room')) . '</button>';
+                echo '</form></div></div>';
+            }
+            echo '</div>';
+        } else {
+            echo '<p>' . esc_html(I18n::get_label('label_no_rooms')) . '</p>';
+        }
+
+        echo '</div>';
+        return ob_get_clean();
     }
 }

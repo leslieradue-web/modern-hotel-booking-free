@@ -530,9 +530,9 @@ class Client {
     private static function get_dynamic_fallback_chain( string $primary ): array {
         // Alias map: allow shorthand admin selections to resolve to real model IDs.
         $blanket_map = [
-            'gemini-stable-primary' => 'gemini-3.5-flash',
+            'gemini-stable-primary' => 'gemini-3.6-flash',
             'gemini-stable-high'    => 'gemini-3.1-pro-preview',
-            'gemini-flash-latest'   => 'gemini-3.5-flash',
+            'gemini-flash-latest'   => 'gemini-3.6-flash',
             'gemini-pro-latest'     => 'gemini-3.1-pro-preview',
         ];
 
@@ -540,16 +540,17 @@ class Client {
             $primary = $blanket_map[ $primary ];
         }
 
-        // May 2026 Economic Cascade — ordered by cost (cheapest first), all verified active.
-        // Source: https://ai.google.dev/gemini-api/docs/pricing (May 2026)
+        // July 2026 Economic Cascade — ordered by cost & capability.
         // GA models tried first (most reliable); preview models are the capability safety net.
         $default_models = [
-            'gemini-3.5-flash',              // GA      : $0.15/M input — newest, best value
-            'gemini-3.1-flash-lite',         // GA      : $0.075/M input — cheapest stable
-            'gemini-3-flash-preview',        // Preview : $0.50/M input — Computer Use support
-            'gemini-3.1-pro-preview',        // Preview : $2–4/M input — most capable preview
-            'gemini-2.5-flash-lite',         // GA      : $0.10/M input — ultralight safety net
-            'gemini-2.5-flash',              // GA      : $0.30/M input — proven last resort
+            'gemini-3.6-flash',              // GA      : July 2026 flagship flash
+            'gemini-3.5-flash',              // GA      : High performance
+            'gemini-3.5-flash-lite',         // GA      : July 2026 ultralight budget
+            'gemini-3.1-flash-lite',         // GA      : Stable
+            'gemini-3-flash-preview',        // Preview : Computer Use support
+            'gemini-3.1-pro-preview',        // Preview : Capability preview
+            'gemini-2.5-flash-lite',         // GA      : Safety net (EOL Oct 2026)
+            'gemini-2.5-flash',              // GA      : Last resort (EOL Oct 2026)
         ];
 
         // Separation: Reliable vs Unreliable (recently failed in last 5 min)

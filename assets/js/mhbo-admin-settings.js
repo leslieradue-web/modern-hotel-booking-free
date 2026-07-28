@@ -543,6 +543,89 @@
 				},
 			} );
 		} );
+
+		// Braintree Test
+		const $braintreeTestBtn = $( '#mhbo-test-braintree-btn' );
+		const $braintreeResult = $( '#mhbo-braintree-test-result' );
+
+		$braintreeTestBtn.on( 'click', function ( e ) {
+			e.preventDefault();
+			const btn = $( this );
+			const selectedMode =
+				$( 'select[name="mhbo_braintree_mode"]' ).val() || 'sandbox';
+
+			btn.prop( 'disabled', true );
+			$braintreeResult.html(
+				'<span class="spinner is-active" style="float: none; margin: 0;"></span>'
+			);
+
+			const mIdField =
+				selectedMode === 'production'
+					? 'mhbo_braintree_live_merchant_id'
+					: 'mhbo_braintree_sandbox_merchant_id';
+			const pkField =
+				selectedMode === 'production'
+					? 'mhbo_braintree_live_public_key'
+					: 'mhbo_braintree_sandbox_public_key';
+			const skField =
+				selectedMode === 'production'
+					? 'mhbo_braintree_live_private_key'
+					: 'mhbo_braintree_sandbox_private_key';
+
+			$.ajax( {
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'mhbo_test_braintree_credentials',
+					security: config.nonces?.test_braintree || config.nonces?.test_stripe || '',
+					mode: selectedMode,
+					merchant_id: $( 'input[name="' + mIdField + '"]' ).val() || '',
+					public_key: $( 'input[name="' + pkField + '"]' ).val() || '',
+					private_key: $( 'input[name="' + skField + '"]' ).val() || '',
+					merchant_account_id: $( 'input[name="mhbo_braintree_merchant_account_id"]' ).val() || '',
+				},
+				success( response ) {
+					btn.prop( 'disabled', false );
+					if ( response.success ) {
+						$braintreeResult
+							.empty()
+							.append(
+								$(
+									'<span style="color: green; font-weight: bold;">✓ </span>'
+								),
+								$( '<span/>' ).text( response.data.message )
+							);
+					} else {
+						$braintreeResult
+							.empty()
+							.append(
+								$(
+									'<span style="color: red; font-weight: bold;">✗ </span>'
+								),
+								$( '<span/>' ).text(
+									response.data
+										? response.data.message
+										: 'Unknown error'
+								)
+							);
+					}
+				},
+				error( xhr ) {
+					btn.prop( 'disabled', false );
+					const response = xhr.responseJSON;
+					const errorMsg =
+						response && response.data && response.data.message
+							? response.data.message
+							: config.i18n?.connection_error ||
+							  'Connection error. Please try again.';
+					$braintreeResult.html(
+						'<span style="color: red;">' +
+							errorMsg.replace( /\n/g, '<br>' ) +
+							'</span>'
+					);
+				},
+			} );
+		} );
 	}
 
 	/**

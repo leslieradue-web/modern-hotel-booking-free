@@ -49,7 +49,7 @@ class Loader {
         // Block and shortcode must register unconditionally so the block always
         // appears in the inserter regardless of widget-enabled settings.
         add_action( 'init', [ self::class, 'register_block' ],     10 );
-        add_action( 'init', [ self::class, 'register_shortcode' ], 10 );
+        // add_action( 'init', [ self::class, 'register_shortcode' ], 10 ); // Removed per user request
 
         $widget_enabled = (int) get_option( 'mhbo_ai_widget_enabled', 1 );
 

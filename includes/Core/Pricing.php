@@ -644,7 +644,7 @@ class Pricing
         $allow_choice    = get_option('mhbo_deposit_allow_guest_choice', 1);
 
         // Hide wrapper until JS populates amounts from the REST price response.
-        $wrapper_style = $has_total ? 'margin-bottom: 30px;' : 'margin-bottom: 30px; display: none;';
+        $wrapper_style = $has_total ? 'margin-bottom: 32px;' : 'margin-bottom: 32px; display: none;';
         ?>
         <div class="mhbo-deposit-options-wrapper" style="<?php echo esc_attr($wrapper_style); ?>">
             <h4 style="margin-top:25px; margin-bottom:15px;"><?php echo esc_html(I18n::get_label('label_payment_options')); ?></h4>
