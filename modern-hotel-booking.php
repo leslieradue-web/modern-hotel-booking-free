@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /**
  * Plugin Name:       Modern Hotel Booking — Direct Booking Engine & Availability Calendar
- * Plugin URI:        https://github.com/leslieradue-web/modern-hotel-booking-free
+ * Plugin URI:        https://modernhotelwp.com/
  * Description:       Hotel booking system for vacation rentals, B&Bs and cabins. Includes iCal sync for Airbnb, Stripe payments and a built-in AI Concierge.
  * Version:           2.4.8
  * Requires at least: 6.6
