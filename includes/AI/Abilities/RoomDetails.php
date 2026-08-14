@@ -138,7 +138,7 @@ class RoomDetails {
             'currency'         => $currency,
             'price_formatted'  => $price_money->format(),
             'amenities'        => $amenities,
-            'thumbnail_url'    => esc_url( (string) ( $type->image_url ?? '' ) ),
+            'thumbnail_url'    => esc_url_raw( (string) ( $type->image_url ?? '' ) ),
             'booking_url'      => KnowledgeBase::get_booking_url(),
             'total_rooms'      => (int) ( $type->total_rooms ?? 0 ),
         ];

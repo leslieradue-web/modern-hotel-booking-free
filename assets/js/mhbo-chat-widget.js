@@ -725,6 +725,15 @@
 				.replace( /'/g, '&#39;' );
 		}
 
+		_cleanUrl( url ) {
+			if ( ! url ) {
+				return '';
+			}
+			return String( url )
+				.replace( /&#038;/g, '&' )
+				.replace( /&amp;/g, '&' );
+		}
+
 		// ── Suggestions ───────────────────────────────────────────────────────
 
 		addSuggestions( items ) {
@@ -1118,7 +1127,7 @@
                     <div class="mhbo-summary-item"><label>Payment</label><span>${ depositMsg }</span></div>
                 </div>
                 <div class="mhbo-booking-summary-footer">
-                    <a href="${ this._esc( data.booking_url ) }"
+                    <a href="${ this._cleanUrl( data.booking_url ) }"
                        class="mhbo-booking-link-btn mhbo-complete-booking-btn"
                        data-room-id="${ data.room_id || '' }"
                        data-check-in="${ this._esc( data.check_in || '' ) }"
@@ -1282,7 +1291,7 @@
                             ${ capHtml }
                             ${ priceHtml }
                         </div>
-                        <a href="${ this._esc( room.booking_url || '' ) }"
+                        <a href="${ this._cleanUrl( room.booking_url || '' ) }"
                            class="mhbo-booking-link-btn mhbo-complete-booking-btn"
                            data-room-id="${ roomId }"
                            data-check-in="${ checkIn }"
@@ -1401,7 +1410,7 @@
 		// After the configured dwell time on a page that contains booking-relevant
 		// content, auto-open the first widget with a context-aware greeting.
 		// Respects: already-open widgets, dismissed flag (sessionStorage), data-proactive="false".
-		const proactiveSecs = cfg.settings?.proactiveTriggerSeconds ?? 45;
+		const proactiveSecs = cfg.settings?.proactiveTriggerSeconds ?? 0;
 		const proactiveEl = document.querySelector(
 			'.mhbo-chat-widget:not([data-proactive="false"])'
 		);

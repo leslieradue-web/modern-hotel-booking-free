@@ -123,7 +123,8 @@
 		const disabled = [];
 		data.forEach( function ( item ) {
 			// Disable both booked dates and unbookable dates (no price)
-			if ( item.status === 'booked' || item.status === 'unbookable' ) {
+			// BUT do NOT disable dates that allow check-out (can_checkout !== false)
+			if ( ( item.status === 'booked' || item.status === 'unbookable' ) && item.can_checkout === false ) {
 				disabled.push( item.date );
 			}
 		} );
@@ -210,11 +211,11 @@
 
 					let newDisabled = [ ...disabledDates ];
 					if ( firstBookedAfter ) {
-						// For 2026 BP: Always un-disable firstBookedAfter.
-						// The REST API implicitly shifts firstBookedAfter back by 1 day ("dead day") when turnover is prevented.
-						newDisabled = newDisabled.filter(
-							( d ) => d !== firstBookedAfter
+						const checkInStr = instance.formatDate( checkIn, 'Y-m-d' );
+						newDisabled = disabledDates.filter(
+							( d ) => d < checkInStr || d > firstBookedAfter
 						);
+						instance.set( 'maxDate', firstBookedAfter );
 					}
 					instance.set( 'disable', newDisabled );
 				} else if ( selectedDates.length === 2 ) {

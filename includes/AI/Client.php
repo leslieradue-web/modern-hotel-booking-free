@@ -249,7 +249,7 @@ class Client {
         }
 
         return match ( $provider ) {
-            self::PROVIDER_GEMINI    => self::http_gemini( $api_key, $model ?: 'gemini-3.5-flash', $messages, $system_prompt, $tools ),
+            self::PROVIDER_GEMINI    => self::http_gemini( $api_key, $model ?: 'gemini-3.7-flash', $messages, $system_prompt, $tools ),
             self::PROVIDER_OPENAI    => self::http_openai( $api_key, $model ?: 'gpt-5.4-mini', $messages, $system_prompt, $tools, ( str_contains( $model, 'gpt-5' ) ) ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions' ),
             self::PROVIDER_OPENROUTER => self::http_openai( $api_key, $model, $messages, $system_prompt, $tools, 'https://openrouter.ai/api/v1/chat/completions' ),
             self::PROVIDER_ANTHROPIC => self::http_anthropic( $api_key, $model ?: 'claude-sonnet-4-6', $messages, $system_prompt, $tools ),
@@ -342,7 +342,7 @@ class Client {
  
         switch ( $provider ) {
             case self::PROVIDER_GEMINI:
-                return self::http_gemini( $api_key, $model ?: 'gemini-3.5-flash', $messages, $system_prompt, $tools );
+                return self::http_gemini( $api_key, $model ?: 'gemini-3.7-flash', $messages, $system_prompt, $tools );
  
             case self::PROVIDER_OPENAI:
                 $endpoint = ( str_contains( $model, 'gpt-5' ) ) ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions';
@@ -392,11 +392,11 @@ class Client {
      * Reason: v1beta is the ONLY endpoint that supports system_instruction,
      * tools/function_declarations, and all Gemini 3.x preview models. Google's
      * stable v1 endpoint lags behind and does not expose these agentic features.
-     * v1beta itself is NOT deprecated (April 2026 verified).
+     * v1beta itself is NOT deprecated (verified August 2026).
      *
-     * Verified Fallback Chain (April 2026):
-     *   gemini-3.5-flash → gemini-3.1-flash-lite → gemini-3-flash-preview → gemini-2.5-flash
-     *   → gemini-2.5-flash-lite → gemini-3.1-pro-preview (last resort, most expensive)
+     * Verified Fallback Chain (August 2026):
+     *   gemini-3.7-flash → gemini-3.6-flash → gemini-3.5-flash → gemini-3.5-flash-lite
+     *   → gemini-3.1-flash-lite → gemini-3-flash-preview → gemini-3.1-pro-preview
      *
      * EOL models removed: gemini-3.1-flash-lite-preview (shut down 2026-05-25),
      *                      gemini-2.5-flash-lite-preview (shut down 2026-03-31),
@@ -412,7 +412,7 @@ class Client {
     private static function http_gemini( string $api_key, string $model, array $messages, string $system_prompt, array $tools ): array {
         // Normalize retired model names to stable 2026 equivalents.
         // Retired: gemini-1.5-*, gemini-2.0-*, gemini-2.5-flash-lite-preview, gemini-3.1-flash-lite-preview.
-        $model = str_replace( '-latest', '', $model ?: 'gemini-3.5-flash' );
+        $model = str_replace( '-latest', '', $model ?: 'gemini-3.7-flash' );
 
         $retired_prefixes = [
             'gemini-1.5',
@@ -427,11 +427,11 @@ class Client {
         ];
 
         if ( in_array( $model, $retired_exact, true ) ) {
-            self::log_error( "Model {$model} is EOL. Auto-migrating to gemini-3.5-flash." );
-            $model = 'gemini-3.5-flash';
+            self::log_error( "Model {$model} is EOL. Auto-migrating to gemini-3.7-flash." );
+            $model = 'gemini-3.7-flash';
         } elseif ( [] !== array_filter( $retired_prefixes, fn( $p ) => str_starts_with( $model, $p ) ) ) {
-            self::log_error( "Model {$model} uses a retired prefix. Auto-migrating to gemini-3.5-flash." );
-            $model = 'gemini-3.5-flash';
+            self::log_error( "Model {$model} uses a retired prefix. Auto-migrating to gemini-3.7-flash." );
+            $model = 'gemini-3.7-flash';
         }
 
         // Build the Gemini-format contents array (OpenAI → Gemini conversion).
@@ -514,15 +514,12 @@ class Client {
      * over "Absolute Minimum Cost". If the cheapest model is busy, the system will try
      * more available tiers in the ecosystem.
      *
-     * May 2026 Verified Active Models (v1beta endpoint):
-     *   GA       : gemini-3.5-flash ($0.15/M) — best value, newest GA
-     *              gemini-3.1-flash-lite ($0.075/M) — cheapest stable
-     *              gemini-2.5-flash ($0.30/M) — proven stable
-     *              gemini-2.5-flash-lite ($0.10/M) — ultralight stable
-     *   PREVIEW  : gemini-3-flash-preview ($0.50/M) — Computer Use support
-     *              gemini-3.1-pro-preview ($2-4/M) — flagship preview
-     * EOL (DO NOT USE): gemini-3.1-flash-lite-preview (May 25), gemini-2.5-flash-lite-preview (Mar 31),
-     *                   gemini-1.5-*, gemini-2.0-*, gemini-3-pro-preview (Mar 9)
+     * August 2026 Verified Active Models:
+     *   GA       : gemini-3.7-flash — best value, newest frontier
+     *              gemini-3.6-flash — high performance workhorse
+     *              gemini-3.5-flash-lite — cheapest stable
+     *   PREVIEW  : gemini-3-flash-preview — Computer Use support
+     *              gemini-3.1-pro-preview — flagship preview
      *
      * @param string $primary
      * @return list<string>
@@ -530,9 +527,9 @@ class Client {
     private static function get_dynamic_fallback_chain( string $primary ): array {
         // Alias map: allow shorthand admin selections to resolve to real model IDs.
         $blanket_map = [
-            'gemini-stable-primary' => 'gemini-3.6-flash',
+            'gemini-stable-primary' => 'gemini-3.7-flash',
             'gemini-stable-high'    => 'gemini-3.1-pro-preview',
-            'gemini-flash-latest'   => 'gemini-3.6-flash',
+            'gemini-flash-latest'   => 'gemini-3.7-flash',
             'gemini-pro-latest'     => 'gemini-3.1-pro-preview',
         ];
 
@@ -540,17 +537,18 @@ class Client {
             $primary = $blanket_map[ $primary ];
         }
 
-        // July 2026 Economic Cascade — ordered by cost & capability.
+        // August 2026 Economic Cascade — ordered by cost & capability.
         // GA models tried first (most reliable); preview models are the capability safety net.
         $default_models = [
-            'gemini-3.6-flash',              // GA      : July 2026 flagship flash
-            'gemini-3.5-flash',              // GA      : High performance
-            'gemini-3.5-flash-lite',         // GA      : July 2026 ultralight budget
+            'gemini-3.7-flash',              // GA      : August 2026 frontier flagship
+            'gemini-3.6-flash',              // GA      : July 2026 workhorse
+            'gemini-3.5-flash',              // GA      : High performance legacy
+            'gemini-3.5-flash-lite',         // GA      : Ultralight budget
             'gemini-3.1-flash-lite',         // GA      : Stable
             'gemini-3-flash-preview',        // Preview : Computer Use support
             'gemini-3.1-pro-preview',        // Preview : Capability preview
-            'gemini-2.5-flash-lite',         // GA      : Safety net (EOL Oct 2026)
-            'gemini-2.5-flash',              // GA      : Last resort (EOL Oct 2026)
+            'gemini-2.5-flash-lite',         // GA      : Safety net (Deprecated)
+            'gemini-2.5-flash',              // GA      : Last resort (Deprecated)
         ];
 
         // Separation: Reliable vs Unreliable (recently failed in last 5 min)
@@ -618,8 +616,8 @@ class Client {
         $new_lock = \time() + $duration;
         \set_transient( 'mhbo_ai_quota_lock', $new_lock, $duration + 60 );
 
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            \error_log( "[MHBO AI] Resilience: Circuit Breaker score expanded to {$score}. Cooling down for {$duration}s." ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional debug telemetry, guarded by WP_DEBUG
+        if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+            \error_log( "[MHBO AI] Resilience: Circuit Breaker score expanded to {$score}. Cooling down for {$duration}s." ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- intentional debug telemetry, guarded by WP_DEBUG_LOG
         }
     }
 

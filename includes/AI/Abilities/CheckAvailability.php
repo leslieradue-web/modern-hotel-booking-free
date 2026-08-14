@@ -218,7 +218,8 @@ $child_ages = [];
         foreach ( $type_inventory as $type_id => $data ) {
             $room       = $data['room'];
             $count      = (int) $data['count'];
-            $room_id    = (int) $room->room_id;
+            $avail_ids  = (array) $data['available_room_ids'];
+            $room_id    = [] !== $avail_ids ? (int) $avail_ids[0]['id'] : (int) $room->room_id;
             $max_a      = (int) $room->max_adults;
             $max_c      = (int) $room->max_children;
             $max_guests = $max_a + $max_c;
@@ -343,8 +344,8 @@ $child_ages = [];
                 'max_children'    => (int) $room->max_children,
                 'max_guests'      => $max_guests,
                 'amenities'       => $room_amenities,
-                'thumbnail_url'   => \esc_url( (string) ( $room->image_url ?? '' ) ),
-                'booking_url'     => \esc_url( (string) $room_booking_url ),
+                'thumbnail_url'   => \esc_url_raw( (string) ( $room->image_url ?? '' ) ),
+                'booking_url'     => \esc_url_raw( (string) $room_booking_url ),
             ];
         }
 

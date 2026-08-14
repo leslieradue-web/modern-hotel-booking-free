@@ -32,7 +32,7 @@ class Calendar
                 'mhbo-calendar-style',
                 MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
                 ['mhbo-flatpickr-css', 'mhbo-style'],
-                (string) time() // Cache buster for active development
+                MHBO_VERSION
             );
         }
         if (!wp_style_is('mhbo-flatpickr-css', 'registered')) {
@@ -398,6 +398,42 @@ class Calendar
                     </a>
                 </div>
             <?php endif; ?>
+
+            <?php
+            // BP 2026: DOM Preloading for Zero-Latency Initialization.
+            // Fetch the payload natively for single-room and aggregated views to avoid the first AJAX roundtrip.
+            if ($room_id >= 0 && class_exists('\MHBO\Api\RestApi')) {
+                $current_year  = (int) wp_date('Y');
+                $current_month = (int) wp_date('m');
+
+                // Replicate the transient logic to avoid generating it if already cached
+                $version_hash = \MHBO\Core\Cache::get_version(\MHBO\Core\Cache::TABLE_BOOKINGS) . '_' . 
+                                \MHBO\Core\Cache::get_version(\MHBO\Core\Cache::TABLE_CALENDAR_OVERRIDES) . '_' . 
+                                \MHBO\Core\Cache::get_version(\MHBO\Core\Cache::TABLE_ROOMS) . '_' . 
+                                \MHBO\Core\Cache::get_version(\MHBO\Core\Cache::TABLE_SETTINGS);
+                $transient_key = 'mhbo_cal_payload_' . $room_id . '_' . $current_year . '_' . $current_month . '_v' . md5($version_hash);
+                $cached_payload = get_transient($transient_key);
+
+                if (false === $cached_payload) {
+                    $payload = ($room_id > 0)
+                        ? \MHBO\Api\RestApi::generate_calendar_payload($room_id, $current_year, $current_month)
+                        : \MHBO\Api\RestApi::generate_aggregated_calendar_payload($current_year, $current_month);
+
+                    if (!is_wp_error($payload) && is_array($payload) && [] !== $payload) {
+                        set_transient($transient_key, $payload, 12 * HOUR_IN_SECONDS);
+                        $cached_payload = $payload;
+                    }
+                }
+
+                if (is_array($cached_payload) && [] !== $cached_payload) {
+                    $json_str = wp_json_encode(array(
+                        'hash' => md5($version_hash), // Pass hash for stale-while-revalidate checks
+                        'data' => $cached_payload
+                    ));
+                    echo '<div class="mhbo-calendar-payload" id="mhbo-calendar-payload-' . esc_attr((string) $room_id) . '" data-payload="' . esc_attr((string) $json_str) . '" style="display:none;"></div>';
+                }
+            }
+            ?>
         </div>
         <?php
         return ob_get_clean();

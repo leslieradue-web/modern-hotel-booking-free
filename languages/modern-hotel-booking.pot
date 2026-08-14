@@ -2,26 +2,27 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Modern Hotel Booking 2.4.7.1\n"
+"Project-Id-Version: Modern Hotel Booking 2.4.8.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modern-hotel-booking\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T10:42:14+00:00\n"
+"POT-Creation-Date: 2026-08-02T13:38:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: modern-hotel-booking\n"
 
 #. Plugin Name of the plugin
 #: modern-hotel-booking.php
-msgid "Modern Hotel Booking PRO"
+msgid "Modern Hotel Booking — Direct Booking Engine & Availability Calendar"
 msgstr ""
 
 #. Plugin URI of the plugin
+#. Author URI of the plugin
 #: modern-hotel-booking.php
-msgid "https://github.com/leslieradue-web/modern-hotel-booking-free"
+msgid "https://modernhotelwp.com/"
 msgstr ""
 
 #. Description of the plugin
@@ -32,11 +33,6 @@ msgstr ""
 #. Author of the plugin
 #: modern-hotel-booking.php
 msgid "StartMySuccess"
-msgstr ""
-
-#. Author URI of the plugin
-#: modern-hotel-booking.php
-msgid "https://modernhotelwp.com/"
 msgstr ""
 
 #: includes/Admin/AiSettings.php:100
@@ -79,10 +75,11 @@ msgstr ""
 msgid "AI Resilience Engine reset. All failure scores and cooldowns cleared."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:311
-#: includes/Admin/AiSettings.php:361
-#: includes/AI/KnowledgeBase.php:59
-#: includes/AI/Loader.php:613
+#: includes/Admin/AiSettings.php:323
+#: includes/Admin/AiSettings.php:374
+#: includes/AI/KnowledgeBase.php:61
+#: includes/AI/KnowledgeBase.php:166
+#: includes/AI/Loader.php:623
 #: includes/Core/I18n.php:1259
 #: includes/Core/I18n.php:1382
 #: includes/Pro/CouponAdmin.php:585
@@ -102,19 +99,19 @@ msgstr ""
 msgid "AI Concierge"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:348
+#: includes/Admin/AiSettings.php:360
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:346
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:293
 msgid "General"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:349
+#: includes/Admin/AiSettings.php:361
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:347
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:294
 msgid "Assistant Persona"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:350
+#: includes/Admin/AiSettings.php:362
 #: includes/Core/I18n.php:1510
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:348
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/I18n.php:1287
@@ -123,14 +120,14 @@ msgstr ""
 msgid "Appearance"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:352
-#: includes/Admin/AiSettings.php:921
+#: includes/Admin/AiSettings.php:364
+#: includes/Admin/AiSettings.php:935
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:350
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:918
 msgid "AI Discovery (GEO)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:353
+#: includes/Admin/AiSettings.php:365
 #: includes/Core/I18n.php:1509
 #: includes/Core/I18n.php:1695
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:351
@@ -141,13 +138,17 @@ msgstr ""
 msgid "Analytics"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:362
+#: includes/Admin/AiSettings.php:366
+msgid "Knowledge"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:375
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:360
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:304
 msgid "Manage your AI guest assistant, knowledge base, and voice integrations."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:365
+#: includes/Admin/AiSettings.php:378
 #: includes/Core/I18n.php:1503
 #: includes/Core/I18n.php:1804
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:363
@@ -159,7 +160,7 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:390
+#: includes/Admin/AiSettings.php:404
 #: includes/Core/I18n.php:1626
 #: includes/Core/I18n.php:2053
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:388
@@ -171,137 +172,137 @@ msgstr ""
 msgid "System Status"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:396
+#: includes/Admin/AiSettings.php:410
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:394
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:335
 msgid "AI Service Engine"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:398
+#: includes/Admin/AiSettings.php:412
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:396
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:337
 msgid "All AI subsystems are active and ready."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:398
+#: includes/Admin/AiSettings.php:412
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:396
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:337
 msgid "AI is currently offline. No connections will be made."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:407
+#: includes/Admin/AiSettings.php:421
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:405
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:346
 msgid "The Master Kill Switch disables all AI functionality plugin-wide, including background syncing and API connections."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:411
+#: includes/Admin/AiSettings.php:425
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:409
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:350
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:414
+#: includes/Admin/AiSettings.php:428
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:412
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:353
 msgid "Snapshot Status"
 msgstr ""
 
 #. translators: %s: last update date and time
-#: includes/Admin/AiSettings.php:425
+#: includes/Admin/AiSettings.php:439
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:423
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:364
 #, php-format
 msgid "Last updated: %s"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:427
+#: includes/Admin/AiSettings.php:441
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:425
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:366
 msgid "Snapshot is over 30 days old. Refresh recommended."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:431
+#: includes/Admin/AiSettings.php:445
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:429
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:370
 msgid "Not built yet."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:436
+#: includes/Admin/AiSettings.php:450
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:434
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:375
 msgid "Sync Now"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:440
+#: includes/Admin/AiSettings.php:454
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:438
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:379
 msgid "The AI learns context from your rooms, amenities, and settings. Syncing ensures it has the latest data."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:443
+#: includes/Admin/AiSettings.php:457
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:441
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:382
 msgid "Resilience & Service Limits"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:450
+#: includes/Admin/AiSettings.php:464
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:448
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:389
 msgid "Operational"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:455
+#: includes/Admin/AiSettings.php:469
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:453
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:394
 msgid "Cooling Down (Demand Spike)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:459
+#: includes/Admin/AiSettings.php:473
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:457
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:398
 msgid "High Demand (Degraded)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:466
+#: includes/Admin/AiSettings.php:480
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:464
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:405
 msgid "Service Health"
 msgstr ""
 
 #. translators: %1$d: seconds remaining before AI concierge resumes
-#: includes/Admin/AiSettings.php:473
+#: includes/Admin/AiSettings.php:487
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:471
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:412
 #, php-format
 msgid "Resuming in %1$d seconds..."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:478
+#: includes/Admin/AiSettings.php:492
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:476
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:417
 msgid "Error Score"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:486
+#: includes/Admin/AiSettings.php:500
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:484
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:425
 msgid "Eliminate \"Quota Exhausted\" Errors"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:488
+#: includes/Admin/AiSettings.php:502
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:486
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:427
 msgid "By default, free projects are capped at 20 RPM. Enabling billing (Tier 1) immediately increases your limits by 10x."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:492
+#: includes/Admin/AiSettings.php:506
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:490
 msgid "Upgrade to Tier 1 →"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:498
-#: includes/Admin/AiSettings.php:1343
+#: includes/Admin/AiSettings.php:512
+#: includes/Admin/AiSettings.php:1432
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:496
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1340
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:433
@@ -309,44 +310,44 @@ msgstr ""
 msgid "Reset Engine Lock"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:500
+#: includes/Admin/AiSettings.php:514
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:498
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:435
 msgid "Manually clear the demand cooldown and reset failure scores."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:506
+#: includes/Admin/AiSettings.php:520
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:504
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:441
 msgid "Primary AI Connection"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:509
+#: includes/Admin/AiSettings.php:523
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:507
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:444
 msgid "WordPress 7.0+ AI Client Detected"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:510
+#: includes/Admin/AiSettings.php:524
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:508
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:445
 msgid "Using site-wide AI provider from Settings → Connectors. Plugin API key settings below serve as fallback."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:515
+#: includes/Admin/AiSettings.php:529
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:513
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:450
 msgid "Notice: Cost Resilience"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:516
+#: includes/Admin/AiSettings.php:530
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:514
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:451
 msgid "To ensure your guests always receive a response, the system may automatically fallback to secondary models if your chosen model is unavailable. This may result in higher than expected billable token costs."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:521
-#: includes/Admin/AiSettings.php:670
+#: includes/Admin/AiSettings.php:535
+#: includes/Admin/AiSettings.php:684
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:519
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:667
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:456
@@ -354,14 +355,14 @@ msgstr ""
 msgid "Provider"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:524
+#: includes/Admin/AiSettings.php:538
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:522
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:459
 msgid "— Select —"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:525
-#: includes/Admin/AiSettings.php:674
+#: includes/Admin/AiSettings.php:539
+#: includes/Admin/AiSettings.php:688
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:523
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:671
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:460
@@ -369,12 +370,12 @@ msgstr ""
 msgid "Google Gemini"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:526
+#: includes/Admin/AiSettings.php:540
 msgid "OpenAI (GPT-5.6)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:527
-#: includes/Admin/AiSettings.php:676
+#: includes/Admin/AiSettings.php:541
+#: includes/Admin/AiSettings.php:690
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:525
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:673
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:462
@@ -382,12 +383,12 @@ msgstr ""
 msgid "OpenRouter.ai"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:528
+#: includes/Admin/AiSettings.php:542
 msgid "Anthropic (Claude 5)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:529
-#: includes/Admin/AiSettings.php:678
+#: includes/Admin/AiSettings.php:543
+#: includes/Admin/AiSettings.php:692
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:527
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:675
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:464
@@ -395,8 +396,8 @@ msgstr ""
 msgid "Ollama (local)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:530
-#: includes/Admin/AiSettings.php:679
+#: includes/Admin/AiSettings.php:544
+#: includes/Admin/AiSettings.php:693
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:528
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:676
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:465
@@ -404,18 +405,18 @@ msgstr ""
 msgid "Custom (OpenAI-compatible)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:535
+#: includes/Admin/AiSettings.php:549
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:533
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:470
 msgid "Real-Time Streaming"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:541
+#: includes/Admin/AiSettings.php:555
 msgid "Enable SSE to show \"typing\" and \"thinking\" in real-time. (May 2026 BP)."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:545
-#: includes/Admin/AiSettings.php:684
+#: includes/Admin/AiSettings.php:559
+#: includes/Admin/AiSettings.php:698
 #: includes/Core/I18n.php:1909
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:543
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:681
@@ -426,8 +427,8 @@ msgstr ""
 msgid "API Key"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:551
-#: includes/Admin/AiSettings.php:690
+#: includes/Admin/AiSettings.php:565
+#: includes/Admin/AiSettings.php:704
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:549
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:687
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:486
@@ -435,45 +436,45 @@ msgstr ""
 msgid "Model"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:557
+#: includes/Admin/AiSettings.php:571
 msgid "Gemini 3.6 Flash ⚡ Recommended (GA July 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:558
+#: includes/Admin/AiSettings.php:572
 msgid "Gemini 3.5 Flash — High Performance (GA)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:559
+#: includes/Admin/AiSettings.php:573
 msgid "Gemini 3.5 Flash-Lite — Ultra Budget (GA July 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:560
+#: includes/Admin/AiSettings.php:574
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:557
 msgid "Gemini 3.1 Flash-Lite — Stable (GA)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:561
+#: includes/Admin/AiSettings.php:575
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:558
 msgid "Gemini 3 Flash Preview (Computer Use)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:562
+#: includes/Admin/AiSettings.php:576
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:559
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:493
 msgid "Gemini 3.1 Pro Preview (Flagship)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:563
+#: includes/Admin/AiSettings.php:577
 msgid "Gemini 2.5 Flash — Deprecated (EOL Oct 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:564
+#: includes/Admin/AiSettings.php:578
 msgid "Gemini 2.5 Flash-Lite — Deprecated (EOL Oct 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:565
-#: includes/Admin/AiSettings.php:591
-#: includes/Admin/AiSettings.php:614
+#: includes/Admin/AiSettings.php:579
+#: includes/Admin/AiSettings.php:605
+#: includes/Admin/AiSettings.php:628
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:563
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:588
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:611
@@ -483,97 +484,97 @@ msgstr ""
 msgid "— Manual Override / Custom —"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:582
+#: includes/Admin/AiSettings.php:596
 msgid "GPT-5.6 Luna ⚡ (Fast & Budget - GA July 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:584
+#: includes/Admin/AiSettings.php:598
 msgid "GPT-5.6 Terra ⚡ (Workhorse - GA July 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:585
+#: includes/Admin/AiSettings.php:599
 msgid "GPT-5.6 Sol (Supreme Frontier - GA July 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:586
+#: includes/Admin/AiSettings.php:600
 msgid "GPT-5.5 (Superseded Flagship)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:587
+#: includes/Admin/AiSettings.php:601
 msgid "GPT-5.4 Mini (Proven Budget)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:589
+#: includes/Admin/AiSettings.php:603
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:586
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:515
 msgid "GPT-4o (Legacy Stable)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:590
+#: includes/Admin/AiSettings.php:604
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:587
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:516
 msgid "GPT-4o Mini (Legacy Budget)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:607
+#: includes/Admin/AiSettings.php:621
 msgid "Claude Sonnet 5 ⚡ Recommended (GA June 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:609
+#: includes/Admin/AiSettings.php:623
 msgid "Claude Opus 5 (Supreme Reasoning - GA July 2026)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:610
+#: includes/Admin/AiSettings.php:624
 msgid "Claude Fable 5 (Frontier Capabilities)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:611
+#: includes/Admin/AiSettings.php:625
 msgid "Claude Sonnet 4.6 (Legacy Stable)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:613
+#: includes/Admin/AiSettings.php:627
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:609
 msgid "Claude Haiku 4.5 (Budget, Fast)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:631
+#: includes/Admin/AiSettings.php:645
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:628
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:552
 msgid "Enter a specific model identifier if not listed above."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:637
+#: includes/Admin/AiSettings.php:651
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:634
 msgid "Reasoning Intensity"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:640
+#: includes/Admin/AiSettings.php:654
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:637
 msgid "Auto (Balanced)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:641
+#: includes/Admin/AiSettings.php:655
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:638
 msgid "Low (Speed Focused)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:642
+#: includes/Admin/AiSettings.php:656
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:639
 msgid "Medium (Deeper Reasoning)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:643
+#: includes/Admin/AiSettings.php:657
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:640
 msgid "High (Advanced Complex)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:645
+#: includes/Admin/AiSettings.php:659
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:642
 msgid "Higher intensity increases intelligence and accuracy but raises operational token costs. (GPT-5.4 & Claude 4.6+)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:650
-#: includes/Admin/AiSettings.php:696
+#: includes/Admin/AiSettings.php:664
+#: includes/Admin/AiSettings.php:710
 #: includes/Core/I18n.php:1932
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:647
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:693
@@ -584,9 +585,9 @@ msgstr ""
 msgid "Endpoint"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:658
-#: includes/Admin/AiSettings.php:1294
-#: includes/Admin/AiSettings.php:1297
+#: includes/Admin/AiSettings.php:672
+#: includes/Admin/AiSettings.php:1383
+#: includes/Admin/AiSettings.php:1386
 #: includes/Core/I18n.php:1778
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:655
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1291
@@ -599,25 +600,25 @@ msgstr ""
 msgid "Test Connection"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:664
+#: includes/Admin/AiSettings.php:678
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:661
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:572
 msgid "Fallback Connection"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:666
+#: includes/Admin/AiSettings.php:680
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:663
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:574
 msgid "Fallback models are used when the primary connection is overloaded. Note: Fallback models may have different pricing profiles than your primary selection."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:673
+#: includes/Admin/AiSettings.php:687
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:670
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:581
 msgid "— None —"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:675
+#: includes/Admin/AiSettings.php:689
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:524
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:672
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:461
@@ -625,7 +626,7 @@ msgstr ""
 msgid "OpenAI (GPT-5.4)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:677
+#: includes/Admin/AiSettings.php:691
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:526
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:674
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:463
@@ -633,9 +634,9 @@ msgstr ""
 msgid "Anthropic (Claude 4.6)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:704
-#: includes/Admin/AiSettings.php:1307
-#: includes/Admin/AiSettings.php:1310
+#: includes/Admin/AiSettings.php:718
+#: includes/Admin/AiSettings.php:1396
+#: includes/Admin/AiSettings.php:1399
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:701
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1304
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1307
@@ -645,127 +646,127 @@ msgstr ""
 msgid "Test Fallback"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:713
+#: includes/Admin/AiSettings.php:727
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:710
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:621
 msgid "Persona & Rules"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:716
+#: includes/Admin/AiSettings.php:730
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:713
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:624
 msgid "Bot Name"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:722
+#: includes/Admin/AiSettings.php:736
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:719
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:630
 msgid "Instructions"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:725
+#: includes/Admin/AiSettings.php:739
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:722
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:633
 msgid "Define specific rules, e.g. \"Suggest the breakfast buffet if guests ask about snacks.\""
 msgstr ""
 
-#: includes/Admin/AiSettings.php:729
+#: includes/Admin/AiSettings.php:743
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:726
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:637
 msgid "First Message"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:731
+#: includes/Admin/AiSettings.php:745
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:728
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:639
 msgid "How can I help you today?"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:737
+#: includes/Admin/AiSettings.php:751
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:734
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:645
 msgid "Language & Locale"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:740
+#: includes/Admin/AiSettings.php:754
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:737
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:648
 msgid "Active Locale:"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:746
+#: includes/Admin/AiSettings.php:760
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:743
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:654
 msgid "The AI automatically adapts to the guest language based on your site configuration."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:752
+#: includes/Admin/AiSettings.php:766
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:749
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:660
 msgid "Force Language"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:755
+#: includes/Admin/AiSettings.php:769
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:752
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:663
 msgid "e.g. en-US, de-DE. Leave blank for auto-detect."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:763
+#: includes/Admin/AiSettings.php:777
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:760
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:671
 msgid "Local Concierge Guide"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:766
+#: includes/Admin/AiSettings.php:780
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:763
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:674
 msgid "Local Tips & Info"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:769
+#: includes/Admin/AiSettings.php:783
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:766
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:677
 msgid "e.g. Best Pizza: Luigi's (2 blocks away), Transit: Use Line 4 to Beach..."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:771
+#: includes/Admin/AiSettings.php:785
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:768
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:679
 msgid "Provide details about nearby attractions, restaurants, and transit. The AI will use this to answer general concierge questions."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:781
+#: includes/Admin/AiSettings.php:795
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:778
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:689
 msgid "Widget Display"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:784
+#: includes/Admin/AiSettings.php:798
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:781
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:692
 msgid "Enable Chat"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:793
+#: includes/Admin/AiSettings.php:807
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:790
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:701
 msgid "Global Display"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:797
+#: includes/Admin/AiSettings.php:811
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:794
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:705
 msgid "Show on all public pages"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:799
+#: includes/Admin/AiSettings.php:813
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:796
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:707
 msgid "Uncheck to only show the AI via Shortcode or Gutenberg Block."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:803
+#: includes/Admin/AiSettings.php:817
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:800
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:711
 #: blocks/ai-concierge/index.js:158
@@ -774,7 +775,7 @@ msgstr ""
 msgid "Position"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:806
+#: includes/Admin/AiSettings.php:820
 #: includes/Core/I18n.php:2561
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:803
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/I18n.php:2338
@@ -786,7 +787,7 @@ msgstr ""
 msgid "Bottom Right"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:807
+#: includes/Admin/AiSettings.php:821
 #: includes/Core/I18n.php:2562
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:804
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/I18n.php:2339
@@ -798,297 +799,345 @@ msgstr ""
 msgid "Bottom Left"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:812
+#: includes/Admin/AiSettings.php:826
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:809
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:720
 msgid "Brand Color"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:823
+#: includes/Admin/AiSettings.php:837
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:820
 msgid "Pro Theme"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:828
+#: includes/Admin/AiSettings.php:842
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:825
 msgid "Default Premium"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:829
+#: includes/Admin/AiSettings.php:843
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:826
 msgid "Minimalist"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:830
+#: includes/Admin/AiSettings.php:844
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:827
 msgid "Luxury Gold"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:831
+#: includes/Admin/AiSettings.php:845
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:828
 msgid "Boutique"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:832
+#: includes/Admin/AiSettings.php:846
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:829
 msgid "Modern Edge"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:833
+#: includes/Admin/AiSettings.php:847
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:830
 msgid "Solid Dark"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:846
+#: includes/Admin/AiSettings.php:860
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:843
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:732
 msgid "Proactive Suggestion"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:850
+#: includes/Admin/AiSettings.php:864
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:847
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:736
 msgid "seconds of inactivity before bubble appears (0 to disable)."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:857
+#: includes/Admin/AiSettings.php:871
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:854
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:743
 msgid "Advanced Integrations"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:860
+#: includes/Admin/AiSettings.php:874
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:857
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:746
 msgid "MCP Server"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:866
+#: includes/Admin/AiSettings.php:880
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:863
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:752
 msgid "Enable external AI tools access via Model Context Protocol."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:870
+#: includes/Admin/AiSettings.php:884
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:867
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:756
 msgid "Voice Input"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:871
+#: includes/Admin/AiSettings.php:885
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:868
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:757
 msgid "Enable Speech-to-Text"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:874
+#: includes/Admin/AiSettings.php:888
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:871
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:760
 msgid "Voice Output"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:875
+#: includes/Admin/AiSettings.php:889
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:872
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:761
 msgid "Enable Neural TTS"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:880
+#: includes/Admin/AiSettings.php:894
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:877
 msgid "ElevenLabs Key"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:883
+#: includes/Admin/AiSettings.php:897
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:880
 msgid "Required for premium high-fidelity voice."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:893
+#: includes/Admin/AiSettings.php:907
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:890
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:769
 msgid "Integration & Usage"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:895
+#: includes/Admin/AiSettings.php:909
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:892
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:771
 msgid "Display Mode"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:897
+#: includes/Admin/AiSettings.php:911
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:894
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:773
 msgid "If \"Global Display\" is unchecked above, the AI will only appear where you explicitly place it using the tools below."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:902
+#: includes/Admin/AiSettings.php:916
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:899
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:778
 msgid "1. Gutenberg Block"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:904
+#: includes/Admin/AiSettings.php:918
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:901
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:780
 msgid "Search for the \"Hotel: AI Concierge\" block in the editor to embed more than one chat widget or place it exactly where needed."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:909
+#: includes/Admin/AiSettings.php:923
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:906
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:785
 msgid "2. Shortcode"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:912
+#: includes/Admin/AiSettings.php:926
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:909
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:788
 msgid "Attributes:"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:932
+#: includes/Admin/AiSettings.php:946
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:929
 msgid "Manifest is Live"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:932
+#: includes/Admin/AiSettings.php:946
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:929
 msgid "Not Indexable"
 msgstr ""
 
 #. translators: %s: date of the manifest publication
-#: includes/Admin/AiSettings.php:938
+#: includes/Admin/AiSettings.php:952
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:935
 #, php-format
 msgid "Published to root: %s"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:943
+#: includes/Admin/AiSettings.php:957
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:940
 msgid "Outdated: KB is newer than manifest."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:947
+#: includes/Admin/AiSettings.php:961
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:944
 msgid "Property discovery files are not currently present."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:957
+#: includes/Admin/AiSettings.php:971
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:954
 msgid "Update Manifest Now"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:957
+#: includes/Admin/AiSettings.php:971
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:954
 msgid "Publish Discovery Files"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:961
+#: includes/Admin/AiSettings.php:975
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:958
 msgid "Takedown Manifest"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:970
+#: includes/Admin/AiSettings.php:984
+msgid "Sitemap URL"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:987
+msgid "Optional: Add your sitemap URL to include it in your llms.txt"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:991
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:967
 msgid "Auto-Sync (Pro)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:976
+#: includes/Admin/AiSettings.php:997
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:973
 msgid "Automatically refresh discovery summary when hotel data changes."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:981
+#: includes/Admin/AiSettings.php:1002
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:978
 msgid "Impact of Discovery"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:983
+#: includes/Admin/AiSettings.php:1004
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:980
 msgid "By publishing llms.txt, you provide AI agents (like Perplexity, ChatGPT, and AI Travel Assistants) a structured map of your hotel. This ensures accurate pricing, amenity listings, and direct booking links appear in conversational search results."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:994
+#: includes/Admin/AiSettings.php:1015
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:991
 msgid "AI Performance & Analytics"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1003
+#: includes/Admin/AiSettings.php:1022
+msgid "Seasonal Policies"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1023
+msgid "Configure date-bounded policy documents (JSON format)."
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1027
+msgid "Local Attractions"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1028
+msgid "Configure local attractions for the AI to recommend (JSON format)."
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1034
+msgid "Data Feeds"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1038
+msgid "Google Hotel Feeds"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1044
+msgid "Disabled by default. When enabled, generates google-hotels.xml and google-prices.xml in your site root on a daily schedule. Enable only when you are ready to submit these feeds to Google Hotel Center."
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1050
+msgid "Smart Context"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1054
+msgid "Context Budget"
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1057
+msgid "Maximum characters to inject for RAG context matching."
+msgstr ""
+
+#: includes/Admin/AiSettings.php:1069
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1000
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:798
 msgid "Apply AI Configuration"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1095
+#: includes/Admin/AiSettings.php:1184
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1092
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:890
 msgid "AI Concierge settings saved."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1152
+#: includes/Admin/AiSettings.php:1241
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1149
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:947
 msgid "WordPress site language"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1179
+#: includes/Admin/AiSettings.php:1268
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1176
 msgid "The chat sessions table could not be created. Please deactivate and reactivate the plugin, or contact support."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1210
+#: includes/Admin/AiSettings.php:1299
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1207
 msgid "Chats (Monthly)"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1214
+#: includes/Admin/AiSettings.php:1303
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1211
 msgid "Bookings Influenced"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1218
+#: includes/Admin/AiSettings.php:1307
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1215
 msgid "Conversion Rate"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1225
+#: includes/Admin/AiSettings.php:1314
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1222
 msgid "Trending Questions"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1228
+#: includes/Admin/AiSettings.php:1317
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1225
 msgid "No trending questions detected in the current period."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1244
+#: includes/Admin/AiSettings.php:1333
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1241
 msgid "Deep Dive Data"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1245
+#: includes/Admin/AiSettings.php:1334
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1242
 msgid "Download the full interaction logs for sentiment analysis and fine-tuning."
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1247
+#: includes/Admin/AiSettings.php:1336
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1244
 msgid "Export CSV"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1280
+#: includes/Admin/AiSettings.php:1369
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1277
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:974
 msgid "Refreshing…"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1284
+#: includes/Admin/AiSettings.php:1373
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1281
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:978
 msgid "Refresh Knowledge Base Now"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1292
-#: includes/Admin/AiSettings.php:1305
+#: includes/Admin/AiSettings.php:1381
+#: includes/Admin/AiSettings.php:1394
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1289
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1302
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:986
@@ -1096,19 +1145,19 @@ msgstr ""
 msgid "Testing…"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1318
+#: includes/Admin/AiSettings.php:1407
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1315
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1012
 msgid "Syncing…"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1322
+#: includes/Admin/AiSettings.php:1411
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1319
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1016
 msgid "Sync Failed"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1329
+#: includes/Admin/AiSettings.php:1418
 #: includes/Core/I18n.php:1565
 #: includes/Core/I18n.php:3077
 #: includes/Core/I18n.php:3180
@@ -1123,31 +1172,31 @@ msgstr ""
 msgid "Are you sure?"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1331
+#: includes/Admin/AiSettings.php:1420
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1328
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1025
 msgid "Cleaning…"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1340
+#: includes/Admin/AiSettings.php:1429
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1337
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1034
 msgid "Clearing…"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1342
+#: includes/Admin/AiSettings.php:1431
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1339
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1036
 msgid "Engine Reset ✅"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1345
+#: includes/Admin/AiSettings.php:1434
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1342
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1039
 msgid "Failed"
 msgstr ""
 
-#: includes/Admin/AiSettings.php:1353
+#: includes/Admin/AiSettings.php:1442
 #: scratch/extracted_pro/modern-hotel-booking/includes/Admin/AiSettings.php:1350
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Admin/AiSettings.php:1047
 msgid "Creating…"
@@ -2752,20 +2801,20 @@ msgstr ""
 msgid "Retrieve recommendations for nearby restaurants, attractions, and local travel tips."
 msgstr ""
 
-#: includes/AI/Abilities/LocalTips.php:73
+#: includes/AI/Abilities/LocalTips.php:107
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Abilities/LocalTips.php:74
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/Abilities/LocalTips.php:69
 msgid "I don't have specific local tips configured yet. Please ask our front desk staff for personalized recommendations!"
 msgstr ""
 
-#: includes/AI/Abilities/LocalTips.php:74
+#: includes/AI/Abilities/LocalTips.php:108
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Abilities/LocalTips.php:75
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/Abilities/LocalTips.php:70
 msgid "No local tips configured in settings."
 msgstr ""
 
 #. translators: %s: recommendation category
-#: includes/AI/Abilities/LocalTips.php:83
+#: includes/AI/Abilities/LocalTips.php:115
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Abilities/LocalTips.php:84
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/Abilities/LocalTips.php:79
 #, php-format
@@ -2972,6 +3021,14 @@ msgstr ""
 msgid "Pay %s Total Now"
 msgstr ""
 
+#: includes/AI/Abilities/Pro/LocalAttractions.php:31
+msgid "Get Local Attractions"
+msgstr ""
+
+#: includes/AI/Abilities/Pro/LocalAttractions.php:32
+msgid "Retrieve curated local attractions and points of interest."
+msgstr ""
+
 #: includes/AI/Abilities/Pro/ModifyBooking.php:33
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Abilities/Pro/ModifyBooking.php:33
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Abilities/Pro/ModifyBooking.php:34
@@ -3055,6 +3112,14 @@ msgstr ""
 msgid "Confirmation email for Booking #%d has been resent to your verified email address."
 msgstr ""
 
+#: includes/AI/Abilities/Pro/SeasonalPolicies.php:31
+msgid "Get Seasonal Policies"
+msgstr ""
+
+#: includes/AI/Abilities/Pro/SeasonalPolicies.php:32
+msgid "Retrieve all active seasonal policies."
+msgstr ""
+
 #: includes/AI/Abilities/Pro/SendVerification.php:39
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Abilities/Pro/SendVerification.php:39
 msgid "A valid email address is required for verification."
@@ -3100,26 +3165,26 @@ msgstr ""
 msgid "Room type not found."
 msgstr ""
 
-#: includes/AI/ChatRest.php:557
+#: includes/AI/ChatRest.php:566
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/ChatRest.php:545
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/ChatRest.php:545
 msgid "Book next room"
 msgstr ""
 
-#: includes/AI/ChatRest.php:558
+#: includes/AI/ChatRest.php:567
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/ChatRest.php:546
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/ChatRest.php:546
 msgid "Change room type"
 msgstr ""
 
-#: includes/AI/ChatRest.php:559
+#: includes/AI/ChatRest.php:568
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/ChatRest.php:547
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/ChatRest.php:547
 msgid "Contact hotel"
 msgstr ""
 
 #. translators: %1$s: optional refund policy note e.g. " (non-refundable)"
-#: includes/AI/KnowledgeBase.php:249
+#: includes/AI/KnowledgeBase.php:390
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/KnowledgeBase.php:244
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/KnowledgeBase.php:203
 #, php-format
@@ -3127,7 +3192,7 @@ msgid "- A deposit of your first night's rate is required at booking time%1$s."
 msgstr ""
 
 #. translators: %1$s: deposit amount, %2$s: currency symbol, %3$s: optional refund policy note
-#: includes/AI/KnowledgeBase.php:256
+#: includes/AI/KnowledgeBase.php:397
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/KnowledgeBase.php:251
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/KnowledgeBase.php:210
 #, php-format
@@ -3135,8 +3200,8 @@ msgid "- A deposit of %1$s %2$s is required at booking time%3$s."
 msgstr ""
 
 #. translators: %1$d: deposit percentage, %2$s: optional refund policy note
-#: includes/AI/KnowledgeBase.php:265
-#: includes/AI/KnowledgeBase.php:272
+#: includes/AI/KnowledgeBase.php:406
+#: includes/AI/KnowledgeBase.php:413
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/KnowledgeBase.php:260
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/KnowledgeBase.php:267
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/KnowledgeBase.php:219
@@ -3145,7 +3210,7 @@ msgstr ""
 msgid "- A deposit of %1$d%% of the total is required at booking time%2$s."
 msgstr ""
 
-#: includes/AI/KnowledgeBase.php:276
+#: includes/AI/KnowledgeBase.php:417
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/KnowledgeBase.php:271
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/AI/KnowledgeBase.php:230
 msgid "Inform guests when discussing pricing."
@@ -3153,7 +3218,7 @@ msgstr ""
 
 #: includes/AI/LlmFile.php:39
 #: includes/AI/LlmFile.php:63
-#: includes/AI/Loader.php:193
+#: includes/AI/Loader.php:201
 #: includes/Core/I18n.php:819
 #: includes/Core/I18n.php:1666
 #: includes/Core/I18n.php:2417
@@ -3193,16 +3258,16 @@ msgstr ""
 msgid "AI Discovery files removed."
 msgstr ""
 
-#: includes/AI/Loader.php:279
+#: includes/AI/Loader.php:287
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Loader.php:279
 msgid "Hotel Information"
 msgstr ""
 
-#: includes/AI/Loader.php:280
+#: includes/AI/Loader.php:288
 msgid "Governs queries regarding hotel properties, room details, local tips, policies, and contact information."
 msgstr ""
 
-#: includes/AI/Loader.php:283
+#: includes/AI/Loader.php:291
 #: includes/Core/I18n.php:857
 #: includes/Core/I18n.php:2332
 #: includes/Core/I18n.php:2480
@@ -3219,20 +3284,20 @@ msgstr ""
 msgid "Booking Management"
 msgstr ""
 
-#: includes/AI/Loader.php:284
+#: includes/AI/Loader.php:292
 msgid "Allows looking up availability, creating and modifying bookings, and cancellation."
 msgstr ""
 
-#: includes/AI/Loader.php:287
+#: includes/AI/Loader.php:295
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Loader.php:285
 msgid "Guest Services"
 msgstr ""
 
-#: includes/AI/Loader.php:288
+#: includes/AI/Loader.php:296
 msgid "Handles applying promotional codes and looking up guest history details."
 msgstr ""
 
-#: includes/AI/Loader.php:630
+#: includes/AI/Loader.php:640
 #: scratch/extracted_pro/modern-hotel-booking/includes/AI/Loader.php:627
 msgid "Hotel AI Guest"
 msgstr ""
@@ -3463,7 +3528,7 @@ msgstr ""
 
 #: includes/Core/Email.php:188
 #: includes/Core/I18n.php:850
-#: includes/Frontend/Shortcode.php:1802
+#: includes/Frontend/Shortcode.php:1825
 #: includes/Pro/Invoice.php:184
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/Email.php:188
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/I18n.php:631
@@ -4601,7 +4666,7 @@ msgstr ""
 
 #: includes/Core/I18n.php:944
 #: includes/Core/Tax.php:792
-#: includes/Pro/PaymentGateways.php:1799
+#: includes/Pro/PaymentGateways.php:1803
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/I18n.php:725
 #: scratch/extracted_pro/modern-hotel-booking/includes/Core/Tax.php:792
 #: scratch/extracted_pro/modern-hotel-booking/includes/Pro/PaymentGateways.php:1707
@@ -14952,9 +15017,9 @@ msgstr ""
 msgid "Your booking was received but we could not load the confirmation. Please check your email."
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:525
-#: includes/Frontend/Shortcode.php:661
-#: includes/Frontend/Shortcode.php:730
+#: includes/Frontend/Shortcode.php:527
+#: includes/Frontend/Shortcode.php:663
+#: includes/Frontend/Shortcode.php:732
 #: includes/Pro/CouponManager.php:158
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:522
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:643
@@ -14963,48 +15028,48 @@ msgstr ""
 msgid "Please enter a coupon code."
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:526
-#: includes/Frontend/Shortcode.php:662
-#: includes/Frontend/Shortcode.php:731
+#: includes/Frontend/Shortcode.php:528
+#: includes/Frontend/Shortcode.php:664
+#: includes/Frontend/Shortcode.php:733
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:523
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:644
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:753
 msgid "Validating…"
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:527
-#: includes/Frontend/Shortcode.php:663
-#: includes/Frontend/Shortcode.php:732
+#: includes/Frontend/Shortcode.php:529
+#: includes/Frontend/Shortcode.php:665
+#: includes/Frontend/Shortcode.php:734
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:524
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:645
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:754
 msgid "An error occurred. Please try again."
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:528
-#: includes/Frontend/Shortcode.php:664
-#: includes/Frontend/Shortcode.php:733
+#: includes/Frontend/Shortcode.php:530
+#: includes/Frontend/Shortcode.php:666
+#: includes/Frontend/Shortcode.php:735
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:525
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:646
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:755
 msgid "Coupon"
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:1724
+#: includes/Frontend/Shortcode.php:1747
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:1764
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Frontend/Shortcode.php:1377
 msgctxt "error message"
 msgid "Over-occupancy: Please check guest limits for this room."
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:1797
+#: includes/Frontend/Shortcode.php:1820
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:1837
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Frontend/Shortcode.php:1447
 msgctxt "cart item"
 msgid "Item"
 msgstr ""
 
-#: includes/Frontend/Shortcode.php:1798
+#: includes/Frontend/Shortcode.php:1821
 #: scratch/extracted_pro/modern-hotel-booking/includes/Frontend/Shortcode.php:1838
 #: scratch/wordpress-playground (3)/wp-content/plugins/modern-hotel-booking/includes/Frontend/Shortcode.php:1448
 msgid "Amount"

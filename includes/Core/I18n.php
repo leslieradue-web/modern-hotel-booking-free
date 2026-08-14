@@ -3058,6 +3058,8 @@ if (!defined('ABSPATH')) {
             'msg_license_invalid_format'        => __('Invalid license key format.', 'modern-hotel-booking'),
             'msg_license_unexpected_format'     => __('Unexpected response format from server. Please contact support.', 'modern-hotel-booking'),
             'msg_license_invalid_server_error'  => __('Invalid license key or server error.', 'modern-hotel-booking'),
+            /* translators: %d: number of hours since last successful verification */
+            'msg_license_server_unreachable_recent' => __('Could not reach the license server, but your license was last verified %d hour(s) ago and remains active.', 'modern-hotel-booking'),
 
             /* Frontend Blocks */
             'label_block_business_info'         => __('Hotel: Business Info', 'modern-hotel-booking'),

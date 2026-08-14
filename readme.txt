@@ -1,10 +1,10 @@
 === Modern Hotel Booking — Direct Booking Engine & Availability Calendar ===
 Contributors: leslierad
 Donate link: https://startmysuccess.com/
-Tags: hotel booking, vacation rental, booking calendar, bed and breakfast, property management
+Tags: hotel booking, vacation rental, Booking Engine, bed and breakfast, accommodation
 Requires at least: 6.6
-Tested up to: 7.0.2
-Stable tag: 2.4.8
+Tested up to: 7.1
+Stable tag: 2.4.9
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,7 +41,7 @@ The first hotel booking plugin with a built-in AI Concierge. Your 24/7 virtual f
 
 * 8 native Gutenberg blocks — Booking Form, Room Calendar, Room Grid, Company Profile, WhatsApp Chat, Bank Transfer, Revolut Pay, AI Concierge
 * Full shortcode support — [mhbo_booking_form], [mhbo_room_calendar], [mhbo_room_grid], [mhbo_company_profile]
-* 4 optional Elementor widgets with visual controls and live editor preview
+* 3 optional Elementor widgets with visual controls and live editor preview
 * Works with any WordPress theme — Block themes, Classic editor, Divi, Beaver Builder, and more
 
 **Guest Communication & Payments**
@@ -144,6 +144,18 @@ Yes. Modern Hotel Booking Pro includes seasonal rates for any date range, weeken
 5. **Plugin Settings & AI Concierge Setup** — Configure email notifications, currency, booking rules, payment options, and connect your free AI Concierge API key.
 
 == Changelog ==
+
+= 2.4.9 =
+* FIX (Pro): Enhanced LMFWC License System — Idempotent token-based deactivation, silent token recovery, and soft-invalid retry logic to prevent spurious deactivations on live sites.
+* MOD (Free & Pro): AI Model Landscape Refresh — Added Gemini 3.7 Flash as recommended default, updated fallback cascade and provider labels.
+* MOD (Free & Pro): WordPress 7.1 Compatibility Confirmed — Audited against iframed editor, abilities API improvements, and PHP 8.4 nullable types.
+* MOD (Free & Pro): Code Quality — Replaced loose empty() checks with strict type comparisons across AI Abilities layer.
+
+= 2.4.8.1 =
+* NEW (Pro): RAG 2.0 Enhanced Knowledge Base — Structured room feature indexing, seasonal policy documents, local attraction recommendations, and Google Hotel Feeds XML generation.
+* NEW (Free & Pro): Smart Context Windowing — Query-aware context injection with UTF-8 multi-locale tokenization.
+* NEW (Free & Pro): Smart llms.txt Parsing — Enhanced AI visibility discovery without duplicate H1/Blockquote headers.
+* MOD (Free & Pro): Security Hardening — Audited all debug log telemetry behind WP_DEBUG_LOG guards.
 
 = 2.4.8 =
 * MOD (Free & Pro): Updated bundled FullCalendar library to v7.0.2.

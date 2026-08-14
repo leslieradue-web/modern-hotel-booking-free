@@ -488,7 +488,7 @@
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'dayGridMonth,timeGridWeek,listWeek',
+				right: 'dayGridMonth,dayGridWeek,listWeek',
 			},
 			events,
 			navLinks: true,
@@ -498,6 +498,41 @@
 					window.location.href = info.event.url;
 					info.jsEvent.preventDefault();
 				}
+			},
+			dayCellClass: function(arg) {
+				const year = arg.date.getFullYear();
+				const month = String(arg.date.getMonth() + 1).padStart(2, '0');
+				const day = String(arg.date.getDate()).padStart(2, '0');
+				const dateStr = `${year}-${month}-${day}`;
+				let classes = [];
+				if (config.fullDays && config.fullDays.includes(dateStr)) {
+					classes.push('mhbo-day-full');
+				}
+				if (arg.isToday) {
+					classes.push('mhbo-day-today-highlight');
+				}
+				return classes.join(' ');
+			},
+			eventClass: function(arg) {
+				let classes = [];
+				if (arg.isStart) classes.push('mhbo-event-checkin');
+				if (arg.isEnd) classes.push('mhbo-event-checkout');
+				return classes.join(' ');
+			},
+			eventContent: function(arg) {
+				let checkinDot = '';
+				let checkoutDot = '';
+
+				if (arg.isStart) {
+					checkinDot = '<span class="mhbo-dot-checkin" title="Check-in Date"></span>';
+				}
+				if (arg.isEnd) {
+					checkoutDot = '<span class="mhbo-dot-checkout" title="Check-out Date"></span>';
+				}
+
+				return {
+					html: `<div class="mhbo-event-inner">${checkinDot}<span class="fc-event-title">${arg.event.title}</span>${checkoutDot}</div>`
+				};
 			},
 			height: 'auto',
 			aspectRatio: 1.8,

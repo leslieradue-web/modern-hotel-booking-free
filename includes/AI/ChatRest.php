@@ -25,8 +25,10 @@ use MHBO\AI\Abilities\CheckAvailability;
 use MHBO\AI\Abilities\CreateBookingLink;
 use MHBO\AI\Abilities\GetBusinessCard;
 use MHBO\AI\Abilities\GetKnowledgeBase;
+use MHBO\AI\Abilities\GetPriceBreakdown;
 use MHBO\AI\Abilities\HotelInfo;
 use MHBO\AI\Abilities\Policies;
+use MHBO\AI\Abilities\RecommendRooms;
 use MHBO\AI\Abilities\RoomDetails;
 use MHBO\Core\HotelTime;
 use MHBO\Core\I18n;
@@ -206,7 +208,10 @@ class ChatRest {
 
         // 6. System prompt + tools.
         $lang          = (string) ( $request->get_param( 'lang' ) ?? '' );
+        
+        /* BUILD_FREE_START
         $system_prompt = KnowledgeBase::get_system_prompt( $lang );
+        BUILD_FREE_END */
         $tools         = KnowledgeBase::get_tool_definitions( false );
 
         // 7. Dynamic Session Context (2026 BP).
@@ -644,6 +649,8 @@ class ChatRest {
             'get_knowledge_base'  => GetKnowledgeBase::execute( $args ),
             'get_local_tips'      => Abilities\LocalTips::execute( $args ),
             'get_business_card'   => GetBusinessCard::execute( $args ),
+            'get_price_breakdown' => GetPriceBreakdown::execute( $args ),
+            'recommend_rooms'     => RecommendRooms::execute( $args ),
             'create_booking_link' => CreateBookingLink::execute( $args ),
             
             default => [ 'error' => "Unknown tool: {$name}" ],

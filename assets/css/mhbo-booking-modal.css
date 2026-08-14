@@ -298,3 +298,12 @@
         text-align: left !important;
     }
 }
+
+/* iOS Safari zoom fix for form fields */
+@media screen and (max-width: 768px) {
+    .mhbo-booking-modal input,
+    .mhbo-booking-modal select,
+    .mhbo-booking-modal textarea {
+        font-size: 16px !important;
+    }
+}

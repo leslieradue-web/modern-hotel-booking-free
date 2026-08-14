@@ -415,11 +415,7 @@ class Shortcode
         // Enqueue frontend script (depends on both jQuery and flatpickr)
         wp_enqueue_script('mhbo-frontend', MHBO_PLUGIN_URL . 'assets/js/mhbo-frontend.js', ['jquery', 'mhbo-flatpickr-js'], MHBO_VERSION, true);
 
-        // Enqueue calendar assets for the new search form
-        wp_enqueue_style('mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css', [], (string) time());
-        wp_enqueue_script('mhbo-calendar-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js', ['jquery', 'mhbo-flatpickr-js'], MHBO_VERSION, true);
-
-        // Ensure calendar script is localized if enqueued here
+        // Enqueue calendar assets via centralized handler (with proper dependency chains)
         if (class_exists('MHBO\Frontend\Calendar')) {
             Calendar::enqueue_assets();
         }
@@ -610,7 +606,7 @@ class Shortcode
                 </div>
             </div>
 
-            <?php if ('completed' === $booking->payment_status) : ?>
+            <?php if (in_array($booking->payment_status, ['completed', 'deposit_paid'], true)) : ?>
                 <div class="mhbo-transaction-details">
                     <p><strong><?php echo esc_html(I18n::get_label('label_payment_status')); ?>:</strong> <?php echo esc_html(I18n::get_label('label_paid')); ?></p>
                     <?php if ((float) ($booking->payment_amount ?? 0) > 0) : ?>
@@ -821,7 +817,7 @@ class Shortcode
                     echo '</div>'; // .mhbo-stay-details
 
                     // Show payment summary
-                    if ('completed' === $booking->payment_status) {
+                    if (in_array($booking->payment_status, ['completed', 'deposit_paid'], true)) {
                         echo '<div class="mhbo-transaction-details">';
                         echo '<p><strong>' . esc_html(I18n::get_label('label_payment_status')) . ':</strong> ' . esc_html(I18n::get_label('label_paid')) . '</p>';
                         if ((float) ($booking->payment_amount ?? 0) > 0) {
@@ -863,7 +859,7 @@ class Shortcode
         } else {
             // Show any errors captured during handle_form_submissions redirect
             $user_id = get_current_user_id();
-        $client_ip = Security::get_client_ip();
+            $client_ip = Security::get_client_ip();
             $key = 'mhbo_err_' . ($user_id ? $user_id : md5((string)$client_ip));
             $error = get_transient($key);
             if ('' !== $error) {
@@ -892,15 +888,6 @@ class Shortcode
      */
     private function handle_booking_process(array $atts = []): void
     {
-        // 0. Show error from transient if exists (redirected from handle_form_submissions)
-        $user_id = get_current_user_id();
-        $client_ip = Security::get_client_ip();
-        $key = 'mhbo_err_' . ($user_id ? $user_id : md5((string)$client_ip));
-        $error_msg = get_transient($key);
-        if ('' !== $error_msg) {
-            delete_transient($key);
-            echo wp_kses_post((string)$error_msg);
-        }
 
         $room_id_attr = isset($atts['room_id']) ? absint($atts['room_id']) : 0;
 
@@ -961,6 +948,18 @@ class Shortcode
         }
 
         // 3. Check for Automatic Booking/Search (GET)
+        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Reading QUERY_STRING to unescape entity-encoded ampersands before individual parameter sanitization below.
+        if ( isset( $_SERVER['QUERY_STRING'] ) ) {
+            $raw_qs = function_exists( 'wp_unslash' ) ? wp_unslash( $_SERVER['QUERY_STRING'] ) : $_SERVER['QUERY_STRING'];
+            if ( is_string( $raw_qs ) && ( str_contains( $raw_qs, '&#038;' ) || str_contains( $raw_qs, '&amp;' ) ) ) {
+                $clean_query = str_replace( [ '&#038;', '&amp;' ], '&', $raw_qs );
+                parse_str( $clean_query, $parsed_get );
+                if ( is_array( $parsed_get ) ) {
+                    $_GET = array_merge( $_GET, $parsed_get );
+                }
+            }
+        }
+        // phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Search parameters do not require nonce verification.
         $is_auto_book = isset($_GET['mhbo_auto_book']);
         $is_auto_search = isset($_GET['mhbo_auto_search']) || (isset($_GET['check_in']) && isset($_GET['check_out']));
@@ -1135,27 +1134,31 @@ class Shortcode
 
         // Implement manual caching for search results
         $cache_key = 'mhbo_available_rooms_v3_' . md5($sql . wp_json_encode($query_args));
-        $available_rooms = wp_cache_get($cache_key, 'mhbo_bookings');
+        $all_rooms = wp_cache_get($cache_key, 'mhbo_bookings');
 
-        if (false === $available_rooms) {
+        if (false === $all_rooms) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: High-performance room availability search across custom relational tables. Query is safely assembled using $wpdb->prepare placeholders for all variables.
             $all_rooms = $wpdb->get_results($wpdb->prepare($sql, ...$query_args));
-            
-            $available_rooms = [];
-            $seen_types = [];
-            if ( is_array($all_rooms) && [] !== $all_rooms ) {
-                foreach ($all_rooms as $room) {
-                    if (!isset($seen_types[$room->type_id])) {
-                        $available_rooms[] = $room;
-                        $seen_types[$room->type_id] = true;
-                    }
-                }
+            if (!is_array($all_rooms)) {
+                $all_rooms = [];
             }
-            
-            wp_cache_set($cache_key, $available_rooms, 'mhbo_bookings', 300); // Cache for 5 minutes
+            wp_cache_set($cache_key, $all_rooms, 'mhbo_bookings', 300); // Cache for 5 minutes
         }
 
-echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_in, $check_out)) . '</h3>';
+// Deduplicate by room type ID. We only need to show one result per room type.
+        // Doing this AFTER Pro filtering ensures that if Room A is blocked but Room B (same type) is free, the type still shows.
+        $available_rooms = [];
+        $seen_types = [];
+        if ( is_array($all_rooms) && [] !== $all_rooms ) {
+            foreach ($all_rooms as $room) {
+                if (!isset($seen_types[$room->type_id])) {
+                    $available_rooms[] = $room;
+                    $seen_types[$room->type_id] = true;
+                }
+            }
+        }
+
+        echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_in, $check_out)) . '</h3>';
         if (!is_array($available_rooms) || [] === $available_rooms) {
             echo '<p>' . esc_html(I18n::get_label('label_no_rooms')) . '</p>';
             $this->render_search_form();
@@ -1273,16 +1276,19 @@ echo '<h3>' . esc_html(sprintf(I18n::get_label('label_available_rooms'), $check_
         $customer_phone = isset($params['customer_phone']) ? sanitize_text_field($params['customer_phone']) : '';
         $admin_notes    = isset($params['admin_notes']) ? sanitize_textarea_field($params['admin_notes']) : '';
 
-        // Resolve room_id from type_id if it's 0 (category booking)
-        if (0 === $room_id && 0 !== $type_id) {
-            $resolved_room = Pricing::find_available_room($type_id, $check_in, $check_out, $guests);
-            if (0 !== $resolved_room) {
-                $room_id = $resolved_room;
-            }
-        }
-
         $exclude_id = isset($params['exclude_id']) ? intval($params['exclude_id']) : 0;
         $update_id  = isset($params['mhbo_update_id']) ? intval($params['mhbo_update_id']) : 0;
+
+        // Resolve room_id from type_id if room_id is 0 or if the specified room_id is not available for these dates
+        if ($type_id > 0) {
+            $is_specified_avail = ($room_id > 0) ? Pricing::is_room_available((int) $room_id, $check_in, $check_out, $exclude_id) : false;
+            if (true !== $is_specified_avail) {
+                $resolved_room = Pricing::find_available_room($type_id, $check_in, $check_out, $guests);
+                if (false !== $resolved_room && 0 !== $resolved_room) {
+                    $room_id = (int) $resolved_room;
+                }
+            }
+        }
 
         // Check availability before rendering booking form.
         $available = Pricing::is_room_available((int) $room_id, $check_in, $check_out, $exclude_id);
@@ -1617,7 +1623,7 @@ echo wp_kses_post(Tax::render_breakdown_html($tax_data, null, false, array(), fa
         $result = \MHBO\Core\BookingProcessor::process($data);
 
         if (is_wp_error($result)) {
-            $this->booking_fail('<div class="mhbo-error">' . $result->get_error_message() . '</div>');
+            $this->booking_fail('<div class="mhbo-error">' . esc_html($result->get_error_message()) . '</div>');
             return;
         }
 

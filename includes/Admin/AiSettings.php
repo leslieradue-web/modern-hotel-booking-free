@@ -136,11 +136,11 @@ class AiSettings {
         \delete_transient( 'mhbo_ai_error_score' );
 
         // Clear model-specific failure flags — must match get_dynamic_fallback_chain() list.
-        // May 2026: gemini-3.1-flash-lite-preview is EOL (May 25). Replaced with GA models.
         $models_to_clear = [
-            'gemini-3.6-flash',              // GA primary (July 2026)
-            'gemini-3.5-flash',              // GA fast
-            'gemini-3.5-flash-lite',         // GA ultralight (July 2026)
+            'gemini-3.7-flash',              // GA frontier (August 2026)
+            'gemini-3.6-flash',              // GA workhorse
+            'gemini-3.5-flash',              // GA legacy fast
+            'gemini-3.5-flash-lite',         // GA ultralight
             'gemini-3.1-flash-lite',         // GA stable
             'gemini-3-flash-preview',        // Preview (Computer Use)
             'gemini-3.1-pro-preview',        // Preview flagship
@@ -194,6 +194,7 @@ class AiSettings {
             register_setting( self::OPTION_GROUP, $opt, [ 'sanitize_callback' => $callback ] );
         }
         register_setting( self::OPTION_GROUP, 'mhbo_ai_custom_instructions', [ 'sanitize_callback' => 'sanitize_textarea_field' ] );
+        
     }
 
     /**
@@ -260,7 +261,7 @@ class AiSettings {
         $voice_output  = (int) get_option( 'mhbo_ai_voice_output_enabled', 0 );
         $voice_lang    = (string) get_option( 'mhbo_ai_voice_language', '' ); // empty = auto
         $elevenlabs    = (string) get_option( 'mhbo_ai_elevenlabs_key', '' );
-        $proactive_trigger = (int) get_option( 'mhbo_ai_proactive_trigger_seconds', 45 );
+        $proactive_trigger = (int) get_option( 'mhbo_ai_proactive_trigger_seconds', 0 );
 
         // Fallback Connection.
         $f_provider    = (string) get_option( 'mhbo_ai_fallback_provider', '' );
@@ -449,9 +450,9 @@ $is_pro = false;
                                             <select name="mhbo_ai_provider" id="mhbo_ai_provider" style="width: 100%;">
                                                 <option value=""><?php esc_html_e( '— Select —', 'modern-hotel-booking' ); ?></option>
                                                 <option value="gemini"    <?php selected( $provider, 'gemini' ); ?>><?php esc_html_e( 'Google Gemini', 'modern-hotel-booking' ); ?></option>
-                                                <option value="openai"    <?php selected( $provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI (GPT-5.6)', 'modern-hotel-booking' ); ?></option>
+                                                <option value="openai"    <?php selected( $provider, 'openai' ); ?>><?php esc_html_e( 'OpenAI', 'modern-hotel-booking' ); ?></option>
                                                 <option value="openrouter" <?php selected( $provider, 'openrouter' ); ?>><?php esc_html_e( 'OpenRouter.ai', 'modern-hotel-booking' ); ?></option>
-                                                <option value="anthropic" <?php selected( $provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic (Claude 5)', 'modern-hotel-booking' ); ?></option>
+                                                <option value="anthropic" <?php selected( $provider, 'anthropic' ); ?>><?php esc_html_e( 'Anthropic', 'modern-hotel-booking' ); ?></option>
                                                 <option value="ollama"    <?php selected( $provider, 'ollama' ); ?>><?php esc_html_e( 'Ollama (local)', 'modern-hotel-booking' ); ?></option>
                                                 <option value="custom"    <?php selected( $provider, 'custom' ); ?>><?php esc_html_e( 'Custom (OpenAI-compatible)', 'modern-hotel-booking' ); ?></option>
                                             </select>
@@ -464,7 +465,7 @@ $is_pro = false;
                                                 <input type="checkbox" name="mhbo_ai_streaming_enabled" value="1" <?php checked( get_option( 'mhbo_ai_streaming_enabled', '1' ), '1' ); ?>>
                                                 <span class="mhbo-ai-toggle-slider"></span>
                                             </label>
-                                            <p class="description"><?php esc_html_e( 'Enable SSE to show "typing" and "thinking" in real-time. (May 2026 BP).', 'modern-hotel-booking' ); ?></p>
+                                            <p class="description"><?php esc_html_e( 'Enable SSE to show "typing" and "thinking" in real-time.', 'modern-hotel-booking' ); ?></p>
                                         </td>
                                     </tr>
                                     <tr>
@@ -478,16 +479,16 @@ $is_pro = false;
                                         <td>
                                             <div id="mhbo_gemini_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'gemini' ) ? 'block' : 'none'; ?>;">
                                                 <?php
-                                                // July 2026: Gemini 3.6 Flash & 3.5 Flash-Lite GA (July 21, 2026).
                                                 $gemini_models = [
-                                                    'gemini-3.6-flash'              => \__( 'Gemini 3.6 Flash ⚡ Recommended (GA July 2026)', 'modern-hotel-booking' ),
-                                                    'gemini-3.5-flash'              => \__( 'Gemini 3.5 Flash — High Performance (GA)', 'modern-hotel-booking' ),
-                                                    'gemini-3.5-flash-lite'         => \__( 'Gemini 3.5 Flash-Lite — Ultra Budget (GA July 2026)', 'modern-hotel-booking' ),
+                                                    'gemini-3.7-flash'              => \__( 'Gemini 3.7 Flash ⚡ Recommended (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3.6-flash'              => \__( 'Gemini 3.6 Flash — High Performance (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3.5-flash'              => \__( 'Gemini 3.5 Flash — Legacy High Performance (GA)', 'modern-hotel-booking' ),
+                                                    'gemini-3.5-flash-lite'         => \__( 'Gemini 3.5 Flash-Lite — Ultra Budget (GA)', 'modern-hotel-booking' ),
                                                     'gemini-3.1-flash-lite'         => \__( 'Gemini 3.1 Flash-Lite — Stable (GA)', 'modern-hotel-booking' ),
                                                     'gemini-3-flash-preview'        => \__( 'Gemini 3 Flash Preview (Computer Use)', 'modern-hotel-booking' ),
                                                     'gemini-3.1-pro-preview'        => \__( 'Gemini 3.1 Pro Preview (Flagship)', 'modern-hotel-booking' ),
-                                                    'gemini-2.5-flash'              => \__( 'Gemini 2.5 Flash — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
-                                                    'gemini-2.5-flash-lite'         => \__( 'Gemini 2.5 Flash-Lite — Deprecated (EOL Oct 2026)', 'modern-hotel-booking' ),
+                                                    'gemini-2.5-flash'              => \__( 'Gemini 2.5 Flash — Deprecated', 'modern-hotel-booking' ),
+                                                    'gemini-2.5-flash-lite'         => \__( 'Gemini 2.5 Flash-Lite — Deprecated', 'modern-hotel-booking' ),
                                                     'custom'                        => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
                                                 ];
                                                 // Determine if current model is in presets.
@@ -503,9 +504,8 @@ $is_pro = false;
 
                                             <div id="mhbo_openai_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'openai' ) ? 'block' : 'none'; ?>;">
                                                 <?php
-                                                // July 2026: GPT-5.6 family (Sol, Terra, Luna) released GA (July 9, 2026).
                                                 $openai_models = [
-                                                    'gpt-5.6-luna'    => \__( 'GPT-5.6 Luna ⚡ (Fast & Budget - GA July 2026)', 'modern-hotel-booking' ),
+                                                    'gpt-5.6-luna'    => \__( 'GPT-5.6 Luna ⚡ (Fast & Budget - GA)', 'modern-hotel-booking' ),
                                                     
                                                     'gpt-4o'          => \__( 'GPT-4o (Legacy Stable)', 'modern-hotel-booking' ),
                                                     'gpt-4o-mini'     => \__( 'GPT-4o Mini (Legacy Budget)', 'modern-hotel-booking' ),
@@ -523,9 +523,8 @@ $is_pro = false;
 
                                             <div id="mhbo_anthropic_model_wrapper" class="mhbo-provider-model-wrapper" style="display: <?php echo ( $provider === 'anthropic' ) ? 'block' : 'none'; ?>;">
                                                 <?php
-                                                // July 2026: Claude Sonnet 5 & Opus 5 released GA (June-July 2026).
                                                 $anthropic_models = [
-                                                    'claude-sonnet-5'  => \__( 'Claude Sonnet 5 ⚡ Recommended (GA June 2026)', 'modern-hotel-booking' ),
+                                                    'claude-sonnet-5'  => \__( 'Claude Sonnet 5 ⚡ Recommended (GA)', 'modern-hotel-booking' ),
                                                     
                                                     'claude-haiku-4-5'  => \__( 'Claude Haiku 4.5 (Budget, Fast)', 'modern-hotel-booking' ),
                                                     'custom'            => \__( '— Manual Override / Custom —', 'modern-hotel-booking' ),
@@ -835,8 +834,9 @@ $is_pro = false;
                 'mhbo_ai_elevenlabs_key'
             ],
             'discovery'  => [
-                'mhbo_ai_discovery_auto_sync'
-            ]
+                'mhbo_ai_discovery_auto_sync', 'mhbo_ai_sitemap_url'
+            ],
+            
         ];
 
         // 1. Text/Password/Select fields.
@@ -844,7 +844,7 @@ $is_pro = false;
         $checkboxes = [ 
             'mhbo_ai_enabled', 'mhbo_ai_show_globally', 'mhbo_ai_widget_enabled', 
             'mhbo_ai_mcp_enabled', 'mhbo_ai_voice_input_enabled', 'mhbo_ai_voice_output_enabled',
-            'mhbo_ai_discovery_auto_sync'
+            'mhbo_ai_discovery_auto_sync', 'mhbo_ai_feeds_enabled'
         ];
 
         // 0. Extract all relevant POST data once (Gated by Nonce).
@@ -864,7 +864,7 @@ $is_pro = false;
                 continue;
             }
 
-            // Checkbox logic: Only update if it's a checkbox AND it's in the current tab's scope.
+// Checkbox logic: Only update if it's a checkbox AND it's in the current tab's scope.
             if ( in_array( $key, $checkboxes, true ) ) {
                 $val = ( null !== $raw_val ) ? 1 : 0;
                 update_option( $key, $val );
@@ -876,6 +876,8 @@ $is_pro = false;
                 $val_str = (string) $raw_val;
                 if ( 'mhbo_ai_proactive_trigger_seconds' === $key ) {
                     update_option( $key, absint( $val_str ) );
+                } elseif ( 'mhbo_ai_sitemap_url' === $key ) {
+                    update_option( $key, esc_url_raw( $val_str ) );
                 } else {
                     update_option( $key, sanitize_text_field( $val_str ) );
                 }
@@ -999,6 +1001,28 @@ $is_pro = false;
                 }).fail(function(xhr) {
                     btn.prop('disabled', false).text('" . esc_js( __( 'Test Fallback', 'modern-hotel-booking' ) ) . "');
                     $('#mhbo_ai_test_fallback_result').text('❌ ' + xhr.responseJSON.message).css('color', 'red');
+                });
+            });
+            // Test MCP Endpoint.
+            $('#mhbo_ai_test_mcp_btn').on('click', function() {
+                var btn = $(this);
+                btn.prop('disabled', true).text('" . esc_js( __( 'Probing…', 'modern-hotel-booking' ) ) . "');
+                var mcpUrl = '" . esc_js( McpServer::get_endpoint_url() ) . "';
+                $.ajax({
+                    url: mcpUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize' })
+                }).done(function(res) {
+                    btn.prop('disabled', false).text('" . esc_js( __( 'Probe MCP Endpoint', 'modern-hotel-booking' ) ) . "');
+                    if (res && res.result && res.result.serverInfo) {
+                        $('#mhbo_ai_test_mcp_result').html('<span style=\"color: #10b981; font-weight: 600;\">✅ Connected! (' + res.result.serverInfo.name + ' v' + res.result.serverInfo.version + ')</span>');
+                    } else {
+                        $('#mhbo_ai_test_mcp_result').html('<span style=\"color: #f59e0b;\">⚠️ Unexpected response</span>');
+                    }
+                }).fail(function(xhr) {
+                    btn.prop('disabled', false).text('" . esc_js( __( 'Probe MCP Endpoint', 'modern-hotel-booking' ) ) . "');
+                    $('#mhbo_ai_test_mcp_result').html('<span style=\"color: #ef4444; font-weight: 600;\">❌ Failed (HTTP ' + xhr.status + ')</span>');
                 });
             });
 

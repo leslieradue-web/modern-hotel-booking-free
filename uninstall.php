@@ -19,17 +19,13 @@ $mhbo_option_val = get_option('mhbo_save_data_on_uninstall', 1);
 $mhbo_save_data = is_numeric($mhbo_option_val) ? (int) $mhbo_option_val : 1;
 
 if (0 !== $mhbo_save_data) {
-    // Only clear scheduled cron events, keep data and tables
     $mhbo_cron_hooks = array(
         'mhbo_hourly_sync',
         'mhbo_daily_maintenance',
         'mhbo_ical_scheduled_sync',
         'mhbo_ical_scheduled_sync_single',
-        'mhbo_license_revalidation',
-        'mhbo_license_retry_check',
-        'mhbo_ai_weekly_deep_sync',
         'check_updates-modern-hotel-booking',
-        'check_updates-modern-hotel-booking-pro'
+        
     );
 
     foreach ($mhbo_cron_hooks as $mhbo_hook) {
@@ -48,11 +44,10 @@ $mhbo_tables = array(
     $wpdb->prefix . 'mhbo_bookings',
     $wpdb->prefix . 'mhbo_ical_feeds',
     $wpdb->prefix . 'mhbo_ical_connections',
-    $wpdb->prefix . 'mhbo_ical_logs',
     $wpdb->prefix . 'mhbo_pricing_rules',
     $wpdb->prefix . 'mhbo_calendar_overrides',
     $wpdb->prefix . 'mhbo_idempotency',
-    $wpdb->prefix . 'mhbo_coupons',
+    
 );
 
 foreach ($mhbo_tables as $mhbo_table) {
@@ -65,17 +60,13 @@ $wpdb->query(
     "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'mhbo_%'"
 );
 
-// Clear all scheduled cron events
 $mhbo_cron_hooks = array(
     'mhbo_hourly_sync',
     'mhbo_daily_maintenance',
     'mhbo_ical_scheduled_sync',
     'mhbo_ical_scheduled_sync_single',
-    'mhbo_license_revalidation',
-    'mhbo_license_retry_check',
-    'mhbo_ai_weekly_deep_sync',
     'check_updates-modern-hotel-booking',
-    'check_updates-modern-hotel-booking-pro'
+    
 );
 
 foreach ($mhbo_cron_hooks as $mhbo_hook) {
@@ -91,19 +82,19 @@ $wpdb->query(
 // Clean up roles and capabilities
 global $wp_roles;
 if (isset($wp_roles)) {
-    $capabilities = array(
+    $mhbo_capabilities = array(
         'mhbo_manage_bookings',
         'mhbo_view_analytics',
         'mhbo_manage_settings',
         'mhbo_create_booking'
     );
 
-    foreach ($wp_roles->roles as $role_name => $role_info) {
-        $role = get_role($role_name);
-        if ($role) {
-            foreach ($capabilities as $cap) {
-                if ($role->has_cap($cap)) {
-                    $role->remove_cap($cap);
+    foreach ($wp_roles->roles as $mhbo_role_name => $mhbo_role_info) {
+        $mhbo_role = get_role($mhbo_role_name);
+        if ($mhbo_role) {
+            foreach ($mhbo_capabilities as $mhbo_cap) {
+                if ($mhbo_role->has_cap($mhbo_cap)) {
+                    $mhbo_role->remove_cap($mhbo_cap);
                 }
             }
         }

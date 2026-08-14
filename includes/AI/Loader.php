@@ -94,9 +94,12 @@ class Loader {
         // Site Scanner hooks (auto-invalidate KB on content save).
         SiteScanner::register_hooks();
 
-// MCP Server (priority 20 = after abilities are registered).
+// MCP Server (registers /wp-json/modern-hotel-booking/mcp).
+        if ( class_exists( 'MHBO\AI\McpServer' ) ) {
+            McpServer::init();
+        }
 
-// Pro activation: register AI guest role.
+        // Pro activation: register AI guest role.
         
     }
     
@@ -184,6 +187,8 @@ class Loader {
         Abilities\LocalTips::register();
         Abilities\GetBusinessCard::register();
         Abilities\CreateBookingLink::register();
+        Abilities\GetPriceBreakdown::register();
+        Abilities\RecommendRooms::register();
 
 }
 
@@ -254,7 +259,7 @@ class Loader {
                 'pageLocale'     => self::detect_page_locale(),
                 
                 // Einstein / proactive features.
-                'proactiveTriggerSeconds' => (int) get_option( 'mhbo_ai_proactive_trigger_seconds', 45 ),
+                'proactiveTriggerSeconds' => (int) get_option( 'mhbo_ai_proactive_trigger_seconds', 0 ),
                 'bookingUrl'              => KnowledgeBase::get_booking_url(),
                 'modalEnabled'            => (bool) get_option( 'mhbo_modal_enabled', 0 ),
                 'aiNativeAvailable'       => Client::is_native_available(),
@@ -371,11 +376,14 @@ class Loader {
      * Register the AI Concierge Gutenberg block.
      */
     public static function register_block(): void {
+        if ( ! function_exists( 'register_block_type' ) ) {
+            return;
+        }
         $block_dir = MHBO_PLUGIN_DIR . 'blocks/ai-concierge';
         if ( ! file_exists( $block_dir . '/block.json' ) ) {
             return;
         }
-        register_block_type( $block_dir, [
+        \register_block_type( $block_dir, [
             'render_callback' => [ self::class, 'render_block' ],
         ] );
     }

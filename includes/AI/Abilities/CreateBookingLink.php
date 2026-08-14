@@ -63,7 +63,7 @@ class CreateBookingLink {
     public static function get_definition(): array {
         return [
             'label'        => \__( 'Create Booking Link', 'modern-hotel-booking' ),
-            'description'  => \__( 'Generate a pre-filled booking link for a guest with full pricing, deposit, and payment details. Use this when the guest has confirmed their room choice, dates, and guest count. ALWAYS include guest_name, guest_email, and guest_phone if collected. CRITICAL RESPONSE RULES after calling this tool: (1) Do NOT include the URL anywhere in your reply — not as a hyperlink, not as plain text, not as "click here". (2) Do NOT say "use the link below", "click the link", or "booking link". (3) Reply with 1–2 sentences ONLY: confirm the room name, dates, and total price. The booking card with the button is shown to the guest automatically.', 'modern-hotel-booking' ),
+            'description'  => \__( 'Generate a pre-filled booking URL with complete pricing summary, deposit info, and guest details for reserving a room.', 'modern-hotel-booking' ),
             'category'     => 'booking-management',
             'input_schema' => [
                 'type'       => 'object',
@@ -162,11 +162,17 @@ class CreateBookingLink {
         // 2026 BP: Mandatory live availability validation to prevent broken links.
         $available = Pricing::is_room_available( $room_id, $check_in, $check_out );
         if ( true !== $available ) {
-            return [
-                'error'            => \__( 'Room not Available', 'modern-hotel-booking' ),
-                'error_code'       => 'room_occupied',
-                'internal_message' => 'The selected room is no longer available for these dates. Please suggest an alternative room.',
-            ];
+            $resolved_type_id = $type_id > 0 ? $type_id : (int) $room->type_id;
+            $alt_room_id = Pricing::find_available_room( $resolved_type_id, $check_in, $check_out, $adults + $children );
+            if ( false !== $alt_room_id && $alt_room_id > 0 ) {
+                $room_id = (int) $alt_room_id;
+            } else {
+                return [
+                    'error'            => \__( 'Room not Available', 'modern-hotel-booking' ),
+                    'error_code'       => 'room_occupied',
+                    'internal_message' => 'The selected room is no longer available for these dates. Please suggest an alternative room.',
+                ];
+            }
         }
 
         // ── Calculate pricing (read-only, no DB insert) ─────────────

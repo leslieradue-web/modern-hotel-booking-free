@@ -674,6 +674,29 @@
 		} );
 	}
 
+	/**
+	 * Gap Settings Toggle
+	 */
+	function initGapSettingsToggle() {
+		const $autocorrectCheckbox = $( '#mhbo_orphan_gap_autocorrection' );
+		const $minStayRow = $( '#mhbo_orphan_gap_min_stay' ).closest( 'tr' );
+
+		if ( ! $autocorrectCheckbox.length || ! $minStayRow.length ) {
+			return;
+		}
+
+		function toggleRow() {
+			if ( $autocorrectCheckbox.is( ':checked' ) ) {
+				$minStayRow.show();
+			} else {
+				$minStayRow.hide();
+			}
+		}
+
+		$autocorrectCheckbox.on( 'change', toggleRow );
+		toggleRow();
+	}
+
 	// Initialize on DOM ready
 	$( document ).ready( function () {
 		initLicenseManagement();
@@ -683,5 +706,6 @@
 		initThemeSelection();
 		initPaymentGatewayTests();
 		initCacheClear();
+		initGapSettingsToggle();
 	} );
 } )( jQuery );

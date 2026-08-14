@@ -377,8 +377,8 @@ register_rest_route($namespace, '/bookings', array(
         $transient_key = 'mhbo_api_rate_' . $identifier;
         $request_count = get_transient($transient_key);
         
-        // Higher limit for API Key holders
-        $default_limit = ($api_key !== '' && $api_key !== null) ? 300 : 60;
+        // Higher limit for API Key holders (300), 180 req/min default for public read requests
+        $default_limit = ($api_key !== '' && $api_key !== null) ? 300 : 180;
         $limit = apply_filters('mhbo_api_rate_limit', $default_limit, $api_key); 
         $window = apply_filters('mhbo_api_rate_window', 60); 
 
@@ -558,18 +558,111 @@ if ($check_in >= $check_out) {
         $year        = absint($request->get_param('year') ?: wp_date('Y'));
         $month       = absint($request->get_param('month') ?: wp_date('m'));
 
-        // Validate room_id - If 0, we serve aggregated data for the search page
-        if (0 === $room_id) {
-            $start_str = sprintf('%04d-%02d-01', $year, $month);
-            $dt_start  = new \DateTime($start_str);
-            $dt_end    = clone $dt_start;
-            $dt_end->modify('last day of this month');
-            return $this->get_aggregated_calendar_data($start_str, $dt_end->format('Y-m-d'));
-        }
-
         if ($room_id < 0) {
             return new \WP_Error('mhbo_missing_room_id', I18n::get_label('api_err_room_id_required'), array('status' => 400));
         }
+
+        // BP 2026: Transient Payload Caching (Skip all SQL and formatting loops)
+        // Auto-invalidates when bookings, overrides, rooms, or settings change.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Safe debugging flag; gated behind admin capability.
+        if (isset($_GET['flush_cal']) && current_user_can('manage_options')) { Cache::bump(Cache::TABLE_BOOKINGS); Cache::bump(Cache::TABLE_SETTINGS); }
+        $version_hash = Cache::get_version(Cache::TABLE_BOOKINGS) . '_' . 
+                        Cache::get_version(Cache::TABLE_CALENDAR_OVERRIDES) . '_' . 
+                        Cache::get_version(Cache::TABLE_ROOMS) . '_' . 
+                        Cache::get_version(Cache::TABLE_SETTINGS);
+        
+        $transient_key = 'mhbo_cal_payload_' . $room_id . '_' . $year . '_' . $month . '_v' . md5($version_hash);
+        $cached_payload = get_transient($transient_key);
+
+        if (false !== $cached_payload) {
+            $cached_response = rest_ensure_response($cached_payload);
+            $cached_response->header('X-MHBO-Calendar-Hash', md5($version_hash));
+            return $cached_response;
+        }
+
+        // Validate room_id - If 0, we serve aggregated data for the search page
+        if (0 === $room_id) {
+            $data = self::generate_aggregated_calendar_payload($year, $month);
+            if (is_wp_error($data)) {
+                return $data;
+            }
+            $response = rest_ensure_response($data);
+            $response->header('X-MHBO-Calendar-Hash', md5($version_hash));
+
+            if (is_array($data) && [] !== $data) {
+                set_transient($transient_key, $data, 12 * HOUR_IN_SECONDS);
+            }
+
+            return $response;
+        }
+
+$data = self::generate_calendar_payload($room_id, $year, $month);
+        
+        if (is_wp_error($data)) {
+            return $data;
+        }
+
+        $response = rest_ensure_response($data);
+
+// BP 2026: Emit version hash header for Stale-While-Revalidate.
+        // The JS reads this to detect whether preloaded DOM data is still valid.
+        $response->header('X-MHBO-Calendar-Hash', md5($version_hash));
+        
+        // Save to transient for caching ONLY if payload is a non-empty array
+        if (is_array($data) && [] !== $data) {
+            set_transient($transient_key, $data, 12 * HOUR_IN_SECONDS);
+        }
+        
+        return $response;
+    }
+
+    /**
+     * Generate aggregated calendar payload for all rooms.
+     *
+     * Extracted from get_calendar_data() to allow server-side DOM preloading
+     * in Calendar.php for aggregated views (room_id = 0).
+     *
+     * @since 2.4.9
+     *
+     * @param int $year  Calendar start year.
+     * @param int $month Calendar start month.
+     * @return array<int, array<string, mixed>>|\WP_Error Calendar day entries or error.
+     */
+    public static function generate_aggregated_calendar_payload(int $year, int $month): array|\WP_Error
+    {
+        $start_str = sprintf('%04d-%02d-01', $year, $month);
+        $dt_start  = new \DateTime($start_str);
+        $dt_end    = clone $dt_start;
+        $dt_end->modify('last day of this month');
+
+        $instance = new self();
+        $response = $instance->get_aggregated_calendar_data($start_str, $dt_end->format('Y-m-d'));
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $payload = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+        return is_array($payload) ? $payload : [];
+    }
+
+    /**
+     * Generate calendar payload for a specific room.
+     *
+     * Extracted from get_calendar_data() to allow server-side DOM preloading
+     * in Calendar.php without simulating an HTTP request. Uses the same
+     * batched-override queries and Rule 13 versioned caching as the REST path.
+     *
+     * @since 2.4.8.1
+     *
+     * @param int $room_id Room ID (must be > 0).
+     * @param int $year    Calendar start year.
+     * @param int $month   Calendar start month.
+     * @return array<int, array<string, mixed>>|\WP_Error Calendar day entries or error.
+     */
+    public static function generate_calendar_payload(int $room_id, int $year, int $month): array|\WP_Error
+    {
+        global $wpdb;
 
         // Fetch bookings with status to differentiate pending vs confirmed
         // Cache with versioning for Rule 13 compliance
@@ -702,7 +795,8 @@ if ($check_in >= $check_out) {
                     'booking_status' => $b_status,
                     'is_checkin' => in_array($date_str, $check_ins, true),
                     'is_checkout' => $is_check_out_day,
-                    'can_check_in' => $can_check_in,
+                    'can_checkin' => $can_check_in,
+                    'can_checkout' => true,
                     'price' => $price,
                     'price_formatted' => $price_money->format(false, $show_decimals ? null : 0),
                     'reason' => $reason,
@@ -713,9 +807,7 @@ if ($check_in >= $check_out) {
             return new \WP_Error('mhbo_calendar_error', I18n::get_label('api_err_calendar_gen'), array('status' => 500));
         }
 
-        $response = rest_ensure_response($data);
-        
-        return $response;
+return $data;
     }
 
     /**
@@ -752,7 +844,7 @@ if ($check_in >= $check_out) {
             $room_placeholders_string = implode(',', array_fill(0, count($room_ids), '%d'));
             $params = array_merge($room_ids, [$end_str, $start_str]);
 
-            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             /**
              * RATIONALE FOR PHPCS DISABLE (RULE 13):
              * 1. DirectQuery: Required for custom table 'mhbo_bookings'.
@@ -809,13 +901,18 @@ $data = [];
             $has_pending_pm = false;
             $has_pending_am = false;
 
+            $daily_min_stays = [];
+            $daily_max_stays = [];
+            $free_rooms_pm_list = []; // Array to track specifically which rooms are free PM
+
             foreach ($room_ids as $rid) {
                 // Check status for this room on this date
                 $is_occupied_pm = false; // Night stay
                 $is_blocked_pm = false; // Turnover block
                 $is_occupied_am = false; // Morning checkout day
+                $is_manual_block = false;
 
-                foreach ($room_bookings[$rid] as $b) {
+foreach ($room_bookings[$rid] as $b) {
                     // Stay Occupancy (Night of date_str)
                     if ($date_str >= $b['check_in'] && $date_str < $b['check_out']) {
                         $is_occupied_pm = true; 
@@ -846,13 +943,14 @@ $data = [];
                     }
                 }
 
-                // A room is NOT free PM if it's either occupied by a stay OR blocked by turnover
-                if (!$is_occupied_pm && !$is_blocked_pm) {
+                // A room is NOT free PM if it's either occupied by a stay OR blocked by turnover OR manually blocked
+                if (!$is_occupied_pm && !$is_blocked_pm && !$is_manual_block) {
                     $rooms_free_pm++;
+                    $free_rooms_pm_list[] = (int) $rid;
                 }
                 
                 // Track actual night occupancy separately for status visualization
-                if ($is_occupied_pm) {
+                if ($is_occupied_pm || $is_manual_block) {
                     $rooms_booked_pm++;
                 }
 
@@ -861,14 +959,15 @@ $data = [];
                 }
 
                 // Calculate price (lowest available)
-                if (!$is_occupied_pm) {
+                if (!$is_occupied_pm && !$is_manual_block) {
                     $price_money = Pricing::calculate_daily_price_money((int) $rid, $date_str);
                     $price = (float) $price_money->toDecimal();
                     if ($min_price === null || $price < $min_price) {
                         $min_price = $price;
                     }
                 }
-            }
+
+}
 
             // Aggregated Status
             $status = 'available';
@@ -914,11 +1013,12 @@ $data = [];
                 'is_checkout' => $is_checkout,
                 'can_checkin' => $rooms_free_pm > 0,
                 'can_checkout' => $rooms_free_am > 0,
+                'free_rooms' => $free_rooms_pm_list,
                 
             ];
         }
 
-        return rest_ensure_response($data);
+return rest_ensure_response($data);
     }
 
     /**
@@ -1170,4 +1270,5 @@ return $response;
 
         return rest_ensure_response($result);
     }
+
 }

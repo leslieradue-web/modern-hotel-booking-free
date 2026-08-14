@@ -65,20 +65,25 @@ class LocalTips {
     public static function execute( array $args ): array {
         $category = sanitize_text_field( (string) ( $args['category'] ?? 'general' ) );
         
-        // Retrieve the admin-configured tips.
-        $all_tips = (string) get_option( 'mhbo_ai_local_guide', '' );
+        $tips_output = '';
+
+// Fallback to the admin-configured free text tips if no structured data found.
+        if ( '' === $tips_output ) {
+            $all_tips = (string) get_option( 'mhbo_ai_local_guide', '' );
+            if ( '' !== $all_tips ) {
+                $tips_output = "---\n" . I18n::decode( $all_tips ) . "\n---";
+            }
+        }
         
-        if ( '' === $all_tips ) {
+        if ( '' === $tips_output ) {
             return [
                 'tips'    => __( 'I don\'t have specific local tips configured yet. Please ask our front desk staff for personalized recommendations!', 'modern-hotel-booking' ),
                 'message' => __( 'No local tips configured in settings.', 'modern-hotel-booking' )
             ];
         }
 
-        // In a more advanced version, we could parse by category. 
-        // For now, we return the full guide as it's typically a summary.
         return [
-            'tips'    => "---\n" . I18n::decode( $all_tips ) . "\n---",
+            'tips'    => $tips_output,
             // translators: %s: recommendation category
             'message' => sprintf( __( 'Showing local recommendations for: %s', 'modern-hotel-booking' ), (string) $category )
         ];

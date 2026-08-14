@@ -3,9 +3,9 @@
  * Plugin Name:       Modern Hotel Booking — Direct Booking Engine & Availability Calendar
  * Plugin URI:        https://modernhotelwp.com/
  * Description:       Hotel booking system for vacation rentals, B&Bs and cabins. Includes iCal sync for Airbnb, Stripe payments and a built-in AI Concierge.
- * Version:           2.4.8
+ * Version:           2.4.9
  * Requires at least: 6.6
- * Tested up to:      7.0.2
+ * Tested up to:      7.1
  * Requires PHP:      8.0
  * Author:            StartMySuccess
  * Author URI:        https://modernhotelwp.com/
@@ -36,7 +36,7 @@ if (version_compare(PHP_VERSION, '8.0.0', '<')) {
     return;
 }
 
-define('MHBO_VERSION', '2.4.8');
+define('MHBO_VERSION', '2.4.9');
 define( 'MHBO_IS_PRO', false );
 define('MHBO_PLUGIN_FILE', __FILE__);
 define('MHBO_PLUGIN_DIR', plugin_dir_path(__FILE__));
@@ -83,6 +83,7 @@ function mhbo_activate(): void
             \MHBO\Core\Activator::activate();
         }
     }
+    do_action('mhbo_activated');
 }
 
 /**
@@ -97,6 +98,7 @@ function mhbo_deactivate(): void
             \MHBO\Core\Deactivator::deactivate();
         }
     }
+    do_action('mhbo_deactivated');
 }
 
 register_activation_hook(__FILE__, 'mhbo_activate');
@@ -203,14 +205,12 @@ add_action('mhbo_activated', static function (): void {
     if (mhbo_is_pro() && class_exists('MHBO\AI\ChatSession')) {
         \MHBO\AI\ChatSession::create_table();
     }
-    if (class_exists('MHBO\AI\Loader')) {
-        \MHBO\AI\Loader::maybe_register_ai_guest_role();
-    }
+    
 });
 
 /**
  * On deactivation: remove AI guest role.
  */
 add_action('mhbo_deactivated', static function (): void {
-    remove_role('mhbo_ai_guest');
+    
 });

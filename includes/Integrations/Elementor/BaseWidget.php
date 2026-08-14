@@ -13,13 +13,13 @@ namespace Elementor {
             public function get_name(): string { return ''; }
             public function get_title(): string { return ''; }
             public function get_icon(): string { return ''; }
-            public function get_categories(): array { return array(); }
-            public function get_keywords(): array { return array(); }
-            protected function start_controls_section(string $id, array $args = array()): void {}
-            protected function add_control(string $id, array $args = array()): void {}
+            /** @return array<mixed> */ public function get_categories(): array { return array(); }
+            /** @return array<mixed> */ public function get_keywords(): array { return array(); }
+            /** @param array<mixed> $args */ protected function start_controls_section(string $id, array $args = array()): void {}
+            /** @param array<mixed> $args */ protected function add_control(string $id, array $args = array()): void {}
             protected function end_controls_section(): void {}
-            protected function add_group_control(string $type, array $args = array()): void {}
-            protected function get_settings_for_display(): array { return array(); }
+            /** @param array<mixed> $args */ protected function add_group_control(string $type, array $args = array()): void {}
+            /** @return array<mixed> */ protected function get_settings_for_display(): array { return array(); }
         }
     }
 
@@ -52,7 +52,7 @@ namespace Elementor {
 
     if (!class_exists('\\Elementor\\Elements_Manager')) {
         class Elements_Manager {
-            public function add_category(string $id, array $args = array()): void {}
+            /** @param array<mixed> $args */ public function add_category(string $id, array $args = array()): void {}
         }
     }
 
