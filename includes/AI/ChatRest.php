@@ -222,6 +222,30 @@ class ChatRest {
         $guest_email   = ChatSession::get_guest_email( $session_id );
         $guest_phone   = ChatSession::get_guest_phone( $session_id );
 
+        // WP 7.1: Token-efficient user context via fields projection.
+        // Uses the 'fields' parameter on core/get-user-info ability to fetch
+        // only display_name, first_name, and locale instead of the full user object.
+        $wp_user_context = '';
+        if ( is_user_logged_in() && function_exists( 'wp_get_ability' ) ) {
+            $user_ability = call_user_func( 'wp_get_ability', 'core/get-user-info' );
+            if ( $user_ability && method_exists( $user_ability, 'execute' ) ) {
+                $user_info = $user_ability->execute( [
+                    'fields' => [ 'display_name', 'first_name', 'locale' ],
+                ] );
+                if ( is_array( $user_info ) ) {
+                    $wp_display = (string) ( $user_info['display_name'] ?? '' );
+                    $wp_locale  = (string) ( $user_info['locale'] ?? '' );
+                    if ( '' !== $wp_display ) {
+                        $wp_user_context = "\nLogged-in WP user: {$wp_display}";
+                        if ( '' !== $wp_locale ) {
+                            $wp_user_context .= " (locale: {$wp_locale})";
+                        }
+                        $wp_user_context .= ".\n";
+                    }
+                }
+            }
+        }
+
         $lang_block    = $lang ? \sprintf( I18n::get_label( 'ai_prompt_lang_rule' ), $lang ) : '';
         
         $context_name  = $guest_name ? \sprintf( I18n::get_label( 'ai_prompt_guest_name' ), $guest_name ) : "";
@@ -239,7 +263,7 @@ class ChatRest {
             false ? '`create_booking_link` (or `create_booking_draft` if is_pro)' : '`create_booking_link`'
         );
         
-        $system_prompt .= "\n" . $lang_block . "\n" . $context_name . " " . $context_email . " " . $context_phone . "\n" . $date_context . "\n" . $scarcity_rule . $decisive_rule;
+        $system_prompt .= "\n" . $lang_block . "\n" . $context_name . " " . $context_email . " " . $context_phone . "\n" . $date_context . "\n" . $scarcity_rule . $decisive_rule . $wp_user_context;
 
         // 7b. Multi-Room Sequential Context (2026 BP).
         //     If a multi-room plan is active, inject the current progress so the AI

@@ -22,7 +22,6 @@ use MHBO\AI\Client;
 use MHBO\AI\ChatSession;
 use MHBO\AI\LlmFile;
 use MHBO\AI\LlmAnalytics;
-use MHBO\Core\License;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -275,7 +274,7 @@ class AiSettings {
         // Language detection — runs on every page load so the badge is live.
         [ 'locale' => $detected_locale, 'source' => $lang_source, 'label' => $lang_source_label ] = self::get_multilang_status();
 
-$is_pro = false;
+$is_pro = ( defined( 'MHBO_IS_PRO' ) && MHBO_IS_PRO );
 
         // KB info.
         $kb_snapshot_time = (string) get_option( 'mhbo_kb_snapshot_updated', '' );
@@ -1003,52 +1002,8 @@ $is_pro = false;
                     $('#mhbo_ai_test_fallback_result').text('❌ ' + xhr.responseJSON.message).css('color', 'red');
                 });
             });
-            // Test MCP Endpoint.
-            $('#mhbo_ai_test_mcp_btn').on('click', function() {
-                var btn = $(this);
-                btn.prop('disabled', true).text('" . esc_js( __( 'Probing…', 'modern-hotel-booking' ) ) . "');
-                var mcpUrl = '" . esc_js( McpServer::get_endpoint_url() ) . "';
-                $.ajax({
-                    url: mcpUrl,
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize' })
-                }).done(function(res) {
-                    btn.prop('disabled', false).text('" . esc_js( __( 'Probe MCP Endpoint', 'modern-hotel-booking' ) ) . "');
-                    if (res && res.result && res.result.serverInfo) {
-                        $('#mhbo_ai_test_mcp_result').html('<span style=\"color: #10b981; font-weight: 600;\">✅ Connected! (' + res.result.serverInfo.name + ' v' + res.result.serverInfo.version + ')</span>');
-                    } else {
-                        $('#mhbo_ai_test_mcp_result').html('<span style=\"color: #f59e0b;\">⚠️ Unexpected response</span>');
-                    }
-                }).fail(function(xhr) {
-                    btn.prop('disabled', false).text('" . esc_js( __( 'Probe MCP Endpoint', 'modern-hotel-booking' ) ) . "');
-                    $('#mhbo_ai_test_mcp_result').html('<span style=\"color: #ef4444; font-weight: 600;\">❌ Failed (HTTP ' + xhr.status + ')</span>');
-                });
-            });
 
-            // Discovery Sync.
-            $('#mhbo_ai_discovery_sync').on('click', function() {
-                var btn = $(this);
-                btn.prop('disabled', true).text('" . esc_js( __( 'Syncing…', 'modern-hotel-booking' ) ) . "');
-                apiRequest('/ai/sync-discovery').done(function(res) {
-                    location.reload();
-                }).fail(function(xhr) {
-                    btn.prop('disabled', false).text('" . esc_js( __( 'Sync Failed', 'modern-hotel-booking' ) ) . "');
-                    alert(xhr.responseJSON.message);
-                });
-            });
-
-            // Discovery Cleanup.
-            $('#mhbo_ai_discovery_cleanup').on('click', function() {
-                if (!confirm('" . esc_js( __( 'Are you sure?', 'modern-hotel-booking' ) ) . "')) return;
-                var btn = $(this);
-                btn.prop('disabled', true).text('" . esc_js( __( 'Cleaning…', 'modern-hotel-booking' ) ) . "');
-                apiRequest('/ai/cleanup-discovery').done(function() {
-                    location.reload();
-                });
-            });
-
-            // Clear Quota Lock.
+// Clear Quota Lock.
             $('#mhbo_ai_clear_lock').on('click', function() {
                 var btn = $(this);
                 btn.prop('disabled', true).text('" . esc_js( __( 'Clearing…', 'modern-hotel-booking' ) ) . "');

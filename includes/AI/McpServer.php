@@ -101,7 +101,7 @@ class McpServer {
         // 4. Rate Limiting Check (30 req/hr Free, 200 req/hr Pro per IP).
         $ip     = self::get_client_ip();
         $ip_key = 'mhbo_mcp_rl_' . md5( (string) $ip );
-        $rate   = ( class_exists( 'MHBO\Core\License' ) && false ) ? 200 : 30;
+        $rate   = ( defined( 'MHBO_IS_PRO' ) && MHBO_IS_PRO ) ? 200 : 30;
 
         $count = (int) get_transient( $ip_key );
         if ( $count >= $rate ) {

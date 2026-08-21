@@ -250,7 +250,9 @@ class Client {
 
         return match ( $provider ) {
             self::PROVIDER_GEMINI    => self::http_gemini( $api_key, $model ?: 'gemini-3.7-flash', $messages, $system_prompt, $tools ),
+            // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Direct integration used as Path 3 fallback when wp_ai_client_prompt() does not support function calling or on pre-WP 7.0.
             self::PROVIDER_OPENAI    => self::http_openai( $api_key, $model ?: 'gpt-5.4-mini', $messages, $system_prompt, $tools, ( str_contains( $model, 'gpt-5' ) ) ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions' ),
+            // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Direct integration used as Path 3 fallback when wp_ai_client_prompt() does not support function calling or on pre-WP 7.0.
             self::PROVIDER_OPENROUTER => self::http_openai( $api_key, $model, $messages, $system_prompt, $tools, 'https://openrouter.ai/api/v1/chat/completions' ),
             self::PROVIDER_ANTHROPIC => self::http_anthropic( $api_key, $model ?: 'claude-sonnet-4-6', $messages, $system_prompt, $tools ),
             self::PROVIDER_OLLAMA    => self::http_openai( '', $model ?: 'llama3', $messages, $system_prompt, $tools, (string) get_option( self::OPT_PREFIX . 'fallback_custom_url', 'http://localhost:11434/v1/chat/completions' ) ),
@@ -345,10 +347,12 @@ class Client {
                 return self::http_gemini( $api_key, $model ?: 'gemini-3.7-flash', $messages, $system_prompt, $tools );
  
             case self::PROVIDER_OPENAI:
+                // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Direct integration used as Path 3 fallback when wp_ai_client_prompt() does not support function calling or on pre-WP 7.0.
                 $endpoint = ( str_contains( $model, 'gpt-5' ) ) ? 'https://api.openai.com/v1/responses' : 'https://api.openai.com/v1/chat/completions';
                 return self::http_openai( $api_key, $model ?: 'gpt-5.4-mini', $messages, $system_prompt, $tools, $endpoint );
  
             case self::PROVIDER_OPENROUTER:
+                // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Direct integration used as Path 3 fallback when wp_ai_client_prompt() does not support function calling or on pre-WP 7.0.
                 return self::http_openai( $api_key, $model, $messages, $system_prompt, $tools, 'https://openrouter.ai/api/v1/chat/completions' );
  
             case self::PROVIDER_ANTHROPIC:
@@ -444,7 +448,23 @@ class Client {
         ];
 
         if ( [] !== $tools ) {
-            $body['tools'] = [ [ 'function_declarations' => array_map( fn( $t ) => $t['function'] ?? $t, $tools ) ] ];
+            // WP 7.1: Sanitize tool schemas to Draft-4 for strict AI clients.
+            $sanitized_tools = $tools;
+            if ( \function_exists( 'wp_prepare_json_schema_for_client' ) ) {
+                $sanitized_tools = array_map( function ( $t ) {
+                    $fn = $t['function'] ?? $t;
+                    if ( isset( $fn['parameters'] ) ) {
+                        $fn['parameters'] = \call_user_func( 'wp_prepare_json_schema_for_client', $fn['parameters'], 'draft-04' );
+                    }
+                    if ( isset( $t['function'] ) ) {
+                        $t['function'] = $fn;
+                    } else {
+                        $t = $fn;
+                    }
+                    return $t;
+                }, $sanitized_tools );
+            }
+            $body['tools'] = [ [ 'function_declarations' => array_map( fn( $t ) => $t['function'] ?? $t, $sanitized_tools ) ] ];
         }
 
         // 2026.4 BP: Cascade: primary model first, then cheaper/resilient fallbacks.
@@ -470,6 +490,7 @@ class Client {
             // Always use v1beta — it supports system_instruction, tools/function_declarations,
             // and generationConfig across all model generations. The v1 stable endpoint uses
             // a stricter camelCase-only JSON schema that breaks these fields.
+            // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Direct integration used as Path 3 fallback when wp_ai_client_prompt() does not support function calling or on pre-WP 7.0.
             $url         = "https://generativelanguage.googleapis.com/v1beta/models/{$try_model}:generateContent?key=" . rawurlencode( $api_key );
             $last_result = self::http_gemini_request( $url, $body, $try_model );
 
@@ -1103,14 +1124,22 @@ class Client {
 
 if ( [] !== $tools ) {
             $body['tools'] = array_map( function ( $t ) {
+                $schema = $t['function']['parameters'] ?? $t['parameters'] ?? [ 'type' => 'object', 'properties' => [] ];
+
+                // WP 7.1: Sanitize schema to Draft-4 for strict AI clients.
+                if ( \function_exists( 'wp_prepare_json_schema_for_client' ) ) {
+                    $schema = \call_user_func( 'wp_prepare_json_schema_for_client', $schema, 'draft-04' );
+                }
+
                 return [
                     'name'         => $t['function']['name'] ?? $t['name'] ?? '',
                     'description'  => $t['function']['description'] ?? $t['description'] ?? '',
-                    'input_schema' => $t['function']['parameters'] ?? $t['parameters'] ?? [ 'type' => 'object', 'properties' => [] ],
+                    'input_schema' => $schema,
                 ];
             }, $tools );
         }
 
+        // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- Direct integration used as Path 3 fallback when wp_ai_client_prompt() does not support function calling or on pre-WP 7.0.
         $response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
             'timeout'        => 12, // 2026.6 BP: Reduced from 22s for consistency with cascade timing.
             'connecttimeout' => 5,  // 2026.6 BP: Fast-fail on unreachable endpoint.

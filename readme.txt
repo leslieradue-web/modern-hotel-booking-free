@@ -4,7 +4,7 @@ Donate link: https://startmysuccess.com/
 Tags: hotel booking, vacation rental, Booking Engine, bed and breakfast, accommodation
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.4.9
+Stable tag: 2.4.9.6
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -145,41 +145,45 @@ Yes. Modern Hotel Booking Pro includes seasonal rates for any date range, weeken
 
 == Changelog ==
 
+= 2.4.9.6 =
+* FIX (Free & Pro): Free Build Stability — Isolated pro payment gateway dependencies and added runtime class_exists guards in AiSettings and Loader to eliminate fatal errors on standalone free installs.
+* FIX (Free & Pro): WordPress Security & Coding Standards (2026 BP) — Unslashed and sanitized all superglobal inputs ($_SERVER, $_COOKIE) with strict IP/token filters in PaymentsController.
+* FIX (Free & Pro): Direct Database Query Hardening — Replaced interpolated table variable patterns with direct {$wpdb->prefix} references to satisfy WordPress VIP and Plugin Check (PCP) security sniffers.
+* FIX (Pro): iCal Stream Refactoring — Replaced direct fopen/fclose filesystem operations in ICalSync with native wp_safe_remote_get() and memory-efficient line generator.
+* MOD (Free & Pro): Build Exclusions — Excluded internal development and research markdown files from release distributions while preserving USER_GUIDE.md in Pro.
+
+= 2.4.9.5 =
+* NEW (Free & Pro): WP 7.1 Abilities API Hooks — `wp_ability_invoked` audit telemetry, `wp_ability_validate_input` deep date/email validation, `wp_ability_validate_output` response integrity checks.
+* NEW (Free & Pro): JSON Schema Client Preparation — AI tool schemas sanitized via `wp_prepare_json_schema_for_client()` for Draft-4 strict compliance with Anthropic/Gemini.
+* MOD (Free & Pro): Token-Efficient User Context — Uses WP 7.1 `fields` projection on `core/get-user-info` ability to minimize token waste.
+* MOD (Free & Pro): verify-standards.php expanded with jQuery UI 1.14.2, persistent toolbar, and client-side media processing audit rules.
+* MOD (Free & Pro): WordPress 7.1 RC3 Final Compliance — Full audit against iframed editor, persistent toolbar, 40px form controls, and jQuery UI 1.14.2.
+
 = 2.4.9 =
 * FIX (Pro): Enhanced LMFWC License System — Idempotent token-based deactivation, silent token recovery, and soft-invalid retry logic to prevent spurious deactivations on live sites.
 * MOD (Free & Pro): AI Model Landscape Refresh — Added Gemini 3.7 Flash as recommended default, updated fallback cascade and provider labels.
 * MOD (Free & Pro): WordPress 7.1 Compatibility Confirmed — Audited against iframed editor, abilities API improvements, and PHP 8.4 nullable types.
-* MOD (Free & Pro): Code Quality — Replaced loose empty() checks with strict type comparisons across AI Abilities layer.
 
 = 2.4.8.1 =
 * NEW (Pro): RAG 2.0 Enhanced Knowledge Base — Structured room feature indexing, seasonal policy documents, local attraction recommendations, and Google Hotel Feeds XML generation.
 * NEW (Free & Pro): Smart Context Windowing — Query-aware context injection with UTF-8 multi-locale tokenization.
 * NEW (Free & Pro): Smart llms.txt Parsing — Enhanced AI visibility discovery without duplicate H1/Blockquote headers.
-* MOD (Free & Pro): Security Hardening — Audited all debug log telemetry behind WP_DEBUG_LOG guards.
 
 = 2.4.8 =
 * MOD (Free & Pro): Updated bundled FullCalendar library to v7.0.2.
-
-= 2.4.7.1 =
-* NEW (Pro): Braintree Payment Gateway Integration — Direct credit card, debit card, and 3D Secure 2 (3DS2) processing via Braintree Web Drop-in SDK.
-* NEW (Free): Enterprise Elementor Widget Pack — 4 native Elementor widgets (Booking Form, Room Grid, Calendar, AI Concierge) with live editor preview.
-* MOD (Free & Pro): AI Model Landscape Refresh (July 2026) — Added gemini-3.6-flash, OpenAI gpt-5.6 family, and Anthropic claude-sonnet-5 and claude-opus-5.
-* NEW (Free & Pro): Extended WPML 4.x/5.x Deep Compatibility for Room post types, taxonomies, and metadata.
-
-= 2.4.5 =
-* MOD (Free & Pro): Improved translation plugin compatibility — WPML, Polylang, and added Bogo compatibility.
-
-= 2.4.4 =
-* NEW (Free & Pro): Atomic Availability Locking using MySQL native locks (GET_LOCK) for high-concurrency environments.
-* MOD (Free & Pro): Improved mobile responsiveness for the Booking Modal.
-* FIX (Free & Pro): AI Concierge Abilities API fixes for WP 6.9+ and WP 7.0+ compatibility.
 
 For the full changelog of all versions, see [changelog.txt](https://plugins.svn.wordpress.org/modern-hotel-booking/trunk/changelog.txt).
 
 == Upgrade Notice ==
 
-= 2.4.8 =
-Updated FullCalendar v7.0.2, Elementor widgets, Braintree payments (Pro) and AI model refresh. Recommended for all users.
+= 2.4.9.6 =
+Free build stability hardening, 2026 BP superglobal sanitization/unslashing, and database query security compliance.
+
+= 2.4.9.5 =
+WordPress 7.1 deep compatibility: Abilities API audit/validation hooks, JSON Schema sanitization for AI providers, and token-efficient user context.
+
+= 2.4.9 =
+Updated Booking admin page, new option to fill gaps when gaps exist in min days booking (Pro), css tidy up, improved AI and updated models in use.
 
 == Credits ==
 
