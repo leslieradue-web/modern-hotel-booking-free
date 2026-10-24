@@ -26,10 +26,12 @@
 	class ChatWidget {
 		constructor( container ) {
 			this.container = container;
+			this.doc = container.ownerDocument || document;
+			this.win = this.doc.defaultView || window;
 			this.isOpen = false;
 			this.isSending = false;
 			this.sessionId =
-				sessionStorage.getItem( 'mhbo_session_id' ) || null;
+				this.win.sessionStorage.getItem( 'mhbo_session_id' ) || null;
 			this.evtSource = null;
 			this.panel = null;
 			this.fab = null;
@@ -46,6 +48,21 @@
 			this._buildPanel();
 			this._attachEvents();
 			this._injectIntoContainer();
+			this._setTtsEnabled( Boolean( cfg.settings?.ttsEnabled ), false );
+
+			// Listen for external open concierge trigger (e.g. from Guest Portal)
+			this.win.addEventListener( 'mhbo_open_concierge', ( e ) => {
+				this.open();
+				if ( e.detail && ! this.hasGreetedGuest ) {
+					this.hasGreetedGuest = true;
+					const guestName = e.detail.customer_name ? ` ${ e.detail.customer_name }` : '';
+					const bookingId = e.detail.booking_id ? ` #${ e.detail.booking_id }` : '';
+					this.renderBubble(
+						'assistant',
+						`Hello${ guestName }! I see you are logged into your reservation${ bookingId }. How may I assist you with your stay today?`
+					);
+				}
+			} );
 
 			// Default: closed unless autoopen is explicitly true.
 			if ( this.container.dataset.autoopen === 'true' ) {
@@ -58,7 +75,7 @@
 		// ── FAB (floating action button) ──────────────────────────────────────
 
 		_buildFab() {
-			const btn = document.createElement( 'button' );
+			const btn = this.doc.createElement( 'button' );
 			btn.className = 'mhbo-chat-fab';
 			btn.type = 'button';
 			btn.setAttribute(
@@ -77,7 +94,7 @@
 		// ── Panel ─────────────────────────────────────────────────────────────
 
 		_buildPanel() {
-			const panel = document.createElement( 'div' );
+			const panel = this.doc.createElement( 'div' );
 			panel.className = 'mhbo-chat-panel';
 			panel.setAttribute( 'role', 'dialog' );
 			panel.setAttribute( 'aria-modal', 'true' );
@@ -107,15 +124,20 @@
 						}" aria-pressed="false" title="${
 							s.toggleVoice || 'Toggle voice output'
 						}">
-                            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <svg class="mhbo-chat-tts-icon-on" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <svg class="mhbo-chat-tts-icon-off" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
                         </button>
                         <button type="button" class="mhbo-chat-minimize" aria-label="${
 							s.minimize || 'Minimize chat'
+						}" title="${
+							s.minimize || 'Minimize'
 						}">
                             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         </button>
                         <button type="button" class="mhbo-chat-close" aria-label="${
 							s.close || 'Close chat'
+						}" title="${
+							s.close || 'Close'
 						}">
                             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
@@ -133,11 +155,15 @@
 					}" aria-label="${
 						s.inputLabel || 'Chat message'
 					}" maxlength="1000" autocomplete="off">
-                    <button type="button" class="mhbo-chat-voice-btn" aria-label="${
-						s.startVoice || 'Start voice input'
-					}" title="${ s.startVoice || 'Voice input' }">
+                    ${
+						this.win.mhboChat?.settings?.voiceEnabled
+							? `<button type="button" class="mhbo-chat-voice-btn" aria-label="${
+									s.startVoice || 'Start voice input'
+							  }" title="${ s.startVoice || 'Voice input' }">
                         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                    </button>
+                    </button>`
+							: ''
+					}
                     <button type="submit" class="mhbo-chat-send" aria-label="${
 						s.send || 'Send message'
 					}">
@@ -192,7 +218,7 @@
 				setTimeout( () => this.inputEl.focus(), 300 );
 			}
 
-			const prefersReduced = window.matchMedia(
+			const prefersReduced = this.win.matchMedia(
 				'(prefers-reduced-motion: reduce)'
 			).matches;
 			if ( ! prefersReduced ) {
@@ -229,6 +255,19 @@
 			this.fab.setAttribute( 'aria-expanded', 'false' );
 			this.fab.classList.remove( 'mhbo-chat-fab--active' );
 
+			if ( this.win.MhboVoiceInput ) {
+				this.win.MhboVoiceInput.stop();
+				this.win.MhboVoiceInput.stopSpeaking();
+			}
+			if ( 'speechSynthesis' in this.win ) {
+				try {
+					this.win.speechSynthesis.cancel();
+				} catch ( _ ) {}
+			}
+			if ( this.inputEl && this.inputEl.dataset.originalPlaceholder ) {
+				this.inputEl.placeholder = this.inputEl.dataset.originalPlaceholder;
+			}
+
 			if ( this.evtSource ) {
 				this.evtSource.close();
 				this.evtSource = null;
@@ -241,10 +280,31 @@
 			// FAB toggle.
 			this.fab.addEventListener( 'click', () => this.toggle() );
 
+			// Minimize.
+			const minBtn = this.panel.querySelector( '.mhbo-chat-minimize' );
+			if ( minBtn ) {
+				minBtn.addEventListener( 'click', ( ev ) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					this.close();
+					if ( this.fab ) {
+						this.fab.focus();
+					}
+				} );
+			}
+
 			// Close.
-			this.panel
-				.querySelector( '.mhbo-chat-close' )
-				.addEventListener( 'click', () => this.close() );
+			const closeBtn = this.panel.querySelector( '.mhbo-chat-close' );
+			if ( closeBtn ) {
+				closeBtn.addEventListener( 'click', ( ev ) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					this.close();
+					if ( this.fab ) {
+						this.fab.focus();
+					}
+				} );
+			}
 
 			// Form submit.
 			this.panel
@@ -256,9 +316,17 @@
 
 			// Keyboard: send on Enter (without shift).
 			this.inputEl.addEventListener( 'keydown', ( e ) => {
-				// Barge-in: Stop speech if user starts typing.
-				if ( window.MhboVoiceInput ) {
-					window.MhboVoiceInput.stopSpeaking();
+				// Barge-in: Stop speech and active mic if user starts typing.
+				if ( this.win.MhboVoiceInput ) {
+					this.win.MhboVoiceInput.stopSpeaking();
+					if ( this.win.MhboVoiceInput.isListening ) {
+						this.win.MhboVoiceInput.stop();
+					}
+				}
+				if ( 'speechSynthesis' in this.win ) {
+					try {
+						this.win.speechSynthesis.cancel();
+					} catch ( _ ) {}
 				}
 
 				if ( e.key === 'Enter' && ! e.shiftKey ) {
@@ -267,56 +335,160 @@
 				}
 			} );
 
-			// Keyboard: Escape to close.
-			document.addEventListener( 'keydown', ( e ) => {
+			// Keyboard: Escape to stop mic recording or close panel.
+			this.doc.addEventListener( 'keydown', ( e ) => {
 				if ( e.key === 'Escape' && this.isOpen ) {
+					if ( this.win.MhboVoiceInput && this.win.MhboVoiceInput.isListening ) {
+						e.preventDefault();
+						this.win.MhboVoiceInput.stop();
+						if ( this.inputEl && this.inputEl.dataset.originalPlaceholder ) {
+							this.inputEl.placeholder = this.inputEl.dataset.originalPlaceholder;
+						}
+						return;
+					}
 					this.close();
 					this.fab.focus();
 				}
 			} );
 
 			// TTS toggle.
-			this.ttsToggle.addEventListener( 'click', () => {
-				const isCurrentlyEnabled =
-					this.ttsToggle.getAttribute( 'aria-pressed' ) === 'true';
-				this._setTtsEnabled( ! isCurrentlyEnabled );
-			} );
+			if ( this.ttsToggle ) {
+				this.ttsToggle.addEventListener( 'click', ( ev ) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					this._setTtsEnabled( ! this.ttsEnabled, true );
+				} );
+			}
 
 			// Voice input (delegated to VoiceInput if available).
-			this.voiceBtn.addEventListener( 'click', () => {
-				if ( window.MhboVoiceInput ) {
-					// Switch audio on as likely the guest wants audible responses when chatting to bot.
-					this._setTtsEnabled( true );
+			if ( this.voiceBtn ) {
+				this.voiceBtn.addEventListener( 'click', ( ev ) => {
+					ev.preventDefault();
+					ev.stopPropagation();
 
-					window.MhboVoiceInput.start( ( transcript ) => {
-						this.inputEl.value = transcript;
-						this.inputEl.focus();
-						// Scroll to end of input text
-						this.inputEl.setSelectionRange(
-							transcript.length,
-							transcript.length
+					if ( this.win.MhboVoiceInput ) {
+						if ( this.win.MhboVoiceInput.isListening ) {
+							this.win.MhboVoiceInput.stop();
+							if ( this.inputEl.dataset.originalPlaceholder ) {
+								this.inputEl.placeholder = this.inputEl.dataset.originalPlaceholder;
+							}
+							return;
+						}
+
+						// Switch audio on as likely the guest wants audible responses when chatting to bot.
+						this._setTtsEnabled( true, false );
+
+						if ( ! this.inputEl.dataset.originalPlaceholder ) {
+							this.inputEl.dataset.originalPlaceholder = this.inputEl.placeholder;
+						}
+						const originalPlaceholder = this.inputEl.dataset.originalPlaceholder;
+						this.inputEl.placeholder = s.startVoice || 'Listening… speak now';
+
+						this.win.MhboVoiceInput.start(
+							( transcript ) => {
+								this.inputEl.value = transcript;
+								this.inputEl.focus();
+								// Scroll to end of input text
+								this.inputEl.setSelectionRange(
+									transcript.length,
+									transcript.length
+								);
+							},
+							( errorMsg ) => {
+								this.inputEl.placeholder = originalPlaceholder;
+								if ( errorMsg ) {
+									this.renderBubble( 'error', errorMsg );
+								}
+							},
+							() => {
+								this.inputEl.placeholder = originalPlaceholder;
+							}
 						);
-					} );
-				}
-			} );
+					}
+				} );
+			}
 		}
 
 		/**
 		 * Enable or disable Text-to-Speech output.
 		 *
 		 * @param {boolean} enabled
+		 * @param {boolean} userTriggered
 		 */
-		_setTtsEnabled( enabled ) {
-			this.ttsEnabled = !! enabled;
-			this.ttsToggle.setAttribute(
-				'aria-pressed',
-				String( this.ttsEnabled )
-			);
+		_setTtsEnabled( enabled, userTriggered = false ) {
+			this.ttsEnabled = Boolean( enabled );
+			if ( this.ttsToggle ) {
+				this.ttsToggle.setAttribute(
+					'aria-pressed',
+					String( this.ttsEnabled )
+				);
+				this.ttsToggle.classList.toggle(
+					'mhbo-chat-tts-toggle--active',
+					this.ttsEnabled
+				);
+				this.ttsToggle.title = this.ttsEnabled
+					? ( s.voiceOutputOn || 'Voice output is ON (click to mute)' )
+					: ( s.toggleVoice || 'Turn on voice output' );
+			}
+
+			if ( ! this.ttsEnabled ) {
+				if ( this.win.MhboVoiceInput ) {
+					this.win.MhboVoiceInput.stopSpeaking();
+				}
+				if ( 'speechSynthesis' in this.win ) {
+					try {
+						this.win.speechSynthesis.cancel();
+					} catch ( _ ) {}
+				}
+			} else if ( userTriggered ) {
+				this.speak( s.voiceEnabledAck || 'Voice output enabled.' );
+			}
+		}
+
+		/**
+		 * Speak text via TTS (MhboVoiceInput or native browser SpeechSynthesis).
+		 *
+		 * @param {string} text
+		 */
+		speak( text ) {
+			if ( ! text ) {
+				return;
+			}
+			if (
+				this.win.MhboVoiceInput &&
+				typeof this.win.MhboVoiceInput.speak === 'function'
+			) {
+				this.win.MhboVoiceInput.speak( text );
+				return;
+			}
+			if ( 'speechSynthesis' in this.win ) {
+				try {
+					this.win.speechSynthesis.cancel();
+					const clean = String( text )
+						.replace( /[*#_`~>]/g, '' )
+						.replace( /https?:\/\/\S+/g, '' )
+						.trim();
+					if ( clean ) {
+						const utter = new SpeechSynthesisUtterance( clean );
+						const htmlLang = this.doc.documentElement.lang || '';
+						utter.lang = (
+							htmlLang ||
+							cfg.settings?.pageLocale ||
+							cfg.settings?.language ||
+							'en-US'
+						).replace( '_', '-' );
+						this.win.speechSynthesis.speak( utter );
+					}
+				} catch ( _ ) {}
+			}
 		}
 
 		// ── Messaging ─────────────────────────────────────────────────────────
 
 		sendMessage() {
+			if ( this.win.MhboVoiceInput && this.win.MhboVoiceInput.isListening ) {
+				this.win.MhboVoiceInput.stop();
+			}
 			const text = this.inputEl.value.trim();
 			if ( ! text || this.isSending ) {
 				return;
@@ -393,10 +565,13 @@
 										// Done: Final metadata.
 										if ( data.done ) {
 											this.hideStatusNotification();
+											if ( this.ttsEnabled && fullText ) {
+												this.speak( fullText );
+											}
 											if ( data.session_id ) {
 												this.sessionId =
 													data.session_id;
-												sessionStorage.setItem(
+												this.win.sessionStorage.setItem(
 													'mhbo_session_id',
 													this.sessionId
 												);
@@ -404,6 +579,14 @@
 											if ( data.suggestions ) {
 												this.addSuggestions(
 													data.suggestions
+												);
+											}
+											if (
+												data.booking_intent &&
+												data.booking_intent.score >= 60
+											) {
+												this.showBookingIntentCta(
+													data.booking_intent
 												);
 											}
 											if ( data.tool_calls_made ) {
@@ -449,7 +632,7 @@
 					// Always update session ID unconditionally.
 					if ( data && data.session_id ) {
 						this.sessionId = data.session_id;
-						sessionStorage.setItem(
+						this.win.sessionStorage.setItem(
 							'mhbo_session_id',
 							this.sessionId
 						);
@@ -461,8 +644,8 @@
 						data.response.length > 0
 					) {
 						this.receiveMessage( data.response );
-						if ( this.ttsEnabled && window.MhboVoiceInput ) {
-							window.MhboVoiceInput.speak( data.response );
+						if ( this.ttsEnabled ) {
+							this.speak( data.response );
 						}
 						if ( data.suggestions && data.suggestions.length ) {
 							this.addSuggestions( data.suggestions );
@@ -521,12 +704,9 @@
 					);
 				} )
 				.finally( () => {
-					// Note: If streaming, finally is handled in the try/catch loop above.
-					if ( ! cfg.settings?.streamingEnabled ) {
-						this.isSending = false;
-						this.sendBtn.disabled = false;
-						this.inputEl.focus();
-					}
+					this.isSending = false;
+					this.sendBtn.disabled = false;
+					this.inputEl.focus();
 				} );
 		}
 
@@ -542,9 +722,24 @@
 			}
 
 			const pageLang =
-				document.documentElement.lang || cfg.settings?.pageLocale || '';
+				this.doc.documentElement.lang || cfg.settings?.pageLocale || '';
 			if ( pageLang ) {
 				body.append( 'lang', pageLang.replace( '_', '-' ) );
+			}
+
+			// Authenticated Guest Portal Context
+			const portalToken =
+				( typeof window !== 'undefined' && window.mhboGuestPortalContext?.booking_token ) ||
+				( () => {
+					try {
+						return sessionStorage.getItem( 'mhbo_portal_token' ) || '';
+					} catch ( e ) {
+						return '';
+					}
+				} )();
+			if ( portalToken ) {
+				body.append( 'booking_token', portalToken );
+				body.append( 'portal_token', portalToken );
 			}
 
 			const headers = { 'X-WP-Nonce': cfg.restNonce || '' };
@@ -618,10 +813,10 @@
 		// ── Rendering ─────────────────────────────────────────────────────────
 
 		renderBubble( role, text, deferred = false ) {
-			const wrap = document.createElement( 'div' );
+			const wrap = this.doc.createElement( 'div' );
 			wrap.className = 'mhbo-chat-bubble mhbo-chat-bubble--' + role;
 
-			const inner = document.createElement( 'div' );
+			const inner = this.doc.createElement( 'div' );
 			inner.className = 'mhbo-chat-bubble-inner';
 
 			if ( role === 'error' ) {
@@ -636,7 +831,7 @@
 			}
 
 			// Timestamp.
-			const time = document.createElement( 'time' );
+			const time = this.doc.createElement( 'time' );
 			time.className = 'mhbo-chat-bubble-time';
 			time.setAttribute( 'aria-hidden', 'true' );
 			time.textContent = new Date().toLocaleTimeString( [], {
@@ -666,7 +861,7 @@
 				'.mhbo-chat-status-bar'
 			);
 			if ( ! statusEl ) {
-				statusEl = document.createElement( 'div' );
+				statusEl = this.doc.createElement( 'div' );
 				statusEl.className = 'mhbo-chat-status-bar';
 				this.messagesEl.appendChild( statusEl );
 			}
@@ -740,15 +935,15 @@
 			this.clearSuggestions();
 			const sugEl = this.panel.querySelector( '.mhbo-chat-suggestions' );
 			items.forEach( ( text ) => {
-				const btn = document.createElement( 'button' );
+				const btn = this.doc.createElement( 'button' );
 				btn.type = 'button';
 				btn.className = 'mhbo-chat-suggestion';
 				btn.setAttribute( 'role', 'listitem' );
 				btn.textContent = text;
 				btn.addEventListener( 'click', () => {
 					// Barge-in: Stop speech if suggestion clicked.
-					if ( window.MhboVoiceInput ) {
-						window.MhboVoiceInput.stopSpeaking();
+					if ( this.win.MhboVoiceInput ) {
+						this.win.MhboVoiceInput.stopSpeaking();
 					}
 					this.inputEl.value = text;
 					this.sendMessage();
@@ -776,7 +971,7 @@
 			if ( this.typingEl ) {
 				return;
 			}
-			const el = document.createElement( 'div' );
+			const el = this.doc.createElement( 'div' );
 			el.className =
 				'mhbo-chat-bubble mhbo-chat-bubble--assistant mhbo-chat-typing';
 			el.setAttribute( 'aria-label', s.typing || 'AI is typing' );
@@ -798,7 +993,15 @@
 		// ── Scroll ────────────────────────────────────────────────────────────
 
 		scrollToBottom() {
+			if ( ! this.messagesEl ) {
+				return;
+			}
 			this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+			requestAnimationFrame( () => {
+				if ( this.messagesEl ) {
+					this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+				}
+			} );
 		}
 
 		// ── Einstein NBA: Book Now CTA ────────────────────────────────────────
@@ -816,7 +1019,7 @@
 				return;
 			}
 
-			const wrap = document.createElement( 'div' );
+			const wrap = this.doc.createElement( 'div' );
 			wrap.className = 'mhbo-book-now-cta';
 			wrap.setAttribute( 'role', 'complementary' );
 			wrap.setAttribute( 'aria-label', s.bookNowLabel || 'Book now' );
@@ -827,31 +1030,34 @@
 					  '🔥 Ready to book? Secure your room now'
 					: s.ctaMedIntent || '✅ Looks good! Book your stay today';
 
-			const btn = document.createElement( 'a' );
+			const btn = this.doc.createElement( 'a' );
 			btn.href = bookingUrl;
 			btn.className = 'mhbo-book-now-btn';
 			btn.textContent = label;
+			btn.setAttribute( 'target', '_blank' );
+			btn.setAttribute( 'rel', 'noopener noreferrer' );
 
-			/* When the booking modal is active and the URL carries a room_id,
-               intercept the click so the drawer opens instead of navigating. */
-			let ctaRoomId = 0;
-			if ( typeof window.MhboModal !== 'undefined' && bookingUrl ) {
+			btn.addEventListener( 'click', ( ev ) => {
+				const isModalActive =
+					typeof this.win.MhboModal !== 'undefined' &&
+					typeof this.win.MhboModal.open === 'function' &&
+					Boolean( this.win.mhboChat?.settings?.modalEnabled );
+				let ctaRoomId = 0;
 				try {
-					const u = new URL( bookingUrl, window.location.href );
+					const u = new URL( bookingUrl, this.win.location.href );
 					ctaRoomId =
 						parseInt(
 							u.searchParams.get( 'room_id' ) || '0',
 							10
 						) || 0;
 				} catch ( _ ) {}
-			}
-			if ( ctaRoomId > 0 ) {
-				btn.addEventListener( 'click', function ( ev ) {
+
+				if ( isModalActive && ctaRoomId > 0 ) {
 					ev.preventDefault();
 					wrap.remove();
 					try {
-						const u = new URL( bookingUrl, window.location.href );
-						document.dispatchEvent(
+						const u = new URL( bookingUrl, this.win.location.href );
+						this.doc.dispatchEvent(
 							new CustomEvent( 'mhboBookNow', {
 								detail: {
 									room_id: ctaRoomId,
@@ -867,14 +1073,11 @@
 							} )
 						);
 					} catch ( _ ) {}
-				} );
-			} else {
-				btn.setAttribute( 'target', '_blank' );
-				btn.setAttribute( 'rel', 'noopener noreferrer' );
-			}
+				}
+			} );
 
 			// Dismiss link.
-			const dismiss = document.createElement( 'button' );
+			const dismiss = this.doc.createElement( 'button' );
 			dismiss.type = 'button';
 			dismiss.className = 'mhbo-book-now-dismiss';
 			dismiss.setAttribute( 'aria-label', s.dismiss || 'Dismiss' );
@@ -906,19 +1109,19 @@
 				return;
 			}
 
-			const bar = document.createElement( 'div' );
+			const bar = this.doc.createElement( 'div' );
 			bar.className = 'mhbo-handoff-bar';
 
-			const intro = document.createElement( 'p' );
+			const intro = this.doc.createElement( 'p' );
 			intro.className = 'mhbo-handoff-intro';
 			intro.textContent = s.handoffIntro || 'Need to speak with someone?';
 			bar.appendChild( intro );
 
-			const buttons = document.createElement( 'div' );
+			const buttons = this.doc.createElement( 'div' );
 			buttons.className = 'mhbo-handoff-buttons';
 
 			if ( this._handoff.whatsapp ) {
-				const wa = document.createElement( 'a' );
+				const wa = this.doc.createElement( 'a' );
 				const waNum = this._handoff.whatsapp.replace( /\D/g, '' );
 				wa.href = `https://wa.me/${ waNum }`;
 				wa.className = 'mhbo-handoff-btn mhbo-handoff-btn--whatsapp';
@@ -929,7 +1132,7 @@
 			}
 
 			if ( this._handoff.email ) {
-				const em = document.createElement( 'a' );
+				const em = this.doc.createElement( 'a' );
 				em.href = `mailto:${ this._handoff.email }`;
 				em.className = 'mhbo-handoff-btn mhbo-handoff-btn--email';
 				em.textContent = s.handoffEmail || '✉️ Email us';
@@ -937,7 +1140,7 @@
 			}
 
 			if ( this._handoff.phone ) {
-				const ph = document.createElement( 'a' );
+				const ph = this.doc.createElement( 'a' );
 				ph.href = `tel:${ this._handoff.phone }`;
 				ph.className = 'mhbo-handoff-btn mhbo-handoff-btn--phone';
 				ph.textContent = s.handoffPhone || '📞 Call us';
@@ -955,10 +1158,10 @@
 		// ── Tool Result Rendering ─────────────────────────────────────────────
 
 		_renderToolCard( toolName, result ) {
-			const wrap = document.createElement( 'div' );
+			const wrap = this.doc.createElement( 'div' );
 			wrap.className = 'mhbo-chat-bubble mhbo-chat-bubble--tool-result';
 
-			const card = document.createElement( 'div' );
+			const card = this.doc.createElement( 'div' );
 			card.className = 'mhbo-tool-card';
 
 			if ( toolName === 'get_business_card' ) {
@@ -980,7 +1183,7 @@
 				toolName === 'create_booking_link' &&
 				result.multi_room_remaining > 0
 			) {
-				const hint = document.createElement( 'div' );
+				const hint = this.doc.createElement( 'div' );
 				hint.className = 'mhbo-chat-multi-room-hint';
 				hint.style.fontSize = '12px';
 				hint.style.color = 'var(--mhbo-chat-text-muted, #666)';
@@ -1106,6 +1309,12 @@
 				  ) }</div>`
 				: '';
 
+			const summaryBookingUrl = this._cleanUrl(
+				data.booking_url ||
+					this.win.mhboChat?.settings?.bookingUrl ||
+					''
+			);
+
 			return `
             <div class="mhbo-booking-summary">
                 <div class="mhbo-booking-summary-header">
@@ -1127,7 +1336,7 @@
                     <div class="mhbo-summary-item"><label>Payment</label><span>${ depositMsg }</span></div>
                 </div>
                 <div class="mhbo-booking-summary-footer">
-                    <a href="${ this._cleanUrl( data.booking_url ) }"
+                    <a href="${ summaryBookingUrl }"
                        class="mhbo-booking-link-btn mhbo-complete-booking-btn"
                        data-room-id="${ data.room_id || '' }"
                        data-check-in="${ this._esc( data.check_in || '' ) }"
@@ -1141,7 +1350,9 @@
 						) }"
                        data-guest-phone="${ this._esc(
 							data.guest_phone || ''
-						) }">
+						) }"
+                       target="_blank"
+                       rel="noopener noreferrer">
                         ${ s.completeBooking || 'Complete Booking' }
                     </a>
                     ${
@@ -1273,6 +1484,19 @@
                         </div>
                     </div>`;
 				} else {
+					const rawBookingUrl = this._cleanUrl(
+						room.booking_url ||
+							this.win.mhboChat?.settings?.bookingUrl ||
+							''
+					);
+					const cardThumbHtml = thumbUrl
+						? `<a href="${ rawBookingUrl }" target="_blank" rel="noopener noreferrer" class="mhbo-room-thumb-link mhbo-complete-booking-btn" data-room-id="${ roomId }" data-check-in="${ checkIn }" data-check-out="${ checkOut }" data-guests="${ totalGuests }" data-children="${ totalChildren }" data-total-price="${ room.total_price || 0 }"><div class="mhbo-room-thumb-wrap"><img class="mhbo-room-thumb" src="${ this._esc(
+								thumbUrl
+						  ) }" alt="${ this._esc(
+								room.room_name
+						  ) }" loading="lazy"></div></a>`
+						: '';
+
 					const btnLabel = isMulti
 						? s.viewOptions || 'View Options'
 						: s.bookNow || 'Book Now';
@@ -1280,18 +1504,18 @@
                     <div class="mhbo-room-avail-card${
 						isMulti ? ' mhbo-room-avail-card--multi' : ''
 					}">
-                        ${ thumbHtml }
+                        ${ cardThumbHtml }
                         <div class="mhbo-room-avail-body">
                             <div class="mhbo-room-avail-name-row">
-                                <span class="mhbo-room-avail-name">${ this._esc(
+                                <a href="${ rawBookingUrl }" target="_blank" rel="noopener noreferrer" class="mhbo-room-avail-name-link mhbo-complete-booking-btn" data-room-id="${ roomId }" data-check-in="${ checkIn }" data-check-out="${ checkOut }" data-guests="${ totalGuests }" data-children="${ totalChildren }" data-total-price="${ room.total_price || 0 }"><span class="mhbo-room-avail-name">${ this._esc(
 									room.room_name
-								) }</span>
+								) }</span></a>
                                 <div class="mhbo-room-badges">${ multiBadge }${ scarcityBadge }</div>
                             </div>
                             ${ capHtml }
                             ${ priceHtml }
                         </div>
-                        <a href="${ this._cleanUrl( room.booking_url || '' ) }"
+                        <a href="${ rawBookingUrl }"
                            class="mhbo-booking-link-btn mhbo-complete-booking-btn"
                            data-room-id="${ roomId }"
                            data-check-in="${ checkIn }"
@@ -1299,6 +1523,7 @@
                            data-guests="${ totalGuests }"
                            data-children="${ totalChildren }"
                            data-total-price="${ room.total_price || 0 }"
+                           target="_blank"
                            rel="noopener noreferrer">
                             ${ btnLabel }
                         </a>
@@ -1338,26 +1563,27 @@
 			// Zoom QR code
 			card.querySelectorAll( '.mhbo-qr-thumb' ).forEach( ( img ) => {
 				img.addEventListener( 'click', () => {
-					window.open( img.src, '_blank' );
+					this.win.open( img.src, '_blank' );
 				} );
 			} );
 
-			// Modal-mode intercept for booking buttons (supports multiple buttons per card)
-			const modalActive =
-				( window.mhboChat &&
-					window.mhboChat.settings &&
-					window.mhboChat.settings.modalEnabled ) ||
-				typeof window.MhboModal !== 'undefined';
+			// Modal-mode intercept for booking buttons (supports multiple buttons/links per card)
+			// Dynamically check that the modal controller exists and has initialized in the DOM
+			// AND modal mode is enabled in plugin settings.
 			card.querySelectorAll( '.mhbo-complete-booking-btn' ).forEach(
 				( btn ) => {
-					btn.addEventListener( 'click', function ( ev ) {
+					btn.addEventListener( 'click', ( ev ) => {
 						const roomId = parseInt(
 							btn.dataset.roomId || '0',
 							10
 						);
-						if ( roomId > 0 && modalActive ) {
+						const isModalActive =
+							Boolean( this.win.mhboChat?.settings?.modalEnabled ) &&
+							typeof this.win.MhboModal !== 'undefined' &&
+							typeof this.win.MhboModal.open === 'function';
+						if ( roomId > 0 && isModalActive ) {
 							ev.preventDefault();
-							document.dispatchEvent(
+							this.doc.dispatchEvent(
 								new CustomEvent( 'mhboBookNow', {
 									detail: {
 										room_id: roomId,

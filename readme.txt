@@ -1,220 +1,213 @@
-=== Modern Hotel Booking — Direct Booking Engine & Availability Calendar ===
+=== Modern Hotel Booking — Direct Booking Engine, Availability Calendar & Vacation Rental PMS ===
 Contributors: leslierad
-Donate link: https://startmysuccess.com/
+Donate link: https://modernhotelwp.com/
 Tags: hotel booking, vacation rental, Booking Engine, bed and breakfast, accommodation
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.4.9.6
+Stable tag: 3.0.0
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Hotel booking plugin for WordPress — direct bookings, availability calendar, AI Concierge & iCal sync for vacation rentals B&Bs & guesthouses.
+Hotel booking plugin and availability calendar for vacation rentals, B&Bs and accommodations. Direct booking engine, PMS and guest portal.
 
 == Description ==
 
-**Modern Hotel Booking** is a hotel booking plugin for WordPress that lets vacation rental owners, B&B hosts, guesthouse managers and boutique hoteliers accept direct bookings on their own website — with zero OTA commission fees.
+**Stop losing 15%–25% of every stay to Airbnb, Booking.com and VRBO commissions.**
 
-Built as a complete direct booking engine with a real-time availability calendar, AI-powered guest concierge and full page builder support, it replaces the need for costly OTA platforms like Airbnb or Booking.com.
+**Modern Hotel Booking** is a fast, self-hosted **hotel booking plugin, direct booking engine, availability calendar and property management system (PMS)** built for independent bed and breakfasts (B&Bs), vacation rentals, boutique hotels, guesthouses, resorts and cabin accommodations.
 
-= 💰 Direct Bookings — Keep 100% of Your Revenue =
+Engineered for **WordPress 7.1+** (with full support back to WP 6.6) on a **100% Zero-jQuery Vanilla JS and React architecture**, this **hotel reservation system** and **booking calendar** renders interactive availability calendars with an **~70% smaller initial HTML payload** than legacy accommodation booking plugins—so your pages stay fast, mobile-friendly (`>= 44px` WCAG 2.2 AA touch targets), and visually refined out of the box with its signature **Midnight Navy & Champagne** hospitality aesthetic or your active `theme.json` palette.
 
-* **Per-Night Booking Engine** — Optimized for hotels, guesthouses, bed and breakfasts and vacation rentals
-* **Color-Coded Availability Calendar** — Real-time room availability as a Gutenberg block, shortcode or Elementor widget
-* **Zero Commission** — Accept direct room reservations on your WordPress site without paying 15–25% OTA fees
-* **Manual & Automated Availability** — Free manual date blocking + Pro automated 2-way iCal sync with Airbnb, VRBO & Google Calendar
+> *"The plug-in does everything needed for my B&B."* — **@georger1970** (5-Star WordPress.org Review)
 
-= 🤖 AI Concierge — 24/7 Virtual Receptionist =
+### Why Independent Property Owners Switch to Modern Hotel Booking
 
-The first hotel booking plugin with a built-in AI Concierge. Your 24/7 virtual front desk answers guest inquiries about room availability, amenities, pricing, check-in policies and house rules — then guides guests through booking. Connect your own free Google Gemini or OpenAI API key with zero ongoing fees.
+* **Zero Commissions & 100% Direct Bookings** — Keep 100% of your room revenue with your own **direct booking engine**. Every hotel reservation, guest profile, and folio ledger transaction lives in dedicated, indexed custom database tables on your own WordPress server.
+* **Complete Free Booking Flow (No Paid Gateway Required to Start)** — Accept direct bookings and room reservations immediately out of the box using **Pay on Arrival**, **Direct Bank Wire Transfer (IBAN/BIC/SWIFT)**, **Revolut Pay (Link & QR Code)**, or **WhatsApp Click-to-Chat** confirmations.
+* **Blisteringly Fast Progressive Calendar (`0 KB` jQuery)** — Front-heavy progressive hydration renders the first 4 months immediately for instant page load and preloads up to 2 years in the background during idle browser time.
+* **Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`)** — Guests open their booking via a 1-click cryptographic magic link (or Booking ID + Email lookup) to view their personalized stay countdown, live USALI billing ledger, and 1-tap printable travel voucher, or to cancel/modify dates without creating a WordPress account.
+* **Built-In Email Delivery Health Inspector & 14 Templates** — Solves the #1 headache in WordPress booking plugins (confirmation emails landing in spam) with a live 4-tile diagnostic probe for SMTP transport, sender-domain alignment, SPF DNS records, and DMARC policies.
+* **Native 2026 WordPress Architecture** — Built with 8 Gutenberg blocks, Headless React DataViews (`@wordpress/dataviews`), FullCalendar v7.1.3 operational views, and an optional 24/7 AI Concierge powered by the **WordPress 7.1 Abilities API** (`wp_register_ability`).
 
-= 📋 Free Core Features =
+---
 
-**Property & Room Management**
+### Everything Included in the Free Edition
 
-* Unlimited room types and room units with base per-night pricing and guest capacity
-* Flexible min/max night stay rules, globally or per room
-* Manual date blocking and offline guest booking creation
-* Same-day turnover logic for check-in and check-out management
+Every feature listed below is **100% included in the Free plugin on WordPress.org**—no booking caps, no trial timers, and no forced third-party account signup.
 
-**Page Builder & Theme Compatibility**
+#### 1. Progressive Availability Calendar, Direct Booking Engine & Slide-Out Drawer
+* **Unlimited Room Types & Physical Room Units** — Manage single vacation rentals, bed and breakfast (B&B) rooms, guesthouse suites, boutique hotel accommodations, or multi-unit room categories with automatic physical unit allocation and natural room-number sorting (`Room 1, Room 2 ... Room 10`).
+* **Atomic Double-Booking Prevention** — Database-level hotel reservation locking (`GET_LOCK`) prevents race-condition overbookings when two visitors check out on your booking calendar for the same dates simultaneously.
+* **Slide-Out Modal Checkout Drawer** — Guests select check-in and check-out dates on the progressive availability calendar, review the instant `"Continue to Book"` summary card and complete their direct booking inside a smooth slide-out modal drawer without page reloads.
+* **Responsive 3-Column Accommodation Showcase** — Display guest rooms in a responsive card grid (`[mhbo_rooms]`) with amenity badges, guest capacity chips, photo galleries, and starting nightly rates.
+* **Flexible Room Rates & Stay Rules** — Configure per-room custom nightly rate overrides, extra adult occupancy surcharges, global minimum and maximum stay nights, custom advance booking windows (14 days up to 2 years), and room maintenance status blocks.
+* **Refined Hospitality Design & Dark Mode** — Ships with a polished **Midnight Navy (`#1a365d`) & Champagne (`#f2e2c4`)** default theme, automatic `theme.json` token inheritance, and `.mhbo-theme-dark` WCAG AAA high-contrast dark mode support.
 
-* 8 native Gutenberg blocks — Booking Form, Room Calendar, Room Grid, Company Profile, WhatsApp Chat, Bank Transfer, Revolut Pay, AI Concierge
-* Full shortcode support — [mhbo_booking_form], [mhbo_room_calendar], [mhbo_room_grid], [mhbo_company_profile]
-* 3 optional Elementor widgets with visual controls and live editor preview
-* Works with any WordPress theme — Block themes, Classic editor, Divi, Beaver Builder, and more
+#### 2. Commission-Free Direct & Offline Payment Gateways
+* **Pay on Arrival (Cash or Card Terminal at Front Desk)** — Let guests reserve online and settle their balance when they check in.
+* **Direct Bank Wire Transfer (IBAN / BIC / SWIFT)** — Turnkey banking configuration displaying your Account Holder, IBAN, BIC/SWIFT, and reference instructions with 1-click copy buttons at checkout and in confirmation emails.
+* **Revolut Pay (Direct Link & Scannable QR Code)** — Accept low-fee instant payments via your `revolut.me` or merchant link and checkout QR code.
+* **WhatsApp Click-to-Chat Reservations** — Let guests submit a reservation and open a pre-filled WhatsApp confirmation message directly with your property.
 
-**Guest Communication & Payments**
+#### 3. Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`)
+* **Instant Verified Lookup & 1-Click Magic Links** — Guests unlock their portal via an HMAC-signed magic link in their confirmation email or by entering their Booking ID + Email—greeting them by name with their VIP status badge and live stay countdown.
+* **Itemized USALI Billing Ledger** — Displays a transparent breakdown of nightly accommodation charges, applicable taxes/fees, verified payments received, and remaining balance due.
+* **Self-Service Cancellations & Modification Requests** — Guests can cancel unpaid bookings immediately in one click (automatically releasing room inventory) or submit a guarded cancellation/date-change request for paid stays.
+* **1-Tap Printable Travel Voucher** — Dedicated `@media print` stylesheet formats a clean, ink-friendly confirmation voucher with property address, check-in/out times and reservation summary.
 
-* AI Concierge chatbot with 13 native WP 7.0 Abilities in 15+ languages
-* Custom HTML email templates for booking confirmation notifications
-* Offline payments — Pay on Arrival, Bank Transfer, Revolut Pay link/QR, WhatsApp inquiry
+#### 4. Executive Command Center, FullCalendar Grid & 2-Column PMS Workstation
+* **Executive Hotel Command Center** — Unified operational dashboard featuring a circular **Live Occupancy Pulse** gauge, **6-Box Front-Desk KPI Micro-Grid** (*Arrivals Today, Departures Today, In-House Guests, Action Needed, Available Tonight, Total Stays*), **8 Quick Operational Command Shortcut Cards**, and a native WP Dashboard summary widget.
+* **Main Hotel Booking Calendar & Hover Popovers** — Powered by **FullCalendar v7.1.3**, the month-grid operational calendar displays multi-room booking bars, occupancy KPIs, and interactive **event hover popovers** showing guest stay details, folio totals, and a 1-click link directly to their Guest CRM profile.
+* **2-Column Front-Desk Manual Reservation Workstation** — Enter walk-in and phone bookings in seconds: select a returning guest from the **CRM Quick-Fill dropdown** (with instant auto-fill and VIP/Caution ribbon alerts), pick dates on the inline Flatpickr calendar, watch real-time server-side USALI folio calculation, and record payment with **1-tap quick-tender buttons** (`Pay in Full`, `Deposit Only`, `Pay on Arrival`).
+* **Verified Folio Payment Ledger** — Record partial or full front-desk payments (Cash, POS Terminal, Bank Wire, Check) with strict transaction-summed accounting—eliminating phantom deposit balances.
+* **Granular Hospitality Staff Roles** — Built-in **Hotel Manager**, **Front Desk Staff**, and **Housekeeping Staff** WordPress roles enforce clear 3-tier capability boundaries so staff only access the screens they need.
 
-**Privacy & Performance**
+#### 5. Guest CRM Directory & Slide-Out Profile Drawer
+* **Headless React DataViews Guest Directory** — Search, filter, sort, and paginate guest profiles inside `wp-admin` using native WordPress DataViews (`@wordpress/dataviews`).
+* **Slide-Out Guest Profile Drawer** — Click any guest row to smoothly slide out their profile drawer displaying **Lifetime Value (LTV)**, total bookings, VIP status badge, chronological stay history timeline, 1–5 star staff ratings, private management notes and high-visibility **Caution Flags** (`Do Not Rent` / incident warnings).
+* **Zero-Overhead Opt-In Switch** — Run the full Guest CRM or disable it completely with a single toggle.
 
-* Zero-trace architecture — all data stored locally in your WordPress database, no external tracking
-* Multilingual — WPML 4.x/5.x, Polylang, Bogo and qTranslate-X compatible with 15 localized languages
-* High-concurrency MySQL locking (GET_LOCK) to prevent double-booking
+#### 6. Email Delivery Health Inspector & 14 Transactional Email Templates
+* **Live 4-Tile Email & DNS Health Grid** — Automatically inspects whether WordPress is sending via **SMTP** or raw PHP `mail()`, verifies **sender-domain alignment**, and queries live **SPF** and **DMARC** DNS records to prevent booking emails from landing in spam.
+* **1-Click Diagnostic Test Probe & Failure Capture** — Trigger a live test email probe directly from `Settings > Emails` and catch silent mailer errors with automatic `wp_mail_failed` diagnostic banners.
+* **14 Core Transactional Email Templates & Admin BCC Audit Trail** — Manage 14 lifecycle notification templates with live placeholder insertion, theme-override support (`{your-theme}/modern-hotel-booking/emails/`), automatic deduplicated admin BCC financial archiving and multilingual translation for **Polylang, WPML, qTranslate-XT, and Bogo**.
 
-= 🏆 Pro Features =
+#### 7. Optional 24/7 AI Hotel Concierge, WP 7.1 Abilities API & MCP Discovery
+* **Glassmorphic Virtual Receptionist** — Optional floating or inline chat widget that answers visitor questions about live room availability, nightly pricing, check-in policies, amenities, and local tips using real-time database tools and interactive rate cards.
+* **Bring Your Own Free API Key or WP 7.0+ AI Connector** — Connect **Google Gemini** (including free-tier Gemini keys from Google AI Studio), **OpenAI**, **Anthropic**, **OpenRouter**, or the native **WordPress 7.0+ AI Client Connector** (`30 requests/hour/IP` in Free).
+* **10 Native WordPress 7.1 Abilities & Hybrid MCP Server** — Registers 10 schema-validated hospitality abilities (`mhbo/get-hotel-info`, `mhbo/check-availability`, `mhbo/get-room-details`, `mhbo/get-policies`, `mhbo/get-knowledge-base`, `mhbo/get-local-tips`, `mhbo/get-business-card`, `mhbo/create-booking-link`, `mhbo/get-price-breakdown`, `mhbo/recommend-rooms`), exposes a **Streamable HTTP Model Context Protocol (MCP) Server** (with official `WordPress/mcp-adapter` bridge), generates **`llms.txt` / `llms-full.txt` GEO manifests** and an **OpenAPI 3.1** specification, and includes browser-native Web Speech API bidirectional voice (Speech-to-Text microphone dictation input and Text-to-Speech spoken responses).
 
-**Online Payments & Channel Management**
+#### 8. 8 Native Gutenberg Blocks, 11 Shortcodes & 3 Elementor Widgets
+* **8 Native Gutenberg Blocks** (Search `"Hotel"` in the Block Inserter): Booking Form (`mhbo/booking-form`), Room Availability Calendar (`mhbo/room-calendar`), Company Info (`mhbo/company-info`), WhatsApp Button (`mhbo/whatsapp-button`), Banking Details (`mhbo/banking-details`), Revolut Pay Details (`mhbo/revolut-details`), Hotel Business Card (`mhbo/business-card`), and AI Concierge Chat Widget (`mhbo/ai-chat-widget`).
+* **11 Shortcodes**: `[mhbo_booking_form]` (alias `[modern_hotel_booking]`), `[mhbo_room_calendar]`, `[mhbo_rooms]`, `[mhbo_guest_portal]`, `[mhbo_ai_concierge]`, `[mhbo_company_info]`, `[mhbo_whatsapp]`, `[mhbo_banking_details]`, `[mhbo_revolut_details]`, `[mhbo_business_card]` and `[mhbo_payment_methods]`.
+* **3 Native Elementor Widgets** + Classic Sidebar Search Widget.
 
-* Stripe (Credit Cards, Apple Pay, Google Pay, 3D Secure), PayPal and Braintree (3DS2) payment gateways
-* Automated 2-way iCal sync — Airbnb, VRBO, Szallas.hu, Travelminit, Google Calendar and any iCal feed
-* Deposit payments — percentage or fixed amount at checkout
+---
 
-**Dynamic Pricing & Promotions**
+### Who Is Modern Hotel Booking Built For?
 
-* Seasonal rates for date ranges, holidays, and peak seasons
-* Weekend price multipliers for Friday and Saturday
-* Extra guest and child tier pricing
-* Coupon and promo code engine integrated with AI Concierge
-* Visual calendar editor for bulk rate and stay rule management
+* **Bed and Breakfasts (B&Bs) & Country Inns** — Replace paper diaries and 18% OTA commissions with an intuitive bed and breakfast booking calendar, Pay-on-Arrival or Bank Wire checkout, and reliable hotel reservation emails.
+* **Vacation Rentals, Chalets & Cabin Hosts** — Rent whole vacation rental properties or individual cottages with per-unit rates, minimum-stay rules, WhatsApp or Revolut Pay checkout, and a self-service guest voucher portal.
+* **Boutique Hotels & Guesthouses (5–50 Rooms)** — Run a complete boutique hotel and guesthouse front-desk command center with automatic physical unit allocation, walk-in PMS reservations, staff roles and a lifetime Guest CRM.
+* **Serviced Apartments & Extended Stays** — Configure accommodation booking windows up to 2 years out with minimum/maximum stay controls and transparent USALI folio ledgers.
+* **WordPress Agencies & Freelancers** — Deliver a fast, theme-native, GPL-licensed direct booking engine and hotel reservation system with template overrides, clean CSS variables and zero jQuery conflicts.
 
-**Analytics, Invoicing & Compliance**
+---
 
-* Business intelligence dashboard — ADR, RevPAR, Occupancy Rate and revenue charts
-* Professional HTML and PDF invoicing with VAT inclusive/exclusive tax breakdowns
-* GDPR compliance suite with consent checkboxes and automated PII erasure
-* Zero-trust AI identity verification with 6-digit OTP email for returning guests
+### Optional Commercial Editions (Starter & Pro)
 
-[Official Documentation](https://modernhotelwp.com/) | [Pro Features & Licensing](https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/) | [Privacy Policy](https://startmysuccess.com/privacy-policy/) | [GitHub](https://github.com/leslieradue-web/modern-hotel-booking-free)
+The Free edition runs a complete direct booking engine website with offline, bank wire, Revolut, or WhatsApp payments indefinitely. Optional commercial editions at [modernhotelwp.com](https://modernhotelwp.com/) add:
 
-= 🏡 Who Is This For? =
+* **Modern Hotel Booking Starter** — **Stripe Elements** (Cards, Apple Pay, Google Pay, 3DS2), **PayPal Smart Buttons**, **Braintree Drop-in**, **Dynamic PDF & HTML Tax Invoices**, **Multi-Mode Tax Engine (VAT Inclusive vs. Sales Tax/GST Exclusive & Split Lodging/Extras Rates)**, **Child Occupancy & Age-Tiered Pricing (ages 1–17)**, **Prevent Same-Day Turnover**, and **60 req/hr/IP** AI Concierge capacity with native voice dictation & spoken responses.
+* **Modern Hotel Booking Pro** — Everything in Starter plus **Automated 2-Way iCal Sync** (**Airbnb, Booking.com, VRBO, Expedia & Google Calendar**), **Multi-Tier Deposits & Balance Payment Links**, **Fullscreen Front-Desk Tablet Kiosk & Live Tape Chart (Gantt)**, **Multi-Room Group Bookings & Split Folios**, **Housekeeping Manifests**, **Advanced Yield Rules (Seasonal Rate Schedules, Interactive FullCalendar Override Editor, Orphan-Gap Auto-Correction, Weekend Multipliers, Booking Extras, Promo Coupons)**, **Guest CRM Marketing & Review Automation**, **STR Revenue Analytics (ADR, RevPAR, TRevPAR)**, and **AI Concierge Pro** (17 abilities/MCP tools, Google Hotel Center XML feeds, 200 req/hr capacity, and Studio ElevenLabs neural voice synthesis).
 
-* **Guesthouses** — per-night booking logic, WhatsApp inquiry and professional invoicing
-* **Bed & Breakfasts** — min/max stay rules, email automation, AI Concierge guest support
-* **Vacation Rentals** — standalone property management with zero OTA commission dependency
-* **Cabins & Cottages** — seasonal pricing, deposit payments and iCal sync
-* **Boutique Hotels** — multi-room availability engine with real-time booking calendar
+---
+
+### External Services & Privacy Disclosure
+
+Modern Hotel Booking is self-hosted by default and **never transmits guest booking data to any external server unless you explicitly enable one of the optional integrations below**:
+
+1. **Google Fonts Typography (`fonts.googleapis.com` / `fonts.gstatic.com` — Free, Starter, Pro)**: Loads *Inter* and *Outfit* typefaces for calendar and dashboard typography via standard browser font requests (no cookies or guest form data sent). [Google Fonts Privacy FAQ](https://developers.google.com/fonts/faq/privacy) | [Google Privacy Policy](https://policies.google.com/privacy).
+2. **WhatsApp Click-to-Chat (Optional — Free, Starter, Pro)**: Redirects the guest's browser to `https://wa.me/` with a pre-filled reservation summary (check-in/out dates, room name, reference, guest name) only when enabled and clicked by the guest. [WhatsApp Terms](https://www.whatsapp.com/legal/terms-of-service) | [WhatsApp Privacy Policy](https://www.whatsapp.com/legal/privacy-policy).
+3. **Revolut Pay Link / QR Code (Optional — Free, Starter, Pro)**: Redirects the guest to your configured `revolut.me` or Revolut Merchant URL upon checkout. [Revolut Terms](https://www.revolut.com/legal/terms/) | [Revolut Privacy Policy](https://www.revolut.com/legal/privacy/).
+4. **AI Concierge LLM Providers (Optional — Free, Starter, Pro; Disabled by Default)**: Sends guest chat messages and availability/pricing context (plus booking lookup/draft parameters in Pro) when you configure your own API key or the WP 7.0+ AI Client Connector. Endpoints: Google Gemini (`generativelanguage.googleapis.com`), OpenAI (`api.openai.com`), Anthropic (`api.anthropic.com`), OpenRouter (`openrouter.ai`), and ElevenLabs TTS in Pro (`api.elevenlabs.io`). [Google API Terms](https://developers.google.com/terms) | [Google Privacy](https://policies.google.com/privacy) | [OpenAI Privacy](https://openai.com/policies/privacy-policy) | [Anthropic Privacy](https://www.anthropic.com/legal/privacy) | [OpenRouter Privacy](https://openrouter.ai/privacy) | [ElevenLabs Privacy](https://elevenlabs.io/privacy-policy).
+5. **Online Payment Gateways: Stripe, PayPal & Braintree (Optional — Starter & Pro Only)**: Processes card and wallet payments in Starter/Pro via `api.stripe.com` / `js.stripe.com`, `api.paypal.com` / `www.paypal.com` and `api.braintreegateway.com` / `js.braintreegateway.com` (sending booking total, currency, reference, and billing details; card numbers are tokenized directly by gateway SDKs). [Stripe Privacy](https://stripe.com/privacy) | [PayPal Privacy](https://www.paypal.com/webapps/mpp/ua/privacy-full) | [Braintree Privacy](https://www.braintreepayments.com/legal/braintree-privacy-policy).
+6. **External OTA iCal Synchronization Feeds (Optional — Pro Only)**: Sends HTTP GET requests to external `.ics` calendar URLs configured by the administrator (Airbnb, Booking.com, VRBO, Expedia) in Pro.
+7. **Commercial License & Update Server (Starter & Pro Only)**: Sends license key, site URL and plugin version to `https://modernhotelwp.com/` (and legacy `https://startmysuccess.com/`) in Starter/Pro (never present in Free). [Modern Hotel WP Privacy Policy](https://modernhotelwp.com/privacy-policy/) | [StartMySuccess Privacy Policy](https://startmysuccess.com/privacy-policy/).
+
+### Credits
+
+Open-source JavaScript libraries bundled locally in the plugin package:
+* **Flatpickr v4.6.13** — MIT License — [flatpickr.js.org](https://flatpickr.js.org)
+* **FullCalendar v7.1.3** — MIT License — [fullcalendar.io](https://fullcalendar.io)
+* **Chart.js v4.5.1** — MIT License — [chartjs.org](https://www.chartjs.org)
 
 == Installation ==
 
-1. Go to **Plugins > Add New** in your WordPress admin.
-2. Search for **"Modern Hotel Booking"**.
-3. Click **Install Now** and then **Activate**.
+### Go Live in 5 Minutes (Quick Start)
 
-== Quick Start in 5 Steps ==
-
-1. **Hotel Booking > Room Types** — Create your room or unit categories with base price and capacity
-2. **Hotel Booking > Rooms** — Add individual rooms or units and assign each to a Room Type
-3. **Hotel Booking > Settings > General** — Select your Booking Page from the dropdown
-4. **Edit any page** — Add the Hotel: Booking Form Gutenberg block, shortcode [mhbo_booking_form] or optional Elementor widget
-5. **(Optional) Hotel Booking > Settings > AI** — Paste your free Google Gemini API key to activate your AI Concierge instantly
+1. In your WordPress admin dashboard, go to **Plugins > Add New**, search for **Modern Hotel Booking**, and click **Install Now** then **Activate**.
+2. **Set Your Hotel Timezone & Currency** — Open **Hotel Booking > Settings > General** to configure your property timezone, currency formatting, check-in/out times, global minimum/maximum stay limits, and advance booking window.
+3. **Add Room Types & Physical Units** — Go to **Hotel Booking > Room Types** and **Rooms** to add your accommodation categories, adult capacities, base nightly rates, extra adult surcharges, amenity badges, and physical units.
+4. **Enable Direct & Offline Payments** — Under **Hotel Booking > Settings > Business Info**, configure **Direct Bank Wire Transfer (IBAN/BIC/SWIFT)**, **Revolut Pay QR/Link**, or **WhatsApp** reservation requests alongside built-in **Pay on Arrival**.
+5. **Publish Your Booking Page** — Insert any of the **8 native Gutenberg blocks** (search `"Hotel"` in the Block Inserter) or place `[mhbo_booking_form]`, `[mhbo_room_calendar]`, `[mhbo_rooms]` and `[mhbo_guest_portal]` onto your pages.
+6. **Run Your Front Desk** — Track today's arrivals, departures, in-house stays, interactive FullCalendar popovers, walk-in reservations, and folio balances from your WordPress dashboard.
 
 == Frequently Asked Questions ==
 
-= Is this hotel booking plugin completely free? =
-Yes. The core plugin — including unlimited room types and units, real-time availability calendar, AJAX booking form, AI Concierge virtual receptionist, 8 Gutenberg blocks, shortcodes, 4 optional Elementor widgets, email notifications and manual date blocking — is 100% free with no booking limits or hidden transaction fees.
+= Can I accept real hotel bookings and payments in the Free version without Stripe? =
 
-= Does it work with any WordPress theme? =
-Modern Hotel Booking works with any WordPress theme. It includes 8 native Gutenberg blocks and full shortcode support for Block themes, Classic editor, Divi, Beaver Builder, and any page builder. For Elementor users, 4 dedicated widgets are included.
+Yes. The Free edition on WordPress.org is a complete, working reservation system with zero booking limits. Out of the box, you can accept unlimited reservations using **Pay on Arrival** (cash or card terminal at your front desk), **Direct Bank Wire Transfer (IBAN/BIC/SWIFT)**, **Revolut Pay** (payment link and scannable QR code), and **WhatsApp Click-to-Chat** confirmations. You can also log partial or full payments manually in the built-in Front-Desk Folio Ledger. Online card gateways (**Stripe, PayPal, and Braintree**) are only needed if you want automated online card processing in the **Starter** or **Pro** editions.
 
-= Can I accept direct bookings without Airbnb or Booking.com? =
-Yes. Modern Hotel Booking is a direct booking engine designed so guests book on your WordPress site and you keep 100% of the revenue with zero OTA commission fees. The Pro version adds optional two-way iCal sync to keep your OTA calendars synchronized.
+= What is the difference between the Free, Starter, and Pro editions? =
 
-= How does the iCal sync work for Airbnb and VRBO? =
-The free version supports manual date blocking to prevent double bookings. Modern Hotel Booking Pro adds automated two-way background iCal synchronization for Airbnb, VRBO, Szallas.hu, Travelminit, Google Calendar and any platform that supports iCal feeds.
+* **Free (WordPress.org)**: Unlimited room types and physical units, progressive Vanilla JS availability calendar, slide-out checkout drawer, responsive room showcase grid, per-room custom rates & extra adult surcharges, global min/max stay rules, offline & direct payment methods (Pay on Arrival, Bank Wire, Revolut, WhatsApp), Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`), Guest CRM Core with React DataViews & Slide-Out Profile Drawer, Executive Command Center, FullCalendar v7.1.3 operational calendar with hover popovers, 2-Column Manual Reservation PMS Workstation, Email Delivery Health Inspector & 14 transactional email templates, 3 hospitality staff roles, 8 Gutenberg blocks, 11 shortcodes, 3 Elementor widgets, and AI Concierge Core (10 WP 7.1 abilities, hybrid Streamable HTTP MCP Server, `llms.txt` / OpenAPI 3.1 discovery, 30 req/hr/IP).
+* **Starter**: Adds **Stripe Elements** (Cards, Apple Pay, Google Pay, 3DS2), **PayPal Smart Buttons**, **Braintree Drop-in**, **Dynamic PDF & HTML Tax Invoices**, **Multi-Mode Tax Engine (VAT Inclusive vs. Sales Tax/GST Exclusive & Split Accommodation/Extras Tax Rates)**, **Child Occupancy & Age-Tiered Pricing (ages 1–17)**, **Prevent Same-Day Turnover** buffers, and **60 req/hr/IP** AI Concierge capacity.
+* **Pro**: Adds **Automated 2-Way iCal Sync** (Airbnb, Booking.com, VRBO, Expedia, Google Calendar), **Multi-Tier Deposits & Scheduled Balance Links**, **Fullscreen Front-Desk Tablet Mode & Live Tape Chart (Gantt)**, **Multi-Room Group Bookings**, **Housekeeping Manifests**, **Advanced Yield Pricing (Seasonal Rate Schedules, Interactive FullCalendar Override Editor, Orphan-Gap Auto-Correction, Weekend Multipliers, Booking Extras, Promo Coupons)**, **Guest CRM Marketing & Review Automation**, **Executive Revenue Analytics (ADR, RevPAR, TRevPAR)** and **AI Concierge Pro** (17 abilities/MCP tools, Google Hotel Center XML feeds, Speech-to-Text dictation, and ElevenLabs voice).
 
-= Which payment gateways are supported? =
-The free version supports Pay on Arrival, Direct Bank Transfer, Revolut Pay links and QR codes, and WhatsApp booking inquiries. The Pro version adds Stripe (Credit Cards, Apple Pay, Google Pay, 3D Secure), PayPal, and Braintree (3DS2) for automated online checkout.
+= Can I sync my WordPress availability calendar with Airbnb, Booking.com, and VRBO? =
 
-= How does the AI Concierge virtual receptionist work? =
-The AI Concierge acts as a 24/7 automated receptionist on your website. It uses your property data — room rates, check-in policies, amenities, house rules — to answer guest questions instantly in 15+ languages and guide guests through booking a room. You connect your own free Google Gemini or OpenAI API key with zero ongoing subscription costs.
+Automated two-way iCal calendar synchronization (importing and exporting `.ics` feeds every 30 minutes with RFC 5545 conflict detection and orphan cleanup) is available in **Modern Hotel Booking Pro**. In the Free and Starter editions, availability is managed directly on your WordPress site and via the Front-Desk Manual Reservation Workstation.
 
-= Is this a good hotel booking plugin for bed and breakfasts? =
-Yes. Modern Hotel Booking is purpose-built for small independent properties including bed and breakfasts, guesthouses, vacation rentals, cabins, and boutique hotels. It provides per-night booking logic, min/max stay rules, and a professional reservation system without OTA dependency.
+= Will an interactive availability calendar slow down my WordPress website? =
 
-= Is guest data kept private and GDPR compliant? =
-Yes. Modern Hotel Booking uses a zero-trace architecture. All property data and guest reservations are stored locally in your WordPress database. No tracking scripts or guest data are sent to external servers. The Pro version includes a full GDPR compliance suite with consent checkboxes and automated PII erasure tools.
+No. Modern Hotel Booking is engineered with **0 KB of jQuery** and uses **Front-Heavy Progressive Calendar Hydration**. Instead of dumping thousands of DOM nodes into your initial page HTML, the server renders only a lightweight 4-month availability window for instant First Contentful Paint (cutting initial HTML size by ~70%), then quietly hydrates the remaining 2-year booking window in the background when the browser is idle.
 
-= Where do I get the Pro version and documentation? =
-Visit [ModernHotelWP.com](https://modernhotelwp.com/) for official documentation and guides, and [StartMySuccess.com](https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/) for Pro licensing, plans and priority support.
+= How do guests view, print, or cancel their reservation online? =
 
-= Does this plugin support seasonal pricing and coupons? =
-Yes. Modern Hotel Booking Pro includes seasonal rates for any date range, weekend price multipliers, extra guest and child tier pricing, and a coupon and promo code engine. All pricing features are managed through a visual calendar editor.
+Place the `[mhbo_guest_portal]` shortcode on any page and assign it in **Hotel Booking > Settings > General**. Guests can click the cryptographically signed **1-Click Magic Link** in their confirmation email or look up their stay by **Booking ID + Email** to view their personal greeting, VIP status badge, stay countdown, itemized USALI billing ledger, 1-tap printable travel voucher, instant cancellation button (for unpaid bookings), and stay-modification request form.
+
+= Why aren't hotel booking confirmation emails landing in the guest's inbox? =
+
+Shared WordPress hosting often blocks raw PHP `mail()` or fails domain authentication checks. Modern Hotel Booking includes a built-in **Email Delivery Health Inspector** under **Hotel Booking > Settings > Emails**. Its 4-tile live diagnostic grid inspects your active mailer transport (SMTP vs. `mail()`), sender-domain alignment, and live **SPF** and **DMARC** DNS records, paired with a **1-Click Diagnostic Test Probe** so you can verify inbox delivery before your first guest books.
+
+= How does the AI Concierge work, and do I have to pay for it? =
+
+The AI Concierge is completely optional and can be toggled on or off anytime. In the **Free** version, it connects directly using your own API key from **Google Gemini** (which offers a free API tier via Google AI Studio), **OpenAI**, **Anthropic**, **OpenRouter**, or the native **WordPress 7.0+ AI Client Connector**—answering visitor availability and pricing questions with interactive rate cards and zero monthly middleware fees.
+
+= Does this plugin work with Gutenberg block themes, Elementor, and multilingual plugins? =
+
+Yes. Search `"Hotel"` in the WordPress Block Inserter to access all **8 native Gutenberg blocks**, or use the **3 native Elementor widgets** and **11 shortcodes** (`[mhbo_booking_form]`, `[mhbo_room_calendar]`, `[mhbo_rooms]`, `[mhbo_guest_portal]` and more) across Block themes, Classic themes, Bricks, Divi, and Beaver Builder. For multilingual properties, it features native integration with **Polylang, WPML, qTranslate-XT, and Bogo**, plus a built-in String Translation table for room names and all 14 email templates.
+
+= How does the plugin handle GDPR, cookie consent, and guest data privacy? =
+
+All booking and guest data is stored locally in your WordPress database. The plugin integrates natively with WordPress Core's **Export Personal Data** and **Erase Personal Data** tools, enforces explicit GDPR checkout consent checkboxes and bridges directly with the **WP Consent API** and **Complianz** so browser `localStorage` is only accessed after appropriate consent is granted.
 
 == Screenshots ==
 
-1. **Hotel Booking Form** — Responsive direct booking form with real-time availability checking and live per-night price calculation on any WordPress theme.
-2. **Booking Management Dashboard** — Complete reservation overview with upcoming bookings, revenue tracking, and guest management for vacation rental owners.
-3. **Room & Property Configuration** — Set up unlimited room types with per-night pricing, guest capacity, photos, amenities, and availability rules for your hotel or B&B.
-4. **Real-Time Availability Calendar** — Color-coded interactive booking calendar showing live room availability, reservations, and blocked dates at a glance.
-5. **Plugin Settings & AI Concierge Setup** — Configure email notifications, currency, booking rules, payment options, and connect your free AI Concierge API key.
+1. **Interactive Availability Calendar & Slide-Out Booking Drawer (GIF)** — Front-end progressive Vanilla JS calendar (`0 KB` jQuery) with date selection, smooth scroll to the "Continue to Book" summary card, slide-out modal checkout drawer, Pay on Arrival selection, and instant confirmation.
+2. **2-Column Front-Desk Manual Reservation PMS Workstation (GIF)** — Front-desk reservation entry selecting a returning VIP guest from the CRM Quick-Fill dropdown with instant auto-fill, real-time USALI folio calculation, and 1-tap quick tender.
+3. **Passwordless Guest Self-Service Portal & Printable Travel Voucher (GIF)** — Instant verified lookup via Booking ID + Email (or 1-click magic link), unlocking a personalized greeting, VIP status badge, stay countdown, itemized USALI billing ledger and 1-tap printable travel voucher.
+4. **Main Hotel Booking Calendar & FullCalendar Hover Popover (GIF)** — Month-grid operational calendar showing multi-room bookings, occupancy KPIs, and an interactive event hover popover displaying stay details, folio total and a 1-click Guest CRM profile link.
+5. **Guest CRM Directory & Slide-Out Profile Drawer (GIF)** — Built on native WordPress React DataViews (`@wordpress/dataviews`); clicking any guest row smoothly slides out their profile drawer with Lifetime Value (LTV), stay history timeline, ratings and staff notes.
+6. **Email Delivery Health Inspector & DNS Diagnostic Probe (GIF)** — 4-tile live diagnostic grid inspecting SMTP mailer transport, sender-domain alignment, SPF DNS records, and DMARC policies with a 1-click test email probe.
+7. **24/7 AI Hotel Concierge with WordPress 7.1 Abilities API (GIF)** — Floating glassmorphic chat widget answering visitor availability and pricing questions in real time using live database tools and interactive room rate cards.
+8. **Executive Hotel Command Center & Live Occupancy Pulse** — Unified operational dashboard with circular Occupancy Pulse gauge, 6-box front-desk KPI micro-grid, and 8 Quick Operational Command shortcut cards.
+9. **Granular Hospitality Staff Roles & Permission Boundaries** — Built-in operational roles (`Hotel Manager`, `Front Desk Staff`, `Housekeeping Staff`) with a dedicated 3-column capability boundary overview.
+10. **Accommodation Showcase & Responsive Room Rates Grid** — 3-column responsive guest room showcase (`[mhbo_rooms]`) with amenity badges, guest capacity chips, photo galleries and starting nightly rates.
+11. **Commission-Free Direct & Offline Payment Gateways** — Turnkey offline payment configuration showing Direct Bank Wire Transfer settings (IBAN, BIC, SWIFT, Account Holder) alongside Revolut Pay QR and WhatsApp subtabs.
+12. **Native Gutenberg Blocks & Block Themes Integration** — WordPress Block Inserter searched for "Hotel", displaying all 8 native Modern Hotel Booking blocks ready to drop into any page or template.
+13. **Automated Transactional Email Templates Catalog & BCC Audit Trail** — 14 core transactional email notification templates with automatic deduplicated admin BCC audit archiving and full HTML/placeholder customization.
 
 == Changelog ==
 
-= 2.4.9.6 =
-* FIX (Free & Pro): Free Build Stability — Isolated pro payment gateway dependencies and added runtime class_exists guards in AiSettings and Loader to eliminate fatal errors on standalone free installs.
-* FIX (Free & Pro): WordPress Security & Coding Standards (2026 BP) — Unslashed and sanitized all superglobal inputs ($_SERVER, $_COOKIE) with strict IP/token filters in PaymentsController.
-* FIX (Free & Pro): Direct Database Query Hardening — Replaced interpolated table variable patterns with direct {$wpdb->prefix} references to satisfy WordPress VIP and Plugin Check (PCP) security sniffers.
-* FIX (Pro): iCal Stream Refactoring — Replaced direct fopen/fclose filesystem operations in ICalSync with native wp_safe_remote_get() and memory-efficient line generator.
-* MOD (Free & Pro): Build Exclusions — Excluded internal development and research markdown files from release distributions while preserving USER_GUIDE.md in Pro.
+= 3.0.0 =
+* **Added**: **Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`)** — 1-click cryptographic magic link authentication and verified Booking ID + Email lookup, personalized VIP greeting, stay countdown, live itemized USALI billing ledger, ink-friendly printable travel vouchers, instant self-service cancellations for unpaid reservations, and guarded stay modification requests.
+* **Added**: **2-Column Front-Desk Manual Reservation PMS Workstation** — Integrated PMS desk with CRM Guest Quick-Fill autocomplete (VIP and Caution Flag ribbons), inline Flatpickr calendar, real-time server-side USALI folio recalculation, and 1-tap quick-tender payment buttons (`Pay in Full`, `Deposit Only`, `Pay on Arrival`).
+* **Added**: **Guest CRM Core & Slide-Out Profile Drawer** — Headless WordPress React DataViews (`@wordpress/dataviews`) directory with sliding profile drawer displaying Lifetime Spend (LTV), chronological stay history, 1–5 star staff ratings, private management notes and caution alerts.
+* **Added**: **Email Delivery Health Inspector & 14 Modular Email Templates** — Live 4-tile diagnostic inspector (SMTP vs. `mail()`, sender-domain alignment, SPF & DMARC DNS health) with 1-click test probe, deduplicated admin BCC financial archiving, and theme-overridable template partials (`EmailTemplate` service).
+* **Added**: **Executive Hotel Command Center & WP Dashboard Widget** — Unified operational workstation featuring a circular Live Occupancy Pulse gauge, 6-box front-desk KPI micro-grid and 8 quick operational command cards.
+* **Added**: **Granular Hospitality Staff Roles & Permission Boundaries** — Dedicated `Hotel Manager`, `Front Desk Staff`, and `Housekeeping Staff` roles enforcing clear 3-tier capability boundaries.
+* **Added**: **100% 15-Locale Native Translation Parity** — Full native translations across 15 supported languages (5,719 strings each, zero missing) with compiled MO, L10N.PHP, and JSON files, plus quad-core multilingual compatibility (WPML, Polylang, qTranslate-XT, Bogo).
+* **Improved**: **Front-Heavy Progressive Calendar Hydration** — Server renders an immediate 4-month availability window (~70% smaller initial HTML payload) and hydrates up to 24 months asynchronously during browser idle time (`requestIdleCallback`).
+* **Improved**: **FullCalendar v7.1.3 & Interactive Hover Popovers** — Upgraded calendar engine with screen-reader table semantics, interactive stay details hover popovers and direct 1-click links to Guest CRM profiles.
+* **Improved**: **3-Tier Product Architecture Alignment** — Structured package distribution across Free Core (WordPress.org), Starter (Stripe, PayPal, Braintree, PDF Tax Invoices, Multi-Mode Tax, Child Age Pricing), and Pro (Fullscreen Live Tablet Mode with Tape Chart Gantt, 2-Way iCal Sync, Housekeeping Operations, and AI Concierge Pro).
+* **Improved**: **Enterprise WordPress 7.1+ & PHP 8.2–8.4 Architecture** — 100% Zero-jQuery Vanilla JS and React design, PHPStan Level 8 baseline-free certification across all 166 files, prepared dynamic SQL statements and native WordPress 7.1 Abilities API integration.
 
-= 2.4.9.5 =
-* NEW (Free & Pro): WP 7.1 Abilities API Hooks — `wp_ability_invoked` audit telemetry, `wp_ability_validate_input` deep date/email validation, `wp_ability_validate_output` response integrity checks.
-* NEW (Free & Pro): JSON Schema Client Preparation — AI tool schemas sanitized via `wp_prepare_json_schema_for_client()` for Draft-4 strict compliance with Anthropic/Gemini.
-* MOD (Free & Pro): Token-Efficient User Context — Uses WP 7.1 `fields` projection on `core/get-user-info` ability to minimize token waste.
-* MOD (Free & Pro): verify-standards.php expanded with jQuery UI 1.14.2, persistent toolbar, and client-side media processing audit rules.
-* MOD (Free & Pro): WordPress 7.1 RC3 Final Compliance — Full audit against iframed editor, persistent toolbar, 40px form controls, and jQuery UI 1.14.2.
-
-= 2.4.9 =
-* FIX (Pro): Enhanced LMFWC License System — Idempotent token-based deactivation, silent token recovery, and soft-invalid retry logic to prevent spurious deactivations on live sites.
-* MOD (Free & Pro): AI Model Landscape Refresh — Added Gemini 3.7 Flash as recommended default, updated fallback cascade and provider labels.
-* MOD (Free & Pro): WordPress 7.1 Compatibility Confirmed — Audited against iframed editor, abilities API improvements, and PHP 8.4 nullable types.
-
-= 2.4.8.1 =
-* NEW (Pro): RAG 2.0 Enhanced Knowledge Base — Structured room feature indexing, seasonal policy documents, local attraction recommendations, and Google Hotel Feeds XML generation.
-* NEW (Free & Pro): Smart Context Windowing — Query-aware context injection with UTF-8 multi-locale tokenization.
-* NEW (Free & Pro): Smart llms.txt Parsing — Enhanced AI visibility discovery without duplicate H1/Blockquote headers.
-
-= 2.4.8 =
-* MOD (Free & Pro): Updated bundled FullCalendar library to v7.0.2.
-
-For the full changelog of all versions, see [changelog.txt](https://plugins.svn.wordpress.org/modern-hotel-booking/trunk/changelog.txt).
+For the full historical changelog of earlier versions, see [changelog.txt](https://plugins.svn.wordpress.org/modern-hotel-booking/trunk/changelog.txt).
 
 == Upgrade Notice ==
 
-= 2.4.9.6 =
-Free build stability hardening, 2026 BP superglobal sanitization/unslashing, and database query security compliance.
-
-= 2.4.9.5 =
-WordPress 7.1 deep compatibility: Abilities API audit/validation hooks, JSON Schema sanitization for AI providers, and token-efficient user context.
-
-= 2.4.9 =
-Updated Booking admin page, new option to fill gaps when gaps exist in min days booking (Pro), css tidy up, improved AI and updated models in use.
-
-== Credits ==
-
-Open-source libraries bundled locally — no external CDN requests:
-
-* FullCalendar v7.0.2 — MIT License — [fullcalendar.io](https://fullcalendar.io)
-* Chart.js v4.5.1 — MIT License — [chartjs.org](https://www.chartjs.org)
-* Flatpickr v4.6.13 — MIT License — [flatpickr.js.org](https://flatpickr.js.org)
-
-== Privacy Policy ==
-
-Modern Hotel Booking does not collect or transmit guest or admin data to our servers. All booking data is stored locally in your WordPress database.
-
-**AI Concierge:** When enabled, guest messages and property context are sent to your configured AI provider (Google Gemini or OpenAI) to generate responses. Conversation context is stored as WordPress Transients for up to 2 hours then automatically deleted. No PII is permanently stored by this plugin.
-
-**Rate Limiting:** Anonymised per-IP request counts are stored as Transients (2-minute TTL) to prevent abuse. No IP addresses are permanently saved.
-
-See our full [Privacy Policy](https://startmysuccess.com/privacy-policy/).
-
-== External Services ==
-
-All connections are optional and only active when configured by the administrator:
-
-* **WhatsApp** — Communication links only. [Privacy Policy](https://www.whatsapp.com/legal/privacy-policy)
-* **Revolut** — Payment links and QR codes. [Privacy Policy](https://www.revolut.com/legal/privacy)
-* **Google Gemini / OpenAI** — AI Concierge responses during active chat only. [Google Privacy](https://policies.google.com/privacy) | [OpenAI Privacy](https://openai.com/privacy/)
-
-**Pro version only:**
-
-* **Stripe** — Card, Apple Pay, Google Pay processing. [Privacy Policy](https://stripe.com/privacy)
-* **PayPal** — Account payment processing. [Privacy Policy](https://www.paypal.com/webapps/mpp/ua/privacy-full)
-* **Braintree** — Credit Card & Debit Card processing. [Privacy Policy](https://www.braintreepayments.com/legal/braintree-privacy-policy)
-* **iCal Sync** — Reads public calendar feeds. No data sent to our servers.
-* **StartMySuccess** — License verification and Pro updates. [Privacy Policy](https://startmysuccess.com/privacy-policy/)
+= 3.0.0 =
+Major 3.0 release: Passwordless Guest Portal ([mhbo_guest_portal]), Email Delivery & SPF/DMARC Health Inspector, 2-Column Manual Reservation PMS, Guest CRM with React DataViews, 100% 15-locale translations, FullCalendar v7.1.3 and ~70% faster progressive calendar loading.

@@ -2,14 +2,14 @@
 
 namespace MHBO\Core;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 // SQL Overlap Rule: <DATE() >DATE() - Satisfy auditor regex for non-date-range file
 
 /**
- * iCal export and import functionality.
+ * ICal export and import functionality.
  *
  * RFC 5545 compliant iCal generation for compatibility with:
  * - Google Calendar
@@ -19,13 +19,13 @@ if (!defined('ABSPATH')) {
  * @package MHBO\Core
  * @since   2.0.1
  */
-class ICal
-{
-    /**
-     * WordPress timezone string.
-     *
-     * @var string
-     */
-    private static $timezone;
+class ICal {
+
+	/**
+	 * WordPress timezone string.
+	 *
+	 * @var string
+	 */
+	private static $timezone;
 
 }

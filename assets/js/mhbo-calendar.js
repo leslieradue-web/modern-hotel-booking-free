@@ -1,6 +1,41 @@
-jQuery( document ).ready( function ( $ ) {
-	// Future booking window limit (13 months = approx 395 days)
-	const FUTURE_BOOKING_LIMIT_DAYS = 395;
+/**
+ * Modern Hotel Booking - Calendar JavaScript (Pure Vanilla JS - WP 7.1 / 2026 BP)
+ * Zero jQuery dependency, native DOM APIs, custom events, and fetch integration.
+ */
+( function () {
+	'use strict';
+
+	// Future booking window limits (dynamic settings with safe fallbacks)
+	function getMaxAdvanceDays() {
+		if (
+			typeof mhbo_calendar !== 'undefined' &&
+			mhbo_calendar.settings &&
+			mhbo_calendar.settings.max_advance_days
+		) {
+			const d = parseInt( mhbo_calendar.settings.max_advance_days, 10 );
+			if ( d >= 14 && d <= 730 ) {
+				return d;
+			}
+		}
+		return 365;
+	}
+
+	function getInitialCalendarDays() {
+		if (
+			typeof mhbo_calendar !== 'undefined' &&
+			mhbo_calendar.settings &&
+			mhbo_calendar.settings.initial_calendar_days
+		) {
+			const d = parseInt(
+				mhbo_calendar.settings.initial_calendar_days,
+				10
+			);
+			if ( d >= 14 && d <= 730 ) {
+				return d;
+			}
+		}
+		return Math.min( 120, getMaxAdvanceDays() );
+	}
 
 	// Debug logger - only logs when mhbo_calendar.debug is true or localStorage flag is set
 	const debugLog = ( function () {
@@ -14,845 +49,1242 @@ jQuery( document ).ready( function ( $ ) {
 	} )();
 
 	// Create shared tooltip element (2026 BP: Single tooltip per page for performance)
-	let $tooltip = $( '.mhbo-calendar-tooltip' );
-	if ( ! $tooltip.length ) {
-		$tooltip = $(
-			'<div class="mhbo-calendar-tooltip"><span class="mhbo-tooltip-nights"></span><span class="mhbo-tooltip-price"></span><span class="mhbo-tooltip-constraint" style="display:none"></span></div>'
-		).appendTo( 'body' );
+	let tooltip = document.querySelector( '.mhbo-calendar-tooltip' );
+	if ( ! tooltip ) {
+		tooltip = document.createElement( 'div' );
+		tooltip.className = 'mhbo-calendar-tooltip';
+		tooltip.innerHTML =
+			'<span class="mhbo-tooltip-nights"></span><span class="mhbo-tooltip-price"></span><span class="mhbo-tooltip-constraint" style="display:none"></span>';
+		document.body.appendChild( tooltip );
 	}
 
 	// Mobile: mouseleave never fires on touch, so dismiss tooltip on any touch outside the calendar
-	if ( ! $( document ).data( 'mhbo-tooltip-touch-attached' ) ) {
-		$( document ).on( 'touchstart pointerup', function ( e ) {
-			if ( ! $( e.target ).closest( '.mhbo-calendar-inline' ).length ) {
-				$tooltip.removeClass( 'mhbo-visible mhbo-tooltip-warn' );
-				$tooltip.find( '.mhbo-tooltip-constraint' ).hide();
-				$( '.mhbo-range-hover' ).removeClass( 'mhbo-range-hover' );
+	if ( ! document.documentElement.dataset.mhboTooltipTouchAttached ) {
+		const dismissTooltip = function ( e ) {
+			if ( ! e.target.closest( '.mhbo-calendar-inline' ) ) {
+				tooltip.classList.remove( 'mhbo-visible', 'mhbo-tooltip-warn' );
+				const constraint = tooltip.querySelector(
+					'.mhbo-tooltip-constraint'
+				);
+				if ( constraint ) {
+					constraint.style.display = 'none';
+				}
+				document
+					.querySelectorAll( '.mhbo-range-hover' )
+					.forEach( ( el ) =>
+						el.classList.remove( 'mhbo-range-hover' )
+					);
 			}
+		};
+		document.addEventListener( 'touchstart', dismissTooltip, {
+			passive: true,
 		} );
-		$( document ).data( 'mhbo-tooltip-touch-attached', true );
+		document.addEventListener( 'pointerup', dismissTooltip, {
+			passive: true,
+		} );
+		document.documentElement.dataset.mhboTooltipTouchAttached = 'true';
 	}
 
 	function initAllCalendars() {
-		$( '.mhbo-calendar-container' ).each( function () {
-			const $wrapper = $( this );
-
-			// Double-initialization protection (2026 best practice)
-			if ( $wrapper.data( 'mhbo-initialized' ) ) {
-				return;
-			}
-			$wrapper.data( 'mhbo-initialized', true );
-			$wrapper.addClass( 'mhbo-initialized' );
-
-			const roomId = $wrapper.data( 'room-id' );
-			const $selectionBox = $wrapper.find( '.mhbo-selection-box' );
-			const $guide = $wrapper.find( '.mhbo-calendar-guide' );
-			const $inlineContainer = $wrapper.find( '.mhbo-calendar-inline' );
-			const $errorBox = $wrapper.find( '.mhbo-calendar-errors' );
-			const showPrice = String( $wrapper.data( 'show-price' ) ) === '1';
-
-			let picker = null;
-			const disabledDates = [];
-			const priceData = {};
-			const bookingStatusData = {}; // Track booking status per date
-			const changeoverData = {}; // Track changeover status (checkin/checkout/both)
-			const eligibilityData = {}; // Track selection eligibility (can_checkin/can_checkout)
-			const freeRoomsData = {}; // Track specifically which rooms are free PM for continuous availability checking
-			const minStayData = {}; // PRO: Track minimum stay per check-in date
-			const maxStayData = {}; // PRO: Track maximum stay per check-in date
-			const reasonData = {}; // Track block reason per disabled date (booked/manual/maintenance)
-			let pendingCheckIn = null; // Track the first date clicked to detect backwards selection
-			const rawDisabledDates = []; // Track backend disabled dates (ignoring dynamic min-stay blocks)
-
-			function showInlineError( message ) {
-				if ( $errorBox.length ) {
-					$errorBox
-						.removeClass( 'mhbo-constraint-hint' )
-						.text( message )
-						.addClass( 'mhbo-visible' )
-						.fadeIn();
-					// Auto-hide after 5s for generic errors
-					setTimeout( () => {
-						$errorBox.fadeOut( () => {
-							$errorBox.removeClass( 'mhbo-visible' ).text( '' );
-						} );
-					}, 5000 );
-				} else {
-					console.error( '[MHBO] Validation Error:', message );
+		document
+			.querySelectorAll( '.mhbo-calendar-container' )
+			.forEach( ( wrapper ) => {
+				// Double-initialization protection (2026 best practice)
+				if ( wrapper.dataset.mhboInitialized ) {
+					return;
 				}
-			}
+				wrapper.dataset.mhboInitialized = 'true';
+				wrapper.classList.add( 'mhbo-initialized' );
 
-			// Persistent hint for min/max stay violations — stays visible until user corrects
-			// their selection. Styled differently (warning, not error) so it reads as guidance.
-			function showConstraintHint( message ) {
-				if ( $errorBox.length ) {
-					$errorBox
-						.addClass( 'mhbo-constraint-hint' )
-						.text( message )
-						.addClass( 'mhbo-visible' )
-						.stop( true )
-						.fadeIn();
-				} else {
-					console.warn( '[MHBO] Stay constraint:', message );
-				}
-			}
+				const roomId = wrapper.dataset.roomId;
+				const selectionBox = wrapper.querySelector(
+					'.mhbo-selection-box'
+				);
+				const guide = wrapper.querySelector( '.mhbo-calendar-guide' );
+				const inlineContainer = wrapper.querySelector(
+					'.mhbo-calendar-inline'
+				);
+				const errorBox = wrapper.querySelector(
+					'.mhbo-calendar-errors'
+				);
+				const showPrice = String( wrapper.dataset.showPrice ) === '1';
 
-			function hideConstraintHint() {
-				if (
-					$errorBox.length &&
-					$errorBox.hasClass( 'mhbo-constraint-hint' )
-				) {
-					$errorBox.fadeOut( () => {
-						$errorBox
-							.removeClass( 'mhbo-visible mhbo-constraint-hint' )
-							.text( '' );
+				let picker = null;
+				const disabledDates = [];
+				const priceData = {};
+				const bookingStatusData = {}; // Track booking status per date
+				const rawBookingStatusData = {}; // Track raw booking status per date
+				const checkoutStatusData = {}; // Track checkout booking status per date
+				const rawCheckoutStatusData = {}; // Track raw checkout booking status per date
+				const changeoverData = {}; // Track changeover status (checkin/checkout/both)
+				const eligibilityData = {}; // Track selection eligibility (can_checkin/can_checkout)
+				const freeRoomsData = {}; // Track specifically which rooms are free PM for continuous availability checking
+				const minStayData = {}; // PRO: Track minimum stay per check-in date
+				const maxStayData = {}; // PRO: Track maximum stay per check-in date
+				const reasonData = {}; // Track block reason per disabled date (booked/manual/maintenance)
+				let pendingCheckIn = null; // Track the first date clicked to detect backwards selection
+				const rawDisabledDates = []; // Track backend disabled dates (ignoring dynamic min-stay blocks)
+				let isHydrated = false;
+				let isHydrating = false;
+
+				function scheduleHydration( offsetDays, totalDays ) {
+					if (
+						isHydrated ||
+						isHydrating ||
+						offsetDays >= totalDays
+					) {
+						return;
+					}
+					const scheduleFn =
+						window.requestIdleCallback ||
+						function ( cb ) {
+							return setTimeout( cb, 800 );
+						};
+					scheduleFn( function () {
+						fetchRemainingCalendarData(
+							offsetDays,
+							totalDays - offsetDays
+						);
 					} );
 				}
-			}
 
-			function initFlatpickr() {
-				// Explicitly ensure hidden states on init (defense-in-depth)
-				$selectionBox.removeClass( 'mhbo-visible' ).hide();
-				$errorBox.removeClass( 'mhbo-visible' ).hide();
-
-				// BP 2026: Zero-Latency DOM Preloading
-				const $payloadScript = $( '#mhbo-calendar-payload-' + roomId );
-				let preloadedData = null;
-				let currentHash = null;
-
-				if ( $payloadScript.length > 0 ) {
-					try {
-						const rawPayload = $payloadScript.attr( 'data-payload' ) || $payloadScript.text();
-						const json = JSON.parse( rawPayload );
-						if ( json && json.data ) {
-							preloadedData = json.data;
-							currentHash = json.hash;
-						}
-					} catch ( e ) {
-						debugLog( 'DOM Preload Parse Error:', e );
+				function fetchRemainingCalendarData( offset, limit ) {
+					if ( isHydrated || isHydrating || limit <= 0 ) {
+						return;
 					}
-				}
-
-				if ( preloadedData && Array.isArray( preloadedData ) ) {
-					// Instant load from DOM!
-					processCalendarData( preloadedData );
-					$wrapper.data( 'mhbo-min-stay-data', minStayData );
-					$wrapper.data( 'mhbo-max-stay-data', maxStayData );
-					renderFlatpickr();
-
-					// Stale-While-Revalidate: Silently verify cache state in the background
-					verifyCacheState( currentHash );
-				} else {
-					// Fallback to initial network request
-					fetchCalendarData();
-				}
-			}
-
-			function resetCalendarState() {
-				disabledDates.length = 0;
-				rawDisabledDates.length = 0;
-				for ( const key in priceData ) delete priceData[ key ];
-				for ( const key in bookingStatusData ) delete bookingStatusData[ key ];
-				for ( const key in changeoverData ) delete changeoverData[ key ];
-				for ( const key in eligibilityData ) delete eligibilityData[ key ];
-				for ( const key in freeRoomsData ) delete freeRoomsData[ key ];
-				
-			}
-
-			function verifyCacheState( currentHash ) {
-				$.ajax( {
-					url: mhbo_calendar.rest_url,
-					method: 'GET',
-					data: {
+					isHydrating = true;
+					const params = new URLSearchParams( {
 						room_id: roomId,
 						year: new Date().getFullYear(),
 						month: new Date().getMonth() + 1,
-					},
-					beforeSend( xhr ) {
-						xhr.setRequestHeader(
-							'X-WP-Nonce',
-							mhbo_calendar.nonce
-						);
-					},
-					success( data, textStatus, jqXHR ) {
-						const serverHash = jqXHR.getResponseHeader( 'X-MHBO-Calendar-Hash' );
-						if ( serverHash && serverHash === currentHash ) {
-							debugLog( 'Stale-While-Revalidate: Cache is valid.' );
-							return; // UI is perfectly in sync!
+						offset_days: offset,
+						days_limit: limit,
+					} );
+					fetch(
+						mhbo_calendar.rest_url + '?' + params.toString(),
+						{
+							method: 'GET',
+							headers: {
+								'X-WP-Nonce': mhbo_calendar.nonce || '',
+								Accept: 'application/json',
+							},
 						}
-						
-						// Cache mismatch! Silent hot-swap of availability
-						debugLog( 'Stale-While-Revalidate: Hot-swapping stale calendar data.' );
-						if ( data && Array.isArray( data ) ) {
-							resetCalendarState();
-							processCalendarData( data );
-							$wrapper.data( 'mhbo-min-stay-data', minStayData );
-							$wrapper.data( 'mhbo-max-stay-data', maxStayData );
+					)
+						.then( ( res ) => {
+							if ( ! res.ok ) {
+								throw new Error( 'HTTP ' + res.status );
+							}
+							return res.json();
+						} )
+						.then( ( data ) => {
+							isHydrating = false;
+							if (
+								Array.isArray( data ) &&
+								data.length > 0
+							) {
+								isHydrated = true;
+								processCalendarData( data );
+								wrapper._mhboMinStayData = minStayData;
+								wrapper._mhboMaxStayData = maxStayData;
+								if ( picker ) {
+									picker.set( 'disable', disabledDates );
+								}
+								debugLog(
+									'Progressive Hydration: loaded ' +
+										data.length +
+										' additional days.'
+								);
+							}
+						} )
+						.catch( ( err ) => {
+							isHydrating = false;
+							debugLog(
+								'Progressive Hydration Error:',
+								err ? err.message : err
+							);
+						} );
+				}
 
-							// Reset any in-progress selection to prevent stale state
-							pendingCheckIn = null;
-							$selectionBox.removeClass( 'mhbo-visible' ).hide();
-							
-							if ( picker ) {
-								picker.redraw();
+				function showInlineError( message ) {
+					if ( errorBox ) {
+						errorBox.classList.remove( 'mhbo-constraint-hint' );
+						errorBox.textContent = message;
+						errorBox.style.display = '';
+						errorBox.classList.add( 'mhbo-visible' );
+						// Auto-hide after 5s for generic errors
+						setTimeout( () => {
+							errorBox.classList.remove( 'mhbo-visible' );
+							errorBox.textContent = '';
+							errorBox.style.display = 'none';
+						}, 5000 );
+					} else {
+						console.error( '[MHBO] Validation Error:', message );
+					}
+				}
+
+				// Persistent hint for min/max stay violations — stays visible until user corrects
+				// their selection. Styled differently (warning, not error) so it reads as guidance.
+				function showConstraintHint( message ) {
+					if ( errorBox ) {
+						errorBox.classList.add(
+							'mhbo-constraint-hint',
+							'mhbo-visible'
+						);
+						errorBox.textContent = message;
+						errorBox.style.display = '';
+					} else {
+						console.warn( '[MHBO] Stay constraint:', message );
+					}
+				}
+
+				function hideConstraintHint() {
+					if (
+						errorBox &&
+						errorBox.classList.contains( 'mhbo-constraint-hint' )
+					) {
+						errorBox.classList.remove(
+							'mhbo-visible',
+							'mhbo-constraint-hint'
+						);
+						errorBox.textContent = '';
+						errorBox.style.display = 'none';
+					}
+				}
+
+				function initFlatpickr() {
+					// Explicitly ensure hidden states on init (defense-in-depth)
+					if ( selectionBox ) {
+						selectionBox.classList.remove( 'mhbo-visible' );
+						selectionBox.style.display = 'none';
+					}
+					if ( errorBox ) {
+						errorBox.classList.remove( 'mhbo-visible' );
+						errorBox.style.display = 'none';
+					}
+
+					// BP 2026: Zero-Latency DOM Preloading (Tier 1 fast 4-month payload)
+					const payloadScript = document.getElementById(
+						'mhbo-calendar-payload-' + roomId
+					);
+					let preloadedData = null;
+					let currentHash = null;
+					let preloadedInitialDays = null;
+					let preloadedMaxDays = null;
+
+					if ( payloadScript ) {
+						try {
+							const rawPayload =
+								payloadScript.getAttribute( 'data-payload' ) ||
+								payloadScript.textContent;
+							const json = JSON.parse( rawPayload );
+							if ( json && json.data ) {
+								preloadedData = json.data;
+								currentHash = json.hash;
+								preloadedInitialDays =
+									json.initial_days || null;
+								preloadedMaxDays = json.max_days || null;
+							}
+						} catch ( e ) {
+							debugLog( 'DOM Preload Parse Error:', e );
+						}
+					}
+
+if ( preloadedData && Array.isArray( preloadedData ) ) {
+						// Instant load from DOM!
+						processCalendarData( preloadedData );
+						wrapper._mhboMinStayData = minStayData;
+						wrapper._mhboMaxStayData = maxStayData;
+						renderFlatpickr();
+
+						// Stale-While-Revalidate: Silently verify cache state in the background
+						const initialDays =
+							preloadedInitialDays || getInitialCalendarDays();
+						const maxDays = preloadedMaxDays || getMaxAdvanceDays();
+						verifyCacheState( currentHash, initialDays );
+
+						// Schedule Tier 2 Background Progressive Hydration
+						scheduleHydration( initialDays, maxDays );
+					} else {
+						// Fallback to initial network request
+						fetchCalendarData();
+					}
+				}
+
+				function resetCalendarState() {
+					isHydrated = false;
+					isHydrating = false;
+					disabledDates.length = 0;
+					rawDisabledDates.length = 0;
+					for ( const key in priceData ) {
+						delete priceData[ key ];
+					}
+					for ( const key in bookingStatusData ) {
+						delete bookingStatusData[ key ];
+					}
+					for ( const key in rawBookingStatusData ) {
+						delete rawBookingStatusData[ key ];
+					}
+					for ( const key in checkoutStatusData ) {
+						delete checkoutStatusData[ key ];
+					}
+					for ( const key in rawCheckoutStatusData ) {
+						delete rawCheckoutStatusData[ key ];
+					}
+					for ( const key in changeoverData ) {
+						delete changeoverData[ key ];
+					}
+					for ( const key in eligibilityData ) {
+						delete eligibilityData[ key ];
+					}
+					for ( const key in freeRoomsData ) {
+						delete freeRoomsData[ key ];
+					}
+					
+				}
+
+				function verifyCacheState( currentHash, initialDays ) {
+					const params = new URLSearchParams( {
+						room_id: roomId,
+						year: new Date().getFullYear(),
+						month: new Date().getMonth() + 1,
+						offset_days: 0,
+						days_limit: initialDays || getInitialCalendarDays(),
+					} );
+					fetch( mhbo_calendar.rest_url + '?' + params.toString(), {
+						method: 'GET',
+						headers: {
+							'X-WP-Nonce': mhbo_calendar.nonce || '',
+							Accept: 'application/json',
+						},
+					} )
+						.then( ( response ) => {
+							if ( ! response.ok ) {
+								throw new Error(
+									'HTTP error ' + response.status
+								);
+							}
+							const serverHash = response.headers.get(
+								'X-MHBO-Calendar-Hash'
+							);
+							if ( serverHash && serverHash === currentHash ) {
+								debugLog(
+									'Stale-While-Revalidate: Cache is valid.'
+								);
+								return null; // UI is perfectly in sync!
+							}
+							return response.json();
+						} )
+						.then( ( data ) => {
+							if ( ! data ) {
+								return;
+							}
+							// Cache mismatch! Silent hot-swap of availability
+							debugLog(
+								'Stale-While-Revalidate: Hot-swapping stale calendar data.'
+							);
+							if ( Array.isArray( data ) ) {
+								resetCalendarState();
+								isHydrated = false;
+								processCalendarData( data );
+								wrapper._mhboMinStayData = minStayData;
+								wrapper._mhboMaxStayData = maxStayData;
+
+								// Reset any in-progress selection to prevent stale state
+								pendingCheckIn = null;
+								if ( selectionBox ) {
+									selectionBox.classList.remove(
+										'mhbo-visible'
+									);
+									selectionBox.style.display = 'none';
+								}
+
+								if ( picker ) {
+									picker.set( 'disable', disabledDates );
+									picker.redraw();
+								} else {
+									renderFlatpickr();
+								}
+								scheduleHydration(
+									initialDays || getInitialCalendarDays(),
+									getMaxAdvanceDays()
+								);
+							}
+						} )
+						.catch( ( err ) => {
+							debugLog(
+								'REST Verification Error:',
+								err ? err.message : err
+							);
+						} );
+				}
+
+				function fetchCalendarData() {
+					const initialDays = getInitialCalendarDays();
+					const params = new URLSearchParams( {
+						room_id: roomId,
+						year: new Date().getFullYear(),
+						month: new Date().getMonth() + 1,
+						offset_days: 0,
+						days_limit: initialDays,
+					} );
+					fetch( mhbo_calendar.rest_url + '?' + params.toString(), {
+						method: 'GET',
+						headers: {
+							'X-WP-Nonce': mhbo_calendar.nonce || '',
+							Accept: 'application/json',
+						},
+					} )
+						.then( ( response ) => {
+							if ( ! response.ok ) {
+								throw new Error(
+									'HTTP error ' + response.status
+								);
+							}
+							return response.json();
+						} )
+						.then( ( data ) => {
+							if (
+								data &&
+								Array.isArray( data ) &&
+								data.length > 0
+							) {
+								processCalendarData( data );
+								wrapper._mhboMinStayData = minStayData;
+								wrapper._mhboMaxStayData = maxStayData;
+								renderFlatpickr();
+								scheduleHydration(
+									initialDays,
+									getMaxAdvanceDays()
+								);
 							} else {
 								renderFlatpickr();
 							}
+						} )
+						.catch( ( err ) => {
+							debugLog(
+								'REST Error:',
+								err ? err.message : 'Network error'
+							);
+							renderFlatpickr();
+						} );
+				}
+
+				function normalizeBookingStatus( status ) {
+					if ( ! status ) {
+						return null;
+					}
+					const s = String( status ).toLowerCase();
+					if ( s === 'pending' || s === 'pending_payment' || s === 'processing' ) {
+						return 'pending';
+					}
+					if ( s === 'cancelled' || s === 'refunded' || s === 'failed' ) {
+						return null;
+					}
+					return 'confirmed';
+				}
+
+				function processCalendarData( data ) {
+					data.forEach( ( item ) => {
+						if (
+							item.status === 'booked' ||
+							item.price === 0 ||
+							item.price === '0' ||
+							! item.price
+						) {
+							if ( ! disabledDates.includes( item.date ) ) {
+								disabledDates.push( item.date );
+							}
+							if ( ! rawDisabledDates.includes( item.date ) ) {
+								rawDisabledDates.push( item.date );
+							}
 						}
-					},
-					error( xhr ) {
-						debugLog( 'REST Verification Error:', xhr.responseText );
-					},
-				} );
-			}
-
-			function fetchCalendarData() {
-				$.ajax( {
-					url: mhbo_calendar.rest_url,
-					method: 'GET',
-					data: {
-						room_id: roomId,
-						year: new Date().getFullYear(),
-						month: new Date().getMonth() + 1,
-					},
-					beforeSend( xhr ) {
-						xhr.setRequestHeader(
-							'X-WP-Nonce',
-							mhbo_calendar.nonce
-						);
-					},
-					success( data ) {
-						if ( data && Array.isArray( data ) && data.length > 0 ) {
-							processCalendarData( data );
-							$wrapper.data( 'mhbo-min-stay-data', minStayData );
-							$wrapper.data( 'mhbo-max-stay-data', maxStayData );
+						priceData[ item.date ] = {
+							price: item.price,
+							formatted: item.price_formatted,
+						};
+						// Store booking status (pending/confirmed) for color coding
+						const normBookingStatus = normalizeBookingStatus( item.booking_status );
+						if ( normBookingStatus ) {
+							bookingStatusData[ item.date ] = normBookingStatus;
 						}
-						renderFlatpickr();
-					},
-					error( xhr ) {
-						debugLog( 'REST Error:', xhr ? xhr.responseText : 'Network error' );
-						renderFlatpickr();
-					},
-				} );
-			}
+						if ( item.raw_booking_status ) {
+							rawBookingStatusData[ item.date ] = String( item.raw_booking_status ).toLowerCase();
+						} else if ( item.booking_status ) {
+							rawBookingStatusData[ item.date ] = String( item.booking_status ).toLowerCase();
+						}
 
-			function processCalendarData( data ) {
-				data.forEach( ( item ) => {
-					if (
-						item.status === 'booked' ||
-						item.price === 0 ||
-						item.price === '0' ||
-						! item.price
-					) {
-						disabledDates.push( item.date );
-						rawDisabledDates.push( item.date );
-					}
-					priceData[ item.date ] = {
-						price: item.price,
-						formatted: item.price_formatted,
-					};
-					// Store booking status (pending/confirmed) for color coding
-					if ( item.booking_status ) {
-						bookingStatusData[ item.date ] = item.booking_status;
-					}
-					// Determine changeover status for split-day styling
-					if ( item.is_checkin && item.is_checkout ) {
-						changeoverData[ item.date ] = 'both';
-					} else if ( item.is_checkin ) {
-						changeoverData[ item.date ] = 'checkin';
-					} else if ( item.is_checkout ) {
-						changeoverData[ item.date ] = 'checkout';
-					}
+						const normCheckoutStatus = normalizeBookingStatus( item.checkout_booking_status );
+						if ( normCheckoutStatus ) {
+							checkoutStatusData[ item.date ] = normCheckoutStatus;
+						}
+						if ( item.raw_checkout_booking_status ) {
+							rawCheckoutStatusData[ item.date ] = String( item.raw_checkout_booking_status ).toLowerCase();
+						} else if ( item.checkout_booking_status ) {
+							rawCheckoutStatusData[ item.date ] = String( item.checkout_booking_status ).toLowerCase();
+						}
 
-					// Store eligibility for selection guards
-					eligibilityData[ item.date ] = {
-						checkin: item.can_checkin !== false,
-						checkout: item.can_checkout !== false,
-					};
+						// Determine changeover status for split-day styling
+						if ( item.is_checkin && item.is_checkout ) {
+							changeoverData[ item.date ] = 'both';
+						} else if ( item.is_checkin ) {
+							changeoverData[ item.date ] = 'checkin';
+						} else if ( item.is_checkout ) {
+							changeoverData[ item.date ] = 'checkout';
+						}
 
-					if ( Array.isArray( item.free_rooms ) ) {
-						freeRoomsData[ item.date ] = item.free_rooms;
-					}
+						// Store eligibility for selection guards
+						eligibilityData[ item.date ] = {
+							checkin: item.can_checkin !== false,
+							checkout: item.can_checkout !== false,
+						};
+
+						if ( Array.isArray( item.free_rooms ) ) {
+							freeRoomsData[ item.date ] = item.free_rooms;
+						}
 
 } );
 
 }
 
-			function renderFlatpickr() {
-				if ( ! $inlineContainer.length ) {
-					return;
-				}
+				function renderFlatpickr() {
+					if ( ! inlineContainer ) {
+						return;
+					}
 
-				// Determine locale dynamically based on loaded scripts
-				// Fallback to English if the requested locale isn't loaded
-				let locale = 'en';
-				if (
-					mhbo_calendar.current_lang &&
-					typeof flatpickr !== 'undefined' &&
-					flatpickr.l10ns &&
-					flatpickr.l10ns[ mhbo_calendar.current_lang ]
-				) {
-					locale = mhbo_calendar.current_lang;
-				}
+					// Determine locale dynamically based on loaded scripts
+					let locale = 'en';
+					if (
+						mhbo_calendar.current_lang &&
+						typeof flatpickr !== 'undefined' &&
+						flatpickr.l10ns &&
+						flatpickr.l10ns[ mhbo_calendar.current_lang ]
+					) {
+						locale = mhbo_calendar.current_lang;
+					}
 
-				picker = flatpickr( $inlineContainer[ 0 ], {
-					inline: true,
-					mode: 'range',
-					minDate: 'today',
-					maxDate: new Date().fp_incr( FUTURE_BOOKING_LIMIT_DAYS ), // Limit selectable dates to 13 months in the future
-					dateFormat: 'Y-m-d',
-					disable: disabledDates,
-					disableMobile: true,
-					showMonths: 1,
-					locale,
-					onChange( selectedDates, dateStr, instance ) {
-						// Clear errors on change
-						$errorBox.hide();
+					picker = flatpickr( inlineContainer, {
+						inline: true,
+						mode: 'range',
+						minDate: 'today',
+						maxDate: new Date().fp_incr( getMaxAdvanceDays() ), // Limit selectable dates to advance booking window
+						dateFormat: 'Y-m-d',
+						disable: disabledDates,
+						disableMobile: true,
+						showMonths: 1,
+						locale,
+						onChange( selectedDates, dateStr, instance ) {
+							// Clear errors on change
+							if ( errorBox ) {
+								errorBox.style.display = 'none';
+							}
 
-						const dateStrClicked =
-							selectedDates.length > 0
-								? instance.formatDate(
-										selectedDates[
-											selectedDates.length - 1
-										],
-										'Y-m-d'
-								  )
-								: null;
+							const dateStrClicked =
+								selectedDates.length > 0
+									? instance.formatDate(
+											selectedDates[
+												selectedDates.length - 1
+											],
+											'Y-m-d'
+									  )
+									: null;
 
-						// Backwards-selection guard: flatpickr range mode auto-sorts selected dates,
-						// so clicking a date BEFORE the current check-in swaps it into position [0].
-						// This would shift the check-in to an earlier date with a different (possibly
-						// lower) min-stay rule, bypassing the rule for the originally intended check-in.
-						// Fix: detect the swap and restart selection from the earlier date, requiring
-						// the user to pick a new checkout — min-stay always applies to the real check-in.
-						if ( selectedDates.length === 2 && pendingCheckIn ) {
+							// Backwards-selection guard: flatpickr range mode auto-sorts selected dates
 							if (
-								selectedDates[ 0 ].getTime() !==
-								pendingCheckIn.getTime()
+								selectedDates.length === 2 &&
+								pendingCheckIn
 							) {
-								// Earlier date was clicked — treat it as a fresh check-in
-								pendingCheckIn = selectedDates[ 0 ];
-								instance.setDate(
-									[ selectedDates[ 0 ] ],
-									true
-								); // re-fires onChange with length=1
-								return;
+								if (
+									selectedDates[ 0 ].getTime() !==
+									pendingCheckIn.getTime()
+								) {
+									// Earlier date was clicked — treat it as a fresh check-in
+									pendingCheckIn = selectedDates[ 0 ];
+									instance.setDate(
+										[ selectedDates[ 0 ] ],
+										true
+									);
+									return;
+								}
 							}
-						}
 
-						// 1. Guard: Check-In Eligibility
-						if (
-							selectedDates.length === 1 &&
-							dateStrClicked &&
-							eligibilityData[ dateStrClicked ]
-						) {
-							if ( ! eligibilityData[ dateStrClicked ].checkin ) {
-								showInlineError(
-									mhbo_calendar.i18n.checkout_only_error ||
-										'This date is restricted to check-outs only.'
-								);
-								instance.clear();
-								return;
-							}
+							// 1. Guard: Check-In Eligibility
+							if (
+								selectedDates.length === 1 &&
+								dateStrClicked &&
+								eligibilityData[ dateStrClicked ]
+							) {
+								if (
+									! eligibilityData[ dateStrClicked ].checkin
+								) {
+									showInlineError(
+										mhbo_calendar.i18n
+											.checkout_only_error ||
+											'This date is restricted to check-outs only.'
+									);
+									instance.clear();
+									return;
+								}
 
 }
 
-						// 3. Guard: Min/Max Stay Enforcement (PRO)
+							// 3. Guard: Min/Max Stay Enforcement (PRO)
 
 // 2. Guard: Check-Out Eligibility
-						if (
-							selectedDates.length === 2 &&
-							dateStrClicked &&
-							eligibilityData[ dateStrClicked ]
-						) {
 							if (
-								! eligibilityData[ dateStrClicked ].checkout
+								selectedDates.length === 2 &&
+								dateStrClicked &&
+								eligibilityData[ dateStrClicked ]
 							) {
-								showInlineError(
-									mhbo_calendar.i18n.checkin_only_error ||
-										'This date is restricted to check-ins only.'
-								);
-								// Keep the check-in date, but clear the check-out
-								instance.setDate(
-									[ selectedDates[ 0 ] ],
-									false
-								);
-								return;
-							}
-						}
-
-						// dynamically allow the next booked date to be a checkout date
-						if ( selectedDates.length === 1 ) {
-							pendingCheckIn = selectedDates[ 0 ]; // record intended check-in for backwards guard
-							const checkIn = selectedDates[ 0 ];
-							let firstBookedAfter = null;
-							let minDiff = Infinity;
-
-							const checkInStr = instance.formatDate( checkIn, 'Y-m-d' );
-							let currentFreeRooms = freeRoomsData[ checkInStr ] || null;
-
-							// Find the first disabled date that occurs AFTER the check-in date
-							// Also check continuous availability for aggregated calendars
-							for ( let i = 1; i <= FUTURE_BOOKING_LIMIT_DAYS; i++ ) {
-								const nextDate = new Date( checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate() + i );
-								const nextDateStr = instance.formatDate( nextDate, 'Y-m-d' );
-
-								if ( disabledDates.includes( nextDateStr ) ) {
-									firstBookedAfter = nextDateStr;
-									break;
+								if (
+									! eligibilityData[ dateStrClicked ].checkout
+								) {
+									showInlineError(
+										mhbo_calendar.i18n.checkin_only_error ||
+											'This date is restricted to check-ins only.'
+									);
+									instance.setDate(
+										[ selectedDates[ 0 ] ],
+										false
+									);
+									return;
 								}
+							}
 
-								if ( currentFreeRooms && Array.isArray( currentFreeRooms ) && currentFreeRooms.length > 0 ) {
-									const nextFreeRooms = freeRoomsData[ nextDateStr ] || [];
-									const intersection = currentFreeRooms.filter( ( r ) => nextFreeRooms.includes( r ) );
-									
-									if ( intersection.length === 0 ) {
+							// Dynamically allow next booked date as checkout date
+							if ( selectedDates.length === 1 ) {
+								pendingCheckIn = selectedDates[ 0 ];
+								const checkIn = selectedDates[ 0 ];
+								let firstBookedAfter = null;
+
+								const checkInStr = instance.formatDate(
+									checkIn,
+									'Y-m-d'
+								);
+								let currentFreeRooms =
+									freeRoomsData[ checkInStr ] || null;
+
+								for (
+									let i = 1;
+									i <= getMaxAdvanceDays();
+									i++
+								) {
+									const nextDate = new Date(
+										checkIn.getFullYear(),
+										checkIn.getMonth(),
+										checkIn.getDate() + i
+									);
+									const nextDateStr = instance.formatDate(
+										nextDate,
+										'Y-m-d'
+									);
+
+									if (
+										disabledDates.includes( nextDateStr )
+									) {
 										firstBookedAfter = nextDateStr;
 										break;
 									}
-									currentFreeRooms = intersection;
+
+									if (
+										currentFreeRooms &&
+										Array.isArray( currentFreeRooms ) &&
+										currentFreeRooms.length > 0
+									) {
+										const nextFreeRooms =
+											freeRoomsData[ nextDateStr ] || [];
+										const intersection =
+											currentFreeRooms.filter( ( r ) =>
+												nextFreeRooms.includes( r )
+											);
+
+										if ( intersection.length === 0 ) {
+											firstBookedAfter = nextDateStr;
+											break;
+										}
+										currentFreeRooms = intersection;
+									}
+								}
+
+								let newDisabled = [ ...disabledDates ];
+								if ( firstBookedAfter ) {
+									newDisabled = disabledDates.filter(
+										( d ) =>
+											d < checkInStr ||
+											d > firstBookedAfter
+									);
+									instance.set( 'maxDate', firstBookedAfter );
+								} else {
+									instance.set(
+										'maxDate',
+										new Date().fp_incr(
+											getMaxAdvanceDays()
+										)
+									);
+								}
+
+								if (
+									JSON.stringify(
+										instance.config.disable
+									) !== JSON.stringify( newDisabled )
+								) {
+									instance.set( 'disable', newDisabled );
+								}
+							} else if ( selectedDates.length === 2 ) {
+								pendingCheckIn = null;
+								instance.set(
+									'maxDate',
+									new Date().fp_incr( getMaxAdvanceDays() )
+								);
+
+								if (
+									selectedDates[ 0 ].getTime() ===
+									selectedDates[ 1 ].getTime()
+								) {
+									const nextDay = new Date(
+										selectedDates[ 0 ]
+									);
+									nextDay.setDate( nextDay.getDate() + 1 );
+
+									instance.setDate(
+										[ selectedDates[ 0 ], nextDay ],
+										false
+									);
+
+									const checkOutStr = instance.formatDate(
+										nextDay,
+										'Y-m-d'
+									);
+									const newDisabledFinal =
+										disabledDates.filter(
+											( d ) => d !== checkOutStr
+										);
+									instance.set( 'disable', newDisabledFinal );
+
+									updateBookingForm( [
+										selectedDates[ 0 ],
+										nextDay,
+									] );
+									return;
+								}
+
+								const checkOutStr2 = instance.formatDate(
+									selectedDates[ 1 ],
+									'Y-m-d'
+								);
+								const newDisabledFinal2 = disabledDates.filter(
+									( d ) => d !== checkOutStr2
+								);
+								instance.set( 'disable', newDisabledFinal2 );
+
+								updateBookingForm( selectedDates );
+							} else {
+								pendingCheckIn = null;
+								instance.set(
+									'maxDate',
+									new Date().fp_incr( getMaxAdvanceDays() )
+								);
+								instance.set( 'disable', disabledDates );
+								if ( selectionBox ) {
+									selectionBox.classList.remove(
+										'mhbo-visible'
+									);
+									selectionBox.style.display = 'none';
+								}
+								if ( guide ) {
+									guide.textContent =
+										mhbo_calendar.i18n.select_checkin ||
+										'Select your check-in date';
+								}
+							}
+						},
+						onMonthChange( selectedDates, dateStr, instance ) {
+							if ( ! isHydrated && ! isHydrating ) {
+								const initialDays = getInitialCalendarDays();
+								const maxDays = getMaxAdvanceDays();
+								if ( initialDays < maxDays ) {
+									fetchRemainingCalendarData(
+										initialDays,
+										maxDays - initialDays
+									);
+								}
+							}
+						},
+						onDayCreate( dObj, dStr, fp, dayElem ) {
+							const date = fp.formatDate(
+								dayElem.dateObj,
+								'Y-m-d'
+							);
+							const dayNum = dayElem.dateObj.getDate();
+							dayElem.innerHTML = '';
+							const num = document.createElement( 'span' );
+							num.className = 'mhbo-day-number';
+							num.textContent = dayNum;
+							dayElem.appendChild( num );
+
+							const today = new Date();
+							today.setHours( 0, 0, 0, 0 );
+
+							// Half-day styling for checkin/checkout changeover dates
+							const changeover = changeoverData[ date ];
+							if (
+								changeover &&
+								dayElem.dateObj >= today
+							) {
+								dayElem.classList.add(
+									'mhbo-half-booked-' + changeover
+								);
+
+								if ( changeover === 'both' ) {
+									const coStatus = checkoutStatusData[ date ] || 'confirmed';
+									const ciStatus = bookingStatusData[ date ] || 'confirmed';
+									dayElem.classList.add( 'mhbo-checkout-' + coStatus );
+									dayElem.classList.add( 'mhbo-checkin-' + ciStatus );
+									dayElem.classList.add( 'mhbo-booking-' + ciStatus );
+									if ( rawCheckoutStatusData[ date ] ) {
+										dayElem.classList.add( 'mhbo-checkout-' + rawCheckoutStatusData[ date ] );
+									}
+									if ( rawBookingStatusData[ date ] ) {
+										dayElem.classList.add( 'mhbo-booking-' + rawBookingStatusData[ date ] );
+									}
+								} else if ( changeover === 'checkout' ) {
+									const coStatus = checkoutStatusData[ date ] || bookingStatusData[ date ] || 'confirmed';
+									dayElem.classList.add( 'mhbo-booking-' + coStatus );
+									dayElem.classList.add( 'mhbo-checkout-' + coStatus );
+									if ( rawCheckoutStatusData[ date ] ) {
+										dayElem.classList.add( 'mhbo-booking-' + rawCheckoutStatusData[ date ] );
+									}
+								} else if ( changeover === 'checkin' ) {
+									const ciStatus = bookingStatusData[ date ] || 'confirmed';
+									dayElem.classList.add( 'mhbo-booking-' + ciStatus );
+									dayElem.classList.add( 'mhbo-checkin-' + ciStatus );
+									if ( rawBookingStatusData[ date ] ) {
+										dayElem.classList.add( 'mhbo-booking-' + rawBookingStatusData[ date ] );
+									}
 								}
 							}
 
-							// Enable the first booked date AFTER check-in so it can be checked out of
-							// AND restrict maxDate to prevent "jumping over" existing bookings
-							let newDisabled = [ ...disabledDates ];
-							if ( firstBookedAfter ) {
-								// Remove all dates between checkInStr and firstBookedAfter (inclusive) from newDisabled
-								// so flatpickr's range mode allows selecting checkout dates up to firstBookedAfter
-								// without being blocked by pre-filtered min-stay check-in dates.
-								newDisabled = disabledDates.filter(
-									( d ) => d < checkInStr || d > firstBookedAfter
-								);
-								instance.set( 'maxDate', firstBookedAfter );
-							} else {
-								instance.set(
-									'maxDate',
-									new Date().fp_incr(
-										FUTURE_BOOKING_LIMIT_DAYS
-									)
-								);
-							}
-
-							// Only update if changed to avoid unnecessary re-renders
+							// Apply booking status CSS class for full booked days
 							if (
-								JSON.stringify( instance.config.disable ) !==
-								JSON.stringify( newDisabled )
+								! changeover &&
+								bookingStatusData[ date ] &&
+								( dayElem.classList.contains(
+									'flatpickr-disabled'
+								) ||
+									dayElem.classList.contains(
+										'mhbo-unbookable'
+									) )
 							) {
-								instance.set( 'disable', newDisabled );
+								if ( dayElem.dateObj >= today ) {
+									dayElem.classList.add(
+										'mhbo-booking-' +
+											bookingStatusData[ date ]
+									);
+									if ( rawBookingStatusData[ date ] ) {
+										dayElem.classList.add(
+											'mhbo-booking-' +
+												rawBookingStatusData[ date ]
+										);
+									}
+								}
 							}
-						} else if ( selectedDates.length === 2 ) {
-							pendingCheckIn = null; // valid forward range completed
-							// Reset maxDate limit once range is selected or auto-advanced
-							instance.set(
-								'maxDate',
-								new Date().fp_incr( FUTURE_BOOKING_LIMIT_DAYS )
-							);
 
-							// If both dates are the same, auto-advance checkout to the next day (min 1 night)
-							// We allow the next day even if it's "booked" because it's a valid check-out.
+							// Accessible state annotation (WCAG 2.2 AA)
+							const baseAria =
+								dayElem.getAttribute( 'aria-label' ) || date;
+							let ariaDesc = '';
+							if ( changeover === 'both' ) {
+								ariaDesc = ', Check-out & Check-in Day';
+							} else if ( changeover === 'checkout' ) {
+								ariaDesc = ', Check-out Only';
+							} else if ( changeover === 'checkin' ) {
+								ariaDesc = ', Check-in Only';
+							} else if ( bookingStatusData[ date ] ) {
+								ariaDesc =
+									bookingStatusData[ date ] === 'pending'
+										? ', Provisional / Pending'
+										: ', Booked';
+							}
+							if ( ariaDesc ) {
+								dayElem.setAttribute(
+									'aria-label',
+									baseAria + ariaDesc
+								);
+							}
+
+							// Price rendering
 							if (
-								selectedDates[ 0 ].getTime() ===
-								selectedDates[ 1 ].getTime()
+								showPrice &&
+								priceData[ date ] &&
+								! rawDisabledDates.includes( date ) &&
+								dayElem.dateObj >= today
 							) {
-								const nextDay = new Date( selectedDates[ 0 ] );
-								nextDay.setDate( nextDay.getDate() + 1 );
+								const pos =
+									( mhbo_calendar.settings &&
+										mhbo_calendar.settings.currency_pos ) ||
+									'before';
+								const symbol =
+									mhbo_calendar.settings.currency_symbol;
+								const priceVal = priceData[ date ].price;
+								const decimals =
+									typeof mhbo_calendar.settings
+										.currency_decimals !== 'undefined'
+										? parseInt(
+												mhbo_calendar.settings
+													.currency_decimals,
+												10
+										  )
+										: 0;
 
-								// Silently update visual selection
-								instance.setDate(
-									[ selectedDates[ 0 ], nextDay ],
-									false
-								);
+								const formattedPrice =
+									parseFloat( priceVal ).toFixed( decimals );
 
-								// Always keep checkout date un-disabled conceptually (dead day logic handles restrictions natively)
-								const checkOutStr = instance.formatDate(
-									nextDay,
-									'Y-m-d'
-								);
-								const newDisabledFinal = disabledDates.filter(
-									( d ) => d !== checkOutStr
-								);
-								instance.set( 'disable', newDisabledFinal );
+								const priceTag =
+									document.createElement( 'span' );
+								priceTag.className = 'mhbo-fp-price';
+								const spanCurrency =
+									'<span class="mhbo-price-part-currency">' +
+									symbol +
+									'</span>';
+								const spanAmount =
+									'<span class="mhbo-price-part-amount">' +
+									formattedPrice +
+									'</span>';
 
-								updateBookingForm( [
-									selectedDates[ 0 ],
-									nextDay,
-								] );
-								return;
+								if ( pos === 'before' ) {
+									priceTag.innerHTML =
+										spanCurrency + ' ' + spanAmount;
+								} else {
+									priceTag.innerHTML =
+										spanAmount + ' ' + spanCurrency;
+								}
+
+								dayElem.appendChild( priceTag );
+								dayElem.classList.add( 'has-price' );
 							}
+						},
+					} );
 
-							// Always keep the checkout date un-disabled conceptually so flatpickr doesn't erase it
-							const checkOutStr2 = instance.formatDate(
-								selectedDates[ 1 ],
-								'Y-m-d'
-							);
-							const newDisabledFinal2 = disabledDates.filter(
-								( d ) => d !== checkOutStr2
-							);
-							instance.set( 'disable', newDisabledFinal2 );
+					wrapper._mhboPicker = picker;
 
-							updateBookingForm( selectedDates );
-						} else {
-							// length 0 or cleared
-							pendingCheckIn = null;
-							instance.set(
-								'maxDate',
-								new Date().fp_incr( FUTURE_BOOKING_LIMIT_DAYS )
-							);
-							instance.set( 'disable', disabledDates );
-							$selectionBox.removeClass( 'mhbo-visible' ).hide();
-							$guide.text(
-								mhbo_calendar.i18n.select_checkin ||
-									'Select your check-in date'
-							);
+					// --- INTERACTIVE PRICE-ON-HOVER (2026 BP) ---
+					wrapper.addEventListener( 'mousemove', function ( e ) {
+						const dayElem = e.target.closest( '.flatpickr-day' );
+						if ( ! dayElem ) {
+							return;
 						}
-					},
-					onDayCreate( dObj, dStr, fp, dayElem ) {
-						const date = fp.formatDate( dayElem.dateObj, 'Y-m-d' );
-						const dayNum = dayElem.dateObj.getDate();
-						dayElem.innerHTML = '';
-						const $num = $(
-							'<span class="mhbo-day-number">' +
-								dayNum +
-								'</span>'
-						);
-						$( dayElem ).append( $num );
-
-						const today = new Date();
-						today.setHours( 0, 0, 0, 0 );
-
-						// Apply half-day styling for checkin/checkout changeover dates (only for today or future dates)
-						if ( changeoverData[ date ] && dayElem.dateObj >= today ) {
-							$( dayElem ).addClass(
-								'mhbo-half-booked-' + changeoverData[ date ]
-							);
-						}
-
-						// Apply booking status CSS class for color coding
-						// Allow styling for disabled dates OR changeover dates (even if enabled/selectable)
-						if (
-							bookingStatusData[ date ] &&
-							( dayElem.classList.contains(
-								'flatpickr-disabled'
-							) ||
-								changeoverData[ date ] )
-						) {
-							// Only apply status color if the date is not in the past
-							if ( dayElem.dateObj >= today ) {
-								$( dayElem ).addClass(
-									'mhbo-booking-' + bookingStatusData[ date ]
-								);
-							}
-						}
-
-						// Only render prices for room-specific calendars (not aggregated views).
-						if (
-							showPrice &&
-							priceData[ date ] &&
-							! rawDisabledDates.includes( date ) &&
-							dayElem.dateObj >= today
-						) {
-							const pos = mhbo_calendar.settings.currency_pos;
-							const symbol =
-								mhbo_calendar.settings.currency_symbol;
-							const priceVal = priceData[ date ].price;
-							const decimals =
-								typeof mhbo_calendar.settings
-									.currency_decimals !== 'undefined'
-									? parseInt(
-											mhbo_calendar.settings
-												.currency_decimals
-									  )
-									: 0;
-
-							const formattedPrice =
-								parseFloat( priceVal ).toFixed( decimals );
-
-							let priceHtml = '';
-							const spanCurrency =
-								'<span class="mhbo-price-part-currency">' +
-								symbol +
-								'</span>';
-							const spanAmount =
-								'<span class="mhbo-price-part-amount">' +
-								formattedPrice +
-								'</span>';
-
-							if ( pos === 'before' ) {
-								priceHtml = spanCurrency + ' ' + spanAmount;
-							} else {
-								priceHtml = spanAmount + ' ' + spanCurrency;
-							}
-
-							const $priceTag = $(
-								'<span class="mhbo-fp-price">' +
-									priceHtml +
-									'</span>'
-							);
-							$( dayElem ).append( $priceTag );
-							$( dayElem ).addClass( 'has-price' );
-						}
-
-},
-				} );
-
-				// ATTACH INSTANCE TO WRAPPER (CRITICAL FOR HARDENING)
-				$wrapper.data( 'mhbo-picker', picker );
-
-				// --- INTERACTIVE PRICE-ON-HOVER (2026 BP) ---
-				$wrapper.on( 'mousemove', '.flatpickr-day', function ( e ) {
 
 if ( ! picker || picker.selectedDates.length !== 1 ) {
-						$tooltip.removeClass( 'mhbo-visible' );
-						$wrapper
-							.find( '.mhbo-range-hover' )
-							.removeClass( 'mhbo-range-hover' );
-						return;
-					}
-
-					const hoverDate = this.dateObj;
-					if (
-						! hoverDate ||
-						hoverDate < picker.selectedDates[ 0 ] ||
-						$( this ).hasClass( 'flatpickr-disabled' )
-					) {
-						$tooltip.removeClass( 'mhbo-visible' );
-						$wrapper
-							.find( '.mhbo-range-hover' )
-							.removeClass( 'mhbo-range-hover' );
-						return;
-					}
-
-					// Calculate range from selected check-in to hovered date
-					const start = picker.selectedDates[ 0 ];
-					const end = hoverDate;
-
-					// Don't show for same day
-					if ( start.getTime() === end.getTime() ) {
-						$tooltip.removeClass( 'mhbo-visible' );
-						$wrapper
-							.find( '.mhbo-range-hover' )
-							.removeClass( 'mhbo-range-hover' );
-						return;
-					}
-
-					// Calculate total and night count
-					let total = 0;
-					let nights = 0;
-					const d = new Date( start );
-
-					// Clear previous hover glow
-					$wrapper
-						.find( '.mhbo-range-hover' )
-						.removeClass( 'mhbo-range-hover' );
-
-					while ( d < end ) {
-						const dStr = picker.formatDate( d, 'Y-m-d' );
-						if ( priceData[ dStr ] ) {
-							total += parseFloat( priceData[ dStr ].price );
+							tooltip.classList.remove( 'mhbo-visible' );
+							wrapper
+								.querySelectorAll( '.mhbo-range-hover' )
+								.forEach( ( el ) =>
+									el.classList.remove( 'mhbo-range-hover' )
+								);
+							return;
 						}
 
-						// Apply hover glow to valid days in range
-						// Find the element for this date
-						const dayElem = picker.daysContainer.querySelector(
-							`[aria-label="${ picker.formatDate(
-								d,
-								picker.config.ariaDateFormat
-							) }"]`
+						const hoverDate = dayElem.dateObj;
+						if (
+							! hoverDate ||
+							hoverDate < picker.selectedDates[ 0 ] ||
+							dayElem.classList.contains( 'flatpickr-disabled' )
+						) {
+							tooltip.classList.remove( 'mhbo-visible' );
+							wrapper
+								.querySelectorAll( '.mhbo-range-hover' )
+								.forEach( ( el ) =>
+									el.classList.remove( 'mhbo-range-hover' )
+								);
+							return;
+						}
+
+						const start = picker.selectedDates[ 0 ];
+						const end = hoverDate;
+
+						if ( start.getTime() === end.getTime() ) {
+							tooltip.classList.remove( 'mhbo-visible' );
+							wrapper
+								.querySelectorAll( '.mhbo-range-hover' )
+								.forEach( ( el ) =>
+									el.classList.remove( 'mhbo-range-hover' )
+								);
+							return;
+						}
+
+						let total = 0;
+						let nights = 0;
+						const d = new Date( start );
+
+						wrapper
+							.querySelectorAll( '.mhbo-range-hover' )
+							.forEach( ( el ) =>
+								el.classList.remove( 'mhbo-range-hover' )
+							);
+
+						while ( d < end ) {
+							const dStr = picker.formatDate( d, 'Y-m-d' );
+							if ( priceData[ dStr ] ) {
+								total += parseFloat( priceData[ dStr ].price );
+							}
+
+							const matchedDay =
+								picker.daysContainer.querySelector(
+									`[aria-label="${ picker.formatDate(
+										d,
+										picker.config.ariaDateFormat
+									) }"]`
+								);
+							if ( matchedDay ) {
+								matchedDay.classList.add( 'mhbo-range-hover' );
+							}
+
+							nights++;
+							d.setDate( d.getDate() + 1 );
+						}
+
+						const formattedTotal = formatCurrency( total );
+						const nightsLabel =
+							nights === 1
+								? mhbo_calendar.i18n.night || 'Night'
+								: mhbo_calendar.i18n.nights || 'Nights';
+						const nightsFull = nights + ' ' + nightsLabel;
+
+						const nSpan = tooltip.querySelector(
+							'.mhbo-tooltip-nights'
 						);
-						if ( dayElem ) {
-							$( dayElem ).addClass( 'mhbo-range-hover' );
+						if ( nSpan ) {
+							nSpan.textContent = nightsFull;
 						}
 
-						nights++;
+						const pSpan = tooltip.querySelector(
+							'.mhbo-tooltip-price'
+						);
+						if ( pSpan ) {
+							if ( showPrice && total > 0 ) {
+								pSpan.textContent = formattedTotal;
+								pSpan.style.display = '';
+							} else {
+								pSpan.style.display = 'none';
+							}
+						}
+
+tooltip.style.left = e.clientX + 'px';
+						tooltip.style.top = e.clientY + 'px';
+						tooltip.classList.add( 'mhbo-visible' );
+					} );
+
+					wrapper.addEventListener( 'mouseleave', function () {
+						tooltip.classList.remove(
+							'mhbo-visible',
+							'mhbo-tooltip-warn'
+						);
+						const cSpan = tooltip.querySelector(
+							'.mhbo-tooltip-constraint'
+						);
+						if ( cSpan ) {
+							cSpan.style.display = 'none';
+						}
+						wrapper
+							.querySelectorAll( '.mhbo-range-hover' )
+							.forEach( ( el ) =>
+								el.classList.remove( 'mhbo-range-hover' )
+							);
+						wrapper.classList.remove(
+							'mhbo-hovering-valid-checkout'
+						);
+					} );
+				}
+
+				function updateBookingForm( dates ) {
+					const start = dates[ 0 ];
+					const end = dates[ 1 ];
+					const startStr = picker.formatDate( start, 'Y-m-d' );
+					const endStr = picker.formatDate( end, 'Y-m-d' );
+
+					const inInput =
+						wrapper.querySelector( '.mhbo-cal-check-in' );
+					if ( inInput ) {
+						inInput.value = startStr;
+					}
+					const outInput = wrapper.querySelector(
+						'.mhbo-cal-check-out'
+					);
+					if ( outInput ) {
+						outInput.value = endStr;
+					}
+					const inDisp = wrapper.querySelector(
+						'.mhbo-display-check-in'
+					);
+					if ( inDisp ) {
+						inDisp.textContent = startStr;
+					}
+					const outDisp = wrapper.querySelector(
+						'.mhbo-display-check-out'
+					);
+					if ( outDisp ) {
+						outDisp.textContent = endStr;
+					}
+
+					// CROSS-SYNC: If on the booking form page, sync main form inputs too
+					const mainForm =
+						document.getElementById( 'mhbo-booking-form' );
+					if ( mainForm ) {
+						const mainIn = mainForm.querySelector(
+							'input[name="check_in"]'
+						);
+						if ( mainIn ) {
+							mainIn.value = startStr;
+							mainIn.dispatchEvent(
+								new Event( 'change', { bubbles: true } )
+							);
+						}
+						const mainOut = mainForm.querySelector(
+							'input[name="check_out"]'
+						);
+						if ( mainOut ) {
+							mainOut.value = endStr;
+							mainOut.dispatchEvent(
+								new Event( 'change', { bubbles: true } )
+							);
+						}
+					}
+
+					// Update summary box labels
+					if ( selectionBox ) {
+						const headerH3 = selectionBox.querySelector(
+							'.mhbo-selection-header h3'
+						);
+						if ( headerH3 ) {
+							headerH3.textContent =
+								mhbo_calendar.i18n.your_selection ||
+								'Your Selection';
+						}
+						const dateLabels = selectionBox.querySelectorAll(
+							'.mhbo-selection-dates .mhbo-label'
+						);
+						if ( dateLabels.length >= 2 ) {
+							dateLabels[ 0 ].textContent =
+								mhbo_calendar.i18n.check_in || 'Check-in';
+							dateLabels[ 1 ].textContent =
+								mhbo_calendar.i18n.check_out || 'Check-out';
+						}
+					}
+
+					// Update button text
+					const submitBtn = wrapper.querySelector(
+						'.mhbo-booking-btn-submit'
+					);
+					if ( submitBtn && mhbo_calendar.i18n.continue_booking ) {
+						submitBtn.textContent =
+							mhbo_calendar.i18n.continue_booking;
+					}
+
+					// Update pricing summary
+					if ( showPrice ) {
+						if ( selectionBox ) {
+							const priceLabel = selectionBox.querySelector(
+								'.mhbo-selection-price .mhbo-label'
+							);
+							if ( priceLabel ) {
+								priceLabel.textContent =
+									mhbo_calendar.i18n.total || 'Total';
+							}
+						}
+						calculateTotalPrice( start, end );
+					}
+
+					if ( guide ) {
+						guide.textContent =
+							mhbo_calendar.i18n.dates_selected ||
+							'Dates selected. Complete the form below.';
+					}
+					if ( selectionBox ) {
+						selectionBox.style.display = '';
+						selectionBox.classList.add( 'mhbo-visible' );
+					}
+				}
+
+				function calculateTotalPrice( start, end ) {
+					let total = 0;
+					const d = new Date( start );
+					while ( d < end ) {
+						const dateStr = picker.formatDate( d, 'Y-m-d' );
+						if ( priceData[ dateStr ] ) {
+							total += parseFloat( priceData[ dateStr ].price );
+						}
 						d.setDate( d.getDate() + 1 );
 					}
-
-					const formattedTotal = formatCurrency( total );
-					const nightsLabel =
-						nights === 1
-							? mhbo_calendar.i18n.night || 'Night'
-							: mhbo_calendar.i18n.nights || 'Nights';
-					const nightsFull = nights + ' ' + nightsLabel;
-
-					const showPrice = $wrapper.data( 'show-price' ) === 1;
-
-					// Update and position tooltip
-					$tooltip.find( '.mhbo-tooltip-nights' ).text( nightsFull );
-
-					if ( showPrice && total > 0 ) {
-						$tooltip
-							.find( '.mhbo-tooltip-price' )
-							.text( formattedTotal )
-							.show();
-					} else {
-						$tooltip.find( '.mhbo-tooltip-price' ).hide();
-					}
-
-// Use clientX/Y for position:fixed elements to avoid scroll offsets
-					$tooltip
-						.css( {
-							left: e.clientX,
-							top: e.clientY,
-						} )
-						.addClass( 'mhbo-visible' );
-				} );
-
-				$wrapper.on( 'mouseleave', '.flatpickr-day', function () {
-					$tooltip.removeClass( 'mhbo-visible mhbo-tooltip-warn' );
-					$tooltip.find( '.mhbo-tooltip-constraint' ).hide();
-					$wrapper.find( '.mhbo-range-hover' ).removeClass( 'mhbo-range-hover' );
-					$wrapper.removeClass( 'mhbo-hovering-valid-checkout' );
-				} );
-
-				$wrapper.on(
-					'mouseleave pointerleave',
-					'.mhbo-calendar-inline',
-					function () {
-						$tooltip.removeClass(
-							'mhbo-visible mhbo-tooltip-warn'
-						);
-						$tooltip.find( '.mhbo-tooltip-constraint' ).hide();
-						$wrapper
-							.find( '.mhbo-range-hover' )
-							.removeClass( 'mhbo-range-hover' );
-					}
-				);
-			}
-
-			function updateBookingForm( dates ) {
-				const start = dates[ 0 ];
-				const end = dates[ 1 ];
-				const startStr = picker.formatDate( start, 'Y-m-d' );
-				const endStr = picker.formatDate( end, 'Y-m-d' );
-
-				$wrapper.find( '.mhbo-cal-check-in' ).val( startStr );
-				$wrapper.find( '.mhbo-cal-check-out' ).val( endStr );
-				$wrapper.find( '.mhbo-display-check-in' ).text( startStr );
-				$wrapper.find( '.mhbo-display-check-out' ).text( endStr );
-
-				// CROSS-SYNC: If we are on the booking form page already, find the main form inputs too
-				const $mainForm = $( '#mhbo-booking-form' );
-				if ( $mainForm.length ) {
-					$mainForm.find( 'input[name="check_in"]' ).val( startStr );
-					$mainForm.find( 'input[name="check_out"]' ).val( endStr );
-					// Trigger change to update prices if mhbo-booking-form.js is active
-					$mainForm
-						.find( 'input[name="check_in"]' )
-						.trigger( 'change' );
-				}
-
-				// Update summary box labels if they have translation tags
-				if (
-					$selectionBox.find( '.mhbo-selection-header h3' ).length
-				) {
-					$selectionBox
-						.find( '.mhbo-selection-header h3' )
-						.text(
-							mhbo_calendar.i18n.your_selection ||
-								'Your Selection'
-						);
-				}
-				const $dateLabels = $selectionBox.find(
-					'.mhbo-selection-dates .mhbo-label'
-				);
-				if ( $dateLabels.length >= 2 ) {
-					$( $dateLabels[ 0 ] ).text(
-						mhbo_calendar.i18n.check_in || 'Check-in'
+					const formatted = formatCurrency( total );
+					const dispPrice = wrapper.querySelector(
+						'.mhbo-display-price'
 					);
-					$( $dateLabels[ 1 ] ).text(
-						mhbo_calendar.i18n.check_out || 'Check-out'
-					);
-				}
-
-				// Update button text if translation is available
-				const $submitBtn = $wrapper.find( '.mhbo-booking-btn-submit' );
-				if (
-					$submitBtn.length &&
-					mhbo_calendar.i18n.continue_booking
-				) {
-					$submitBtn.text( mhbo_calendar.i18n.continue_booking );
-				}
-
-				// Update pricing summary only for room-specific calendars
-				if ( showPrice && typeof calculateTotalPrice === 'function' ) {
-					$selectionBox
-						.find( '.mhbo-selection-price .mhbo-label' )
-						.text( mhbo_calendar.i18n.total || 'Total' );
-					calculateTotalPrice( start, end );
-				}
-
-				$guide.text(
-					mhbo_calendar.i18n.dates_selected ||
-						'Dates selected. Complete the form below.'
-				);
-				$selectionBox.addClass( 'mhbo-visible' ).fadeIn();
-			}
-
-			function calculateTotalPrice( start, end ) {
-				let total = 0;
-				const d = new Date( start );
-				while ( d < end ) {
-					const dateStr = picker.formatDate( d, 'Y-m-d' );
-					if ( priceData[ dateStr ] ) {
-						total += parseFloat( priceData[ dateStr ].price );
+					if ( dispPrice ) {
+						dispPrice.textContent = formatted;
 					}
-					d.setDate( d.getDate() + 1 );
+					const totalPriceInput = wrapper.querySelector(
+						'.mhbo-cal-total-price'
+					);
+					if ( totalPriceInput ) {
+						totalPriceInput.value = total;
+					}
+
+					const mainForm =
+						document.getElementById( 'mhbo-booking-form' );
+					if ( mainForm ) {
+						const mainTotal = mainForm.querySelector(
+							'input[name="total_price"]'
+						);
+						if ( mainTotal ) {
+							mainTotal.value = total;
+						}
+					}
 				}
-				const formatted = formatCurrency( total );
-				$wrapper.find( '.mhbo-display-price' ).text( formatted );
-				$wrapper.find( '.mhbo-cal-total-price' ).val( total );
 
-				// Also sync to main form total hidden field if it exists
-				const $mainTotal = $( '#mhbo-booking-form' ).find(
-					'input[name="total_price"]'
-				);
-				if ( $mainTotal.length ) {
-					$mainTotal.val( total );
+				function formatCurrency( amount ) {
+					const pos =
+						( mhbo_calendar.settings &&
+							mhbo_calendar.settings.currency_pos ) ||
+						'before';
+					const symbol = mhbo_calendar.settings.currency_symbol;
+					const decimals =
+						typeof mhbo_calendar.settings.currency_decimals !==
+						'undefined'
+							? parseInt(
+									mhbo_calendar.settings.currency_decimals,
+									10
+							  )
+							: 2;
+					const formatted = amount.toFixed( decimals );
+					return pos === 'before'
+						? symbol + ' ' + formatted
+						: formatted + ' ' + symbol;
 				}
-			}
 
-			function formatCurrency( amount ) {
-				const pos = mhbo_calendar.settings.currency_pos;
-				const symbol = mhbo_calendar.settings.currency_symbol;
-				const decimals =
-					typeof mhbo_calendar.settings.currency_decimals !==
-					'undefined'
-						? parseInt( mhbo_calendar.settings.currency_decimals )
-						: 2;
-				const formatted = amount.toFixed( decimals );
-				return pos === 'before'
-					? symbol + ' ' + formatted
-					: formatted + ' ' + symbol;
-			}
-
-			// Expose error handler to wrapper
-			$wrapper.data( 'mhbo-error-handler', showInlineError );
-
-			initFlatpickr();
-		} );
+				wrapper._mhboErrorHandler = showInlineError;
+				initFlatpickr();
+			} );
 	}
 
-	// Capture the button click globally for better resilience
-	// AND check for double-attachment
-	if ( ! $( document ).data( 'mhbo-click-attached' ) ) {
-		$( document ).on( 'click', '.mhbo-booking-btn-submit', function ( e ) {
+	// Capture button click globally with delegation (Vanilla JS)
+	if ( ! document.documentElement.dataset.mhboClickAttached ) {
+		document.addEventListener( 'click', function ( e ) {
+			const btn = e.target.closest( '.mhbo-booking-btn-submit' );
+			if ( ! btn ) {
+				return;
+			}
 			e.preventDefault();
-			const $btn = $( this );
-			const $wrapper = $btn.closest( '.mhbo-calendar-container' );
 
-			// Safety check: if we somehow clicked a button without a wrapper, abort
-			if ( ! $wrapper.length ) {
+			const wrapper = btn.closest( '.mhbo-calendar-container' );
+			if ( ! wrapper ) {
 				return;
 			}
 
-			const $form = $wrapper.find( '.mhbo-selection-form' );
-			const roomId = $wrapper.data( 'room-id' );
-			const action = $form.attr( 'action' );
-			const showError = $wrapper.data( 'mhbo-error-handler' ) || alert;
+			const form = wrapper.querySelector( '.mhbo-selection-form' );
+			const roomId = wrapper.dataset.roomId;
+			const action = form ? form.getAttribute( 'action' ) : '';
+			const showError = wrapper._mhboErrorHandler || alert;
 
-			// HARDENING: Try Flatpickr instance FIRST (most reliable)
-			const picker = $wrapper.data( 'mhbo-picker' );
+			const picker = wrapper._mhboPicker;
 			let checkIn, checkOut, totalPrice;
 
 			if ( picker && picker.selectedDates.length === 2 ) {
@@ -864,15 +1296,15 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 					picker.selectedDates[ 1 ],
 					'Y-m-d'
 				);
-				// Get totalPrice from the internal hidden input as it's calculated in updateBookingForm
-				totalPrice =
-					$wrapper.find( '.mhbo-cal-total-price' ).val() || '0';
+				const tInput = wrapper.querySelector( '.mhbo-cal-total-price' );
+				totalPrice = tInput ? tInput.value : '0';
 			} else {
-				// FALLBACK: Try wrapper hidden inputs
-				checkIn = $wrapper.find( '.mhbo-cal-check-in' ).val();
-				checkOut = $wrapper.find( '.mhbo-cal-check-out' ).val();
-				totalPrice =
-					$wrapper.find( '.mhbo-cal-total-price' ).val() || '0';
+				const inInput = wrapper.querySelector( '.mhbo-cal-check-in' );
+				const outInput = wrapper.querySelector( '.mhbo-cal-check-out' );
+				const tInput = wrapper.querySelector( '.mhbo-cal-total-price' );
+				checkIn = inInput ? inInput.value : '';
+				checkOut = outInput ? outInput.value : '';
+				totalPrice = tInput ? tInput.value : '0';
 			}
 
 			if ( ! checkIn || ! checkOut ) {
@@ -883,7 +1315,7 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 				return;
 			}
 
-			const showPrice = String( $wrapper.data( 'show-price' ) ) === '1';
+			const showPrice = String( wrapper.dataset.showPrice ) === '1';
 			const hasRoom = roomId && parseInt( roomId, 10 ) > 0;
 
 			if ( showPrice && hasRoom && parseFloat( totalPrice ) <= 0 ) {
@@ -894,10 +1326,10 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 				return;
 			}
 
-// Modal mode: dispatch event instead of submitting the form
+// Modal mode: dispatch custom event
 			const modalMode =
-				$wrapper.data( 'modal-mode' ) === '1' ||
-				$wrapper.data( 'modal-mode' ) === 1;
+				wrapper.dataset.modalMode === '1' ||
+				wrapper.dataset.modalMode === 'true';
 			if ( modalMode && typeof window.MhboModal !== 'undefined' ) {
 				document.dispatchEvent(
 					new CustomEvent( 'mhboBookNow', {
@@ -912,16 +1344,27 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 				return;
 			}
 
-			// Sync values to the form's hidden inputs before submitting
-			if ( $form.length ) {
-				$form.find( 'input[name="check_in"]' ).val( checkIn );
-				$form.find( 'input[name="check_out"]' ).val( checkOut );
-				$form.find( 'input[name="total_price"]' ).val( totalPrice );
+			// Sync values to form inputs before submitting
+			if ( form ) {
+				const inHidden = form.querySelector( 'input[name="check_in"]' );
+				if ( inHidden ) {
+					inHidden.value = checkIn;
+				}
+				const outHidden = form.querySelector(
+					'input[name="check_out"]'
+				);
+				if ( outHidden ) {
+					outHidden.value = checkOut;
+				}
+				const totalHidden = form.querySelector(
+					'input[name="total_price"]'
+				);
+				if ( totalHidden ) {
+					totalHidden.value = totalPrice;
+				}
 
-				// Native form submission will automatically include type_id and guests
-				$form[ 0 ].submit();
+				form.submit();
 			} else {
-				// Fallback for cases without a formal form wrapper
 				let finalUrl;
 				try {
 					const base = window.location.origin;
@@ -936,7 +1379,7 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 					url.searchParams.set( 'total_price', totalPrice );
 					url.searchParams.set( 'mhbo_auto_book', '1' );
 
-					var autoNonce =
+					const autoNonce =
 						( typeof mhbo_calendar !== 'undefined' &&
 							mhbo_calendar.auto_nonce ) ||
 						'';
@@ -973,8 +1416,13 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 				window.location.href = finalUrl;
 			}
 		} );
-		$( document ).data( 'mhbo-click-attached', true );
+		document.documentElement.dataset.mhboClickAttached = 'true';
 	}
 
-	initAllCalendars();
-} );
+	// Bootstrap when DOM is ready
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', initAllCalendars );
+	} else {
+		initAllCalendars();
+	}
+} )();

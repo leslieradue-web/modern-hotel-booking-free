@@ -2,8 +2,8 @@
 
 namespace MHBO\Core;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 /**
@@ -15,71 +15,80 @@ if (!defined('ABSPATH')) {
  * @package MHBO\Core
  * @since   2.2.3
  */
-class Deactivator
-{
-    /**
-     * Run deactivation tasks.
-     *
-     * @return void
-     */
-    public static function deactivate(): void
-    {
-        // Clear all scheduled cron events
-        self::clear_scheduled_crons();
+class Deactivator {
 
-        // Clear plugin transients
-        self::clear_transients();
+	/**
+	 * Run deactivation tasks.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		// Clear all scheduled cron events
+		self::clear_scheduled_crons();
 
-        // Flush rewrite rules
-        flush_rewrite_rules();
+		// Clear plugin transients
+		self::clear_transients();
 
-        // AI Discovery cleanup - remove llms.txt if exists
-        if ( class_exists( '\MHBO\AI\LlmFile' ) ) {
-            \MHBO\AI\LlmFile::cleanup();
-        }
-    }
+		// Flush rewrite rules
+		flush_rewrite_rules();
 
-    /**
-     * Clear all scheduled cron events for this plugin.
-     *
-     * @return void
-     */
-    private static function clear_scheduled_crons(): void
-    {
-        $crons = [
-            'mhbo_hourly_sync',
-            'mhbo_daily_maintenance',
-            'mhbo_ical_scheduled_sync',
-            'mhbo_ical_scheduled_sync_single',
-            'check_updates-modern-hotel-booking',
-            
-        ];
+		// AI Discovery cleanup - remove llms.txt if exists
+		if ( class_exists( '\MHBO\AI\LlmFile' ) ) {
+			\MHBO\AI\LlmFile::cleanup();
+		}
+	}
 
-        foreach ($crons as $cron_hook) {
-            $timestamp = wp_next_scheduled($cron_hook);
-            if ($timestamp) {
-                wp_unschedule_event($timestamp, $cron_hook);
-            }
-            // Clear any remaining scheduled events
-            wp_clear_scheduled_hook($cron_hook);
-        }
-    }
+	/**
+	 * Clear all scheduled cron events for this plugin.
+	 *
+	 * @return void
+	 */
+	private static function clear_scheduled_crons(): void {
+		$crons = array(
+			'mhbo_hourly_sync',
+			'mhbo_daily_maintenance',
+			'mhbo_hourly_maintenance',
+			'mhbo_ical_scheduled_sync',
+			'mhbo_ical_scheduled_sync_single',
+			'mhbo_recalculate_guest_stats',
+			'mhbo_migrate_guests_batch',
+			'mhbo_daily_housekeeping_manifest_cron',
+			'mhbo_dispatch_review_invitations',
+			'mhbo_daily_review_email_cron',
+			'mhbo_send_balance_link',
+			'check_updates-modern-hotel-booking',
+			
+		);
 
-    /**
-     * Clear plugin transients (rate limiting, caching, etc.).
-     *
-     * @return void
-     */
-    private static function clear_transients(): void
-    {
-        global $wpdb;
+		foreach ( $crons as $cron_hook ) {
+			$timestamp = wp_next_scheduled( $cron_hook );
+			if ( $timestamp ) {
+				wp_unschedule_event( $timestamp, $cron_hook );
+			}
+			// Clear any remaining scheduled events
+			wp_clear_scheduled_hook( $cron_hook );
+		}
 
-        // Rule 13 rationale: Bulk cleanup of temporary transients during deactivation.
+if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			\as_unschedule_all_actions( 'mhbo_migrate_guests_batch' );
+			\as_unschedule_all_actions( 'mhbo_recalculate_guest_stats' );
+		}
+	}
+
+	/**
+	 * Clear plugin transients (rate limiting, caching, etc.).
+	 *
+	 * @return void
+	 */
+	private static function clear_transients(): void {
+		global $wpdb;
+
+		// Rule 13 rationale: Bulk cleanup of temporary transients during deactivation.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk cleanup during deactivation
-        $wpdb->query(
-            "DELETE FROM {$wpdb->options} 
+		$wpdb->query(
+			"DELETE FROM {$wpdb->options} 
              WHERE option_name LIKE '_transient_mhbo_%' 
              OR option_name LIKE '_site_transient_mhbo_%'"
-        );
-    }
+		);
+	}
 }

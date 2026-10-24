@@ -1,0 +1,411 @@
+/**
+ * Modern Hotel Booking - WordPress Dashboard Widgets Stylesheet
+ *
+ * Dedicated lightweight stylesheet for native WordPress admin dashboard widgets:
+ * - Hotel Booking Overview (#mhbo_dashboard_overview)
+ * - Hotel Revenue Overview (#mhbo_revenue_widget)
+ *
+ * Enqueued strictly on wp-admin/index.php to prevent loading the full 229KB admin CSS
+ * suite while guaranteeing pixel-perfect layout and typography in WP 7.1+ / 6.6+.
+ *
+ * @package Modern_Hotel_Booking
+ * @version 2.6.2
+ */
+
+/* ==========================================================================
+   1. WordPress Dashboard Widget Container Overrides & Box Model
+   ========================================================================== */
+
+#mhbo_dashboard_overview,
+#mhbo_dashboard_overview .inside,
+#mhbo_revenue_widget,
+#mhbo_revenue_widget .inside {
+    overflow: hidden !important;
+    box-sizing: border-box;
+}
+
+#mhbo_dashboard_overview .inside,
+#mhbo_revenue_widget .inside {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+}
+
+/* Neutralize WordPress core link underlines & color hijacking in #dashboard-widgets */
+#dashboard-widgets #mhbo_dashboard_overview a,
+#dashboard-widgets #mhbo_revenue_widget a {
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+}
+
+#dashboard-widgets #mhbo_dashboard_overview a:focus,
+#dashboard-widgets #mhbo_revenue_widget a:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Root Widget Wrapper with Container Query Context */
+.mhbo-dash-widget {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    color: #1e293b;
+    padding: 12px 14px 16px 14px;
+    box-sizing: border-box;
+    font-size: 13px;
+    line-height: 1.4;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    container-type: inline-size;
+}
+
+/* ==========================================================================
+   2. Header Occupancy Status Badge
+   ========================================================================== */
+
+.mhbo-widget-header-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    gap: 8px;
+}
+
+.mhbo-widget-header-badge .mhbo-occupancy-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    letter-spacing: 0.01em;
+}
+
+/* Pulse Activity Indicators */
+.mhbo-pulse-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    margin-right: 4px;
+    flex-shrink: 0;
+    vertical-align: middle;
+    animation: mhbo-dash-pulse 2s infinite ease-in-out;
+}
+
+.mhbo-pulse-indicator.mhbo-pulse-amber {
+    background: #f59e0b;
+}
+
+.mhbo-pulse-indicator.mhbo-pulse-red {
+    background: #ef4444;
+}
+
+.mhbo-pulse-indicator.mhbo-pulse-blue {
+    background: #3b82f6;
+}
+
+@keyframes mhbo-dash-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* ==========================================================================
+   3. Operational 6-KPI Micro Grid (Hotel Booking Overview)
+   ========================================================================== */
+
+/* Balanced 3-column x 2-row layout guaranteed to fit standard WP dashboard widget widths (300px - 450px) */
+.mhbo-widget-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* On extra-wide 1-column dashboard screens (>= 680px container width), expand to a single 6-column row */
+@container (min-width: 680px) {
+    .mhbo-widget-kpi-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}
+
+.mhbo-widget-kpi-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 4px;
+    text-align: center;
+    text-decoration: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.mhbo-widget-kpi-box:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.mhbo-widget-kpi-box:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+/* Actionable Attention Box Alert State */
+.mhbo-widget-kpi-box.mhbo-kpi-box-alert {
+    border-color: #fecaca;
+    background: #fffafa;
+}
+
+.mhbo-widget-kpi-box.mhbo-kpi-box-alert:hover {
+    border-color: #fca5a5;
+    background: #fff5f5;
+}
+
+.mhbo-widget-kpi-val {
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #0f172a;
+    display: block;
+    margin-bottom: 3px;
+    letter-spacing: -0.02em;
+}
+
+.mhbo-widget-kpi-lbl {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.2;
+    padding: 0 2px;
+}
+
+/* ==========================================================================
+   4. Financial Gradient Stat Cards (Hotel Revenue Overview)
+   ========================================================================== */
+
+.mhbo-widget-gradient-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mhbo-dash-widget a .mhbo-widget-gradient-card,
+.mhbo-widget-gradient-card {
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+    color: #ffffff !important;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.mhbo-dash-widget a .mhbo-widget-gradient-card *,
+.mhbo-widget-gradient-card * {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+.mhbo-dash-widget a:hover .mhbo-widget-gradient-card,
+.mhbo-widget-gradient-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16) !important;
+}
+
+.mhbo-dash-widget a:focus-visible .mhbo-widget-gradient-card {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+
+/* ==========================================================================
+   5. Operational Meta Rows & Badges Matrix
+   ========================================================================== */
+
+.mhbo-widget-meta-list {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.mhbo-widget-meta-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #475569 !important;
+    text-decoration: none !important;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    font-size: 12px;
+    min-width: 0;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.mhbo-widget-meta-item:hover {
+    background-color: #ffffff;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.mhbo-widget-meta-item:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.mhbo-widget-meta-item span:last-child {
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.mhbo-widget-meta-item:hover span:last-child {
+    transform: translateX(2px);
+}
+
+.mhbo-widget-meta-list a {
+    text-decoration: none !important;
+    color: inherit;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.mhbo-widget-meta-list a:hover {
+    color: #0f172a;
+    opacity: 0.9;
+}
+
+/* ==========================================================================
+   6. Action Shortcuts Grid & Buttons
+   ========================================================================== */
+
+.mhbo-widget-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 10px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mhbo-widget-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 6px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #334155 !important;
+    text-decoration: none !important;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+    box-sizing: border-box;
+    min-height: 34px;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mhbo-widget-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mhbo-widget-btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.mhbo-widget-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.mhbo-widget-btn-primary {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.mhbo-widget-btn-primary:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 6px rgba(37, 99, 235, 0.3);
+}
+
+.mhbo-widget-btn-primary .dashicons {
+    color: #ffffff !important;
+}

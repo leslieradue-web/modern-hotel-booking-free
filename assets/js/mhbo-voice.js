@@ -32,6 +32,17 @@
 			this.currentAudio = null; // Track active ElevenLabs/external audio
 			this.ttsEnabled = false;
 			this.silenceTimer = null;
+			this.audioGenId = 0; // Generation counter to prevent out-of-order/stale audio playback
+
+			// Clean up active microphone and audio when navigating away or unmounting.
+			window.addEventListener( 'pagehide', () => {
+				this.stop();
+				this.stopSpeaking();
+			} );
+			window.addEventListener( 'beforeunload', () => {
+				this.stop();
+				this.stopSpeaking();
+			} );
 		}
 
 		/**
@@ -44,10 +55,11 @@
 
 		/**
 		 * Start voice input.
-		 * @param {function(string): void} onResult  Called with the final transcript.
+		 * @param {function(string): void} onResult Called with the final/interim transcript.
 		 * @param {function(string): void} [onError] Called with error message.
+		 * @param {function(): void} [onEnd] Called when speech recognition session ends.
 		 */
-		start( onResult, onError ) {
+		start( onResult, onError, onEnd ) {
 			// Barge-in (2026 BP): Always stop bot speech when guest starts speaking.
 			this.stopSpeaking();
 
@@ -57,11 +69,12 @@
 			}
 
 			if ( ! this.SpeechRecognition ) {
-				onError &&
+				if ( typeof onError === 'function' ) {
 					onError(
 						s.voiceNotSupported ||
 							'Voice input is not supported in this browser.'
 					);
+				}
 				return;
 			}
 
@@ -107,12 +120,12 @@
 				if ( fullResult ) {
 					onResult( fullResult );
 
-					// Silence detection: If no more speech for 3 seconds, stop and submit.
+					// Silence detection: If no more speech for 2.8 seconds, stop and submit.
 					this.silenceTimer = setTimeout( () => {
 						this.stop();
 						const form = document.querySelector(
-							'.mhbo-chat-input-row'
-						);
+							'.mhbo-chat-widget--open .mhbo-chat-input-row'
+						) || document.querySelector( '.mhbo-chat-input-row' );
 						if ( form ) {
 							form.dispatchEvent(
 								new Event( 'submit', {
@@ -121,13 +134,17 @@
 								} )
 							);
 						}
-					}, 3000 ); // 3-second grace period as requested.
+					}, 2800 );
 				}
 			};
 
 			r.onerror = ( event ) => {
 				this._setRecordingUI( false );
 				this.isListening = false;
+				if ( event.error === 'no-speech' ) {
+					// User paused without speaking; exit gracefully without raising error bubble.
+					return;
+				}
 				let msg = s.voiceError || 'Voice input error.';
 				if ( event.error === 'not-allowed' ) {
 					msg =
@@ -138,15 +155,28 @@
 						s.voiceNetworkError ||
 						'Network error during voice recognition.';
 				}
-				onError && onError( msg );
+				if ( typeof onError === 'function' ) {
+					onError( msg );
+				}
 			};
 
 			r.onend = () => {
 				this._setRecordingUI( false );
 				this.isListening = false;
+				if ( typeof onEnd === 'function' ) {
+					onEnd();
+				}
 			};
 
-			r.start();
+			try {
+				r.start();
+			} catch ( err ) {
+				this._setRecordingUI( false );
+				this.isListening = false;
+				if ( typeof onError === 'function' ) {
+					onError( s.voiceError || 'Failed to start microphone recording.' );
+				}
+			}
 		}
 
 		/**
@@ -169,13 +199,64 @@
 		 * Stop all active speech output (Browser TTS and ElevenLabs).
 		 */
 		stopSpeaking() {
+			this.audioGenId = ( this.audioGenId || 0 ) + 1;
 			if ( this.SpeechSynthesis ) {
-				this.SpeechSynthesis.cancel();
+				try {
+					this.SpeechSynthesis.cancel();
+				} catch ( _ ) {}
 			}
 			if ( this.currentAudio ) {
-				this.currentAudio.pause();
+				try {
+					this.currentAudio.pause();
+				} catch ( _ ) {}
 				this.currentAudio = null;
 			}
+		}
+
+		/**
+		 * Strip Markdown syntax, URLs, HTML tags, and code blocks before speaking.
+		 * Prevents synthetic voices from reading symbols like asterisks, hashes, brackets, or URLs.
+		 * @param {string} text
+		 * @return {string}
+		 */
+		_cleanTextForSpeech( text ) {
+			if ( ! text || typeof text !== 'string' ) {
+				return '';
+			}
+			let clean = text;
+
+			// Convert Markdown links [Anchor Text](https://...) to just "Anchor Text"
+			clean = clean.replace( /\[([^\]]+)\]\([^)]+\)/g, '$1' );
+
+			// Strip code blocks and inline code
+			clean = clean.replace( /```[\s\S]*?```/g, '' );
+			clean = clean.replace( /`[^`]+`/g, '' );
+
+			// Strip raw URLs
+			clean = clean.replace( /https?:\/\/\S+/g, '' );
+
+			// Strip HTML tags
+			clean = clean.replace( /<[^>]+>/g, '' );
+
+			// Strip Markdown symbols and bullet points
+			clean = clean.replace( /[*#_~>|]/g, '' );
+			clean = clean.replace( /^[ \t]*[-+*]\s+/gm, '' );
+
+			// Collapse multiple spaces and newlines
+			clean = clean.replace( /\s+/g, ' ' ).trim();
+
+			// Clamp to sensible length (600 chars) for speech conciseness
+			if ( clean.length > 600 ) {
+				const truncated = clean.substring( 0, 600 );
+				const lastPeriod = truncated.lastIndexOf( '.' );
+				if ( lastPeriod > 300 ) {
+					clean = truncated.substring( 0, lastPeriod + 1 );
+				} else {
+					clean = truncated + '…';
+				}
+			}
+
+			return clean;
 		}
 
 		/**
@@ -183,14 +264,14 @@
 		 * @param {string} text
 		 */
 		speak( text ) {
+			const clean = this._cleanTextForSpeech( text );
+			if ( ! clean ) {
+				return;
+			}
 
-this._speakBrowser( text );
+this._speakBrowser( clean );
 		}
 
-		/**
-		 * Browser SpeechSynthesis TTS.
-		 * @param {string} text
-		 */
 		/**
 		 * Resolve the active BCP-47 language tag at call-time.
 		 * Reads document.documentElement.lang (set by Polylang / WPML / qTranslate)
@@ -209,33 +290,47 @@ this._speakBrowser( text );
 			).replace( '_', '-' );
 		}
 
+		/**
+		 * Browser SpeechSynthesis TTS.
+		 * @param {string} text
+		 */
 		_speakBrowser( text ) {
 			if ( ! this.SpeechSynthesis ) {
 				return;
 			}
-			this.SpeechSynthesis.cancel();
-			const utter = new SpeechSynthesisUtterance( text );
-			utter.lang = this._getLanguage();
-			this.SpeechSynthesis.speak( utter );
+			try {
+				this.SpeechSynthesis.cancel();
+				const utter = new SpeechSynthesisUtterance( text );
+				utter.lang = this._getLanguage();
+				utter.onerror = () => {
+					// Gracefully suppress speech cancellation on user barge-in.
+				};
+				this.SpeechSynthesis.speak( utter );
+			} catch ( _ ) {}
 		}
 
 /**
-		 * Toggle the recording UI indicator on the voice button.
+		 * Toggle the recording UI indicator on all voice buttons.
 		 * @param {boolean} active
 		 */
 		_setRecordingUI( active ) {
-			const btn = document.querySelector( '.mhbo-chat-voice-btn' );
-			if ( ! btn ) {
-				return;
-			}
-			btn.classList.toggle( 'mhbo-chat-voice-btn--recording', active );
-			btn.setAttribute( 'aria-pressed', String( active ) );
-			btn.setAttribute(
-				'aria-label',
-				active
-					? s.stopVoice || 'Stop recording'
-					: s.startVoice || 'Start voice input'
-			);
+			const btns = document.querySelectorAll( '.mhbo-chat-voice-btn' );
+			btns.forEach( ( btn ) => {
+				btn.classList.toggle( 'mhbo-chat-voice-btn--recording', active );
+				btn.setAttribute( 'aria-pressed', String( active ) );
+				btn.setAttribute(
+					'aria-label',
+					active
+						? s.stopVoice || 'Stop recording'
+						: s.startVoice || 'Start voice input'
+				);
+				btn.setAttribute(
+					'title',
+					active
+						? s.stopVoice || 'Stop recording'
+						: s.startVoice || 'Voice input'
+				);
+			} );
 		}
 	}
 
@@ -245,15 +340,22 @@ this._speakBrowser( text );
 
 	const instance = new VoiceInput();
 
+	function hideUnsupportedVoiceButtons() {
+		document
+			.querySelectorAll( '.mhbo-chat-voice-btn' )
+			.forEach( ( btn ) => {
+				btn.hidden = true;
+				btn.style.display = 'none';
+			} );
+	}
+
 	// Hide voice buttons if not supported.
 	if ( ! instance.isSupported() ) {
-		document.addEventListener( 'DOMContentLoaded', () => {
-			document
-				.querySelectorAll( '.mhbo-chat-voice-btn' )
-				.forEach( ( btn ) => {
-					btn.hidden = true;
-				} );
-		} );
+		if ( document.readyState === 'loading' ) {
+			document.addEventListener( 'DOMContentLoaded', hideUnsupportedVoiceButtons );
+		} else {
+			hideUnsupportedVoiceButtons();
+		}
 	}
 
 	// Expose globally so ChatWidget can use it.

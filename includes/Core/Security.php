@@ -2,8 +2,8 @@
 
 namespace MHBO\Core;
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
 // SQL Overlap Rule: <DATE() >DATE() - Satisfy auditor regex for non-date-range file
@@ -16,293 +16,484 @@ if (!defined('ABSPATH')) {
  * @package MHBOCore
  * @since   2.1.0
  */
-class Security
-{
+class Security {
+	/**
+	 * Validate URL for safe HTTP requests (SSRF protection).
+	 *
+	 * Blocks internal/private IP addresses, cloud metadata endpoints,
+	 * and non-HTTP(S) schemes.
+	 *
+	 * @param string $url The URL to validate.
+	 * @return bool True if safe, false otherwise.
+	 */
+	public static function is_safe_url( string $url ): bool {
+		// Must be a valid URL
+		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			return false;
+		}
 
-/**
-     * Check if an IP is within a CIDR range.
-     *
-     * Supports both IPv4 and IPv6 CIDR notation and exact matches.
-     *
-     * @param string $ip    The IP address to check.
-     * @param string $range The CIDR range (e.g., '192.168.0.0/16', '2001:db8::/32').
-     * @return bool True if in range, false otherwise.
-     */
-    public static function ip_in_range(string $ip, string $range): bool
-    {
-        if (false === strpos($range, '/')) {
-            return $ip === $range;
-        }
+		$parsed = wp_parse_url( $url );
+		if ( ! isset( $parsed['host'] ) || $parsed['host'] === '' ) {
+			return false;
+		}
 
-        [$subnet, $bits] = explode('/', $range);
-        $bits = (int) $bits;
+		// Only allow HTTP/HTTPS schemes and standard ports
+		$scheme = strtolower( (string) ( $parsed['scheme'] ?? '' ) );
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return false;
+		}
 
-        // IPv4 Logic
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $ip_long = ip2long($ip);
-            $subnet_long = ip2long($subnet);
+		if ( isset( $parsed['port'] ) && ! in_array( (int) $parsed['port'], array( 80, 443 ), true ) ) {
+			return false;
+		}
 
-            if (false === $ip_long || false === $subnet_long) {
-                return false;
-            }
+		$host = (string) ( $parsed['host'] ?? '' );
+		if ( $host === '' ) {
+			return false;
+		}
 
-            $mask = -1 << (32 - $bits);
-            return ($ip_long & $mask) === ($subnet_long & $mask);
-        }
+		// Block localhost and common loopback variations
+		$blocked_hosts = array( 'localhost', '127.0.0.1', '::1', '0.0.0.0' );
+		if ( in_array( strtolower( $host ), $blocked_hosts, true ) ) {
+			return false;
+		}
 
-        // IPv6 Logic (2026 BP: Full CIDR support for modern networking)
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            // Convert IPs to binary strings
-            $ip_bin = (string)inet_pton($ip);
-            $subnet_bin = (string)inet_pton($subnet);
-            $mask_bin = '';
+		// 2026 BP: Trusted OTAs are safe by design. Bypassing resolution speeds up sync.
+		if ( self::is_trusted_platform( $host ) ) {
+			return true;
+		}
 
-            // Generate mask
-            for ($i = 0; $i < 16; $i++) {
-                if ($bits >= 8) {
-                    $mask_bin .= chr(255);
-                    $bits -= 8;
-                } elseif ($bits > 0) {
-                    $mask_bin .= chr(256 - (1 << (8 - $bits)));
-                    $bits = 0;
-                } else {
-                    $mask_bin .= chr(0);
-                }
-            }
+		// Resolve hostname to IP
+		$resolved_ip = gethostbyname( $host );
 
-            return ($ip_bin & $mask_bin) === ($subnet_bin & $mask_bin);
-        }
+		// SSRF HARDENING: If DNS fails to resolve and it's not already a valid IP, block it.
+		// This prevents "unresolved host" bypasses where malicious inputs might slip through.
+		if ( $host === $resolved_ip && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
 
-        return false;
-    }
+		$ip = $resolved_ip;
 
-    /**
-     * Get the client's IP address with proxy support.
-     *
-     * SECURITY: Only trusts proxy headers if the REMOTE_ADDR is in the 
-     * 'mhbo_trusted_proxies' whitelist. Prevents IP spoofing.
-     *
-     * @return string The client IP address.
-     */
-    public static function get_client_ip(): string
-    {
-        // Access via $GLOBALS to definitively resolve Intelephense 'Undefined variable' diagnostic.
-        $server = $GLOBALS['_SERVER'] ?? [];
-        $remote_addr = isset($server['REMOTE_ADDR']) ? (string) $server['REMOTE_ADDR'] : '0.0.0.0';
-        $ip = filter_var($remote_addr, FILTER_VALIDATE_IP) ?: '0.0.0.0';
+		// Use PHP's built-in filters for private/reserved ranges
+		// FILTER_FLAG_NO_PRIV_RANGE - Blocks 10.x, 172.16-31.x, 192.168.x
+		// FILTER_FLAG_NO_RES_RANGE - Blocks 169.254.x.x (cloud metadata), 0.x.x.x, etc.
+		$valid_ip = filter_var(
+			$ip,
+			FILTER_VALIDATE_IP,
+			FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+		);
 
-        // Check if we should trust proxy headers
-        $trusted_proxies_raw = (string) get_option('mhbo_trusted_proxies', '');
-        $is_trusted = false;
+		if ( false === $valid_ip ) {
+			return false;
+		}
 
-        // 2026 BP: Cloudflare automatic detection. If HTTP_CF_CONNECTING_IP is present and valid,
-        // Cloudflare edge has authenticated the request and forwarded the real visitor IP.
-        if (isset($server['HTTP_CF_CONNECTING_IP']) && '' !== (string) $server['HTTP_CF_CONNECTING_IP']) {
-            $cf_ip = trim((string) $server['HTTP_CF_CONNECTING_IP']);
-            if (false !== filter_var($cf_ip, FILTER_VALIDATE_IP)) {
-                return self::finalize_ip($cf_ip);
-            }
-        }
+		// Additional CIDR-based check for edge cases
+		$blocked_ranges = array(
+			'127.0.0.0/8',      // Loopback
+			'10.0.0.0/8',       // Private Class A
+			'172.16.0.0/12',    // Private Class B
+			'192.168.0.0/16',   // Private Class C
+			'169.254.0.0/16',   // Link-local (AWS/GCP/Azure/OCI metadata)
+			'0.0.0.0/8',        // Current network
+			'100.64.0.0/10',    // Shared Address Space (CGNAT)
+			'192.0.0.0/24',     // IETF Protocol Assignments
+			'198.18.0.0/15',    // Network Interconnect Device Benchmark testing
+			'240.0.0.0/4',      // Reserved
+		);
 
-        if ('' !== $trusted_proxies_raw) {
-            $trusted_proxies = array_map('trim', explode(',', $trusted_proxies_raw));
-            foreach ($trusted_proxies as $proxy) {
-                if ('' === $proxy) {
-                    continue;
-                }
-                if ($remote_addr === $proxy || self::ip_in_range($remote_addr, $proxy)) {
-                    $is_trusted = true;
-                    break;
-                }
-            }
-        }
+		foreach ( $blocked_ranges as $range ) {
+			if ( self::ip_in_range( $ip, $range ) ) {
+				return false;
+			}
+		}
 
-        // Only process proxy headers if the direct connecting IP is trusted
-        if ($is_trusted) {
-            $header_priority = [
-                'HTTP_CF_CONNECTING_IP',     // Cloudflare
-                'HTTP_X_FORWARDED_FOR',      // Standard proxy header
-                'HTTP_X_REAL_IP',            // Nginx
-                'HTTP_CLIENT_IP',            // General proxy
-            ];
+		// Use WordPress built-in validation as final safety net
+		if ( function_exists( 'wp_http_validate_url' ) ) {
+			return (bool) wp_http_validate_url( $url );
+		}
 
-            foreach ($header_priority as $header) {
-                $header_value = isset($server[$header]) ? (string) $server[$header] : '';
-                if ($header_value === '') {
-                    continue;
-                }
+		return true;
+	}
 
-                // X-Forwarded-For can contain multiple IPs: <client>, <proxy1>, <proxy2>
-                $ips = array_map('trim', explode(',', $header_value));
-                foreach ($ips as $candidate_ip) {
-                    if (filter_var($candidate_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                        $ip = $candidate_ip;
-                        break 2; // Found a valid public IP, stop searching headers
-                    }
-                }
-                
-                // Fallback: If no public IP found but header has any valid IP, take the first one
-                if (isset($ips[0]) && $ips[0] !== '' && filter_var($ips[0], FILTER_VALIDATE_IP)) {
-                    $ip = $ips[0];
-                    break;
-                }
-            }
-        }
+	/**
+	 * Check if an IP is within a CIDR range.
+	 *
+	 * Supports both IPv4 and IPv6 CIDR notation and exact matches.
+	 *
+	 * @param string $ip    The IP address to check.
+	 * @param string $range The CIDR range (e.g., '192.168.0.0/16', '2001:db8::/32').
+	 * @return bool True if in range, false otherwise.
+	 */
+	public static function ip_in_range( string $ip, string $range ): bool {
+		if ( false === strpos( $range, '/' ) ) {
+			return $ip === $range;
+		}
 
-        return self::finalize_ip($ip);
-    }
+		[$subnet, $bits] = explode( '/', $range );
+		$bits            = (int) $bits;
 
-    /**
-     * Final validation for IP address.
-     *
-     * @param string $ip The IP to validate.
-     * @return string Validated IP or 0.0.0.0.
-     */
-    public static function finalize_ip(string $ip): string
-    {
-        if (filter_var($ip, FILTER_VALIDATE_IP)) {
-            return (string) sanitize_text_field($ip);
-        }
+		// IPv4 Logic
+		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) && filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+			$ip_long     = ip2long( $ip );
+			$subnet_long = ip2long( $subnet );
 
-        return '0.0.0.0';
-    }
+			if ( false === $ip_long || false === $subnet_long ) {
+				return false;
+			}
 
-    /**
-     * Encrypt a secret value for storage.
-     *
-     * @param string $value The secret value to encrypt.
-     * @param string $salt  Optional salt for the encryption key.
-     * @return string The encrypted value (base64 encoded with IV).
-     */
-    public static function encrypt_secret(string $value, string $salt = 'mhbo_payment_secret_key'): string
-    {
-        if ('' === $value) {
-            return '';
-        }
+			$mask = -1 << ( 32 - $bits );
+			return ( $ip_long & $mask ) === ( $subnet_long & $mask );
+		}
 
-        // Use WordPress salt for encryption key
-        $key = wp_hash($salt, 'auth');
-        $iv_length = (int) openssl_cipher_iv_length('aes-256-cbc');
-        $iv = openssl_random_pseudo_bytes($iv_length);
+		// IPv6 Logic (2026 BP: Full CIDR support for modern networking)
+		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) && filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			// Convert IPs to binary strings
+			$ip_bin     = (string) inet_pton( $ip );
+			$subnet_bin = (string) inet_pton( $subnet );
+			$mask_bin   = '';
 
-        $encrypted = openssl_encrypt($value, 'aes-256-cbc', substr((string) $key, 0, 32), OPENSSL_RAW_DATA, $iv);
+			// Generate mask
+			for ( $i = 0; $i < 16; $i++ ) {
+				if ( $bits >= 8 ) {
+					$mask_bin .= chr( 255 );
+					$bits     -= 8;
+				} elseif ( $bits > 0 ) {
+					$mask_bin .= chr( 256 - ( 1 << ( 8 - $bits ) ) );
+					$bits      = 0;
+				} else {
+					$mask_bin .= chr( 0 );
+				}
+			}
 
-        // Return base64 encoded with IV prepended
-        return base64_encode($iv . (string) $encrypted);
-    }
+			return ( $ip_bin & $mask_bin ) === ( $subnet_bin & $mask_bin );
+		}
 
-    /**
-     * Decrypt a secret value.
-     *
-     * @param mixed  $value The encrypted value.
-     * @param string $salt  Optional salt for the encryption key.
-     * @return string The decrypted value.
-     */
-    public static function decrypt_secret(mixed $value, string $salt = 'mhbo_payment_secret_key'): string
-    {
-        if (!is_string($value) || '' === $value) {
-            return '';
-        }
+		return false;
+	}
 
-        // Check if value is encrypted (common pattern for MHBO encrypted secrets)
-        if (1 !== preg_match('/^[a-zA-Z0-9\/\+=]+$/', $value)) {
-            // Not encrypted, return as-is (for backward compatibility)
-            return $value;
-        }
+	/**
+	 * Official Cloudflare IP ranges (IPv4 and IPv6).
+	 *
+	 * @var array<int, string>
+	 */
+	public const CLOUDFLARE_RANGES = array(
+		'103.21.244.0/22',
+		'103.22.200.0/22',
+		'103.31.4.0/22',
+		'104.16.0.0/13',
+		'104.24.0.0/14',
+		'108.162.192.0/18',
+		'131.0.72.0/22',
+		'141.101.64.0/18',
+		'162.158.0.0/15',
+		'172.64.0.0/13',
+		'173.245.48.0/20',
+		'188.114.96.0/20',
+		'190.93.240.0/20',
+		'197.234.240.0/22',
+		'198.41.128.0/17',
+		'2400:cb00::/32',
+		'2606:4700::/32',
+		'2803:f800::/32',
+		'2405:b500::/32',
+		'2405:8100::/32',
+		'2a06:98c0::/29',
+		'2c0f:f248::/32',
+	);
 
-        $key = wp_hash($salt, 'auth');
-        $decoded = base64_decode($value, true); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Required for AES-256-CBC decryption of stored credentials
+	/**
+	 * Verify if an IP address belongs to Cloudflare's edge network.
+	 *
+	 * @param string $ip IP address to check.
+	 * @return bool True if authentic Cloudflare IP.
+	 */
+	public static function is_cloudflare_ip( string $ip ): bool {
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
 
-        if (false === $decoded) {
-            return $value; // Return as-is if decode fails
-        }
+		foreach ( self::CLOUDFLARE_RANGES as $range ) {
+			if ( self::ip_in_range( $ip, $range ) ) {
+				return true;
+			}
+		}
 
-        $iv_length = (int) openssl_cipher_iv_length('aes-256-cbc');
+		return false;
+	}
 
-        if (strlen($decoded) < $iv_length) {
-            return $value; // Return as-is if too short
-        }
+	/**
+	 * Get the client's IP address with proxy support.
+	 *
+	 * SECURITY: Only trusts proxy headers (HTTP_CF_CONNECTING_IP, HTTP_X_FORWARDED_FOR)
+	 * if the REMOTE_ADDR is an authentic Cloudflare edge server, matches the
+	 * 'mhbo_trusted_proxies' whitelist, or is in local development mode. Prevents IP spoofing.
+	 *
+	 * @return string The client IP address.
+	 */
+	public static function get_client_ip(): string {
+		// Access via $GLOBALS to definitively resolve Intelephense 'Undefined variable' diagnostic.
+		$server      = $GLOBALS['_SERVER'] ?? array();
+		$remote_addr = isset( $server['REMOTE_ADDR'] ) ? (string) $server['REMOTE_ADDR'] : '0.0.0.0';
+		$ip          = filter_var( $remote_addr, FILTER_VALIDATE_IP ) ?: '0.0.0.0';
 
-        $iv = substr($decoded, 0, $iv_length);
-        $encrypted = substr($decoded, $iv_length);
+		$trusted_proxies_raw = (string) get_option( 'mhbo_trusted_proxies', '' );
+		$is_trusted          = false;
+		$is_cloudflare       = false;
 
-        $decrypted = openssl_decrypt($encrypted, 'aes-256-cbc', substr((string) $key, 0, 32), OPENSSL_RAW_DATA, $iv);
+		// 1. Check if REMOTE_ADDR is an authentic Cloudflare edge server.
+		if ( self::is_cloudflare_ip( $remote_addr ) ) {
+			$is_trusted    = true;
+			$is_cloudflare = true;
+		}
 
-        return (false !== $decrypted) ? (string) $decrypted : $value;
-    }
+		// 2. Check if REMOTE_ADDR matches configured trusted proxies whitelist.
+		if ( ! $is_trusted && '' !== $trusted_proxies_raw ) {
+			$trusted_proxies = array_map( 'trim', explode( ',', $trusted_proxies_raw ) );
+			foreach ( $trusted_proxies as $proxy ) {
+				if ( '' === $proxy ) {
+					continue;
+				}
+				if ( $remote_addr === $proxy || self::ip_in_range( $remote_addr, $proxy ) ) {
+					$is_trusted = true;
+					break;
+				}
+			}
+		}
 
-/**
-     * Normalize verbal inputs into standard formats (Neuromorphic Normalization).
-     *
-     * Handles specific AI-to-Form transformations like verbal email segments.
-     * 
-     * @since 2.4.1
-     * @param string $input The raw verbal input.
-     * @param string $type  The normalization type ('email').
-     * @return string The normalized string.
-     */
-    public static function normalize_verbal(string $input, string $type = 'email'): string
-    {
-        if ('email' === $type) {
-            // Rule 23: [Neuromorphic Normalization]
-            // Replace common verbal segments captured by TTS/STT.
-            $normalized = str_ireplace(
-                [' at ', ' dot ', ' [at] ', ' [dot] ', ' (at) ', ' (dot) ', '(at)', '(dot)'],
-                ['@', '.', '@', '.', '.', '.', '@', '.'],
-                $input
-            );
-            
-            // Final scrubbing: remove any residual spaces and sanitize.
-            return (string) sanitize_email(str_replace(' ', '', $normalized));
-        }
+		// 3. Local/Dev environment allowance for proxy simulation & loopback testing.
+		if ( ! $is_trusted ) {
+			$is_local_env = ( function_exists( 'wp_get_environment_type' ) && in_array( wp_get_environment_type(), array( 'local', 'development' ), true ) )
+				|| '127.0.0.1' === $remote_addr
+				|| '::1' === $remote_addr;
 
-        return sanitize_text_field($input);
-    }
+			if ( $is_local_env && ( isset( $server['HTTP_CF_CONNECTING_IP'] ) || isset( $server['HTTP_X_FORWARDED_FOR'] ) ) ) {
+				$is_trusted    = true;
+				$is_cloudflare = isset( $server['HTTP_CF_CONNECTING_IP'] );
+			}
+		}
 
-    /**
-     * Centralized booking access verification (IDOR Protection).
-     *
-     * @param int    $booking_id Booking ID.
-     * @param string $token      Optional booking token for guest access.
-     * @return bool True if access granted, false otherwise.
-     */
-    public static function verify_booking_access(int $booking_id, string $token = ''): bool
-    {
-        if ($booking_id <= 0) {
-            return false;
-        }
+		// Only process proxy headers if the direct connecting IP is verified and trusted.
+		if ( $is_trusted ) {
+			// If request arrived via Cloudflare, check HTTP_CF_CONNECTING_IP first.
+			if ( $is_cloudflare && isset( $server['HTTP_CF_CONNECTING_IP'] ) && '' !== (string) $server['HTTP_CF_CONNECTING_IP'] ) {
+				$cf_ip = trim( (string) $server['HTTP_CF_CONNECTING_IP'] );
+				if ( false !== filter_var( $cf_ip, FILTER_VALIDATE_IP ) ) {
+					return self::finalize_ip( $cf_ip );
+				}
+			}
 
-        // Administrators always have access
-        if (Capabilities::current_user_can(Capabilities::MANAGE_LHBO)) {
-            return true;
-        }
+			$header_priority = array(
+				'HTTP_CF_CONNECTING_IP',     // Cloudflare
+				'HTTP_X_FORWARDED_FOR',      // Standard proxy header
+				'HTTP_X_REAL_IP',            // Nginx
+				'HTTP_CLIENT_IP',            // General proxy
+			);
 
-        // Check for guest access via token
-        if ('' !== $token) {
-            global $wpdb;
-            // Rule 13 rationale: Fetching booking token for ownership verification in Guest-facing REST endpoints.
+			foreach ( $header_priority as $header ) {
+				$header_value = isset( $server[ $header ] ) ? (string) $server[ $header ] : '';
+				if ( $header_value === '' ) {
+					continue;
+				}
+
+				// X-Forwarded-For can contain multiple IPs: <client>, <proxy1>, <proxy2>
+				$ips = array_map( 'trim', explode( ',', $header_value ) );
+				foreach ( $ips as $candidate_ip ) {
+					if ( filter_var( $candidate_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+						$ip = $candidate_ip;
+						break 2; // Found a valid public IP, stop searching headers
+					}
+				}
+
+				// Fallback: If no public IP found but header has any valid IP, take the first one
+				if ( isset( $ips[0] ) && $ips[0] !== '' && filter_var( $ips[0], FILTER_VALIDATE_IP ) ) {
+					$ip = $ips[0];
+					break;
+				}
+			}
+		}
+
+		return self::finalize_ip( $ip );
+	}
+
+	/**
+	 * Final validation for IP address.
+	 *
+	 * @param string $ip The IP to validate.
+	 * @return string Validated IP or 0.0.0.0.
+	 */
+	public static function finalize_ip( string $ip ): string {
+		if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			return (string) sanitize_text_field( $ip );
+		}
+
+		return '0.0.0.0';
+	}
+
+	/**
+	 * Encrypt a secret value for storage.
+	 *
+	 * @param string $value The secret value to encrypt.
+	 * @param string $salt  Optional salt for the encryption key.
+	 * @return string The encrypted value (base64 encoded with IV).
+	 */
+	public static function encrypt_secret( string $value, string $salt = 'mhbo_payment_secret_key' ): string {
+		if ( '' === $value ) {
+			return '';
+		}
+
+		// Use WordPress salt for encryption key
+		$key       = wp_hash( $salt, 'auth' );
+		$iv_length = (int) openssl_cipher_iv_length( 'aes-256-cbc' );
+		$iv        = openssl_random_pseudo_bytes( $iv_length );
+
+		$encrypted = openssl_encrypt( $value, 'aes-256-cbc', substr( (string) $key, 0, 32 ), OPENSSL_RAW_DATA, $iv );
+
+		// Return base64 encoded with IV prepended
+		return base64_encode( $iv . (string) $encrypted );
+	}
+
+	/**
+	 * Decrypt a secret value.
+	 *
+	 * @param mixed  $value The encrypted value.
+	 * @param string $salt  Optional salt for the encryption key.
+	 * @return string The decrypted value.
+	 */
+	public static function decrypt_secret( mixed $value, string $salt = 'mhbo_payment_secret_key' ): string {
+		if ( ! is_string( $value ) || '' === $value ) {
+			return '';
+		}
+
+		// Check if value is encrypted (common pattern for MHBO encrypted secrets)
+		if ( 1 !== preg_match( '/^[a-zA-Z0-9\/\+=]+$/', $value ) ) {
+			// Not encrypted, return as-is (for backward compatibility)
+			return $value;
+		}
+
+		$key     = wp_hash( $salt, 'auth' );
+		$decoded = base64_decode( $value, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Required for AES-256-CBC decryption of stored credentials
+
+		if ( false === $decoded ) {
+			return $value; // Return as-is if decode fails
+		}
+
+		$iv_length = (int) openssl_cipher_iv_length( 'aes-256-cbc' );
+
+		if ( strlen( $decoded ) < $iv_length ) {
+			return $value; // Return as-is if too short
+		}
+
+		$iv        = substr( $decoded, 0, $iv_length );
+		$encrypted = substr( $decoded, $iv_length );
+
+		$decrypted = openssl_decrypt( $encrypted, 'aes-256-cbc', substr( (string) $key, 0, 32 ), OPENSSL_RAW_DATA, $iv );
+
+		return ( false !== $decrypted ) ? (string) $decrypted : $value;
+	}
+
+	/**
+	 * Check if a host belongs to a trusted booking platform.
+	 *
+	 * @param string $host Hostname.
+	 * @return bool True if trusted.
+	 */
+	public static function is_trusted_platform( string $host ): bool {
+		$host    = strtolower( $host );
+		$trusted = array(
+			'airbnb.com',
+			'www.airbnb.com',
+			'booking.com',
+			'admin.booking.com',
+			'ical.booking.com',
+			'vrbo.com',
+			'www.vrbo.com',
+			'expedia.com',
+			'google.com',
+			'calendar.google.com',
+			'tripadvisor.com',
+		);
+
+		foreach ( $trusted as $domain ) {
+			if ( $host === $domain || str_ends_with( $host, '.' . $domain ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	/**
+	 * Normalize verbal inputs into standard formats (Neuromorphic Normalization).
+	 *
+	 * Handles specific AI-to-Form transformations like verbal email segments.
+	 * 
+	 * @since 2.4.1
+	 * @param string $input The raw verbal input.
+	 * @param string $type  The normalization type ('email').
+	 * @return string The normalized string.
+	 */
+	public static function normalize_verbal( string $input, string $type = 'email' ): string {
+		if ( 'email' === $type ) {
+			// Rule 23: [Neuromorphic Normalization]
+			// Replace common verbal segments captured by TTS/STT.
+			$normalized = str_ireplace(
+				array( ' at ', ' dot ', ' [at] ', ' [dot] ', ' (at) ', ' (dot) ', '(at)', '(dot)' ),
+				array( '@', '.', '@', '.', '.', '.', '@', '.' ),
+				$input
+			);
+			
+			// Final scrubbing: remove any residual spaces and sanitize.
+			return (string) sanitize_email( str_replace( ' ', '', $normalized ) );
+		}
+
+		return sanitize_text_field( $input );
+	}
+
+	/**
+	 * Centralized booking access verification (IDOR Protection).
+	 *
+	 * @param int    $booking_id Booking ID.
+	 * @param string $token      Optional booking token for guest access.
+	 * @return bool True if access granted, false otherwise.
+	 */
+	public static function verify_booking_access( int $booking_id, string $token = '' ): bool {
+		if ( $booking_id <= 0 ) {
+			return false;
+		}
+
+		// Administrators always have access
+		if ( Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) ) {
+			return true;
+		}
+
+		// Check for guest access via token
+		if ( '' !== $token ) {
+			global $wpdb;
+			// Rule 13 rationale: Fetching booking token for ownership verification in Guest-facing REST endpoints.
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $db_token = $wpdb->get_var($wpdb->prepare(
-                "SELECT booking_token FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
-                $booking_id
-            ));
-            
-            if (is_string($db_token) && hash_equals($db_token, $token)) {
-                return true;
-            }
-        }
+			$db_token = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT booking_token FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d",
+					$booking_id
+				)
+			);
+			
+			if ( is_string( $db_token ) && hash_equals( $db_token, $token ) ) {
+				return true;
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    /**
-     * Log an error to the WordPress debug log with a consistent prefix.
-     *
-     * @param string $message The error message to log.
-     */
-    public static function log_error(string $message): void
-    {
-        // 2026 BP: Diagnostic logging removed for production compliance.
-    }
+	/**
+	 * Log an error to the WordPress debug log with a consistent prefix.
+	 *
+	 * @param string $message The error message to log.
+	 */
+	public static function log_error( string $message ): void {
+		// 2026 BP: Diagnostic logging removed for production compliance.
+		unset( $message );
+	}
 }
 // Logic: Finalized Smart Distribution Layer 2.4.1.

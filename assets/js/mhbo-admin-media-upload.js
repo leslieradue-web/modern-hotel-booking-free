@@ -3,33 +3,46 @@
  *
  * Handles WordPress media modal for logo and QR code uploads in Business Info settings.
  *
- * @param $
  * @package
  * @since   2.1.0
  */
 
-( function ( $ ) {
+( function () {
 	'use strict';
 
-	$( function () {
-		$( '.mhbo-upload-btn, .mhbo-upload-button' ).on(
-			'click',
-			function ( e ) {
+	document.addEventListener( 'DOMContentLoaded', function () {
+		document.addEventListener( 'click', function ( e ) {
+			const uploadBtn = e.target.closest(
+				'.mhbo-upload-btn, .mhbo-upload-button'
+			);
+			if ( uploadBtn ) {
 				e.preventDefault();
 
-				const button = $( this );
-				const id_target = button.data( 'target-id' )
-					? $( '#' + button.data( 'target-id' ) )
+				const targetId = uploadBtn.getAttribute( 'data-target-id' );
+				const targetUrl =
+					uploadBtn.getAttribute( 'data-target-url' ) ||
+					uploadBtn.getAttribute( 'data-target' );
+				const previewId = uploadBtn.getAttribute( 'data-preview' );
+
+				const idTarget = targetId
+					? document.getElementById( targetId )
 					: null;
-				const url_target = button.data( 'target-url' )
-					? $( '#' + button.data( 'target-url' ) )
-					: button.data( 'target' )
-					? $( button.data( 'target' ) )
+				const urlTarget = targetUrl
+					? document.querySelector(
+							targetUrl.startsWith( '#' )
+								? targetUrl
+								: '#' + targetUrl
+					  )
 					: null;
-				const preview = button.data( 'preview' )
-					? $( '#' + button.data( 'preview' ) )
+				const preview = previewId
+					? document.getElementById( previewId )
 					: null;
-				const title = button.data( 'title' ) || 'Select Image';
+				const title =
+					uploadBtn.getAttribute( 'data-title' ) || 'Select Image';
+
+				if ( typeof wp === 'undefined' || ! wp.media ) {
+					return;
+				}
 
 				const frame = wp.media( {
 					title,
@@ -45,37 +58,64 @@
 						.get( 'selection' )
 						.first()
 						.toJSON();
-					if ( id_target ) {
-						id_target.val( attachment.id );
+
+					if ( idTarget ) {
+						idTarget.value = attachment.id;
+						idTarget.dispatchEvent(
+							new Event( 'change', { bubbles: true } )
+						);
 					}
-					if ( url_target ) {
-						url_target.val( attachment.url );
+					if ( urlTarget ) {
+						urlTarget.value = attachment.url;
+						urlTarget.dispatchEvent(
+							new Event( 'change', { bubbles: true } )
+						);
 					}
 
-					if ( preview && preview.length ) {
-						preview
-							.html(
-								'<img src="' +
-									attachment.url +
-									'" alt="" style="max-width:200px;height:auto;" />'
-							)
-							.show();
+					if ( preview ) {
+						preview.innerHTML =
+							'<img src="' +
+							encodeURI( attachment.url ) +
+							'" alt="" style="max-width:200px;height:auto;" />';
+						preview.style.display = '';
 					}
-					button.siblings( '.mhbo-remove-btn' ).show();
+
+					const removeBtn = uploadBtn.parentElement
+						? uploadBtn.parentElement.querySelector(
+								'.mhbo-remove-btn'
+						  )
+						: null;
+					if ( removeBtn ) {
+						removeBtn.style.display = '';
+					}
 				} );
 
 				frame.open();
+				return;
 			}
-		);
 
-		$( '.mhbo-remove-btn' ).on( 'click', function ( e ) {
-			e.preventDefault();
-			const button = $( this );
-			const wrap = button.closest( '.mhbo-media-upload-wrap' );
-
-			wrap.find( 'input[type="hidden"]' ).val( '' );
-			wrap.find( '.mhbo-image-preview' ).empty().hide();
-			button.hide();
+			const removeBtn = e.target.closest( '.mhbo-remove-btn' );
+			if ( removeBtn ) {
+				e.preventDefault();
+				const wrap = removeBtn.closest( '.mhbo-media-upload-wrap' );
+				if ( wrap ) {
+					wrap.querySelectorAll( 'input[type="hidden"]' ).forEach(
+						function ( input ) {
+							input.value = '';
+							input.dispatchEvent(
+								new Event( 'change', { bubbles: true } )
+							);
+						}
+					);
+					wrap.querySelectorAll( '.mhbo-image-preview' ).forEach(
+						function ( prev ) {
+							prev.innerHTML = '';
+							prev.style.display = 'none';
+						}
+					);
+				}
+				removeBtn.style.display = 'none';
+			}
 		} );
 	} );
-} )( jQuery );
+} )();

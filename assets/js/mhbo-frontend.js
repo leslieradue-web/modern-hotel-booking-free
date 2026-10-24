@@ -56,7 +56,7 @@
 		if (
 			roomId &&
 			typeof mhbo_vars !== 'undefined' &&
-			mhbo_vars.rest_url
+			mhbo_vars.api_base
 		) {
 			// Show loading state
 			pickerInput.placeholder =
@@ -66,7 +66,7 @@
 			pickerInput.disabled = true;
 
 			fetch(
-				mhbo_vars.rest_url +
+				mhbo_vars.api_base +
 					'/calendar-data?room_id=' +
 					encodeURIComponent( roomId )
 			)
@@ -124,7 +124,10 @@
 		data.forEach( function ( item ) {
 			// Disable both booked dates and unbookable dates (no price)
 			// BUT do NOT disable dates that allow check-out (can_checkout !== false)
-			if ( ( item.status === 'booked' || item.status === 'unbookable' ) && item.can_checkout === false ) {
+			if (
+				( item.status === 'booked' || item.status === 'unbookable' ) &&
+				item.can_checkout === false
+			) {
 				disabled.push( item.date );
 			}
 		} );
@@ -163,11 +166,16 @@
 		}
 
 		let pendingCheckIn = null; // Track first date click to detect backwards selection
+		const maxDays =
+			typeof mhbo_vars !== 'undefined' && mhbo_vars.max_advance_days
+				? parseInt( mhbo_vars.max_advance_days, 10 )
+				: 365;
 
 		flatpickr( pickerInput, {
 			mode: 'range',
 			dateFormat: 'Y-m-d',
 			minDate: 'today',
+			maxDate: new Date().fp_incr( maxDays ),
 			disable: disabledDates,
 			disableMobile: true,
 			onChange( selectedDates, dateStr, instance ) {
@@ -211,7 +219,10 @@
 
 					let newDisabled = [ ...disabledDates ];
 					if ( firstBookedAfter ) {
-						const checkInStr = instance.formatDate( checkIn, 'Y-m-d' );
+						const checkInStr = instance.formatDate(
+							checkIn,
+							'Y-m-d'
+						);
 						newDisabled = disabledDates.filter(
 							( d ) => d < checkInStr || d > firstBookedAfter
 						);
@@ -299,5 +310,49 @@
 				}
 			},
 		} );
+	}
+
+	// Self-Gating WP Consent API & Complianz Event Listener (Zero-overhead when absent)
+	if (
+		typeof window.wp_has_consent === 'function' ||
+		typeof window.cmplz_has_consent === 'function'
+	) {
+		const purgePreferencesStorage = function () {
+			const prefix =
+				typeof mhbo_vars !== 'undefined' && mhbo_vars.storage_prefix
+					? mhbo_vars.storage_prefix
+					: 'mhbo_';
+			try {
+				localStorage.removeItem( prefix + 'check_in' );
+				localStorage.removeItem( prefix + 'check_out' );
+				localStorage.removeItem( prefix + 'currency' );
+			} catch ( err ) {
+				// Ignore storage errors
+			}
+		};
+
+		// 1. WP Consent API standard event listener
+		document.addEventListener(
+			'wp_listen_for_consent_change',
+			function ( e ) {
+				const categories = e && e.detail ? e.detail : {};
+				if ( categories.preferences === 'deny' || categories.preferences === false ) {
+					purgePreferencesStorage();
+				}
+			}
+		);
+
+		// 2. Complianz standalone custom status change event listener
+		document.addEventListener(
+			'cmplz_status_change',
+			function () {
+				if (
+					typeof window.cmplz_has_consent === 'function' &&
+					! window.cmplz_has_consent( 'preferences' )
+				) {
+					purgePreferencesStorage();
+				}
+			}
+		);
 	}
 } )();

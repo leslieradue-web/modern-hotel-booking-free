@@ -131,6 +131,7 @@
 		setLoading();
 
 		document.body.style.overflow = 'hidden';
+		document.body.classList.add( 'mhbo-modal-open' );
 		overlay.classList.add( 'is-open' );
 		_isOpen = true;
 
@@ -162,6 +163,7 @@
 
 		document.removeEventListener( 'keydown', trapFocus );
 		document.body.style.overflow = '';
+		document.body.classList.remove( 'mhbo-modal-open' );
 
 		overlay.addEventListener(
 			'transitionend',
@@ -257,10 +259,16 @@
 
 		const d = e.detail || {};
 		const restBase =
-			( window.mhbo_vars && window.mhbo_vars.rest_url ) ||
+			( window.mhbo_vars && window.mhbo_vars.api_base ) ||
 			( window.mhbo_calendar &&
 				window.mhbo_calendar.rest_url &&
 				window.mhbo_calendar.rest_url.replace( /\/[^/]+$/, '' ) ) ||
+			( window.mhboChat &&
+				window.mhboChat.restUrl &&
+				window.mhboChat.restUrl.replace( /\/$/, '' ) + '/mhbo/v1' ) ||
+			( window.wpApiSettings &&
+				window.wpApiSettings.root &&
+				window.wpApiSettings.root.replace( /\/$/, '' ) + '/mhbo/v1' ) ||
 			'/wp-json/mhbo/v1';
 
 		const params = new URLSearchParams( {
@@ -274,7 +282,7 @@
 			customer_name: d.customer_name || '',
 			customer_email: d.customer_email || '',
 			customer_phone: d.customer_phone || '',
-			mhbo_locale: (window.mhbo_vars && window.mhbo_vars.locale) || '',
+			mhbo_locale: ( window.mhbo_vars && window.mhbo_vars.locale ) || '',
 		} );
 
 		/* 2026 BP: Public endpoint (permission_callback => __return_true) — do NOT
@@ -376,7 +384,7 @@
 		);
 
 		const restBase =
-			( window.mhbo_vars && window.mhbo_vars.rest_url ) ||
+			( window.mhbo_vars && window.mhbo_vars.api_base ) ||
 			'/wp-json/mhbo/v1';
 
 		const params = new URLSearchParams( {

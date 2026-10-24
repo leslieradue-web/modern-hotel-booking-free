@@ -16,102 +16,123 @@ use MHBO\Business\Info;
 use MHBO\Core\Pricing;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 class HotelInfo {
 
-    /**
-     * Return the WP Ability / MCP tool definition.
-     *
-     * @return array<mixed>
-     */
-    public static function get_definition(): array {
-        return [
-            'label'              => __( 'Get Hotel Information', 'modern-hotel-booking' ),
-            'description'        => __( 'Returns the hotel name, description, location, contact details, amenities, and basic policies.', 'modern-hotel-booking' ),
-            'category'           => 'hotel-information',
-            'input_schema'       => [ 'type' => 'object', 'properties' => (object) [], 'required' => [] ],
-            'output_schema'      => [
-                'type'       => 'object',
-                'properties' => [
-                    'hotel_name'      => [ 'type' => 'string' ],
-                    'description'     => [ 'type' => 'string' ],
-                    'address'         => [ 'type' => 'string' ],
-                    'phone'           => [ 'type' => 'string' ],
-                    'email'           => [ 'type' => 'string' ],
-                    'checkin_time'    => [ 'type' => 'string' ],
-                    'checkout_time'   => [ 'type' => 'string' ],
-                    'currency'        => [ 'type' => 'string' ],
-                    'amenities'       => [ 'type' => 'array', 'items' => [ 'type' => 'string' ] ],
-                    'policies_summary'=> [ 'type' => 'string' ],
-                ],
-            ],
-            'permission_callback' => '__return_true',
-            'execute_callback'    => [ self::class, 'execute' ],
-            'meta'               => [
-                'mcp'          => [ 'public' => true ],
-                'show_in_rest' => true,
-            ],
-        ];
-    }
+	/**
+	 * Return the WP Ability / MCP tool definition.
+	 *
+	 * @return array<mixed>
+	 */
+	public static function get_definition(): array {
+		return array(
+			'label'               => __( 'Get Hotel Information', 'modern-hotel-booking' ),
+			'description'         => __( 'Returns the hotel name, description, location, contact details, amenities, and basic policies.', 'modern-hotel-booking' ),
+			'category'            => 'hotel-information',
+			'input_schema'        => array(
+				'type'       => 'object',
+				'properties' => (object) array(),
+				'required'   => array(),
+			),
+			'output_schema'       => array(
+				'type'       => 'object',
+				'properties' => array(
+					'hotel_name'       => array( 'type' => 'string' ),
+					'description'      => array( 'type' => 'string' ),
+					'address'          => array( 'type' => 'string' ),
+					'phone'            => array( 'type' => 'string' ),
+					'email'            => array( 'type' => 'string' ),
+					'checkin_time'     => array( 'type' => 'string' ),
+					'checkout_time'    => array( 'type' => 'string' ),
+					'currency'         => array( 'type' => 'string' ),
+					'amenities'        => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'policies_summary' => array( 'type' => 'string' ),
+				),
+			),
+			'permission_callback' => '__return_true',
+			'execute_callback'    => array( self::class, 'execute' ),
+			'meta'                => array(
+				'public'       => true,
+				'show_in_rest' => true,
+				'mcp'          => array(
+					'public' => true,
+				),
+				'annotations'  => array(
+					'readonly'    => true,
+					'destructive' => false,
+					'idempotent'  => true,
+				),
+			),
+		);
+	}
 
-    /**
-     * Execute the ability.
-     *
-     * @param array<mixed> $args  Unused.
-     * @return array<mixed>
-     */
-    public static function execute( array $args = [] ): array {
-        $company = Info::get_company();
+	/**
+	 * Execute the ability.
+	 *
+	 * @param array<mixed> $args  Unused.
+	 * @return array<mixed>
+	 */
+	public static function execute( array $args = array() ): array {
+		$company = Info::get_company();
 
-        $address_parts = array_filter( [
-            (string) ( $company['address_line_1'] ?? '' ),
-            (string) ( $company['address_line_2'] ?? '' ),
-            (string) ( $company['city']           ?? '' ),
-            (string) ( $company['state']          ?? '' ),
-            (string) ( $company['postcode']       ?? '' ),
-            (string) ( $company['country']        ?? '' ),
-        ], fn( $val ) => '' !== $val );
+		$address_parts = array_filter(
+			array(
+				(string) ( $company['address_line_1'] ?? '' ),
+				(string) ( $company['address_line_2'] ?? '' ),
+				(string) ( $company['city'] ?? '' ),
+				(string) ( $company['state'] ?? '' ),
+				(string) ( $company['postcode'] ?? '' ),
+				(string) ( $company['country'] ?? '' ),
+			),
+			fn( $val ) => '' !== $val 
+		);
 
-        $amenities_raw = get_option( 'mhbo_amenities_list', [] );
-        $amenities     = [];
-        if ( is_array( $amenities_raw ) ) {
-            foreach ( $amenities_raw as $item ) {
-                if ( isset( $item['name'] ) && '' !== $item['name'] ) {
-                    $amenities[] = sanitize_text_field( (string) $item['name'] );
-                }
-            }
-        }
+		$amenities_raw = get_option( 'mhbo_amenities_list', array() );
+		$amenities     = array();
+		if ( is_array( $amenities_raw ) ) {
+			foreach ( $amenities_raw as $item ) {
+				if ( isset( $item['name'] ) && '' !== $item['name'] ) {
+					$amenities[] = sanitize_text_field( (string) $item['name'] );
+				}
+			}
+		}
 
-        $policies_parts = array_filter( [
-            get_option( 'mhbo_cancellation_policy', '' ) ? 'Cancellation: ' . (string) get_option( 'mhbo_cancellation_policy' ) : '',
-            get_option( 'mhbo_pet_policy', '' )          ? 'Pets: ' . (string) get_option( 'mhbo_pet_policy' ) : '',
-            get_option( 'mhbo_smoking_policy', '' )      ? 'Smoking: ' . (string) get_option( 'mhbo_smoking_policy' ) : '',
-        ], fn( $val ) => '' !== $val );
+		$policies_parts = array_filter(
+			array(
+				get_option( 'mhbo_cancellation_policy', '' ) ? 'Cancellation: ' . (string) get_option( 'mhbo_cancellation_policy' ) : '',
+				get_option( 'mhbo_pet_policy', '' ) ? 'Pets: ' . (string) get_option( 'mhbo_pet_policy' ) : '',
+				get_option( 'mhbo_smoking_policy', '' ) ? 'Smoking: ' . (string) get_option( 'mhbo_smoking_policy' ) : '',
+			),
+			fn( $val ) => '' !== $val 
+		);
 
-        return [
-            'hotel_name'       => (string) ( $company['company_name'] ?: get_bloginfo( 'name' ) ),
-            'description'      => (string) get_bloginfo( 'description' ),
-            'address'          => implode( ', ', $address_parts ),
-            'phone'            => (string) ( $company['telephone'] ?? '' ),
-            'email'            => (string) ( $company['email'] ?? '' ),
-            'checkin_time'     => (string) get_option( 'mhbo_checkin_time', '14:00' ),
-            'checkout_time'    => (string) get_option( 'mhbo_checkout_time', '11:00' ),
-            'currency'         => Pricing::get_currency_code(),
-            'amenities'        => $amenities,
-            'policies_summary' => implode( ' | ', $policies_parts ),
-        ];
-    }
+		return array(
+			'hotel_name'       => (string) ( $company['company_name'] ?: get_bloginfo( 'name' ) ),
+			'description'      => (string) get_bloginfo( 'description' ),
+			'address'          => implode( ', ', $address_parts ),
+			'phone'            => (string) ( $company['telephone'] ?? '' ),
+			'email'            => (string) ( $company['email'] ?? '' ),
+			'checkin_time'     => (string) get_option( 'mhbo_checkin_time', '14:00' ),
+			'checkout_time'    => (string) get_option( 'mhbo_checkout_time', '11:00' ),
+			'currency'         => Pricing::get_currency_code(),
+			'amenities'        => $amenities,
+			'policies_summary' => implode( ' | ', $policies_parts ),
+		);
+	}
 
-    /**
-     * Register as a WordPress Ability (WP 7.0+).
-     */
-    public static function register(): void {
-        if ( ! function_exists( 'wp_register_ability' ) ) {
-            return;
-        }
-        $def = self::get_definition();
-        call_user_func( 'wp_register_ability', 'mhbo/get-hotel-info', $def );
-    }
+	/**
+	 * Register as a WordPress Ability (WP 7.0+).
+	 */
+	public static function register(): void {
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+		$def = self::get_definition();
+		call_user_func( 'wp_register_ability', 'mhbo/get-hotel-info', $def );
+	}
 }

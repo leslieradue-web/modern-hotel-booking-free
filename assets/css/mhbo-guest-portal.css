@@ -1,0 +1,960 @@
+/**
+ * Modern Hotel Booking - Guest Self-Service Portal Stylesheet (Law 65)
+ *
+ * @package MHBO\Frontend
+ * @since   2.6.2
+ */
+
+.mhbo-guest-portal-wrapper {
+	--gp-primary: var(--mhbo-primary, #1a365d);
+	--gp-accent: var(--mhbo-accent, #b45309);
+	--gp-border: var(--mhbo-border, color-mix(in srgb, var(--gp-primary) 15%, transparent));
+	--gp-surface: #ffffff;
+	--gp-dates-bg: var(--mhbo-dates-bg, #f8fafc);
+	max-width: 820px;
+	margin: 36px auto;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	color: #1e293b;
+	line-height: 1.6;
+}
+
+.mhbo-portal-card {
+	background: var(--gp-surface);
+	border: 1px solid var(--gp-border);
+	border-radius: 16px;
+	padding: 36px 32px;
+	box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+	margin-bottom: 28px;
+	position: relative;
+	overflow: hidden;
+}
+
+.mhbo-portal-card::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 4px;
+	background: linear-gradient(90deg, var(--gp-primary), var(--gp-accent));
+}
+
+.mhbo-portal-header {
+	text-align: center;
+	margin-bottom: 30px;
+}
+
+.mhbo-portal-title {
+	font-size: 26px;
+	font-weight: 800;
+	color: var(--gp-primary);
+	margin: 0 0 10px 0;
+	letter-spacing: -0.02em;
+}
+
+.mhbo-portal-desc {
+	font-size: 14px;
+	color: #64748b;
+	margin: 0 auto;
+	max-width: 580px;
+}
+
+.mhbo-portal-form {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 18px;
+}
+
+.mhbo-portal-field-full {
+	grid-column: 1 / -1;
+}
+
+.mhbo-portal-label {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	color: #475569;
+	margin-bottom: 6px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.mhbo-portal-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 12px 16px;
+	border: 1px solid #cbd5e1;
+	border-radius: 10px;
+	font-size: 14px;
+	background: #ffffff;
+	transition: border-color 0.2s, box-shadow 0.2s;
+	outline: none;
+	color: #1e293b;
+}
+
+.mhbo-portal-input:focus {
+	border-color: var(--gp-primary);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--gp-primary), transparent 85%);
+}
+
+.mhbo-portal-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 12px 22px;
+	border-radius: 10px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid transparent;
+	text-decoration: none;
+	transition: all 0.2s ease;
+	box-sizing: border-box;
+}
+
+.mhbo-portal-btn svg {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.mhbo-portal-btn-primary {
+	background: var(--gp-primary);
+	color: #ffffff !important;
+}
+
+.mhbo-portal-btn-primary:hover {
+	filter: brightness(0.92);
+	transform: translateY(-1px);
+}
+
+.mhbo-portal-btn-secondary {
+	background: #ffffff;
+	color: #334155 !important;
+	border-color: #cbd5e1;
+}
+
+.mhbo-portal-btn-secondary:hover {
+	background: #f8fafc;
+	border-color: #94a3b8;
+	color: #0f172a !important;
+}
+
+.mhbo-portal-btn-danger {
+	background: #ffffff;
+	color: #dc2626 !important;
+	border-color: #fecaca;
+}
+
+.mhbo-portal-btn-danger:hover {
+	background: #fef2f2;
+	border-color: #f87171;
+}
+
+.mhbo-portal-btn-ai {
+	background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+	color: #ffffff !important;
+	border: 1px solid #4338ca;
+	box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);
+}
+
+.mhbo-portal-btn-ai:hover {
+	filter: brightness(1.08);
+	transform: translateY(-1px);
+}
+
+.mhbo-portal-btn:focus-visible {
+	outline: 2px solid var(--gp-primary);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--gp-primary), transparent 80%);
+}
+
+.mhbo-portal-badge {
+	display: inline-block;
+	padding: 5px 12px;
+	border-radius: 9999px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.mhbo-badge-confirmed { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.mhbo-badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.mhbo-badge-cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.mhbo-badge-paid { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+/* Timeline */
+.mhbo-portal-timeline {
+	display: flex;
+	justify-content: space-between;
+	background: var(--gp-dates-bg, #f8fafc);
+	border-radius: 12px;
+	padding: 18px 24px;
+	margin: 22px 0;
+	border: 1px solid var(--gp-border, #e2e8f0);
+	box-sizing: border-box;
+}
+
+.mhbo-timeline-col { flex: 1 1 0; text-align: left; }
+.mhbo-timeline-col:nth-child(2) { flex: 1.2 1 0; }
+.mhbo-timeline-col-nights { text-align: right; flex: 0 0 auto; }
+
+.mhbo-timeline-label {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	color: #64748b;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	margin-bottom: 4px;
+}
+
+.mhbo-timeline-val {
+	font-size: 1.05rem;
+	font-weight: 800;
+	color: var(--gp-primary);
+	margin: 4px 0;
+}
+
+.mhbo-stay-time {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--gp-accent);
+}
+
+.mhbo-stay-time-prefix {
+	font-size: 0.65rem;
+	color: #64748b;
+	text-transform: uppercase;
+}
+
+.mhbo-nights-count {
+	font-size: 1.25rem;
+	font-weight: 900;
+	color: var(--gp-primary);
+	margin: 4px 0 0;
+	line-height: 1;
+}
+
+.mhbo-nights-label {
+	font-size: 0.75rem;
+	color: #64748b;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+/* Guest Info Box */
+.mhbo-portal-guest-info {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px 20px;
+	margin: 20px 0;
+	padding: 18px 22px;
+	background: #ffffff;
+	border: 1px solid var(--gp-border, #e2e8f0);
+	border-radius: 12px;
+	font-size: 14px;
+}
+
+.mhbo-portal-info-item {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.mhbo-portal-info-label {
+	font-size: 11px;
+	text-transform: uppercase;
+	font-weight: 700;
+	color: #64748b;
+	letter-spacing: 0.5px;
+}
+
+.mhbo-portal-info-val {
+	font-size: 14px;
+	font-weight: 600;
+	color: #1e293b;
+	word-break: break-word;
+}
+
+/* Finances Box */
+.mhbo-portal-finances {
+	background: #ffffff;
+	border-radius: 12px;
+	padding: 20px 24px;
+	margin: 20px 0;
+	border: 1px solid var(--gp-border, #e2e8f0);
+}
+
+.mhbo-finance-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 14px;
+	margin-bottom: 8px;
+	color: #334155;
+}
+
+.mhbo-finance-row strong {
+	color: #0f172a;
+}
+
+.mhbo-deposit-status-note {
+	font-size: 12.5px;
+	font-weight: 600;
+	letter-spacing: 0.2px;
+	word-spacing: 1.5px;
+}
+
+.mhbo-deposit-status-note.is-due {
+	color: #047857;
+}
+
+.mhbo-deposit-status-note.is-paid {
+	color: #166534;
+}
+
+.mhbo-finance-row-total {
+	border-top: 1px solid var(--gp-border, #e2e8f0);
+	padding-top: 12px;
+	font-size: 16px;
+	font-weight: 700;
+	margin-top: 10px;
+	color: #0f172a;
+}
+
+.mhbo-portal-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--gp-border, #e2e8f0);
+	align-items: center;
+}
+
+.mhbo-portal-alert {
+	padding: 16px 20px;
+	border-radius: 12px;
+	font-size: 14px;
+	margin-bottom: 22px;
+	display: none;
+	line-height: 1.5;
+}
+
+.mhbo-portal-alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.mhbo-portal-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+.mhbo-portal-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(15, 23, 42, 0.65);
+	backdrop-filter: blur(4px);
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 999999;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+.mhbo-modal-content {
+	background: #ffffff;
+	border-radius: 18px;
+	max-width: 520px;
+	width: 100%;
+	padding: 32px 28px;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+	border: 1px solid #e2e8f0;
+}
+
+.mhbo-print-header { display: none; }
+
+.mhbo-voucher-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 14px;
+	background: #ffffff;
+	border: 1px solid var(--gp-border, #cbd5e1);
+	border-radius: 8px;
+	margin: 4px 6px 4px 0;
+	font-size: 13px;
+}
+
+.mhbo-voucher-code {
+	font-family: monospace;
+	font-weight: 700;
+	background: #f1f5f9;
+	color: var(--gp-primary);
+	padding: 3px 8px;
+	border-radius: 4px;
+	letter-spacing: 0.5px;
+}
+
+.mhbo-copy-btn {
+	background: none;
+	border: none;
+	color: var(--gp-accent);
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 2px 6px;
+}
+
+.mhbo-copy-btn:hover { text-decoration: underline; }
+.mhbo-copy-btn:focus-visible {
+	outline: 2px solid var(--gp-accent);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* Hospitality Personalization Hero */
+.mhbo-guest-hero {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	padding: 22px 24px;
+	background: linear-gradient(135deg, color-mix(in srgb, var(--gp-primary) 6%, #ffffff), color-mix(in srgb, var(--gp-accent) 6%, #ffffff));
+	border: 1px solid var(--gp-border);
+	border-radius: 14px;
+	margin-bottom: 22px;
+}
+
+.mhbo-guest-avatar {
+	width: 58px;
+	height: 58px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, var(--gp-primary), color-mix(in srgb, var(--gp-primary) 70%, var(--gp-accent)));
+	color: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+	font-weight: 800;
+	letter-spacing: 0.5px;
+	flex-shrink: 0;
+	box-shadow: 0 4px 12px color-mix(in srgb, var(--gp-primary) 25%, transparent);
+}
+
+.mhbo-guest-greeting {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 800;
+	color: var(--gp-primary);
+	line-height: 1.3;
+}
+
+.mhbo-guest-stage-msg {
+	margin: 6px 0 0 0;
+	font-size: 13.5px;
+	color: #475569;
+	font-weight: 500;
+	line-height: 1.55;
+	white-space: pre-line;
+}
+
+.mhbo-vip-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 9px;
+	background: linear-gradient(135deg, #fef3c7, #fde68a);
+	color: #92400e;
+	border: 1px solid #fcd34d;
+	border-radius: 9999px;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-left: 8px;
+	vertical-align: middle;
+}
+
+/* Concierge Quick-Actions Strip */
+.mhbo-qa-strip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: 0 0 22px 0;
+}
+
+.mhbo-qa-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	background: #ffffff;
+	border: 1px solid var(--gp-border);
+	border-radius: 9999px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #334155;
+	text-decoration: none;
+	transition: all 0.2s ease;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.mhbo-qa-pill:hover {
+	background: #f8fafc;
+	border-color: var(--gp-accent);
+	color: var(--gp-primary);
+	transform: translateY(-1px);
+}
+
+.mhbo-qa-pill svg {
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+	color: var(--gp-accent);
+}
+
+/* Wi-Fi Access Card */
+.mhbo-wifi-card {
+	display: none;
+	background: #f0fdf4;
+	border: 1px solid #bbf7d0;
+	border-radius: 12px;
+	padding: 16px 20px;
+	margin: 20px 0;
+}
+
+.mhbo-wifi-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.mhbo-wifi-title {
+	font-size: 14px;
+	font-weight: 700;
+	color: #166534;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.mhbo-wifi-details {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-top: 10px;
+	font-size: 13px;
+	color: #1e293b;
+}
+
+/* Digital Guide & House Rules Card */
+.mhbo-guide-card {
+	display: none;
+	background: #ffffff;
+	border: 1px solid var(--gp-border);
+	border-radius: 12px;
+	margin: 20px 0;
+	overflow: hidden;
+}
+
+.mhbo-guide-header {
+	padding: 14px 20px;
+	background: var(--gp-dates-bg, #f8fafc);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--gp-primary);
+	user-select: none;
+}
+
+.mhbo-guide-content {
+	padding: 18px 20px;
+	font-size: 13.5px;
+	color: #334155;
+	line-height: 1.6;
+	border-top: 1px solid var(--gp-border);
+}
+
+/* Communication Notices History */
+.mhbo-history-card {
+	display: none;
+	background: #ffffff;
+	border: 1px solid var(--gp-border);
+	border-radius: 12px;
+	margin: 20px 0;
+	overflow: hidden;
+}
+
+.mhbo-history-header {
+	padding: 14px 20px;
+	background: var(--gp-dates-bg, #f8fafc);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--gp-primary);
+	user-select: none;
+}
+
+.mhbo-history-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 20px;
+	font-size: 13px;
+	border-bottom: 1px solid var(--gp-border);
+}
+
+.mhbo-history-item:last-child {
+	border-bottom: none;
+}
+
+/* Property Contact & Front Desk Card */
+.mhbo-hotel-card {
+	background: #ffffff;
+	border: 1px solid var(--gp-border);
+	border-radius: 12px;
+	padding: 18px 22px;
+	margin: 20px 0;
+}
+
+.mhbo-hotel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.mhbo-hotel-title {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--gp-primary);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.mhbo-hotel-details-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+	font-size: 13px;
+}
+
+.mhbo-hotel-label {
+	color: #64748b;
+	font-size: 11px;
+	text-transform: uppercase;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+
+/* Multi-Room Group Reservation Card */
+.mhbo-portal-group-card {
+	background: #f8fafc;
+	border: 1px solid #cbd5e1;
+	border-radius: 12px;
+	padding: 16px 20px;
+	margin-bottom: 22px;
+}
+
+.mhbo-portal-group-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.mhbo-portal-group-title {
+	font-size: 14.5px;
+	font-weight: 700;
+	color: #0f172a;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.mhbo-group-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.mhbo-group-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 8px;
+	background: #ffffff;
+	border: 1px solid #cbd5e1;
+	font-size: 12.5px;
+	color: #1e293b;
+	cursor: pointer;
+	text-decoration: none;
+	transition: all 0.2s ease;
+}
+
+.mhbo-group-chip:hover {
+	border-color: var(--gp-primary);
+	color: var(--gp-primary);
+}
+
+.mhbo-group-chip-active {
+	background: var(--gp-primary);
+	color: #ffffff;
+	border-color: var(--gp-primary);
+	font-weight: 700;
+}
+
+/* Add to Calendar Dropdown */
+.mhbo-qa-dropdown-wrap {
+	position: relative;
+	display: inline-flex;
+}
+
+.mhbo-qa-dropdown-menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	margin-top: 6px;
+	background: #ffffff;
+	border: 1px solid var(--gp-border);
+	border-radius: 8px;
+	box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+	z-index: 50;
+	min-width: 170px;
+	overflow: hidden;
+}
+
+.mhbo-qa-dropdown-item {
+	display: block;
+	padding: 9px 14px;
+	font-size: 12.5px;
+	color: #1e293b;
+	text-decoration: none;
+	transition: background 0.15s ease;
+}
+
+.mhbo-qa-dropdown-item:hover {
+	background: var(--gp-dates-bg, #f8fafc);
+	color: var(--gp-primary);
+}
+
+/* Local Attractions Grid */
+.mhbo-attractions-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 14px;
+}
+
+.mhbo-attraction-card {
+	padding: 12px 14px;
+	border: 1px solid var(--gp-border);
+	border-radius: 8px;
+	background: var(--gp-dates-bg, #f8fafc);
+}
+
+.mhbo-attraction-title {
+	font-size: 13.5px;
+	font-weight: 700;
+	color: var(--gp-primary);
+	margin-bottom: 4px;
+}
+
+.mhbo-attraction-meta {
+	font-size: 11.5px;
+	color: #64748b;
+}
+
+.mhbo-portal-btn-sm {
+	padding: 7px 14px;
+	font-size: 12.5px;
+	border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+	.mhbo-portal-form { grid-template-columns: 1fr; }
+	.mhbo-portal-timeline { flex-direction: column; gap: 14px; text-align: left; }
+	.mhbo-timeline-col { text-align: left; }
+	.mhbo-timeline-col-nights { text-align: left; }
+	.mhbo-portal-guest-info { grid-template-columns: 1fr; }
+	.mhbo-portal-card { padding: 24px 18px; }
+	.mhbo-guest-hero { flex-direction: column; text-align: center; }
+	.mhbo-hotel-details-grid { grid-template-columns: 1fr; }
+}
+
+@page {
+	size: portrait;
+	margin: 10mm 12mm;
+}
+
+@media print {
+	html, body {
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		background: #ffffff !important;
+		color: #0f172a !important;
+		-webkit-print-color-adjust: exact !important;
+		print-color-adjust: exact !important;
+	}
+
+	/* Collapse all theme and non-portal elements from document flow */
+	header,
+	footer,
+	nav,
+	aside,
+	#wpadminbar,
+	.wp-block-template-part,
+	.wp-block-post-title,
+	.wp-block-spacer,
+	.entry-header,
+	.site-header,
+	.site-footer,
+	.site-branding,
+	.main-navigation,
+	.sidebar,
+	#masthead,
+	#colophon,
+	.screen-reader-text,
+	.skip-link {
+		display: none !important;
+		height: 0 !important;
+		min-height: 0 !important;
+		max-height: 0 !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		border: none !important;
+		overflow: hidden !important;
+	}
+
+	/* Zero-out parent block wrappers to remove top gaps */
+	.wp-site-blocks,
+	#page,
+	.site,
+	#content,
+	.site-content,
+	main,
+	article,
+	.page,
+	.type-page,
+	.wp-block-group,
+	.entry-content,
+	.wp-block-post-content {
+		margin: 0 !important;
+		padding: 0 !important;
+		margin-top: 0 !important;
+		padding-top: 0 !important;
+		border: none !important;
+		box-shadow: none !important;
+		max-width: 100% !important;
+		width: 100% !important;
+		display: block !important;
+		gap: 0 !important;
+		row-gap: 0 !important;
+		column-gap: 0 !important;
+	}
+
+	/* Suppress any sibling elements inside the content container */
+	.entry-content > *:not(#mhbo-guest-portal),
+	.wp-block-post-content > *:not(#mhbo-guest-portal),
+	main > *:not(.wp-block-group):not(.entry-content):not(.wp-block-post-content):not(#mhbo-guest-portal) {
+		display: none !important;
+		height: 0 !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	body * {
+		visibility: hidden !important;
+	}
+
+	#mhbo-guest-portal,
+	#mhbo-guest-portal *,
+	#mhbo-portal-details-view,
+	#mhbo-portal-details-view * {
+		visibility: visible !important;
+	}
+
+	#mhbo-guest-portal,
+	.mhbo-guest-portal-wrapper {
+		position: static !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		border: none !important;
+		box-shadow: none !important;
+	}
+
+	#mhbo-portal-details-view {
+		position: static !important;
+		display: block !important;
+		width: 100% !important;
+		max-width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+		box-shadow: none !important;
+		border: none !important;
+		border-radius: 0 !important;
+		background: #ffffff !important;
+		color: #0f172a !important;
+		box-sizing: border-box !important;
+	}
+
+	#mhbo-portal-details-view::before {
+		display: none !important;
+	}
+
+	.mhbo-portal-actions,
+	#mhbo-res-balance-cta,
+	#mhbo-portal-alert,
+	.mhbo-portal-modal,
+	#mhbo-portal-lookup-view,
+	.mhbo-portal-btn,
+	.mhbo-copy-btn,
+	#mhbo-portal-ai-cta,
+	#mhbo-portal-ai-btn,
+	#mhbo-guest-hero,
+	#mhbo-qa-strip,
+	#mhbo-wifi-card,
+	#mhbo-guide-card,
+	#mhbo-portal-attractions-card,
+	#mhbo-email-history-card,
+	#mhbo-res-vouchers-card,
+	#mhbo-portal-edit-profile-btn {
+		display: none !important;
+	}
+
+	.mhbo-print-header {
+		display: block !important;
+		border-bottom: 2px solid #0f172a;
+		padding-bottom: 12px;
+		margin-bottom: 14px;
+		margin-top: 0 !important;
+		padding-top: 0 !important;
+	}
+
+	.mhbo-portal-timeline,
+	.mhbo-portal-finances,
+	.mhbo-portal-guest-info,
+	#mhbo-hotel-contact-card,
+	#mhbo-portal-group-card {
+		border: 1px solid #cbd5e1 !important;
+		background: #ffffff !important;
+		page-break-inside: avoid !important;
+		break-inside: avoid !important;
+		margin-bottom: 14px !important;
+		padding: 14px 18px !important;
+	}
+}

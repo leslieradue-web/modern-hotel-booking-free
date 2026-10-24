@@ -14,10 +14,12 @@ store( 'modern-hotel-booking/room-calendar', {
 		init: () => {
 			const { ref } = getElement();
 
-			// Trigger legacy flatpickr initialisation via custom jQuery event.
-			// This bridges the ESM module world with the existing jQuery calendar code.
-			if ( window.jQuery ) {
-				window.jQuery( ref ).trigger( 'mhbo_init_calendar' );
+			if ( ref ) {
+				document.dispatchEvent(
+					new CustomEvent( 'mhbo_init_calendar', {
+						detail: { element: ref },
+					} )
+				);
 			}
 		},
 	},

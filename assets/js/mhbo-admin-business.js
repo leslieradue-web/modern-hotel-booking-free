@@ -3,28 +3,42 @@
  *
  * Handles media upload for Business Logo, WhatsApp QR, and Banking QR.
  *
- * @param $
  * @package
  * @since   2.1.0
  */
 
-( function ( $ ) {
+( function () {
 	'use strict';
 
-	$( document ).ready( function () {
-		// Generic Media Upload Handler
-		$( '.mhbo-business-upload-button' ).on( 'click', function ( e ) {
+	document.addEventListener( 'DOMContentLoaded', function () {
+		// Generic Media Upload Handler via event delegation
+		document.addEventListener( 'click', function ( e ) {
+			const button = e.target.closest( '.mhbo-business-upload-button' );
+			if ( ! button ) {
+				return;
+			}
 			e.preventDefault();
 
-			const $button = $( this );
-			const $container = $button.closest(
-				'.mhbo-business-media-control'
+			const container = button.closest( '.mhbo-business-media-control' );
+			if ( ! container ) {
+				return;
+			}
+			const input = container.querySelector( '.mhbo-business-media-url' );
+			const preview = container.querySelector(
+				'.mhbo-business-media-preview'
 			);
-			const $input = $container.find( '.mhbo-business-media-url' );
-			const $preview = $container.find( '.mhbo-business-media-preview' );
+
+			if ( typeof wp === 'undefined' || ! wp.media ) {
+				return;
+			}
+
+			const title = button.getAttribute( 'data-title' ) || 'Select Media';
+			const buttonText =
+				button.getAttribute( 'data-button' ) || 'Use this media';
+
 			const customFrame = wp.media( {
-				title: $button.data( 'title' ) || 'Select Media',
-				button: { text: $button.data( 'button' ) || 'Use this media' },
+				title,
+				button: { text: buttonText },
 				multiple: false,
 			} );
 
@@ -34,26 +48,23 @@
 					.get( 'selection' )
 					.first()
 					.toJSON();
-				$input.val( attachment.url );
 
-				if ( $preview.length ) {
-					$preview.html(
-						'<img src="' +
-							attachment.url +
-							'" style="max-width:150px;height:auto;margin-top:10px;">'
+				if ( input ) {
+					input.value = attachment.url;
+					input.dispatchEvent(
+						new Event( 'change', { bubbles: true } )
 					);
 				}
 
-				// Trigger change for any listeners
-				$input.trigger( 'change' );
+				if ( preview ) {
+					preview.innerHTML =
+						'<img src="' +
+						encodeURI( attachment.url ) +
+						'" style="max-width:150px;height:auto;margin-top:10px;" alt="">';
+				}
 			} );
 
 			customFrame.open();
 		} );
-
-		// Tab Navigation (if handled via JS instead of just page refreshes)
-		$( '.mhbo-settings-tabs-nav a' ).on( 'click', function ( e ) {
-			// Currently handled via PHP/GET but this allows smooth transitions if needed later
-		} );
 	} );
-} )( jQuery );
+} )();

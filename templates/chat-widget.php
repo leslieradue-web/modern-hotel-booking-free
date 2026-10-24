@@ -28,17 +28,17 @@ $mhbo_theme_class  = $mhbo_theme ? ' mhbo-theme-' . sanitize_html_class( $mhbo_t
 $mhbo_booking_page_url = get_permalink( get_option( 'mhbo_booking_page', 0 ) ) ?: home_url( '/' );
 
 // Schema.org CommunicateAction structured data.
-$mhbo_schema = [
-    '@context' => 'https://schema.org',
-    '@type'    => 'CommunicateAction',
-    // translators: %s: hotel name
-    'name'     => sprintf( __( 'Chat with %s AI Concierge', 'modern-hotel-booking' ), (string) $mhbo_hotel_name ),
-    'agent'    => [
-        '@type' => 'Hotel',
-        'name'  => $mhbo_hotel_name,
-    ],
-    'description' => __( 'Real-time AI chat assistant for room availability, policies, and booking support.', 'modern-hotel-booking' ),
-];
+$mhbo_schema = array(
+	'@context'    => 'https://schema.org',
+	'@type'       => 'CommunicateAction',
+	// translators: %s: hotel name
+	'name'        => sprintf( __( 'Chat with %s AI Concierge', 'modern-hotel-booking' ), (string) $mhbo_hotel_name ),
+	'agent'       => array(
+		'@type' => 'Hotel',
+		'name'  => $mhbo_hotel_name,
+	),
+	'description' => __( 'Real-time AI chat assistant for room availability, policies, and booking support.', 'modern-hotel-booking' ),
+);
 ?>
 
 <!-- MHBO AI Concierge Widget -->
@@ -46,7 +46,9 @@ $mhbo_schema = [
     class="mhbo-chat-widget<?php echo $mhbo_theme_class; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized via esc_attr() above ?>"
     data-position="<?php echo esc_attr( $mhbo_position ); ?>"
     data-variant="floating"
-    <?php if ( $mhbo_welcome ) : ?>data-welcome-message="<?php echo esc_attr( $mhbo_welcome ); ?>"<?php endif; ?>
+    <?php if ( $mhbo_welcome ) : ?>
+    data-welcome-message="<?php echo esc_attr( $mhbo_welcome ); ?>"
+    <?php endif; ?>
     role="complementary"
     aria-label="<?php esc_attr_e( 'AI Concierge Chat', 'modern-hotel-booking' ); ?>"
 >

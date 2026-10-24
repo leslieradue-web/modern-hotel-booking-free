@@ -1,4 +1,4 @@
-( function ( $ ) {
+( function () {
 	'use strict';
 
 	// Debug logger
@@ -11,6 +11,247 @@
 			? console.error.bind( console, '[MHBO]' )
 			: function () {};
 	} )();
+
+	function escapeHtml( str ) {
+		if ( null === str || undefined === str ) {
+			return '';
+		}
+		return String( str )
+			.replace( /&/g, '&amp;' )
+			.replace( /</g, '&lt;' )
+			.replace( />/g, '&gt;' )
+			.replace( /"/g, '&quot;' )
+			.replace( /'/g, '&#039;' );
+	}
+
+	/**
+	 * Display an inline booking error banner in the active booking form wrapper.
+	 * Exposed on window so payment gateway scripts share identical error rendering.
+	 *
+	 * @param {string}       message   Error message to display.
+	 * @param {Element|null} contextEl Optional form or wrapper element.
+	 * @param {Object}       options   Optional settings ({ scroll: boolean }).
+	 */
+	window.mhboShowBookingError = function ( message, contextEl, options ) {
+		const opts = Object.assign( { scroll: true }, options || {} );
+		const activeModalWrapper = document.querySelector(
+			'#mhbo-booking-modal-overlay.mhbo-modal-open .mhbo-booking-form-wrapper'
+		);
+		const wrapper =
+			( contextEl &&
+				typeof contextEl.closest === 'function' &&
+				( contextEl.closest( '.mhbo-booking-form-wrapper' ) ||
+					contextEl ) ) ||
+			activeModalWrapper ||
+			document.querySelector( '.mhbo-booking-form-wrapper' );
+
+		const errorBox =
+			( wrapper &&
+				typeof wrapper.querySelector === 'function' &&
+				wrapper.querySelector( '.mhbo-booking-errors' ) ) ||
+			document.querySelector( '.mhbo-booking-errors' );
+
+		if ( errorBox ) {
+			errorBox.innerHTML =
+				'<div class="mhbo-error-notification" role="alert"><span class="mhbo-error-icon">⚠️</span> <span>' +
+				escapeHtml( message ) +
+				'</span></div>';
+			errorBox.style.display = 'block';
+			if ( opts.scroll && typeof errorBox.scrollIntoView === 'function' ) {
+				errorBox.scrollIntoView( {
+					behavior: 'smooth',
+					block: 'center',
+				} );
+			}
+		}
+	};
+
+	/**
+	 * Append an inline field-level error message inside a field group container.
+	 *
+	 * @param {Element|null} container Field group element.
+	 * @param {string}       text      Error message.
+	 */
+	function appendFieldErrorMessage( container, text ) {
+		if ( ! container || ! text ) {
+			return;
+		}
+		let msgEl = container.querySelector( '.mhbo-field-error-msg' );
+		if ( ! msgEl ) {
+			msgEl = document.createElement( 'span' );
+			msgEl.className = 'mhbo-field-error-msg';
+			msgEl.setAttribute( 'role', 'alert' );
+			container.appendChild( msgEl );
+		}
+		msgEl.textContent = text;
+	}
+
+	/**
+	 * Validate required booking form fields and GDPR consent checkbox.
+	 * Supports both silent checks and visible inline error notifications across
+	 * Modal Drawer, Shortcode, and Gutenberg Block booking forms.
+	 *
+	 * @param {HTMLFormElement|null} targetForm Booking form to validate.
+	 * @param {boolean}              silent     When true, do not render UI errors.
+	 * @return {boolean} True when all required fields and consent are valid.
+	 */
+	window.mhboValidateBookingForm = function ( targetForm, silent ) {
+		const isSilent = Boolean( silent );
+		const activeModalForm = document.querySelector(
+			'#mhbo-booking-modal-overlay.mhbo-modal-open .mhbo-booking-form'
+		);
+		const form =
+			targetForm ||
+			activeModalForm ||
+			document.querySelector( '.mhbo-booking-form' );
+
+		if ( ! form ) {
+			return true;
+		}
+
+		if ( ! isSilent ) {
+			form.querySelectorAll( '.mhbo-input-error' ).forEach(
+				function ( el ) {
+					el.classList.remove( 'mhbo-input-error' );
+					el.removeAttribute( 'aria-invalid' );
+					el.style.borderColor = '';
+				}
+			);
+			form.querySelectorAll( '.mhbo-gdpr-error' ).forEach(
+				function ( el ) {
+					el.classList.remove( 'mhbo-gdpr-error' );
+				}
+			);
+			form.querySelectorAll( '.mhbo-field-error-msg' ).forEach(
+				function ( el ) {
+					el.remove();
+				}
+			);
+		}
+
+		let hasFieldErrors = false;
+		let hasGdprError = false;
+		let firstInvalidEl = null;
+
+		const v = typeof window.mhbo_vars !== 'undefined' ? window.mhbo_vars : {};
+		const msgFieldRequired =
+			v.msg_field_required || 'This field is required.';
+		const msgFillAllFields =
+			v.msg_fill_all_fields || 'Please fill in all required fields.';
+		const msgGdprRequired =
+			v.msg_gdpr_required ||
+			'Please accept the privacy policy to continue.';
+
+		// 1. Validate required inputs, selects, and textareas (excluding checkboxes/hidden)
+		const requiredInputs = form.querySelectorAll(
+			'input[required]:not([type="checkbox"]):not([type="hidden"]), select[required], textarea[required]'
+		);
+
+		requiredInputs.forEach( function ( input ) {
+			if ( input.disabled ) {
+				return;
+			}
+			const hiddenAncestor = input.closest( '[style*="display: none"], [style*="display:none"]' );
+			if ( hiddenAncestor && hiddenAncestor !== form ) {
+				return;
+			}
+
+			const rawVal =
+				typeof input.value === 'string' ? input.value.trim() : '';
+			let isInvalid = rawVal === '';
+			let fieldMsg = msgFieldRequired;
+
+			if ( input.name === 'child_ages[]' ) {
+				const ageInt = parseInt( rawVal, 10 );
+				if (
+					rawVal === '' ||
+					isNaN( ageInt ) ||
+					ageInt < 0 ||
+					ageInt > 17
+				) {
+					isInvalid = true;
+				}
+			} else if (
+				! isInvalid &&
+				typeof input.checkValidity === 'function' &&
+				! input.checkValidity()
+			) {
+				isInvalid = true;
+				fieldMsg = input.validationMessage || msgFillAllFields;
+			}
+
+			if ( isInvalid ) {
+				hasFieldErrors = true;
+				if ( ! firstInvalidEl ) {
+					firstInvalidEl = input;
+				}
+				if ( ! isSilent ) {
+					input.classList.add( 'mhbo-input-error' );
+					input.setAttribute( 'aria-invalid', 'true' );
+					const group =
+						input.closest(
+							'.mhbo-form-group, .mhbo-child-age-group'
+						) || input.parentElement;
+					appendFieldErrorMessage( group, fieldMsg );
+				}
+			}
+		} );
+
+		// 2. Validate GDPR consent checkbox (and any required checkboxes)
+		const consent = form.querySelector(
+			'input[name="mhbo_consent"], #mhbo-consent, .mhbo-consent'
+		);
+		if ( consent && ! consent.checked ) {
+			hasGdprError = true;
+			if ( ! firstInvalidEl ) {
+				firstInvalidEl = consent;
+			}
+			if ( ! isSilent ) {
+				consent.setAttribute( 'aria-invalid', 'true' );
+				const gdprGroup =
+					consent.closest( '.mhbo-gdpr-consent, .mhbo-form-group' ) ||
+					consent.parentElement;
+				if ( gdprGroup ) {
+					gdprGroup.classList.add( 'mhbo-gdpr-error' );
+					appendFieldErrorMessage( gdprGroup, msgGdprRequired );
+				}
+			}
+		}
+
+		if ( hasFieldErrors || hasGdprError ) {
+			if ( ! isSilent ) {
+				const bannerMsg = hasFieldErrors
+					? msgFillAllFields
+					: msgGdprRequired;
+				window.mhboShowBookingError( bannerMsg, form, {
+					scroll: ! firstInvalidEl,
+				} );
+
+				if ( firstInvalidEl ) {
+					const scrollTarget =
+						firstInvalidEl.closest(
+							'.mhbo-gdpr-consent, .mhbo-form-group, .mhbo-child-age-group'
+						) || firstInvalidEl;
+					if ( typeof scrollTarget.scrollIntoView === 'function' ) {
+						scrollTarget.scrollIntoView( {
+							behavior: 'smooth',
+							block: 'center',
+						} );
+					}
+					if ( typeof firstInvalidEl.focus === 'function' ) {
+						try {
+							firstInvalidEl.focus( { preventScroll: true } );
+						} catch ( _ ) {
+							firstInvalidEl.focus();
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		return true;
+	};
 
 	/**
 	 * Initialize a single booking form wrapper instance.
@@ -29,6 +270,7 @@
 		if ( ! form ) {
 			return;
 		}
+		form.noValidate = true;
 
 		const childrenSelect = wrapper.querySelector(
 			'.mhbo-booking-children'
@@ -38,13 +280,15 @@
 		);
 		const agesInputs = wrapper.querySelector( '.mhbo-child-ages-inputs' );
 		const guestsSelect = wrapper.querySelector( '.mhbo-booking-guests' );
-		const totalDisplay = wrapper.querySelector( '.mhbo-display-total' );
+		const totalDisplays = wrapper.querySelectorAll( '.mhbo-display-total' );
 		const totalHidden = form.querySelector( 'input[name="total_price"]' );
 		const arrivalTotalEl = wrapper.querySelector(
 			'.mhbo-arrival-total-price'
 		);
 		const submitBtn = wrapper.querySelector( '.mhbo-submit-btn' );
-		const consentCheckbox = wrapper.querySelector( '.mhbo-consent' );
+		const consentCheckbox = wrapper.querySelector(
+			'input[name="mhbo_consent"], #mhbo-consent, .mhbo-consent'
+		);
 		const errorBox = wrapper.querySelector( '.mhbo-booking-errors' );
 
 		let debounceTimer;
@@ -54,7 +298,7 @@
 		 * Recalculate price via REST API
 		 */
 		function recalculatePrice() {
-			if ( ! totalDisplay ) {
+			if ( ! totalDisplays || totalDisplays.length === 0 ) {
 				return;
 			}
 
@@ -65,7 +309,9 @@
 			}
 
 			clearTimeout( debounceTimer );
-			totalDisplay.classList.add( 'mhbo_faded' );
+			totalDisplays.forEach( function ( el ) {
+				el.classList.add( 'mhbo_faded' );
+			} );
 			if ( arrivalTotalEl ) {
 				arrivalTotalEl.classList.add( 'mhbo_faded' );
 			}
@@ -98,32 +344,31 @@
 					const children = childrenSelect ? childrenSelect.value : 0;
 
 					const extras = {};
-					form.querySelectorAll( '.mhbo-extra-input' ).forEach(
-						function ( input ) {
-							let val = 0;
-							if ( input.type === 'checkbox' ) {
-								if ( input.checked ) {
-									val = 1;
-								}
-							} else {
-								val = input.value;
+					form.querySelectorAll(
+						'.mhbo-extra-input, .mhbo-booking-extra-checkbox'
+					).forEach( function ( input ) {
+						let val = 0;
+						if ( input.type === 'checkbox' ) {
+							if ( input.checked ) {
+								val = 1;
 							}
+						} else {
+							val = input.value;
+						}
 
-							if ( val && parseFloat( val ) > 0 ) {
-								// Priority: data-extra-id, then id from name
-								const extraId = input.dataset.extraId;
-								if ( extraId ) {
-									extras[ extraId ] = val;
-								} else {
-									const match =
-										input.name.match( /\[(.*?)\]/ );
-									if ( match ) {
-										extras[ match[ 1 ] ] = val;
-									}
+						if ( val && parseFloat( val ) > 0 ) {
+							// Priority: data-extra-id, then id from name
+							const extraId = input.dataset.extraId;
+							if ( extraId ) {
+								extras[ extraId ] = val;
+							} else {
+								const match = input.name.match( /\[(.*?)\]/ );
+								if ( match ) {
+									extras[ match[ 1 ] ] = val;
 								}
 							}
 						}
-					);
+					} );
 
 					const paymentTypeInput = form.querySelector(
 						'input[name="mhbo_payment_type"]:checked'
@@ -152,7 +397,7 @@
 						: '';
 
 					const response = await fetch(
-						mhbo_vars.rest_url + '/recalculate-price',
+						mhbo_vars.api_base + '/recalculate-price',
 						{
 							method: 'POST',
 							signal: recalcAbortController.signal,
@@ -177,9 +422,19 @@
 					const data = await response.json();
 
 					if ( data.success ) {
-						totalDisplay.textContent = data.total_formatted;
+						totalDisplays.forEach( function ( el ) {
+							el.textContent = data.total_formatted;
+						} );
 						if ( totalHidden ) {
 							totalHidden.value = data.total;
+						}
+
+						// Room cost row
+						const roomTotalEl = wrapper.querySelector(
+							'.mhbo-room-total-display'
+						);
+						if ( roomTotalEl && data.room_total_formatted ) {
+							roomTotalEl.textContent = data.room_total_formatted;
 						}
 
 						// Children cost row — show when children contribute to the total
@@ -202,6 +457,124 @@
 								childrenTotalEl.textContent = '';
 							}
 						}
+
+						// Extras summary rows (including early checkin & late checkout)
+						const extrasSummaryContainer = wrapper.querySelector(
+							'.mhbo-extras-summary-rows'
+						);
+						if ( extrasSummaryContainer ) {
+							extrasSummaryContainer.innerHTML = '';
+							if (
+								data.extras_breakdown &&
+								typeof data.extras_breakdown === 'object'
+							) {
+								Object.values( data.extras_breakdown ).forEach(
+									function ( extraItem ) {
+										if (
+											extraItem &&
+											extraItem.value > 0
+										) {
+											const row =
+												document.createElement( 'div' );
+											row.className =
+												'mhbo-summary-row mhbo-extra-summary-row';
+											if ( extraItem.id ) {
+												row.dataset.extraId = String(
+													extraItem.id
+												);
+											}
+
+											const nameSpan =
+												document.createElement(
+													'span'
+												);
+											nameSpan.textContent =
+												extraItem.name || '';
+
+											const amountSpan =
+												document.createElement(
+													'span'
+												);
+											amountSpan.className =
+												'mhbo-extra-item-total';
+											amountSpan.textContent =
+												extraItem.formatted || '';
+
+											row.appendChild( nameSpan );
+											row.appendChild( amountSpan );
+											extrasSummaryContainer.appendChild(
+												row
+											);
+										}
+									}
+								);
+							}
+						}
+
+						// Service fee cost row
+						const serviceFeeRow = wrapper.querySelector(
+							'.mhbo-service-fee-cost-row'
+						);
+						const serviceFeeEl = wrapper.querySelector(
+							'.mhbo-service-fee-display'
+						);
+						if ( serviceFeeRow && serviceFeeEl ) {
+							if (
+								data.service_fee &&
+								parseFloat( data.service_fee ) > 0 &&
+								data.service_fee_formatted
+							) {
+								serviceFeeEl.textContent =
+									data.service_fee_formatted;
+								serviceFeeRow.style.display = 'flex';
+							} else {
+								serviceFeeRow.style.display = 'none';
+								serviceFeeEl.textContent = '';
+							}
+						}
+
+						// Synchronize top summary card coupon row
+						const couponSummaryRow = wrapper.querySelector(
+							'.mhbo-coupon-cost-row'
+						);
+						if ( couponSummaryRow ) {
+							const couponLabelEl = couponSummaryRow.querySelector(
+								'.mhbo-coupon-label'
+							);
+							const couponAmountEl = couponSummaryRow.querySelector(
+								'.mhbo-coupon-discount-display'
+							);
+							if (
+								data.coupon_applied &&
+								data.coupon_discount_formatted
+							) {
+								if ( couponLabelEl ) {
+									couponLabelEl.textContent =
+										( ( typeof mhbo_coupon !== 'undefined' &&
+											mhbo_coupon.label_coupon ) ||
+											'Coupon' ) +
+										' ' +
+										data.coupon_applied;
+								}
+								if ( couponAmountEl ) {
+									couponAmountEl.innerHTML =
+										'<strong>&minus;' +
+										String( data.coupon_discount_formatted )
+											.replace( /&/g, '&amp;' )
+											.replace( /</g, '&lt;' )
+											.replace( />/g, '&gt;' )
+											.replace( /"/g, '&quot;' ) +
+										'</strong>';
+								}
+								couponSummaryRow.style.display = 'flex';
+							} else if ( ! data.coupon_applied ) {
+								couponSummaryRow.style.display = 'none';
+								if ( couponAmountEl ) {
+									couponAmountEl.innerHTML = '';
+								}
+							}
+						}
+
 						if ( arrivalTotalEl ) {
 							arrivalTotalEl.textContent = data.total_formatted;
 						}
@@ -284,6 +657,10 @@
 									data.deposit_amount;
 								depositCard.dataset.balance =
 									data.remaining_balance;
+								if ( data.first_night_total ) {
+									depositCard.dataset.firstNightAmount =
+										data.first_night_total;
+								}
 							}
 
 							// 2026 BP: Also update the Reservation Summary deposit rows so the
@@ -404,7 +781,9 @@
 					debugLog( 'Recalculate error:', err );
 				} finally {
 					recalcAbortController = null;
-					totalDisplay.classList.remove( 'mhbo_faded' );
+					totalDisplays.forEach( function ( el ) {
+						el.classList.remove( 'mhbo_faded' );
+					} );
 					if ( arrivalTotalEl ) {
 						arrivalTotalEl.classList.remove( 'mhbo_faded' );
 					}
@@ -451,22 +830,89 @@
 		}
 
 		/**
-		 * GDPR Consent Enforcement & Button State
+		 * Restore submit button interactive state after async recalculations.
+		 * Keep the button clickable so missing required fields or GDPR consent
+		 * always trigger clear inline validation messages on click.
 		 */
 		function updateSubmitState() {
 			if ( ! submitBtn ) {
 				return;
 			}
+			submitBtn.disabled = false;
+			submitBtn.style.opacity = '';
+			submitBtn.style.cursor = '';
+		}
 
-			let isAllowed = true;
-			if ( consentCheckbox ) {
-				isAllowed = consentCheckbox.checked;
+		/**
+		 * Clear field-level error state as soon as the user corrects an input or checkbox.
+		 *
+		 * @param {Event} e Input or change event.
+		 */
+		function clearFieldErrorOnInteract( e ) {
+			const target = e.target;
+			if ( ! target || ! target.tagName ) {
+				return;
 			}
 
-			submitBtn.disabled = ! isAllowed;
-			submitBtn.style.opacity = isAllowed ? '1' : '0.5';
-			submitBtn.style.cursor = isAllowed ? 'pointer' : 'not-allowed';
+			if (
+				target.type === 'checkbox' &&
+				( target.name === 'mhbo_consent' ||
+					target.id === 'mhbo-consent' ||
+					target.classList.contains( 'mhbo-consent' ) )
+			) {
+				if ( target.checked ) {
+					target.removeAttribute( 'aria-invalid' );
+					const gdprGroup =
+						target.closest(
+							'.mhbo-gdpr-consent, .mhbo-form-group'
+						) || target.parentElement;
+					if ( gdprGroup ) {
+						gdprGroup.classList.remove( 'mhbo-gdpr-error' );
+						const msg = gdprGroup.querySelector(
+							'.mhbo-field-error-msg'
+						);
+						if ( msg ) {
+							msg.remove();
+						}
+					}
+				}
+			} else if ( target.classList.contains( 'mhbo-input-error' ) ) {
+				const val =
+					typeof target.value === 'string'
+						? target.value.trim()
+						: '';
+				if ( val !== '' ) {
+					target.classList.remove( 'mhbo-input-error' );
+					target.removeAttribute( 'aria-invalid' );
+					target.style.borderColor = '';
+					const group =
+						target.closest(
+							'.mhbo-form-group, .mhbo-child-age-group'
+						) || target.parentElement;
+					if ( group ) {
+						const msg = group.querySelector(
+							'.mhbo-field-error-msg'
+						);
+						if ( msg ) {
+							msg.remove();
+						}
+					}
+				}
+			}
+
+			if (
+				errorBox &&
+				errorBox.style.display !== 'none' &&
+				form.querySelectorAll( '.mhbo-input-error, .mhbo-gdpr-error' )
+					.length === 0
+			) {
+				errorBox.style.display = 'none';
+				errorBox.innerHTML = '';
+			}
 		}
+
+		form.addEventListener( 'input', clearFieldErrorOnInteract );
+		form.addEventListener( 'change', clearFieldErrorOnInteract );
 
 		if ( childrenSelect ) {
 			childrenSelect.addEventListener( 'change', function () {
@@ -482,7 +928,7 @@
 						html +=
 							'<div class="mhbo-child-age-group">' +
 							'<label>' +
-							label +
+							escapeHtml( label ) +
 							' <span class="required">*</span></label>' +
 							'<input type="number" name="child_ages[]" value="" placeholder="0" min="0" max="17" required class="mhbo-child-age-input">' +
 							'</div>';
@@ -495,11 +941,14 @@
 				recalculatePrice();
 			} );
 
-			$( wrapper ).on(
-				'change',
-				'.mhbo-child-age-input',
-				recalculatePrice
-			);
+			wrapper.addEventListener( 'change', function ( e ) {
+				if (
+					e.target &&
+					e.target.classList.contains( 'mhbo-child-age-input' )
+				) {
+					recalculatePrice();
+				}
+			} );
 		}
 
 		if ( guestsSelect ) {
@@ -507,28 +956,95 @@
 		}
 
 		// Quantity stepper buttons — update the input directly (it IS the form field).
-		$( wrapper ).on( 'click', '.mhbo-qty-btn', function ( e ) {
+		wrapper.addEventListener( 'click', function ( e ) {
+			const qtyBtn = e.target.closest( '.mhbo-qty-btn' );
+			if ( ! qtyBtn ) {
+				return;
+			}
 			e.preventDefault();
 			e.stopPropagation();
-			const $card = $( this ).closest( '.mhbo-extra-card' );
-			const $input = $card.find( '.mhbo-extra-input' );
-			let val = parseFloat( $input.val() ) || 0;
-			val = $( this ).hasClass( 'plus' )
+			const card = qtyBtn.closest( '.mhbo-extra-card' );
+			if ( ! card ) {
+				return;
+			}
+			const input = card.querySelector( '.mhbo-extra-input' );
+			if ( ! input ) {
+				return;
+			}
+			let val = parseFloat( input.value ) || 0;
+			val = qtyBtn.classList.contains( 'plus' )
 				? val + 1
 				: Math.max( 0, val - 1 );
-			$input.val( val ).trigger( 'change' );
+			input.value = val;
+			input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 		} );
 
 		// Sync card selected state + trigger price recalculation on any extra change.
-		$( wrapper ).on( 'change', '.mhbo-extra-input', function () {
-			const $input = $( this );
-			const $card = $input.closest( '.mhbo-extra-card' );
+		wrapper.addEventListener( 'change', function ( e ) {
+			const input = e.target.closest(
+				'.mhbo-extra-input, .mhbo-booking-extra-checkbox'
+			);
+			if ( ! input ) {
+				return;
+			}
+			const card = input.closest(
+				'.mhbo-extra-card, .mhbo-arrival-option-card'
+			);
 			const selected =
-				$input.attr( 'type' ) === 'checkbox'
-					? $input.prop( 'checked' )
-					: parseFloat( $input.val() ) > 0;
-			$card.toggleClass( 'selected', selected );
+				input.type === 'checkbox'
+					? input.checked
+					: parseFloat( input.value ) > 0;
+			if ( card ) {
+				card.classList.toggle( 'selected', selected );
+				card.classList.toggle( 'is-selected', selected );
+			}
+
+			// Live update check-in / check-out times in the stay dates overview bar
+			const extraId = input.dataset.extraId || input.name || '';
+			if (
+				extraId === '_early_checkin' ||
+				extraId.indexOf( '_early_checkin' ) !== -1
+			) {
+				const ciVal = wrapper.querySelector( '.mhbo-checkin-time-val' );
+				if ( ciVal ) {
+					ciVal.textContent =
+						selected && ciVal.dataset.early
+							? ciVal.dataset.early
+							: ciVal.dataset.standard || ciVal.textContent;
+				}
+			}
+			if (
+				extraId === '_late_checkout' ||
+				extraId.indexOf( '_late_checkout' ) !== -1
+			) {
+				const coVal = wrapper.querySelector(
+					'.mhbo-checkout-time-val'
+				);
+				if ( coVal ) {
+					coVal.textContent =
+						selected && coVal.dataset.late
+							? coVal.dataset.late
+							: coVal.dataset.standard || coVal.textContent;
+				}
+			}
+
 			recalculatePrice();
+		} );
+
+		// Immediate recalculation when typing directly in extra quantity number fields
+		wrapper.addEventListener( 'input', function ( e ) {
+			const input = e.target.closest(
+				'.mhbo-extra-input[type="number"]'
+			);
+			if ( input ) {
+				const card = input.closest( '.mhbo-extra-card' );
+				const selected = parseFloat( input.value ) > 0;
+				if ( card ) {
+					card.classList.toggle( 'selected', selected );
+					card.classList.toggle( 'is-selected', selected );
+				}
+				recalculatePrice();
+			}
 		} );
 
 		// [CRITICAL 2026 FIX] Add listeners for check-in/out to trigger recalculation when calendar updates them
@@ -540,32 +1056,36 @@
 		} );
 
 		// Payment Type Change
-		$( wrapper ).on(
-			'change',
-			'input[name="mhbo_payment_type"]',
-			function () {
-				// UI feedback
-				wrapper
-					.querySelectorAll( '.mhbo-payment-card' )
-					.forEach( ( c ) => c.classList.remove( 'active' ) );
-				const card = this.closest( '.mhbo-payment-card' );
-				if ( card ) {
-					card.classList.add( 'active' );
-				}
-
-				// Immediately update deposit row visibility so the summary reflects
-				// the selection before the async recalculate response arrives.
-				updateDepositVisibility();
-				recalculatePrice();
+		wrapper.addEventListener( 'change', function ( e ) {
+			const ptInput = e.target.closest(
+				'input[name="mhbo_payment_type"]'
+			);
+			if ( ! ptInput ) {
+				return;
 			}
-		);
+			// UI feedback
+			wrapper
+				.querySelectorAll( '.mhbo-payment-card' )
+				.forEach( ( c ) => c.classList.remove( 'active' ) );
+			const card = ptInput.closest( '.mhbo-payment-card' );
+			if ( card ) {
+				card.classList.add( 'active' );
+			}
+
+			// Immediately update deposit row visibility so the summary reflects
+			// the selection before the async recalculate response arrives.
+			updateDepositVisibility();
+			recalculatePrice();
+		} );
+
+		// Listen for coupon application or removal to ensure 100% price parity
+		wrapper.addEventListener( 'mhboCouponApplied', recalculatePrice );
+		wrapper.addEventListener( 'mhboCouponRemoved', recalculatePrice );
 
 		if ( consentCheckbox ) {
 			consentCheckbox.addEventListener( 'change', updateSubmitState );
-			updateSubmitState();
-		} else {
-			updateSubmitState();
 		}
+		updateSubmitState();
 
 		// Initial visibility
 		updateDepositVisibility();
@@ -578,12 +1098,11 @@
 				errorBox.style.display = 'none';
 			}
 
-			if ( consentCheckbox && ! consentCheckbox.checked ) {
+			if ( ! window.mhboValidateBookingForm( form, false ) ) {
 				e.preventDefault();
-				showInstanceError(
-					mhbo_vars.msg_gdpr_required ||
-						'Please accept the privacy policy to continue.'
-				);
+				if ( typeof e.stopImmediatePropagation === 'function' ) {
+					e.stopImmediatePropagation();
+				}
 				return;
 			}
 
@@ -596,12 +1115,10 @@
 				const piInput = form.querySelector(
 					'input[name="mhbo_stripe_payment_intent"]'
 				);
-				const isModalCtxStripe =
-					wrapper && wrapper.dataset.modalContext === '1';
-				if ( ! isModalCtxStripe || ! piInput || ! piInput.value ) {
+				if ( ! piInput || ! piInput.value ) {
 					return; // Hand off to PaymentGateways.js
 				}
-				// PI confirmed in modal — fall through to REST path
+				// PI confirmed — fall through to unified REST path
 			}
 
 			if ( methodValue === 'paypal' ) {
@@ -616,11 +1133,7 @@
 					);
 					return;
 				}
-				const isModalCtxPP =
-					wrapper && wrapper.dataset.modalContext === '1';
-				if ( ! isModalCtxPP ) {
-					return; // Standard path: native form POST
-				}
+				// PayPal confirmed — fall through to unified REST path
 			}
 
 			if ( methodValue === 'braintree' ) {
@@ -635,12 +1148,22 @@
 			e.preventDefault();
 
 			// Clear ALL previous error boxes in wrapper/form/modal before processing
-			const searchCtx = ( typeof form.closest === 'function' ? form.closest( '.mhbo-booking-form-wrapper' ) : null ) || ( typeof document.querySelector === 'function' ? document : null );
+			const searchCtx =
+				( typeof form.closest === 'function'
+					? form.closest( '.mhbo-booking-form-wrapper' )
+					: null ) ||
+				( typeof document.querySelector === 'function'
+					? document
+					: null );
 			if ( searchCtx && searchCtx.querySelectorAll ) {
-				searchCtx.querySelectorAll( '#mhbo-booking-error, .mhbo-booking-error, .mhbo-error-notification, .mhbo-booking-errors, .mhbo-inline-errors, .mhbo-message.mhbo-error' ).forEach( function ( box ) {
-					box.style.display = 'none';
-					box.innerHTML = '';
-				} );
+				searchCtx
+					.querySelectorAll(
+						'#mhbo-booking-error, .mhbo-booking-error, .mhbo-error-notification, .mhbo-booking-errors, .mhbo-inline-errors, .mhbo-message.mhbo-error'
+					)
+					.forEach( function ( box ) {
+						box.style.display = 'none';
+						box.innerHTML = '';
+					} );
 			}
 
 			if ( submitBtn ) {
@@ -770,6 +1293,12 @@
 					);
 					return el ? el.value : '';
 				} )(),
+				session_token: ( function () {
+					const el = form.querySelector(
+						'input[name="mhbo_session_token"]'
+					);
+					return el ? el.value : '';
+				} )(),
 				mhbo_coupon_code: ( function () {
 					const el = form.querySelector(
 						'[name="mhbo_coupon_applied"]'
@@ -778,7 +1307,7 @@
 				} )(),
 			};
 
-			fetch( mhbo_vars.rest_url + '/booking/complete', {
+			fetch( mhbo_vars.api_base + '/booking/complete', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -795,8 +1324,12 @@
 						result.success && result.data ? result.data : result;
 
 					if ( successData.redirect_url ) {
-						const isModalContext =
-							wrapper.dataset.modalContext === '1';
+						const isModalContext = !! (
+							form.closest( '[data-modal-context="1"]' ) ||
+							( wrapper &&
+								wrapper.dataset &&
+								wrapper.dataset.modalContext === '1' )
+						);
 						if ( isModalContext ) {
 							// Modal path: parse token + status from redirect URL,
 							// hand to Phase 5 confirmation handler.
@@ -852,19 +1385,46 @@
 		} );
 
 		function showInstanceError( message ) {
-			if ( errorBox ) {
-				errorBox.innerHTML =
-					'<div class="mhbo-error-notification"><span class="mhbo-error-icon">⚠️</span> ' +
-					message +
-					'</div>';
-				errorBox.style.display = 'block';
-				errorBox.scrollIntoView( {
+			window.mhboShowBookingError( message, wrapper );
+		}
+
+		// Wire mobile sticky bar CTA button and intersection observer
+		const mobileStickyBar = wrapper.querySelector(
+			'.mhbo-mobile-sticky-bar'
+		);
+		const mobileScrollBtn = wrapper.querySelector(
+			'.mhbo-mobile-scroll-btn'
+		);
+		if ( mobileScrollBtn && submitBtn ) {
+			mobileScrollBtn.addEventListener( 'click', function ( e ) {
+				e.preventDefault();
+				submitBtn.scrollIntoView( {
 					behavior: 'smooth',
 					block: 'center',
 				} );
-			} else {
-				alert( message );
-			}
+				submitBtn.focus();
+			} );
+		}
+
+		if ( mobileStickyBar && submitBtn && 'IntersectionObserver' in window ) {
+			const submitContainer =
+				wrapper.querySelector( '.mhbo-submit-container' ) || submitBtn;
+			const observer = new IntersectionObserver(
+				function ( entries ) {
+					entries.forEach( function ( entry ) {
+						if ( entry.isIntersecting ) {
+							mobileStickyBar.classList.add( 'is-hidden' );
+						} else {
+							mobileStickyBar.classList.remove( 'is-hidden' );
+						}
+					} );
+				},
+				{
+					threshold: 0.1,
+					rootMargin: '0px 0px -40px 0px',
+				}
+			);
+			observer.observe( submitContainer );
 		}
 	} // end initBookingFormWrapper
 
@@ -884,4 +1444,4 @@
 			.querySelectorAll( '.mhbo-booking-form-wrapper' )
 			.forEach( initBookingFormWrapper );
 	} );
-} )( jQuery );
+} )();

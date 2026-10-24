@@ -16,111 +16,122 @@ use MHBO\AI\SiteScanner;
 use MHBO\Business\Info;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 class GetKnowledgeBase {
 
-    /**
-     * Return the WP Ability / MCP tool definition.
-     *
-     * @return array<mixed>
-     */
-    public static function get_definition(): array {
-        return [
-            'label'       => __( 'Get Knowledge Base', 'modern-hotel-booking' ),
-            'description' => __( 'Returns the hotel knowledge base. Optionally filter by a search query to retrieve relevant sections.', 'modern-hotel-booking' ),
-            'category'    => 'hotel-information',
-            'input_schema' => [
-                'type'       => 'object',
-                'properties' => [
-                    'query' => [ 'type' => 'string', 'description' => 'Optional search query to filter KB sections.' ],
-                ],
-                'required' => [],
-            ],
-            'output_schema' => [
-                'type'       => 'object',
-                'properties' => [
-                    'knowledge_base' => [ 'type' => 'string' ],
-                    'last_updated'   => [ 'type' => 'string' ],
-                    'hotel_name'     => [ 'type' => 'string' ],
-                ],
-            ],
-            'permission_callback' => '__return_true',
-            'execute_callback'    => [ self::class, 'execute' ],
-            'meta'                => [
-                'mcp'          => [ 'public' => true ],
-                'show_in_rest' => true,
-            ],
-        ];
-    }
+	/**
+	 * Return the WP Ability / MCP tool definition.
+	 *
+	 * @return array<mixed>
+	 */
+	public static function get_definition(): array {
+		return array(
+			'label'               => __( 'Get Knowledge Base', 'modern-hotel-booking' ),
+			'description'         => __( 'Returns the hotel knowledge base. Optionally filter by a search query to retrieve relevant sections.', 'modern-hotel-booking' ),
+			'category'            => 'hotel-information',
+			'input_schema'        => array(
+				'type'       => 'object',
+				'properties' => array(
+					'query' => array(
+						'type'        => 'string',
+						'description' => 'Optional search query to filter KB sections.',
+					),
+				),
+				'required'   => array(),
+			),
+			'output_schema'       => array(
+				'type'       => 'object',
+				'properties' => array(
+					'knowledge_base' => array( 'type' => 'string' ),
+					'last_updated'   => array( 'type' => 'string' ),
+					'hotel_name'     => array( 'type' => 'string' ),
+				),
+			),
+			'permission_callback' => '__return_true',
+			'execute_callback'    => array( self::class, 'execute' ),
+			'meta'                => array(
+				'public'       => true,
+				'show_in_rest' => true,
+				'mcp'          => array(
+					'public' => true,
+				),
+				'annotations'  => array(
+					'readonly'    => true,
+					'destructive' => false,
+					'idempotent'  => true,
+				),
+			),
+		);
+	}
 
-    /**
-     * Execute the ability.
-     *
-     * @param array<mixed> $args
-     * @return array<mixed>
-     */
-    public static function execute( array $args = [] ): array {
-        $query = sanitize_text_field( (string) ( $args['query'] ?? '' ) );
-        $kb    = SiteScanner::get_or_build();
+	/**
+	 * Execute the ability.
+	 *
+	 * @param array<mixed> $args
+	 * @return array<mixed>
+	 */
+	public static function execute( array $args = array() ): array {
+		$query = sanitize_text_field( (string) ( $args['query'] ?? '' ) );
+		$kb    = SiteScanner::get_or_build();
 
-        // Simple section filtering by query.
-        if ( '' !== $query ) {
-            $kb = self::filter_by_query( $kb, $query );
-        }
+		// Simple section filtering by query.
+		if ( '' !== $query ) {
+			$kb = self::filter_by_query( $kb, $query );
+		}
 
-        $company    = Info::get_company();
-        $hotel_name = (string) ( $company['company_name'] ?: get_bloginfo( 'name' ) );
+		$company    = Info::get_company();
+		$hotel_name = (string) ( $company['company_name'] ?: get_bloginfo( 'name' ) );
 
-        // Last-updated is when the snapshot option was last touched.
-        $last_updated = (string) get_option( 'mhbo_kb_snapshot_updated', '' );
-        if ( '' === $last_updated ) {
-            $last_updated = (string) gmdate( 'Y-m-d H:i:s' );
-        }
+		// Last-updated is when the snapshot option was last touched.
+		$last_updated = (string) get_option( 'mhbo_kb_snapshot_updated', '' );
+		if ( '' === $last_updated ) {
+			$last_updated = (string) gmdate( 'Y-m-d H:i:s' );
+		}
 
-        return [
-            'knowledge_base' => $kb,
-            'last_updated'   => $last_updated,
-            'hotel_name'     => $hotel_name,
-        ];
-    }
+		return array(
+			'knowledge_base' => $kb,
+			'last_updated'   => $last_updated,
+			'hotel_name'     => $hotel_name,
+		);
+	}
 
-    /**
-     * Filter KB text by returning sections that contain the query string.
-     *
-     * Splits by === headers and returns matching sections.
-     *
-     * @param string $kb
-     * @param string $query
-     * @return string
-     */
-    private static function filter_by_query( string $kb, string $query ): string {
-        // Split into sections (delimited by lines starting with ===).
-        $sections = preg_split( '/(?=^=== )/m', $kb );
-        if ( ! is_array( $sections ) ) {
-            return $kb;
-        }
+	/**
+	 * Filter KB text by returning sections that contain the query string.
+	 *
+	 * Splits by === headers and returns matching sections.
+	 *
+	 * @param string $kb
+	 * @param string $query
+	 * @return string
+	 */
+	private static function filter_by_query( string $kb, string $query ): string {
+		// Split into sections (delimited by lines starting with ===).
+		$sections = preg_split( '/(?=^=== )/m', $kb );
+		if ( ! is_array( $sections ) ) {
+			return $kb;
+		}
 
-        $lower_query = mb_strtolower( $query );
-        $matched     = [];
+		$lower_query = mb_strtolower( $query );
+		$matched     = array();
 
-        foreach ( $sections as $section ) {
-            if ( str_contains( mb_strtolower( $section ), $lower_query ) ) {
-                $matched[] = trim( $section );
-            }
-        }
+		foreach ( $sections as $section ) {
+			if ( str_contains( mb_strtolower( $section ), $lower_query ) ) {
+				$matched[] = trim( $section );
+			}
+		}
 
-        return [] === $matched ? $kb : implode( "\n\n", $matched );
-    }
+		return array() === $matched ? $kb : implode( "\n\n", $matched );
+	}
 
-    /**
-     * Register as a WordPress Ability (WP 7.0+).
-     */
-    public static function register(): void {
-        if ( ! function_exists( 'wp_register_ability' ) ) {
-            return;
-        }
-        call_user_func( 'wp_register_ability', 'mhbo/get-knowledge-base', self::get_definition() );
-    }
+	/**
+	 * Register as a WordPress Ability (WP 7.0+).
+	 */
+	public static function register(): void {
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+		call_user_func( 'wp_register_ability', 'mhbo/get-knowledge-base', self::get_definition() );
+	}
 }

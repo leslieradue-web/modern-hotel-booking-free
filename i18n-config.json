@@ -1,0 +1,35 @@
+{
+  "vendor": {
+    "mhbo": "Modern Hotel Booking"
+  },
+  "admin-config": {
+    "modern-hotel-booking": {
+      "pages": {
+        "post.php": "post_type=mhbo_room",
+        "post-new.php": "post_type=mhbo_room",
+        "admin.php": "page=mhbo-settings"
+      },
+      "forms": {
+        "post": {
+          "fields": {
+            "mhbo_room_description": {
+              "jquery": "textarea[name='mhbo_room_description']"
+            },
+            "mhbo_amenities": {
+              "jquery": "textarea[name='mhbo_amenities']"
+            }
+          }
+        }
+      }
+    }
+  },
+  "front-config": {
+    "modern-hotel-booking": {
+      "all": {
+        "pages": {
+          "all": ""
+        }
+      }
+    }
+  }
+}

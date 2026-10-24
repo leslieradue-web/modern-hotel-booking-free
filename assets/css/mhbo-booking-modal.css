@@ -90,7 +90,7 @@
     flex: 1 1 auto;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 24px;
+    padding: 24px 24px 70px 24px;
     box-sizing: border-box;
     scroll-padding-top: 16px;
 }
@@ -104,28 +104,85 @@
     border-radius: 4px;
 }
 
+/* Modal Booking Form & Container Optimization */
+.mhbo-modal-body .mhbo-booking-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+.mhbo-modal-body .mhbo-booking-summary {
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.mhbo-modal-body .mhbo-form-heading {
+    margin: 20px 0 16px 0 !important;
+    font-size: 1.35rem !important;
+}
+
+.mhbo-modal-body .mhbo-tax-breakdown,
+.mhbo-modal-body .mhbo-tax-breakdown-container {
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 18px 20px !important;
+    margin: 24px 0 !important;
+    box-sizing: border-box !important;
+}
+
+.mhbo-modal-body table#mhbo-tax-breakdown-table th:last-child,
+.mhbo-modal-body table#mhbo-tax-breakdown-table td:last-child,
+.mhbo-modal-body .mhbo-tax-breakdown-table th:last-child,
+.mhbo-modal-body .mhbo-tax-breakdown-table td:last-child {
+    white-space: nowrap !important;
+    width: 1% !important;
+    text-align: right !important;
+    padding-left: 16px !important;
+}
+
 /* Modal Payment Options & Coupon Spacing Fix */
 .mhbo-modal-body .mhbo-deposit-options {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    margin: 20px 0 28px;
+    gap: 12px;
+    margin: 16px 0 24px;
 }
 
 .mhbo-modal-body .mhbo-payment-card {
     width: 100%;
     min-width: 100%;
     margin-bottom: 0 !important;
+    box-sizing: border-box !important;
 }
 
 .mhbo-modal-body .mhbo-coupon-wrapper {
-    margin-top: 32px !important;
-    padding-top: 24px !important;
-    border-top: 1px dashed #e5e7eb !important;
+    margin-top: 24px !important;
+    padding-top: 20px !important;
+    border-top: 1px dashed var(--mhbo-border, #e2e8f0) !important;
+    margin-bottom: 16px !important;
 }
 
 .mhbo-modal-body .mhbo-coupon-wrapper label {
-    margin-bottom: 10px !important;
+    margin-bottom: 8px !important;
+}
+
+/* Chat bubble collision prevention while modal is active */
+body.mhbo-modal-open .mhbo-chat-widget,
+.mhbo-modal-overlay.is-open ~ .mhbo-chat-widget {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transform: translateY(16px) scale(0.9) !important;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s !important;
 }
 
 /* ── Loading state ───────────────────────────────────────── */
@@ -223,29 +280,30 @@
 
 /* Mobile Optimization for Coupon Section */
 @media screen and (max-width: 480px) {
-    /* 1. Force the row wrapper to stack vertically instead of side-by-side */
     div.mhbo-coupon-input-row {
-        flex-direction: column !important;
+        display: flex !important;
+        flex-direction: row !important;
         align-items: stretch !important;
-        gap: 10px !important;
+        overflow: hidden !important;
     }
 
-    /* 2. Make the input field span the full container width */
     input.mhbo-coupon-code-input {
-        width: 100% !important;
-        min-height: 44px !important; /* Makes it easy to tap on phones */
-        font-size: 16px !important;  /* Prevents iOS from auto-zooming on focus */
+        min-height: 44px !important;
+        font-size: 15px !important;
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: auto !important;
     }
 
-    /* 3. Make both buttons expand fully and sit nicely underneath */
     button.mhbo-coupon-apply-btn,
-    button.mhbo-coupon-remove-btn {
-        width: 100% !important;
+    button.mhbo-coupon-remove-btn,
+    .mhbo-coupon-input-row .mhbo-btn {
         min-height: 44px !important;
-        margin: 0 !important;
-        padding: 10px 16px !important;
-        text-align: center !important;
-        justify-content: center !important;
+        padding: 0 16px !important;
+        width: auto !important;
+        max-width: none !important;
+        flex: 0 0 auto !important;
+        border-radius: 0 10px 10px 0 !important;
     }
 }
 
@@ -306,4 +364,10 @@
     .mhbo-booking-modal textarea {
         font-size: 16px !important;
     }
+}
+
+/* Hide standalone mobile sticky bar inside modal drawer */
+.mhbo-modal-drawer .mhbo-mobile-sticky-bar,
+.mhbo-modal-form .mhbo-mobile-sticky-bar {
+    display: none !important;
 }

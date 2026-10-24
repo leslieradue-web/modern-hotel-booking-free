@@ -6,7 +6,7 @@
     "author": "StartMySuccess"
   },
   "preferredVersions": {
-    "php": "8.3",
+    "php": "8.2",
     "wp": "latest"
   },
   "login": true,
@@ -19,17 +19,6 @@
         "url": "https://raw.githubusercontent.com/leslieradue-web/modern-hotel-booking-free/main/playground.zip"
       },
       "extractToPath": "/wordpress"
-    },
-    {
-      "step": "installPlugin",
-      "pluginData": {
-        "resource": "wordpress.org/plugins",
-        "slug": "modern-hotel-booking"
-      },
-      "options": {
-        "activate": true
-      }
     }
-  ],
-  "features": {}
+  ]
 }
