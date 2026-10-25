@@ -7,7 +7,10 @@
   },
   "preferredVersions": {
     "php": "8.2",
-    "wp": "latest"
+    "wp": "nightly"
+  },
+  "features": {
+    "networking": true
   },
   "login": true,
   "landingPage": "/royal-ocean-suite/",
