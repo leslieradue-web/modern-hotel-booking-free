@@ -129,13 +129,46 @@
     font-size: 1.35rem !important;
 }
 
-.mhbo-modal-body .mhbo-tax-breakdown,
-.mhbo-modal-body .mhbo-tax-breakdown-container {
+.mhbo-modal-body .mhbo-tax-breakdown-container,
+.mhbo-modal-body div.mhbo-tax-breakdown-container,
+div.mhbo-tax-breakdown-container[style] {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 20px 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.mhbo-modal-body .mhbo-tax-breakdown {
     background: #f8fafc !important;
     border: 1.5px solid #e2e8f0 !important;
     border-radius: 14px !important;
-    padding: 18px 20px !important;
-    margin: 24px 0 !important;
+    padding: 16px 14px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    overflow: hidden !important;
+}
+
+.mhbo-modal-body table#mhbo-tax-breakdown-table,
+.mhbo-modal-body .mhbo-tax-breakdown-table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}
+
+.mhbo-modal-body table#mhbo-tax-breakdown-table th:first-child,
+.mhbo-modal-body table#mhbo-tax-breakdown-table td:first-child,
+.mhbo-modal-body .mhbo-tax-breakdown-table th:first-child,
+.mhbo-modal-body .mhbo-tax-breakdown-table td:first-child {
+    width: 52% !important;
+    text-align: left !important;
+    padding: 10px 4px 10px 0 !important;
     box-sizing: border-box !important;
 }
 
@@ -144,9 +177,10 @@
 .mhbo-modal-body .mhbo-tax-breakdown-table th:last-child,
 .mhbo-modal-body .mhbo-tax-breakdown-table td:last-child {
     white-space: nowrap !important;
-    width: 1% !important;
+    width: 48% !important;
     text-align: right !important;
-    padding-left: 16px !important;
+    padding: 10px 6px 10px 0 !important;
+    box-sizing: border-box !important;
 }
 
 /* Modal Payment Options & Coupon Spacing Fix */
@@ -264,6 +298,26 @@ body.mhbo-modal-open .mhbo-chat-widget,
         position: relative;
         padding-top: 24px;
     }
+
+    .mhbo-modal-body {
+        padding: 18px 16px 60px 16px !important;
+    }
+
+    .mhbo-modal-body .mhbo-booking-summary {
+        padding: 16px 14px !important;
+        border-radius: 14px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .mhbo-modal-body .mhbo-tax-breakdown {
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .mhbo-modal-body .mhbo-form-heading {
+        font-size: 1.25rem !important;
+        margin: 18px 0 14px 0 !important;
+    }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */
@@ -309,11 +363,24 @@ body.mhbo-modal-open .mhbo-chat-widget,
 
 /* Mobile Optimization for Booking/Tax Breakdown Table */
 @media screen and (max-width: 480px) {
-    /* 1. Eliminate heavy parent margins that push the table out of bounds */
+    /* 1. Eliminate heavy parent margins and padding that cause nested boxing */
     div.mhbo-tax-breakdown-container {
-        margin: 15px 0 !important;
-        padding: 10px !important;
+        margin: 14px 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
         width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .mhbo-modal-body .mhbo-tax-breakdown {
+        padding: 14px 10px !important;
+        border-radius: 14px !important;
+        margin: 0 !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
         box-sizing: border-box !important;
     }
 
@@ -323,23 +390,24 @@ body.mhbo-modal-open .mhbo-chat-widget,
         table-layout: fixed !important; /* Forces strict adherence to defined column widths */
     }
 
-    /* 3. Divide columns cleanly: 55% for names, 45% for prices */
+    /* 3. Divide columns cleanly: 52% for names, 48% for prices with zero edge clipping */
     table#mhbo-tax-breakdown-table th:first-child,
     table#mhbo-tax-breakdown-table td:first-child {
-        width: 55% !important;
+        width: 52% !important;
         text-align: left !important;
-        font-size: 13px !important;
-        padding: 8px 4px !important;
+        font-size: 12px !important;
+        padding: 6px 2px 6px 0 !important;
+        box-sizing: border-box !important;
     }
 
     table#mhbo-tax-breakdown-table th:last-child,
     table#mhbo-tax-breakdown-table td:last-child {
-        width: 45% !important;
+        width: 48% !important;
         text-align: right !important;
-        font-size: 13px !important;
-        padding: 8px 4px !important;
-        /* 4. Stop the currency symbols and digits from breaking line */
-        white-space: nowrap !important; 
+        font-size: 12px !important;
+        padding: 6px 4px 6px 0 !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
     }
 
     /* 5. Tweak header text spacing */

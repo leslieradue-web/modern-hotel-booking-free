@@ -1585,7 +1585,7 @@ $deposit_data = null;
 				<!-- Inline error notification area for payment/booking errors -->
 				<div class="mhbo-booking-errors mhbo-inline-errors" style="display:none;"></div>
 
-				<div class="mhbo-tax-breakdown-container" style="margin: 20px 0; padding: 15px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+				<div class="mhbo-tax-breakdown-container">
 					<?php
 					// Display the dynamic pricing and tax breakdown from the server calculation
 					$show_breakdown = ! Tax::is_enabled() || get_option( 'mhbo_tax_display_frontend', 1 );

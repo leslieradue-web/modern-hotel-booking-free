@@ -1747,13 +1747,25 @@ textarea.mhbo-admin-notes-textarea {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14) !important;
 }
 
-/* Tax Breakdown Receipt Look */
+.mhbo-tax-breakdown-container,
+div.mhbo-tax-breakdown-container[style] {
+    margin: 20px 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
 .mhbo-tax-breakdown {
-    background: var(--mhbo-glass);
-    border-radius: 20px;
-    padding: 30px;
-    margin-top: 40px;
-    border: 1px solid var(--mhbo-border);
+    background: var(--mhbo-glass, #f8fafc);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 20px;
+    border: 1px solid var(--mhbo-border, #e2e8f0);
+    box-sizing: border-box;
 }
 
 .mhbo-tax-breakdown-title {
@@ -1777,7 +1789,9 @@ textarea.mhbo-admin-notes-textarea {
 
 .mhbo-tax-breakdown-table {
     width: 100%;
+    table-layout: fixed !important;
     border-collapse: collapse;
+    box-sizing: border-box;
 }
 
 .mhbo-tax-breakdown-th {
@@ -1789,13 +1803,24 @@ textarea.mhbo-admin-notes-textarea {
     text-transform: uppercase;
     letter-spacing: 0.6px;
     border-bottom: 1.5px solid var(--mhbo-border, #e2e8f0);
+    box-sizing: border-box;
+}
+
+.mhbo-tax-breakdown-th:first-child,
+.mhbo-tax-breakdown-td:first-child {
+    width: 52% !important;
+    text-align: left !important;
+    box-sizing: border-box;
 }
 
 .mhbo-tax-breakdown-th-right,
-.mhbo-tax-breakdown-th.mhbo-tax-breakdown-th-right {
+.mhbo-tax-breakdown-th.mhbo-tax-breakdown-th-right,
+.mhbo-tax-breakdown-th:last-child {
     text-align: right !important;
     white-space: nowrap !important;
-    width: 1% !important;
+    width: 48% !important;
+    padding-right: 6px !important;
+    box-sizing: border-box;
 }
 
 .mhbo-tax-breakdown-td {
@@ -1804,17 +1829,20 @@ textarea.mhbo-admin-notes-textarea {
     border-bottom: 1px dashed #e2e8f0;
     font-weight: 600;
     text-align: left;
+    box-sizing: border-box;
 }
 
 .mhbo-tax-breakdown-td-right,
-.mhbo-tax-breakdown-td.mhbo-tax-breakdown-td-right {
+.mhbo-tax-breakdown-td.mhbo-tax-breakdown-td-right,
+.mhbo-tax-breakdown-td:last-child {
     text-align: right !important;
     font-weight: 800;
     color: var(--mhbo-primary);
-    padding: 12px 0 12px 16px;
+    padding: 12px 6px 12px 8px !important;
     border-bottom: 1px dashed #e2e8f0;
     white-space: nowrap !important;
-    width: 1% !important;
+    width: 42% !important;
+    box-sizing: border-box;
 }
 
 .mhbo-coupon-discount-row td {
@@ -2020,13 +2048,95 @@ textarea.mhbo-admin-notes-textarea {
         height: 50px !important;
     }
 
+    /* Mobile Unboxing: Remove the redundant outer card frame so the summary and form have clean native spacing */
     .mhbo-booking-wrapper {
-        padding: 25px !important;
-        margin: 20px 10px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 8px 0 20px 0 !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     .mhbo-booking-summary {
-        padding: 20px;
+        background: var(--mhbo-card-bg, #ffffff) !important;
+        border: 1px solid var(--mhbo-border, #e2e8f0) !important;
+        border-radius: 14px !important;
+        padding: 14px 10px !important;
+        margin: 0 0 18px 0 !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .mhbo-summary-title {
+        font-size: 0.95rem !important;
+        letter-spacing: 0.5px !important;
+        margin-bottom: 14px !important;
+        white-space: nowrap !important;
+    }
+
+    .mhbo-summary-content {
+        gap: 10px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .mhbo-summary-content img {
+        width: 76px !important;
+        height: 54px !important;
+        border-radius: 8px !important;
+    }
+
+    .mhbo-booking-dates {
+        padding: 10px 6px !important;
+        margin-bottom: 16px !important;
+        border-radius: 10px !important;
+        gap: 4px !important;
+    }
+
+    .mhbo-booking-dates-col,
+    .mhbo-booking-dates-nights {
+        padding: 0 4px !important;
+    }
+
+    .mhbo-date-title {
+        font-size: 0.65rem !important;
+        letter-spacing: 0.4px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .mhbo-date-val {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+    }
+
+    .mhbo-nights-count {
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+    }
+
+    .mhbo-nights-label {
+        font-size: 0.7rem !important;
+    }
+
+    .mhbo-stay-time {
+        font-size: 0.72rem !important;
+    }
+
+    .mhbo-tax-breakdown {
+        padding: 14px 10px !important;
+        border-radius: 14px !important;
+        margin-top: 14px !important;
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .mhbo-form-heading {
+        font-size: 1.25rem !important;
+        margin: 24px 0 16px 0 !important;
     }
 
     .mhbo-rooms-grid {
@@ -2129,9 +2239,19 @@ textarea.mhbo-admin-notes-textarea {
 
     /* Mobile Fluidity for Booking/Tax Breakdown Table */
     div.mhbo-tax-breakdown-container {
-        margin: 15px 0 !important;
-        padding: 10px !important;
+        margin: 16px 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
         width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .mhbo-tax-breakdown {
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
+        margin-top: 16px !important;
         box-sizing: border-box !important;
     }
 
@@ -2142,19 +2262,21 @@ textarea.mhbo-admin-notes-textarea {
 
     table#mhbo-tax-breakdown-table th:first-child,
     table#mhbo-tax-breakdown-table td:first-child {
-        width: 55% !important;
+        width: 52% !important;
         text-align: left !important;
-        font-size: 13px !important;
-        padding: 8px 4px !important;
+        font-size: 12px !important;
+        padding: 8px 2px 8px 0 !important;
+        box-sizing: border-box !important;
     }
 
     table#mhbo-tax-breakdown-table th:last-child,
     table#mhbo-tax-breakdown-table td:last-child {
-        width: 45% !important;
+        width: 48% !important;
         text-align: right !important;
-        font-size: 13px !important;
-        padding: 8px 4px !important;
+        font-size: 12px !important;
+        padding: 8px 6px 8px 0 !important;
         white-space: nowrap !important;
+        box-sizing: border-box !important;
     }
 
     table#mhbo-tax-breakdown-table th {

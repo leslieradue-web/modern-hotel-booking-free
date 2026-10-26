@@ -204,7 +204,7 @@ Modern Hotel Booking is self-hosted. By default, **no guest booking data is ever
 The following open-source JavaScript libraries are bundled locally in the plugin:
 * **Flatpickr v4.6.13** — MIT License — [Flatpickr Documentation](https://flatpickr.js.org)
 * **FullCalendar v7.1.3** — MIT License — [FullCalendar Documentation](https://fullcalendar.io)
-* **Chart.js v4.5.1** — MIT License — [Chart.js Documentation](https://www.chartjs.org)
+* **Chart.js v4.6.1** — MIT License — [Chart.js Documentation](https://www.chartjs.org)
 
 == Installation ==
 
