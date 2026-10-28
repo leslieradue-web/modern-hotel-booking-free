@@ -710,7 +710,7 @@ return false;
                         self::render_api_tab();
                     }
 
-                    // Show save button — commercial editions gate locked tabs, Free/Starter always shows
+                    // Show save button — license tab uses its own dedicated action buttons
                     $show_save = true;
                     
                     if ($show_save) {

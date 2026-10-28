@@ -40,6 +40,12 @@ class ModelCatalog {
 				'thinking'    => 'adaptive',
 				'recommended' => true,
 			),
+			'gemini-4-argon'         => array(
+				'label'    => 'Gemini 4 Argon — Supreme Agentic & Deep Reasoning Flagship (GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
 			'gemini-3.8-pro'         => array(
 				'label'    => 'Gemini 3.8 Pro — Supreme Reasoning Flagship (GA)',
 				'status'   => 'active',
@@ -229,6 +235,12 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
+			'google/gemini-4-argon'       => array(
+				'label'    => 'Gemini 4 Argon via OpenRouter (Supreme Agentic Reasoning)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
 			'openai/gpt-6.1-sol'          => array(
 				'label'    => 'GPT-6.1 Sol via OpenRouter (Frontier Reasoning)',
 				'status'   => 'active',
@@ -391,7 +403,11 @@ class ModelCatalog {
 			return 'effort';
 		}
 
-		if ( Client::PROVIDER_GEMINI === $provider && ( str_contains( $model, '3.8' ) || str_contains( $model, '3.7' ) || str_contains( $model, 'preview' ) ) ) {
+		if ( Client::PROVIDER_GEMINI === $provider && ( str_contains( $model, '4' ) || str_contains( $model, 'argon' ) || str_contains( $model, '3.8' ) || str_contains( $model, '3.7' ) || str_contains( $model, 'preview' ) ) ) {
+			return 'adaptive';
+		}
+
+		if ( Client::PROVIDER_OPENROUTER === $provider && ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'gemini-3.8' ) || str_contains( $model, 'claude-sonnet-5' ) || str_contains( $model, 'claude-opus-5' ) || str_contains( $model, 'deepseek-r2' ) ) ) {
 			return 'adaptive';
 		}
 

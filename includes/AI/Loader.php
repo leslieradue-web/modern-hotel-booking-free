@@ -543,14 +543,15 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 		$allowed_variants  = array( 'floating', 'inline' );
 		$allowed_positions = array( 'bottom-right', 'bottom-left' );
 
-		$raw_variant  = (string) ( $attrs['variant'] ?? 'floating' );
-		$raw_position = (string) ( $attrs['position'] ?? 'bottom-right' );
+		$raw_variant  = is_scalar( $attrs['variant'] ?? null ) ? (string) $attrs['variant'] : 'floating';
+		$raw_position = is_scalar( $attrs['position'] ?? null ) ? (string) $attrs['position'] : 'bottom-right';
+		$raw_welcome  = is_scalar( $attrs['welcomeMessage'] ?? null ) ? substr( (string) $attrs['welcomeMessage'], 0, 500 ) : '';
 
 		$variant  = esc_attr( \in_array( $raw_variant, $allowed_variants, true ) ? $raw_variant : 'floating' );
 		$position = esc_attr( \in_array( $raw_position, $allowed_positions, true ) ? $raw_position : 'bottom-right' );
-		$welcome  = esc_attr( (string) ( $attrs['welcomeMessage'] ?? '' ) );
+		$welcome  = esc_attr( $raw_welcome );
 
-		$theme = (string) ( $attrs['theme'] ?? '' );
+		$theme = is_scalar( $attrs['theme'] ?? null ) ? substr( (string) $attrs['theme'], 0, 64 ) : '';
 		if ( '' === $theme ) {
 			$theme = (string) get_option( 'mhbo_ai_theme', '' );
 		}

@@ -336,6 +336,7 @@ class AiSettings {
 		// Clear model-specific failure flags — must match get_dynamic_fallback_chain() list.
 		$models_to_clear = array(
 			'gemini-3.8-flash',              // GA frontier (October 2026)
+			'gemini-4-argon',                // GA supreme agentic reasoning flagship
 			'gemini-3.8-pro',                // GA supreme reasoning flagship
 			'gemini-3.7-flash',              // GA high-efficiency workhorse
 			'gemini-3.6-flash',              // GA balanced workhorse
@@ -849,7 +850,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 										echo ( ! $any_preset ) ? 'block' : 'none'; 
 									?>
 									;">
-										<input type="text" name="mhbo_ai_model" id="mhbo_ai_model_input" value="<?php echo esc_attr( $model ); ?>" class="mhbo-form-input" placeholder="e.g. gemini-3.8-flash / gpt-6.1-sol / claude-sonnet-5-5">
+										<input type="text" name="mhbo_ai_model" id="mhbo_ai_model_input" value="<?php echo esc_attr( $model ); ?>" class="mhbo-form-input" placeholder="e.g. gemini-3.8-flash / gemini-4-argon / gpt-6.1-sol / claude-sonnet-5-5">
 										<p class="mhbo-form-help"><?php esc_html_e( 'Enter a specific model identifier if not listed in the presets above.', 'modern-hotel-booking' ); ?></p>
 									</div>
 								</div>

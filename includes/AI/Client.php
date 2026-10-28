@@ -295,8 +295,8 @@ class Client {
 
 				if ( $is_transient && null !== $preference ) {
 					$pref_model = is_array( $preference ) ? (string) ( $preference[1] ?? '' ) : (string) $preference;
-					// If the primary model is gemini-3.8-flash, probe with gemini-3.5-flash-lite to verify connector health.
-					$fallback_model = ( 'gemini-3.8-flash' === $pref_model )
+					// If the primary model is gemini-3.8-flash or gemini-4-argon, probe with gemini-3.5-flash-lite to verify connector health.
+					$fallback_model = in_array( $pref_model, array( 'gemini-3.8-flash', 'gemini-4-argon' ), true )
 						? ( is_array( $preference ) ? array( $preference[0], 'gemini-3.5-flash-lite' ) : 'gemini-3.5-flash-lite' )
 						: null;
 
@@ -962,12 +962,17 @@ return $result;
 			// Per-attempt timeout shrinks to whatever budget remains (floor 10s for model thinking/tools).
 			$attempt_timeout = (int) \max( 10, \min( ( 'cli' === \php_sapi_name() ) ? 25 : 18, (int) \floor( $cascade_budget - $elapsed ) ) );
 
-			// Gemini 3 adaptive-thinking models default to dynamic HIGH thinking, which
-			// doubled latency on the concierge payload (5.2s vs 2.4s measured). Non-thinking
-			// models are left untouched: sending a level would *enable* thinking on them.
+			// Gemini 3.8 & 4 Argon adaptive-thinking models share a unified maxOutputTokens pool across
+			// internal thinking tokens, functionCall arguments, and final text output. Scale maxOutputTokens
+			// with thinkingLevel so 'medium' and 'high' reasoning budgets never truncate mid-thought.
 			$attempt_body = $body;
 			if ( null !== $thinking_level && 'adaptive' === ModelCatalog::get_thinking_mode( self::PROVIDER_GEMINI, $try_model ) ) {
-				$attempt_body['generationConfig']['thinkingConfig'] = array( 'thinkingLevel' => $thinking_level );
+				$attempt_body['generationConfig']['thinkingConfig']  = array( 'thinkingLevel' => $thinking_level );
+				$attempt_body['generationConfig']['maxOutputTokens'] = match ( $thinking_level ) {
+					'high'   => 8192,
+					'medium' => 4096,
+					default  => 2048,
+				};
 			}
 
 			// Always use v1beta — it supports system_instruction, tools/function_declarations,
@@ -1392,14 +1397,16 @@ return $result;
 		$tool_calls     = array();
 
 		foreach ( $parts as $part ) {
-			if ( isset( $part['text'] ) ) {
+			// Gemini v1beta marks internal reasoning blocks with boolean 'thought' => true alongside 'text'.
+			// Never leak internal reasoning parts into guest-facing '$text'.
+			if ( true === ( $part['thought'] ?? false ) ) {
+				$thought       .= (string) ( $part['text'] ?? '' );
+				$text_signature = $part['thoughtSignature'] ?? $part['thought_signature'] ?? $text_signature;
+			} elseif ( isset( $part['thought'] ) && is_string( $part['thought'] ) && '' !== $part['thought'] ) {
+				$thought .= $part['thought'];
+			} elseif ( isset( $part['text'] ) ) {
 				$text          .= (string) $part['text'];
-				$text_signature = $part['thought_signature'] ?? $part['thoughtSignature'] ?? $text_signature;
-			}
-
-			// FIX: Capture native 'thought' blocks (Reasoning).
-			if ( isset( $part['thought'] ) ) {
-				$thought .= (string) $part['thought'];
+				$text_signature = $part['thoughtSignature'] ?? $part['thought_signature'] ?? $text_signature;
 			}
 
 			if ( isset( $part['functionCall'] ) ) {
@@ -1413,8 +1420,8 @@ return $result;
 					),
 				);
 
-				// FIX: Capture thought_signature/thoughtSignature from Part level.
-				$signature = $part['thought_signature'] ?? $part['thoughtSignature'] ?? '';
+				// Capture thoughtSignature from Part level (mandatory for Gemini 3.8 & 4 Argon multi-turn tool calls).
+				$signature = $part['thoughtSignature'] ?? $part['thought_signature'] ?? '';
 				if ( $signature ) {
 					$tc_entry['thought_signature'] = $signature;
 				}
@@ -1441,7 +1448,7 @@ return $result;
 	 * @param array<mixed> $messages
 	 * @return array<mixed>
 	 */
-	private static function build_gemini_contents( array $messages ): array {
+	public static function build_gemini_contents( array $messages ): array {
 		// Build a tool_call_id → function_name map for functionResponse lookup.
 		$tc_name_map = array();
 		foreach ( $messages as $msg ) {
@@ -1474,13 +1481,16 @@ return $result;
 			if ( 'model' === $role || 'assistant' === $role ) {
 				$parts = array();
 				if ( '' !== (string) ( $msg['thought'] ?? '' ) ) {
-					$parts[] = array( 'thought' => (string) $msg['thought'] );
+					$parts[] = array(
+						'text'    => (string) $msg['thought'],
+						'thought' => true,
+					);
 				}
 				if ( '' !== (string) ( $msg['content'] ?? '' ) ) {
 					$part = array( 'text' => (string) $msg['content'] );
-					if ( '' !== (string) ( $msg['thought_signature'] ?? '' ) && array() === ( $msg['tool_calls'] ?? array() ) ) {
-						$part['thought_signature'] = $msg['thought_signature'];
-						$part['thoughtSignature']  = $msg['thought_signature'];
+					$sig  = (string) ( $msg['thought_signature'] ?? $msg['thoughtSignature'] ?? '' );
+					if ( '' !== $sig && array() === ( $msg['tool_calls'] ?? array() ) ) {
+						$part['thoughtSignature'] = $sig;
 					}
 					$parts[] = $part;
 				}
@@ -1501,11 +1511,10 @@ return $result;
 						),
 					);
 
-					// FIX: thought_signature belongs to the Part, not the functionCall.
-					if ( '' !== (string) ( $tc['thought_signature'] ?? '' ) ) {
-						// Send both to be safe, as API vs Documentation differ on case.
-						$part['thought_signature'] = $tc['thought_signature'];
-						$part['thoughtSignature']  = $tc['thought_signature'];
+					// Canonical camelCase thoughtSignature on Part level (avoids duplicate protobuf field rejection).
+					$tc_sig = (string) ( $tc['thought_signature'] ?? $tc['thoughtSignature'] ?? '' );
+					if ( '' !== $tc_sig ) {
+						$part['thoughtSignature'] = $tc_sig;
 					}
 
 					$parts[] = $part;

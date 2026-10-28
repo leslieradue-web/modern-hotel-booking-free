@@ -179,11 +179,40 @@ class Block {
 	/* ---- Render Callbacks (Dynamic) ---- */
 
 	/**
+	 * Safely coerce a block attribute to a bounded scalar string.
+	 * Prevents PHP 8+ TypeError Stored DoS when malformed nested/array block attributes
+	 * are parsed from post_content (WP 7.1.4 block/interactivity hardening).
+	 *
+	 * @param mixed  $value   Raw attribute value.
+	 * @param string $default Default fallback string.
+	 * @param int    $max_len Maximum character length.
+	 * @return string
+	 */
+	private static function scalar_str( mixed $value, string $default = '', int $max_len = 500 ): string {
+		if ( ! is_scalar( $value ) || is_bool( $value ) ) {
+			return $default;
+		}
+		return substr( (string) $value, 0, $max_len );
+	}
+
+	/**
+	 * Safely coerce a block attribute to a non-negative integer.
+	 *
+	 * @param mixed $value Raw attribute value.
+	 * @return int
+	 */
+	private static function scalar_int( mixed $value ): int {
+		return ( is_int( $value ) || is_float( $value ) || ( is_string( $value ) && is_numeric( $value ) ) )
+			? absint( $value )
+			: 0;
+	}
+
+	/**
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_booking_block( $attributes ): string {
 		$raw_id  = $attributes['roomId'] ?? $attributes['room_id'] ?? $attributes['id'] ?? 0;
-		$room_id = absint( $raw_id );
+		$room_id = self::scalar_int( $raw_id );
 		return do_shortcode( sprintf( '[modern_hotel_booking room_id="%d"]', $room_id ) );
 	}
 
@@ -192,7 +221,7 @@ class Block {
 	 */
 	public function render_calendar_block( $attributes ): string {
 		$raw_id  = $attributes['roomId'] ?? $attributes['room_id'] ?? $attributes['id'] ?? 0;
-		$room_id = absint( $raw_id );
+		$room_id = self::scalar_int( $raw_id );
 		if ( ! $room_id ) {
 			return '<div class="mhbo-block-error">' . esc_html( I18n::get_label( 'label_block_no_room' ) ) . '</div>';
 		}
@@ -205,11 +234,11 @@ class Block {
 	public function render_company_block( $attributes ): string {
 		return BusinessShortcodes::get_instance()->render_company_info(
 			array(
-				'show_logo'         => ( $attributes['showLogo'] ?? true ) ? 'yes' : 'no',
-				'show_address'      => ( $attributes['showAddress'] ?? true ) ? 'yes' : 'no',
-				'show_contact'      => ( $attributes['showContact'] ?? true ) ? 'yes' : 'no',
-				'show_registration' => ( $attributes['showRegistration'] ?? true ) ? 'yes' : 'no',
-				'layout'            => $attributes['layout'] ?? 'default',
+				'show_logo'         => ! empty( $attributes['showLogo'] ?? true ) ? 'yes' : 'no',
+				'show_address'      => ! empty( $attributes['showAddress'] ?? true ) ? 'yes' : 'no',
+				'show_contact'      => ! empty( $attributes['showContact'] ?? true ) ? 'yes' : 'no',
+				'show_registration' => ! empty( $attributes['showRegistration'] ?? true ) ? 'yes' : 'no',
+				'layout'            => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
 			)
 		);
 	}
@@ -220,9 +249,9 @@ class Block {
 	public function render_whatsapp_block( $attributes ): string {
 		return BusinessShortcodes::get_instance()->render_whatsapp(
 			array(
-				'style'   => $attributes['style'] ?? 'button',
-				'text'    => $attributes['text'] ?? '',
-				'message' => $attributes['message'] ?? '',
+				'style'   => self::scalar_str( $attributes['style'] ?? 'button', 'button', 64 ),
+				'text'    => self::scalar_str( $attributes['text'] ?? '', '', 200 ),
+				'message' => self::scalar_str( $attributes['message'] ?? '', '', 500 ),
 			)
 		);
 	}
@@ -233,8 +262,8 @@ class Block {
 	public function render_banking_block( $attributes ): string {
 		return BusinessShortcodes::get_instance()->render_banking(
 			array(
-				'show_instructions' => ( $attributes['showInstructions'] ?? true ) ? 'yes' : 'no',
-				'layout'            => $attributes['layout'] ?? 'default',
+				'show_instructions' => ! empty( $attributes['showInstructions'] ?? true ) ? 'yes' : 'no',
+				'layout'            => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
 			)
 		);
 	}
@@ -245,9 +274,9 @@ class Block {
 	public function render_revolut_block( $attributes ): string {
 		return BusinessShortcodes::get_instance()->render_revolut(
 			array(
-				'show_qr'   => ( $attributes['showQR'] ?? true ) ? 'yes' : 'no',
-				'show_link' => ( $attributes['showLink'] ?? true ) ? 'yes' : 'no',
-				'layout'    => $attributes['layout'] ?? 'default',
+				'show_qr'   => ! empty( $attributes['showQR'] ?? true ) ? 'yes' : 'no',
+				'show_link' => ! empty( $attributes['showLink'] ?? true ) ? 'yes' : 'no',
+				'layout'    => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
 			)
 		);
 	}
@@ -256,9 +285,16 @@ class Block {
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_card_block( $attributes ): string {
+		$raw_sections = $attributes['sections'] ?? 'company,whatsapp,banking,revolut';
+		if ( is_array( $raw_sections ) ) {
+			$scalar_items = array_filter( $raw_sections, 'is_scalar' );
+			$sections_str = implode( ',', array_map( 'strval', array_slice( $scalar_items, 0, 10 ) ) );
+		} else {
+			$sections_str = self::scalar_str( $raw_sections, 'company,whatsapp,banking,revolut', 120 );
+		}
 		return BusinessShortcodes::get_instance()->render_business_card(
 			array(
-				'sections' => $attributes['sections'] ?? array( 'all' ),
+				'sections' => $sections_str,
 			)
 		);
 	}
@@ -267,8 +303,9 @@ class Block {
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_chat_widget_block( $attributes ): string {
-		$position = isset( $attributes['position'] ) ? sanitize_html_class( $attributes['position'] ) : 'bottom-right';
-		$welcome  = isset( $attributes['welcomeMessage'] ) ? esc_attr( $attributes['welcomeMessage'] ) : '';
+		$raw_pos  = self::scalar_str( $attributes['position'] ?? 'bottom-right', 'bottom-right', 64 );
+		$position = sanitize_html_class( $raw_pos, 'bottom-right' );
+		$welcome  = esc_attr( self::scalar_str( $attributes['welcomeMessage'] ?? '', '', 500 ) );
 		return sprintf( '<div class="mhbo-chat-widget" data-position="%s" data-welcome-message="%s"></div>', $position, $welcome );
 	}
 }

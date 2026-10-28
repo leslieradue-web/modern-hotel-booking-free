@@ -210,9 +210,9 @@ if ( defined( 'MHBO_PRODUCT_TIER' ) ) {
 	/**
 	 * Compute the effective tier.
 	 *
-	 * Formula: Effective Tier = min(Package Tier, Validated License Tier)
-	 * If license is none or expired, clamps to Free.
-	 * If package is Free, clamps to Free (code is physically absent).
+	 * Keeps the installed package tier active (Pro stays Pro, Starter stays Starter,
+	 * Free stays Free) so paid commercial installations are never degraded to
+	 * Starter or Free when a license is unvalidated, inactive, or deactivated.
 	 *
 	 * @return string 'free' | 'starter' | 'pro'
 	 */
@@ -224,24 +224,7 @@ if ( defined( 'MHBO_PRODUCT_TIER' ) ) {
 			return self::TIER_FREE;
 		}
 
-		$license_tier = self::get_license_tier();
-
-		// If license is missing, invalid, or expired, fall back to Free functionality.
-		if ( self::TIER_NONE === $license_tier || ! isset( self::ORDER[ $license_tier ] ) || self::ORDER[ $license_tier ] <= 0 ) {
-			$effective = self::TIER_FREE;
-		} else {
-			$package_order = self::ORDER[ $package_tier ];
-			$license_order = self::ORDER[ $license_tier ];
-			$min_order     = min( $package_order, $license_order );
-
-			$effective = self::TIER_FREE;
-			foreach ( self::ORDER as $slug => $order ) {
-				if ( $order === $min_order && self::TIER_NONE !== $slug ) {
-					$effective = $slug;
-					break;
-				}
-			}
-		}
+		$effective = $package_tier;
 
 return $effective;
 	}

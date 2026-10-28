@@ -58,14 +58,18 @@ class Shortcodes {
 	}
 
 	private function __construct() {
-		add_shortcode( 'mhbo_company_info', array( $this, 'render_company_info' ) );
-		add_shortcode( 'mhbo_whatsapp', array( $this, 'render_whatsapp' ) );
-		add_shortcode( 'mhbo_banking_details', array( $this, 'render_banking' ) );
-		add_shortcode( 'mhbo_revolut_details', array( $this, 'render_revolut' ) );
-		add_shortcode( 'mhbo_business_card', array( $this, 'render_business_card' ) );
-		add_shortcode( 'mhbo_payment_methods', array( $this, 'render_payment_methods' ) );
+		if ( function_exists( 'add_shortcode' ) ) {
+			add_shortcode( 'mhbo_company_info', array( $this, 'render_company_info' ) );
+			add_shortcode( 'mhbo_whatsapp', array( $this, 'render_whatsapp' ) );
+			add_shortcode( 'mhbo_banking_details', array( $this, 'render_banking' ) );
+			add_shortcode( 'mhbo_revolut_details', array( $this, 'render_revolut' ) );
+			add_shortcode( 'mhbo_business_card', array( $this, 'render_business_card' ) );
+			add_shortcode( 'mhbo_payment_methods', array( $this, 'render_payment_methods' ) );
+		}
 
-		add_action( 'wp_enqueue_scripts', array( $this, 'register_frontend_assets' ) );
+		if ( function_exists( 'add_action' ) ) {
+			add_action( 'wp_enqueue_scripts', array( $this, 'register_frontend_assets' ) );
+		}
 	}
 
 	/**
@@ -175,9 +179,11 @@ class Shortcodes {
 
 		self::enqueue_frontend_assets();
 
+		$layout = is_scalar( $atts['layout'] ?? null ) ? sanitize_html_class( (string) $atts['layout'], 'vertical' ) : 'vertical';
+
 		ob_start();
 		?>
-		<div class="mhbo-company-info mhbo-card-premium mhbo-layout-<?php echo esc_attr( $atts['layout'] ); ?>">
+		<div class="mhbo-company-info mhbo-card-premium mhbo-layout-<?php echo esc_attr( $layout ); ?>">
 			<?php if ( 'yes' === $atts['show_logo'] && '' !== (string) ( $data['logo_url'] ?? '' ) ) : ?>
 				<div class="mhbo-logo">
 					<img src="<?php echo esc_url( $data['logo_url'] ); ?>" alt="<?php echo esc_attr( $data['company_name'] ); ?>" />
@@ -253,24 +259,28 @@ class Shortcodes {
 			'mhbo_whatsapp' 
 		);
 
+		$msg_text = is_scalar( $atts['message'] ?? null ) ? (string) $atts['message'] : '';
+		$btn_text = is_scalar( $atts['text'] ?? null ) ? (string) $atts['text'] : '';
+		$style    = is_scalar( $atts['style'] ?? null ) ? sanitize_html_class( (string) $atts['style'], 'button' ) : 'button';
+
 		$wa_url = 'https://wa.me/' . preg_replace( '/[^\d]/', '', (string) ( $data['phone_number'] ?? '' ) );
-		if ( '' !== (string) ( $atts['message'] ?? '' ) ) {
-			$wa_url = add_query_arg( 'text', rawurlencode( (string) $atts['message'] ), $wa_url );
+		if ( '' !== $msg_text ) {
+			$wa_url = add_query_arg( 'text', rawurlencode( $msg_text ), $wa_url );
 		}
 
 		self::enqueue_frontend_assets();
 
 		ob_start();
-		$class = 'mhbo-whatsapp-link mhbo-wa-' . $atts['style'];
-		if ( 'floating' === $atts['style'] ) {
-			$class .= ' mhbo-wa-pos-' . $data['position'];
+		$class = 'mhbo-whatsapp-link mhbo-wa-' . $style;
+		if ( 'floating' === $style ) {
+			$class .= ' mhbo-wa-pos-' . sanitize_html_class( (string) ( $data['position'] ?? 'right' ), 'right' );
 		}
 
 		$svg = '<svg viewBox="0 0 448 512" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.7 17.8 69.4 27.2 106.2 27.2 122.4 0 222-99.6 222-222 0-59.3-23-115.1-65-157.1zM223.9 446.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54 130.5 0 101.7-82.8 184.5-184.6 184.5zm101.3-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-38.1-3.2-5.6-.3-8.6 2.4-11.3 2.5-2.4 5.5-6.5 8.3-9.7 2.8-3.3 3.7-5.6 5.6-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.5 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>';
 		?>
 		<a href="<?php echo esc_url( $wa_url ); ?>" class="<?php echo esc_attr( $class ); ?>" target="_blank" rel="noopener">
 			<?php echo wp_kses( $svg, self::ALLOWED_SVG ); ?>
-			<span><?php echo esc_html( $atts['text'] ); ?></span>
+			<span><?php echo esc_html( $btn_text ); ?></span>
 		</a>
 		<?php
 		return (string) ob_get_clean();
@@ -298,13 +308,15 @@ class Shortcodes {
 			'mhbo_banking_details' 
 		);
 
-		$reference = $data['reference_prefix'] . ( $atts['booking_id'] ?: 'XXXX' );
+		$booking_id = is_scalar( $atts['booking_id'] ?? null ) ? absint( $atts['booking_id'] ) : 0;
+		$layout     = is_scalar( $atts['layout'] ?? null ) ? sanitize_html_class( (string) $atts['layout'], 'card' ) : 'card';
+		$reference  = $data['reference_prefix'] . ( $booking_id ?: 'XXXX' );
 
 		self::enqueue_frontend_assets();
 
 		ob_start();
 		?>
-		<div class="mhbo-banking-details mhbo-card-premium mhbo-style-<?php echo esc_attr( $atts['layout'] ); ?>">
+		<div class="mhbo-banking-details mhbo-card-premium mhbo-style-<?php echo esc_attr( $layout ); ?>">
 			<div class="mhbo-card-header">
 				<div class="mhbo-icon-wrapper"><?php echo wp_kses( '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M11.5 1L2 6v2h19V6m-5 4v7h3v-7m-5 0v7h3v-7m-5 0v7h3v-7M2 19v2h19v-2H2z"/></svg>', self::ALLOWED_SVG ); ?></div>
 				<h4><?php echo esc_html( $data['bank_name'] ?: __( 'Bank Transfer Details', 'modern-hotel-booking' ) ); ?></h4>
@@ -378,9 +390,11 @@ class Shortcodes {
 
 		self::enqueue_frontend_assets();
 
+		$layout = is_scalar( $atts['layout'] ?? null ) ? sanitize_html_class( (string) $atts['layout'], 'card' ) : 'card';
+
 		ob_start();
 		?>
-		<div class="mhbo-revolut-details mhbo-card-premium mhbo-style-<?php echo esc_attr( $atts['layout'] ); ?>">
+		<div class="mhbo-revolut-details mhbo-card-premium mhbo-style-<?php echo esc_attr( $layout ); ?>">
 			<div class="mhbo-rev-header">
 				<span class="mhbo-rev-badge"><?php echo wp_kses( '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm1-13h-2v5H6v2h5v5h2v-5h5v-2h-5z"/></svg>', self::ALLOWED_SVG ); ?></span>
 				<h4><?php echo esc_html( $data['revolut_name'] ?: __( 'Revolut Payment', 'modern-hotel-booking' ) ); ?></h4>
@@ -445,11 +459,29 @@ class Shortcodes {
 			'mhbo_business_card' 
 		);
 
-		$sections = explode( ',', $atts['sections'] );
+		$raw_sections = $atts['sections'] ?? 'company,whatsapp,banking,revolut';
+		if ( is_array( $raw_sections ) ) {
+			$sections_list = array_map( 'strval', array_filter( $raw_sections, 'is_scalar' ) );
+		} elseif ( is_scalar( $raw_sections ) ) {
+			$sections_list = explode( ',', substr( (string) $raw_sections, 0, 200 ) );
+		} else {
+			$sections_list = array( 'company', 'whatsapp', 'banking', 'revolut' );
+		}
+
+		$normalized = array();
+		foreach ( $sections_list as $sec ) {
+			$sec = strtolower( trim( $sec ) );
+			if ( 'all' === $sec ) {
+				$normalized = array_merge( $normalized, array( 'company', 'whatsapp', 'banking', 'revolut' ) );
+			} elseif ( in_array( $sec, array( 'company', 'whatsapp', 'banking', 'revolut' ), true ) ) {
+				$normalized[] = $sec;
+			}
+		}
+		// Deduplicate to prevent Stored DoS via repeated section tokens.
+		$sections = array_values( array_unique( $normalized ) );
 		$output   = '<div class="mhbo-business-card">';
 
 		foreach ( $sections as $section ) {
-			$section = trim( (string) $section );
 			switch ( $section ) {
 				case 'company':
 					$output .= $this->render_company_info( array( 'layout' => 'horizontal' ) );

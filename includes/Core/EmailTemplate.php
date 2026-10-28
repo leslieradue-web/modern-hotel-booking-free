@@ -81,10 +81,23 @@ class EmailTemplate {
 	/**
 	 * Locate template file, checking theme hierarchy first, then plugin directory.
 	 *
+	 * Enforces WP 7.1.2+ path-traversal hardening via basename(), validate_file(),
+	 * strict TEMPLATE_MAP allowlist verification, and realpath() directory confinement.
+	 *
 	 * @param string $template_name Filename to locate.
 	 * @return string Absolute file path or empty string if not found.
 	 */
 	public static function locate( string $template_name ): string {
+		$template_name = basename( trim( $template_name ) );
+		if ( '' === $template_name || ( function_exists( 'validate_file' ) && 0 !== validate_file( $template_name ) ) ) {
+			return '';
+		}
+
+		// Restrict resolution strictly to known email template filenames.
+		if ( 'default-fallback.php' !== $template_name && ! in_array( $template_name, self::TEMPLATE_MAP, true ) ) {
+			return '';
+		}
+
 		// 1. Check active theme & child theme
 		if ( function_exists( 'locate_template' ) ) {
 			$theme_file = locate_template(
@@ -93,18 +106,27 @@ class EmailTemplate {
 					'mhbo/emails/' . $template_name,
 				)
 			);
-			if ( '' !== $theme_file && file_exists( $theme_file ) ) {
+			if ( '' !== $theme_file && ( ! function_exists( 'validate_file' ) || 0 === validate_file( $theme_file ) ) && file_exists( $theme_file ) ) {
 				return $theme_file;
 			}
 		}
 
 		// 2. Fall back to plugin templates directory
-		$plugin_path = defined( 'MHBO_PLUGIN_DIR' )
-			? MHBO_PLUGIN_DIR . 'templates/emails/' . $template_name
-			: dirname( __DIR__, 2 ) . '/templates/emails/' . $template_name;
+		$emails_dir = defined( 'MHBO_PLUGIN_DIR' )
+			? MHBO_PLUGIN_DIR . 'templates/emails/'
+			: dirname( __DIR__, 2 ) . '/templates/emails/';
+		$plugin_path = $emails_dir . $template_name;
 
 		if ( file_exists( $plugin_path ) ) {
-			return $plugin_path;
+			$real_dir  = realpath( $emails_dir );
+			$real_file = realpath( $plugin_path );
+			if ( false !== $real_dir && false !== $real_file ) {
+				$norm_dir  = rtrim( str_replace( '\\', '/', $real_dir ), '/' ) . '/';
+				$norm_file = str_replace( '\\', '/', $real_file );
+				if ( str_starts_with( $norm_file, $norm_dir ) ) {
+					return $real_file;
+				}
+			}
 		}
 
 		return '';

@@ -125,7 +125,7 @@ class Privacy {
 	 */
 	public static function export_personal_data( string $email_address, int $page = 1 ): array {
 		$number = 500; // Limit per page
-		$page   = (int) $page;
+		$page   = max( 1, (int) $page );
 
 		$export_items = array();
 		global $wpdb;
@@ -150,18 +150,20 @@ class Privacy {
 		}
 
 		foreach ( $bookings as $booking ) {
-			$data = array(
+			$booking_id = (int) $booking->id;
+			$room_id    = (int) $booking->room_id;
+			$data       = array(
 				array(
 					'name'  => I18n::get_label( 'gdpr_booking_id' ),
-					'value' => $booking->id,
+					'value' => $booking_id,
 				),
 				array(
 					'name'  => I18n::get_label( 'gdpr_room_id' ),
-					'value' => $booking->room_id,
+					'value' => $room_id,
 				),
 				array(
 					'name'  => __( 'Room Name', 'modern-hotel-booking' ),
-					'value' => get_the_title( (int) $booking->room_id ),
+					'value' => get_the_title( $room_id ),
 				),
 				array(
 					'name'  => __( 'Guests', 'modern-hotel-booking' ),
@@ -221,7 +223,7 @@ class Privacy {
 			$export_items[] = array(
 				'group_id'    => 'mhbo-bookings',
 				'group_label' => I18n::get_label( 'gdpr_group_label' ),
-				'item_id'     => "mhbo-booking-{$booking->id}",
+				'item_id'     => "mhbo-booking-{$booking_id}",
 				'data'        => $data,
 			);
 		}
@@ -240,10 +242,11 @@ class Privacy {
 
 			if ( array() !== $guests ) {
 				foreach ( $guests as $g ) {
+					$guest_id       = (int) $g->id;
 					$export_items[] = array(
 						'group_id'    => 'mhbo-guests',
 						'group_label' => __( 'Guest Profile', 'modern-hotel-booking' ),
-						'item_id'     => "mhbo-guest-{$g->id}",
+						'item_id'     => "mhbo-guest-{$guest_id}",
 						'data'        => array(
 							array(
 								'name'  => __( 'First Name', 'modern-hotel-booking' ),
@@ -297,7 +300,7 @@ class Privacy {
 	 */
 	public static function erase_personal_data( string $email_address, int $page = 1 ): array {
 		$number         = 500; // Limit per page
-		$page           = (int) $page;
+		$page           = max( 1, (int) $page );
 		$items_removed  = false;
 		$items_retained = false;
 		$messages       = array();
@@ -359,7 +362,7 @@ class Privacy {
 			);
 
 			if ( $updated ) {
-				Cache::invalidate_booking( $booking->id );
+				Cache::invalidate_booking( (int) $booking->id );
 				$items_removed = true;
 			} else {
 				$items_retained = true;
