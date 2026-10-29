@@ -4,7 +4,7 @@ Donate link: https://modernhotelwp.com/
 Tags: hotel booking, vacation rental, booking engine, bed and breakfast, accommodation
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 3.0.0
+Stable tag: 3.0.1
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -360,6 +360,9 @@ All booking and guest data is stored locally in your WordPress database. The plu
 
 == Changelog ==
 
+= 3.0.1 =
+* **Fix**: **Admin Notification Email Settings in Free & Starter Editions**
+
 = 3.0.0 =
 * **Added**: **Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`)** — 1-click cryptographic magic link authentication and verified Booking ID + Email lookup, personalized VIP greeting, stay countdown, live itemized USALI billing ledger, ink-friendly printable travel vouchers, instant self-service cancellations for unpaid reservations, and guarded stay modification requests.
 * **Added**: **2-Column Front-Desk Manual Reservation PMS Workstation** — Integrated PMS desk with CRM Guest Quick-Fill autocomplete (VIP and Caution Flag ribbons), inline Flatpickr calendar, real-time server-side USALI folio recalculation, and 1-tap quick-tender payment buttons (`Pay in Full`, `Deposit Only`, `Pay on Arrival`).
@@ -376,6 +379,9 @@ All booking and guest data is stored locally in your WordPress database. The plu
 For the full historical changelog of earlier versions, see [changelog.txt](https://plugins.svn.wordpress.org/modern-hotel-booking/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 3.0.1 =
+Fix: Admin Notification Email Settings in Free & Starter Editions.
 
 = 3.0.0 =
 Major 3.0 release: Passwordless Guest Portal ([mhbo_guest_portal]), Email Delivery & SPF/DMARC Health Inspector, 2-Column Manual Reservation PMS, Guest CRM with React DataViews, 100% 15-locale translations, FullCalendar v7.1.3 and ~70% faster progressive calendar loading.

@@ -27,7 +27,7 @@ use Throwable;
  *
  * @package MHBO\AI
  * @since   2.3.8
- * @version 3.0.0 (Streamable HTTP 2026 Edition)
+ * @version 3.0.1 (Streamable HTTP 2026 Edition)
  */
 class McpServer {
 
@@ -192,7 +192,7 @@ class McpServer {
 				array(
 					'name'                => 'Modern Hotel Booking MCP Server',
 					'server_id'           => self::SERVER_ID,
-					'version'             => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.0',
+					'version'             => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.1',
 					'status'              => 'active',
 					'transport'           => 'Streamable HTTP (JSON-RPC 2.0 over POST)',
 					'supported_protocols' => self::SUPPORTED_VERSIONS,
@@ -310,7 +310,7 @@ class McpServer {
 					),
 					'serverInfo'      => array(
 						'name'    => 'Modern Hotel Booking MCP Server',
-						'version' => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.0',
+						'version' => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.1',
 					),
 					'instructions'    => __( 'Official Model Context Protocol server for Modern Hotel Booking. Query real-time room availability, policies, rates, and direct booking links.', 'modern-hotel-booking' ),
 				),
@@ -657,7 +657,7 @@ return $map;
 			'info'    => array(
 				'title'       => __( 'Modern Hotel Booking AI Assistant API', 'modern-hotel-booking' ),
 				'description' => __( 'Public machine-readable API for room availability, rates, policies, and direct booking links.', 'modern-hotel-booking' ),
-				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.0',
+				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.1',
 			),
 			'servers' => array(
 				array(
@@ -843,7 +843,7 @@ return $map;
 				'id'          => self::SERVER_ID,
 				'name'        => I18n::get_label( 'ai_mcp_name' ),
 				'description' => I18n::get_label( 'ai_mcp_description' ),
-				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.0',
+				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.1',
 				'abilities'   => array_keys( self::get_ability_map() ),
 				'resources'   => array( self::SERVER_ID . '/site-knowledge-base' ),
 			)
@@ -867,7 +867,7 @@ return $map;
 				self::SERVER_ROUTE,
 				I18n::get_label( 'ai_mcp_name' ),
 				I18n::get_label( 'ai_mcp_description' ),
-				defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.0',
+				defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.1',
 				array( 'WP\\MCP\\Transport\\Http\\RestTransport' ),
 				null,
 				null,

@@ -1,1 +1,0 @@
-import{getElement as t,store as e}from"@wordpress/interactivity";e("modern-hotel-booking/booking-form",{callbacks:{init:()=>{const{ref:e}=t();e&&document.dispatchEvent(new CustomEvent("mhbo_init_form",{detail:{element:e}}))}}});

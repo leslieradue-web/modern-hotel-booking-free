@@ -83,8 +83,10 @@ class Settings {
         // General Settings
         register_setting('mhbo_settings_group', 'mhbo_checkin_time', array('default' => '14:00', 'sanitize_callback' => 'sanitize_text_field'));
         register_setting('mhbo_settings_group', 'mhbo_checkout_time', array('default' => '11:00', 'sanitize_callback' => 'sanitize_text_field'));
-
-register_setting('mhbo_settings_group', 'mhbo_modal_enabled', array('default' => 1, 'sanitize_callback' => 'absint'));
+        register_setting('mhbo_settings_group', 'mhbo_hotel_timezone', array('type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => ''));
+        register_setting('mhbo_settings_group', 'mhbo_notification_email', array('default' => get_option('admin_email'), 'sanitize_callback' => array($this, 'sanitize_notification_email')));
+        register_setting('mhbo_settings_group', 'mhbo_additional_notification_email', array('default' => '', 'sanitize_callback' => array($this, 'sanitize_additional_notification_emails')));
+        register_setting('mhbo_settings_group', 'mhbo_modal_enabled', array('default' => 1, 'sanitize_callback' => 'absint'));
         
         register_setting('mhbo_settings_group', 'mhbo_children_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
         // Global Stay Limits
@@ -140,6 +142,8 @@ register_setting('mhbo_settings_group', 'mhbo_modal_enabled', array('default' =>
         add_settings_section('mhbo_general_section', I18n::get_label('settings_section_general'), '__return_null', 'mhbo-settings');
         add_settings_field('mhbo_checkin_time', I18n::get_label('settings_label_checkin'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_checkin_time'));
         add_settings_field('mhbo_checkout_time', I18n::get_label('settings_label_checkout'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_checkout_time'));
+        add_settings_field('mhbo_notification_email', I18n::get_label('settings_label_notification'), array($this, 'render_text_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_notification_email'));
+        add_settings_field('mhbo_additional_notification_email', __('Additional Notification Email', 'modern-hotel-booking'), array($this, 'render_additional_notification_email_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_additional_notification_email'));
         
         add_settings_field('mhbo_hotel_timezone', __('Hotel Timezone', 'modern-hotel-booking'), array($this, 'render_hotel_timezone_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_hotel_timezone'));
         add_settings_field('mhbo_booking_page', I18n::get_label('settings_label_booking_page'), array($this, 'render_page_select_field'), 'mhbo-settings', 'mhbo_general_section', array('label_for' => 'mhbo_booking_page'));
@@ -430,7 +434,63 @@ add_settings_field('mhbo_global_min_stay', I18n::get_label('settings_label_globa
         }
     }
 
-/**
+    /**
+     * Sanitize and validate primary notification email input.
+     * Falls back to WordPress's global admin_email when empty or invalid.
+     *
+     * @param mixed $value Input value from settings form.
+     * @return string Sanitized email address.
+     */
+    public function sanitize_notification_email( mixed $value ): string {
+        $cleaned = is_string( $value ) ? sanitize_email( trim( $value ) ) : '';
+        if ( '' !== $cleaned && is_email( $cleaned ) ) {
+            return $cleaned;
+        }
+        $fallback = sanitize_email( (string) get_option( 'admin_email', '' ) );
+        return ( '' !== $fallback && is_email( $fallback ) ) ? $fallback : '';
+    }
+
+    /**
+     * Sanitize and validate additional notification email input.
+     * Supports single or comma/semicolon-separated email lists.
+     *
+     * @param mixed $value Input value from settings form.
+     * @return string Sanitized, comma-separated list of valid emails.
+     */
+    public function sanitize_additional_notification_emails( mixed $value ): string {
+        if ( ! is_string( $value ) || '' === trim( $value ) ) {
+            return '';
+        }
+        $parts = preg_split( '/[\s,;]+/', $value, -1, PREG_SPLIT_NO_EMPTY );
+        if ( ! is_array( $parts ) ) {
+            return '';
+        }
+        $valid = array();
+        foreach ( $parts as $part ) {
+            $cleaned = sanitize_email( $part );
+            if ( is_email( $cleaned ) ) {
+                $cleaned_lower = strtolower( $cleaned );
+                if ( ! in_array( $cleaned_lower, $valid, true ) ) {
+                    $valid[] = $cleaned_lower;
+                }
+            }
+        }
+        return implode( ', ', $valid );
+    }
+
+    /**
+     * Render the additional notification email field with description.
+     *
+     * @param array{label_for: string} $args Field arguments.
+     * @return void
+     */
+    public function render_additional_notification_email_field( array $args ): void {
+        $value = $this->sanitize_additional_notification_emails( (string) get_option($args['label_for'], '') );
+        echo '<input type="text" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($value) . '" class="regular-text" placeholder="manager@example.com, accountant@example.com">';
+        echo '<p class="description">' . esc_html__('Optional secondary email address(es) copied (CC) on every admin booking alert. Multiple addresses can be separated by commas.', 'modern-hotel-booking') . '</p>';
+    }
+
+    /**
      * Render the hotel timezone selector using WordPress's built-in timezone list.
      */
     public function render_hotel_timezone_field(): void {
@@ -756,6 +816,8 @@ return false;
         $modal_en   = (int) get_option('mhbo_modal_enabled', 1);
 
 // 5. Operational Notifications & Housekeeping
+        $notif_email   = \MHBO\Core\Email::get_notification_email();
+        $cc_email      = (string) get_option('mhbo_additional_notification_email', '');
 
 // 6. Guest CRM & Intelligence
         $crm_en     = (int) get_option('mhbo_guest_crm_enabled', 0);
@@ -1158,7 +1220,42 @@ return false;
 </div>
             </div>
 
-<!-- Card 6: Guest CRM & Intelligence -->
+            <!-- Card 5: Operational Notifications & Housekeeping -->
+            <div class="mhbo-settings-section-card">
+                <div class="mhbo-settings-section-header">
+                    <div class="mhbo-settings-section-title-wrap">
+                        <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-email-alt"></span></div>
+                        <div>
+                            <h3 class="mhbo-settings-section-title">
+                                <?php echo esc_html(__('Operational Notifications & Housekeeping', 'modern-hotel-booking')); ?>
+                            </h3>
+                            <p class="mhbo-settings-section-desc"><?php echo esc_html(__('Admin notification inboxes and daily housekeeping turnover manifest automation.', 'modern-hotel-booking')); ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mhbo-settings-grid mhbo-grid-2col">
+                    <div class="mhbo-form-group">
+                        <label class="mhbo-form-label" for="mhbo_notification_email"><?php echo esc_html(I18n::get_label('settings_label_notification')); ?></label>
+                        <input type="email" id="mhbo_notification_email" name="mhbo_notification_email" value="<?php echo esc_attr($notif_email); ?>" class="mhbo-form-input" placeholder="admin@example.com">
+                        <p class="mhbo-form-help">
+                            <?php echo esc_html(__('Primary admin inbox for new booking alerts and reservation updates.', 'modern-hotel-booking')); ?>
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=emails#mhbo-email-health-card')); ?>" style="display: inline-block; margin-left: 6px; font-weight: 600; text-decoration: none; color: #2563eb;">
+                                <?php esc_html_e('Email Health Inspector & Test Probe →', 'modern-hotel-booking'); ?>
+                            </a>
+                        </p>
+                    </div>
+
+                    <div class="mhbo-form-group">
+                        <label class="mhbo-form-label" for="mhbo_additional_notification_email"><?php echo esc_html(__('Additional Notification Email (CC)', 'modern-hotel-booking')); ?></label>
+                        <input type="text" id="mhbo_additional_notification_email" name="mhbo_additional_notification_email" value="<?php echo esc_attr($cc_email); ?>" class="mhbo-form-input" placeholder="manager@example.com, accountant@example.com">
+                        <p class="mhbo-form-help"><?php echo esc_html(__('Optional secondary email address(es) copied on every admin booking alert. Multiple addresses can be separated by commas.', 'modern-hotel-booking')); ?></p>
+                    </div>
+
+</div>
+            </div>
+
+            <!-- Card 6: Guest CRM & Intelligence -->
             <div class="mhbo-settings-section-card">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
@@ -1524,7 +1621,7 @@ return false;
      * Render the Email Delivery Health & Diagnostic Inspector card.
      */
     private static function render_email_health_inspector_card(): void {
-        $sender_email = (string) get_option('mhbo_notification_email', get_option('admin_email'));
+        $sender_email = \MHBO\Core\Email::get_notification_email();
         $current_user = wp_get_current_user();
         $test_target  = $current_user->user_email ?: $sender_email;
         $site_domain  = (string) preg_replace('/^www\./', '', (string) wp_parse_url(home_url(), PHP_URL_HOST));
@@ -2648,7 +2745,16 @@ case 'emails':
             update_option('mhbo_guest_portal_page', absint(wp_unslash($data['mhbo_guest_portal_page'])));
         }
 
-if (isset($data['mhbo_booking_page_url'])) {
+if (isset($data['mhbo_notification_email'])) {
+            // 2026 BP: Rule 11 - Individual extraction then sanitization.
+            $raw_email = wp_unslash($data['mhbo_notification_email']);
+            update_option('mhbo_notification_email', $this->sanitize_notification_email($raw_email));
+        }
+        if (isset($data['mhbo_additional_notification_email'])) {
+            $raw_extra = wp_unslash($data['mhbo_additional_notification_email']);
+            update_option('mhbo_additional_notification_email', $this->sanitize_additional_notification_emails($raw_extra));
+        }
+        if (isset($data['mhbo_booking_page_url'])) {
             // 2026 BP: Rule 11 - Individual extraction then sanitization.
             $raw_url = wp_unslash($data['mhbo_booking_page_url']);
             update_option('mhbo_booking_page_url', esc_url_raw($raw_url));

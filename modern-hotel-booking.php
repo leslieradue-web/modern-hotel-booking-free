@@ -5,7 +5,7 @@
  * Plugin Name:       Modern Hotel Booking — Direct Booking Engine, Availability Calendar & Vacation Rental PMS
  * Plugin URI:        https://modernhotelwp.com/
  * Description:       Hotel booking plugin & availability calendar for vacation rentals, B&Bs & accommodations. Direct booking engine, hotel reservations & guest portal.
- * Version:           3.0.0
+ * Version:           3.0.1
  * Requires at least: 6.6
  * Tested up to:      7.1
  * Requires PHP:      8.0
@@ -61,7 +61,7 @@ if ( ! extension_loaded( 'bcmath' ) ) {
 	);
 }
 
-define( 'MHBO_VERSION', '3.0.0' );
+define( 'MHBO_VERSION', '3.0.1' );
 define( 'MHBO_IS_PRO', false );
 if ( ! defined( 'MHBO_PRODUCT_TIER' ) ) {
 	define( 'MHBO_PRODUCT_TIER', 'free' );

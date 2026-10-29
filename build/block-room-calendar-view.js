@@ -1,1 +1,0 @@
-import{getElement as e,store as t}from"@wordpress/interactivity";t("modern-hotel-booking/room-calendar",{callbacks:{init:()=>{const{ref:t}=e();t&&document.dispatchEvent(new CustomEvent("mhbo_init_calendar",{detail:{element:t}}))}}});

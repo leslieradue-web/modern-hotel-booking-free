@@ -180,13 +180,13 @@ class Email {
 			return false;
 		}
 
-$admin_email = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
+$admin_email = self::get_notification_email();
 		if ( ! is_email( $admin_email ) ) {
 			return false;
 		}
 
 		$lang          = I18n::get_current_language();
-		$site_name     = get_bloginfo( 'name' );
+		$site_name     = self::sanitize_header_value( (string) get_bloginfo( 'name' ) );
 		$status_label  = I18n::translate_status( (string) ( $booking->status ?? 'pending' ) );
 		$check_in      = '' !== (string) ( $booking->check_in ?? '' ) ? date_i18n( get_option( 'date_format' ), strtotime( (string) $booking->check_in ) ) : '--';
 		$check_out     = '' !== (string) ( $booking->check_out ?? '' ) ? date_i18n( get_option( 'date_format' ), strtotime( (string) $booking->check_out ) ) : '--';
@@ -275,9 +275,10 @@ $body .= '</div></div>';
 				__( '[%1$s] New Booking #%2$d from %3$s', 'modern-hotel-booking' ),
 				$site_name,
 				(int) $booking->id,
-				esc_html( (string) ( $booking->customer_name ?? '' ) )
+				(string) ( $booking->customer_name ?? '' )
 			);
 		}
+		$subject = self::sanitize_header_value( (string) $subject );
 
 		if ( '' !== trim( $raw_template_message ) ) {
 			$decoded_message = (string) ( I18n::decode( $raw_template_message, $lang, true ) ?? '' );
@@ -317,13 +318,13 @@ $body .= '</div></div>';
 			return false;
 		}
 
-		$admin_email = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
+		$admin_email = self::get_notification_email();
 		if ( ! is_email( $admin_email ) ) {
 			return false;
 		}
 
 		$lang         = I18n::get_current_language();
-		$site_name    = get_bloginfo( 'name' );
+		$site_name    = self::sanitize_header_value( (string) get_bloginfo( 'name' ) );
 		$admin_url    = admin_url( 'admin.php?page=mhbo-bookings&action=view&id=' . $booking_id );
 		$status_label = I18n::translate_status( (string) ( $booking->status ?? 'confirmed' ) );
 		$room_name    = (string) ( I18n::decode( (string) ( $booking->room_name ?? '' ), $lang ) ?? '' );
@@ -352,9 +353,10 @@ $body .= '</div></div>';
 				__( '[%1$s] Payment Received for Booking #%2$d from %3$s', 'modern-hotel-booking' ),
 				$site_name,
 				(int) $booking->id,
-				esc_html( (string) ( $booking->customer_name ?? '' ) )
+				(string) ( $booking->customer_name ?? '' )
 			);
 		}
+		$subject = self::sanitize_header_value( (string) $subject );
 
 		if ( '' !== trim( $raw_message ) ) {
 			$decoded_message = (string) ( I18n::decode( $raw_message, $lang, true ) ?? '' );
@@ -638,7 +640,7 @@ $body .= '</div></div>';
 		$has_social_placeholder    = ( false !== strpos( $message, '{social_links}' ) );
 
 		// Replace placeholders with smart cleanup
-		$subject = self::apply_placeholders( (string) $subject, $placeholders );
+		$subject = self::sanitize_header_value( self::apply_placeholders( (string) $subject, $placeholders ) );
 		$message = self::apply_placeholders( (string) $message, $placeholders );
 
 		if ( ! $has_breakdown_placeholder && ! $has_deposit_placeholder && ! $has_tax_placeholder ) {
@@ -652,17 +654,11 @@ $headers = self::get_transactional_headers( true, (string) $to );
 		// Add iCal attachment for confirmed bookings.
 		if ( 'confirmed' === $status ) {
 			$ics_content = self::generate_simple_ics( $booking );
-			if ( ! function_exists( 'wp_tempnam' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/file.php' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/file.php';
-			}
-			$file_path = function_exists( 'wp_tempnam' )
-				? \wp_tempnam( 'mhbo_ics_' . wp_generate_password( 12, false ) )
-				// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_tempnam -- Ephemeral email attachment, unlinked in finally block.
-				: tempnam( sys_get_temp_dir(), 'mhbo_ics_' );
-
-			if ( $file_path ) {
-				// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents -- Ephemeral email attachment, unlinked immediately in finally block.
-				file_put_contents( $file_path, $ics_content );
+			$file_path   = self::create_ics_attachment_file(
+				$ics_content,
+				sprintf( 'booking-%d.ics', (int) ( $booking->id ?? 0 ) )
+			);
+			if ( '' !== $file_path ) {
 				$attachments[] = $file_path;
 			}
 		}
@@ -850,7 +846,7 @@ $headers = self::get_transactional_headers( true, (string) $to );
 		$has_payment_placeholder = ( false !== strpos( $message, '{payment_details}' ) );
 
 		// Replace placeholders with smart cleanup
-		$subject = self::apply_placeholders( (string) $subject, $placeholders );
+		$subject = self::sanitize_header_value( self::apply_placeholders( (string) $subject, $placeholders ) );
 		$message = self::apply_placeholders( (string) $message, $placeholders );
 
 		// Append payment details only if the template didn't include the placeholder
@@ -1853,6 +1849,21 @@ if ( ! empty( $booking->special_requests ) ) {
 	}
 
 	/**
+	 * Resolve the primary hotel notification email address with automatic fallback
+	 * to WordPress's global admin_email when mhbo_notification_email is empty or invalid.
+	 *
+	 * @return string Validated email address, or empty string if neither is valid.
+	 */
+	public static function get_notification_email(): string {
+		$configured = sanitize_email( (string) get_option( 'mhbo_notification_email', '' ) );
+		if ( '' !== $configured && is_email( $configured ) ) {
+			return (string) $configured;
+		}
+		$fallback = sanitize_email( (string) get_option( 'admin_email', '' ) );
+		return ( '' !== $fallback && is_email( $fallback ) ) ? (string) $fallback : '';
+	}
+
+	/**
 	 * Build standard headers for direct admin notification alerts.
 	 * Sets From to the Notification Email, Reply-To to the customer (or admin),
 	 * and adds deduplicated 'Cc: <additional_email>' headers when configured,
@@ -1862,11 +1873,10 @@ if ( ! empty( $booking->special_requests ) ) {
 	 * @return array<int, string> Formatted email headers for admin alerts.
 	 */
 	public static function get_admin_headers( string $reply_to = '' ): array {
-		$admin_email      = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
+		$safe_admin_email = self::get_notification_email();
 		$hotel_name       = (string) get_option( 'mhbo_hotel_name', '' );
 		$site_name        = '' !== trim( $hotel_name ) ? $hotel_name : (string) get_bloginfo( 'name' );
 		$safe_site_name   = self::sanitize_header_value( $site_name );
-		$safe_admin_email = sanitize_email( (string) $admin_email );
 		$safe_reply_to    = is_email( $reply_to ) ? sanitize_email( $reply_to ) : $safe_admin_email;
 
 		$headers = array(
@@ -1897,11 +1907,10 @@ if ( ! empty( $booking->special_requests ) ) {
 	 * @return array<int, string> Formatted email headers.
 	 */
 	public static function get_transactional_headers( bool $bcc_admin = true, string $recipient = '' ): array {
-		$admin_email      = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
+		$safe_admin_email = self::get_notification_email();
 		$hotel_name       = (string) get_option( 'mhbo_hotel_name', '' );
 		$site_name        = '' !== trim( $hotel_name ) ? $hotel_name : (string) get_bloginfo( 'name' );
 		$safe_site_name   = self::sanitize_header_value( $site_name );
-		$safe_admin_email = sanitize_email( (string) $admin_email );
 
 		$headers = array(
 			'Content-Type: text/html; charset=UTF-8',
@@ -1952,8 +1961,8 @@ if ( ! empty( $booking->special_requests ) ) {
 			return false;
 		}
 
-		$admin_email = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
-		if ( ! is_email( (string) $admin_email ) ) {
+		$admin_email = self::get_notification_email();
+		if ( ! is_email( $admin_email ) ) {
 			return false;
 		}
 
@@ -1985,10 +1994,9 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		$headers = self::get_admin_headers( $guest_email );
-		$sent    = (bool) wp_mail( (string) $admin_email, $safe_subject, $message, $headers );
+		$sent    = (bool) wp_mail( $admin_email, $safe_subject, $message, $headers );
 
 		I18n::restore_language_context();
 		return $sent;
@@ -2021,8 +2029,8 @@ if ( ! empty( $booking->special_requests ) ) {
 			return false;
 		}
 
-		$admin_email = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
-		if ( ! is_email( (string) $admin_email ) ) {
+		$admin_email = self::get_notification_email();
+		if ( ! is_email( $admin_email ) ) {
 			return false;
 		}
 
@@ -2057,10 +2065,9 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		$headers = self::get_admin_headers( $guest_email );
-		$sent    = (bool) wp_mail( (string) $admin_email, $safe_subject, $message, $headers );
+		$sent    = (bool) wp_mail( $admin_email, $safe_subject, $message, $headers );
 
 		I18n::restore_language_context();
 		return $sent;
@@ -2130,7 +2137,6 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		$headers = self::get_transactional_headers( true, $to );
 		$sent    = (bool) wp_mail( $to, $safe_subject, $message, $headers );
@@ -2205,7 +2211,6 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		$headers = self::get_transactional_headers( true, $to );
 		$sent    = (bool) wp_mail( $to, $safe_subject, $message, $headers );
@@ -2243,8 +2248,8 @@ if ( ! empty( $booking->special_requests ) ) {
 			return false;
 		}
 
-		$admin_email = get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
-		if ( ! is_email( (string) $admin_email ) ) {
+		$admin_email = self::get_notification_email();
+		if ( ! is_email( $admin_email ) ) {
 			return false;
 		}
 
@@ -2277,10 +2282,9 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		$headers = self::get_admin_headers( $guest_email );
-		$sent    = (bool) wp_mail( (string) $admin_email, $safe_subject, $message, $headers );
+		$sent    = (bool) wp_mail( $admin_email, $safe_subject, $message, $headers );
 
 		I18n::restore_language_context();
 		return $sent;
@@ -2341,12 +2345,11 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
-		$hotel_email = (string) get_option( 'mhbo_notification_email', get_option( 'admin_email' ) );
+		$hotel_email = self::get_notification_email();
 		$recipients  = array_unique(
 			array_filter(
-				array( sanitize_email( $old_email ), sanitize_email( $new_email ), sanitize_email( $hotel_email ) ),
+				array( sanitize_email( $old_email ), sanitize_email( $new_email ), $hotel_email ),
 				static fn( string $email ): bool => (bool) is_email( $email )
 			)
 		);
@@ -2422,7 +2425,6 @@ if ( ! empty( $booking->special_requests ) ) {
 		$message = self::apply_placeholders( $message, $placeholders );
 
 		$safe_subject = self::sanitize_header_value( $subject );
-		$safe_subject = html_entity_decode( $safe_subject, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 
 		$headers = self::get_transactional_headers( true, $to );
 		$sent    = (bool) wp_mail( $to, $safe_subject, $message, $headers );
@@ -2432,12 +2434,89 @@ if ( ! empty( $booking->special_requests ) ) {
 	}
 
 	/**
-	 * Strip carriage returns and newlines from email header values to prevent header injection.
+	 * Write iCal content to an ephemeral .ics file in the system temporary directory.
+	 * Using a .ics extension instead of wp_tempnam()'s .tmp extension ensures PHPMailer
+	 * sets the attachment MIME type to text/calendar instead of application/octet-stream.
+	 * Uses atomic 'xb' exclusive file creation to prevent CWE-377 symlink/TOCTOU races.
+	 *
+	 * @param string $ics_content Raw RFC 5545 iCalendar payload.
+	 * @param string $filename    Target filename (e.g. 'booking-8.ics').
+	 * @return string Absolute path to the written .ics file, or empty string on failure.
+	 */
+	public static function create_ics_attachment_file( string $ics_content, string $filename ): string {
+		if ( '' === trim( $ics_content ) ) {
+			return '';
+		}
+
+		if ( ! function_exists( 'get_temp_dir' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/file.php' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+
+		$temp_dir    = function_exists( 'get_temp_dir' ) ? get_temp_dir() : sys_get_temp_dir();
+		$is_writable = is_string( $temp_dir ) && '' !== $temp_dir && is_dir( $temp_dir ) && (
+			function_exists( 'wp_is_writable' )
+				? wp_is_writable( $temp_dir )
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Unit test fallback when wp_is_writable is unavailable.
+				: is_writable( $temp_dir )
+		);
+		if ( ! $is_writable ) {
+			$temp_dir = sys_get_temp_dir();
+		}
+
+		$safe_name = function_exists( 'sanitize_file_name' )
+			? sanitize_file_name( $filename )
+			: (string) preg_replace( '/[^a-zA-Z0-9._-]/', '', $filename );
+		if ( '' === $safe_name || '.ics' === strtolower( $safe_name ) ) {
+			$safe_name = 'booking.ics';
+		} elseif ( ! str_ends_with( strtolower( $safe_name ), '.ics' ) ) {
+			$safe_name .= '.ics';
+		}
+
+		$base_dir  = rtrim( (string) $temp_dir, '/\\' ) . DIRECTORY_SEPARATOR;
+		$stem      = substr( $safe_name, 0, -4 );
+		$candidate = $base_dir . $safe_name;
+
+		$handle    = false;
+		$file_path = '';
+		for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+			$try_path = ( 0 === $attempt )
+				? $candidate
+				: $base_dir . $stem . '-' . bin2hex( random_bytes( 4 ) ) . '.ics';
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Atomic 'xb' exclusive creation prevents CWE-377 symlink/TOCTOU races.
+			$handle = @fopen( $try_path, 'xb' );
+			if ( false !== $handle ) {
+				$file_path = $try_path;
+				break;
+			}
+		}
+
+		if ( false === $handle || '' === $file_path ) {
+			return '';
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Writing to atomically opened temp file handle.
+		$written = fwrite( $handle, $ics_content );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closing atomically opened temp file handle.
+		fclose( $handle );
+
+		if ( false === $written ) {
+			wp_delete_file( $file_path );
+			return '';
+		}
+
+		return $file_path;
+	}
+
+	/**
+	 * Decode HTML entities (e.g. &#039; -> ') so plain-text subjects and From: headers render cleanly,
+	 * then strip carriage returns, newlines, and null bytes to prevent CRLF header injection.
 	 *
 	 * @param string $value Header value.
 	 * @return string Sanitized header value.
 	 */
 	private static function sanitize_header_value( string $value ): string {
-		return str_replace( array( "\r", "\n" ), '', $value );
+		$decoded = html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$cleaned = (string) preg_replace( '/&#(?:0*1[03]|x0*[ad]);/i', '', $decoded );
+		return str_replace( array( "\r", "\n", "\0" ), '', $cleaned );
 	}
 }
