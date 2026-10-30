@@ -41,6 +41,7 @@ Experience the direct booking engine, room availability calendar, and guest chec
 Over 65% of travelers search and book accommodation on mobile devices. Legacy hotel booking plugins dump thousands of calendar elements into page HTML, stalling mobile browsers and hurting Google PageSpeed scores.
 
 Modern Hotel Booking uses **Front-Heavy Progressive Hydration**:
+
 * Renders an immediate 4-month availability window in lightweight HTML for instant First Contentful Paint.
 * Preloads future dates up to 2 years out in the background during idle browser moments (`requestIdleCallback`).
 * With **0 KB of jQuery**, the calendar responds instantly to taps, cutting checkout bounce rates and boosting direct reservations.
@@ -68,6 +69,7 @@ Modern Hotel Booking uses **Front-Heavy Progressive Hydration**:
 Every core feature needed to accept direct bookings and run your property is **100% free on WordPress.org** — with zero booking caps, no expiration timers, and no forced account signups.
 
 **Included in the Free Edition (WordPress.org):**
+
 * ✔ **Direct Bookings** — 100% commission-free direct booking engine with unlimited room types and physical units.
 * ✔ **Progressive Calendar** — 0 KB jQuery availability calendar with smooth slide-out checkout drawer.
 * ✔ **Offline Payments** — Pay on Arrival, Bank Wire Transfer (IBAN/BIC), Revolut Pay, and WhatsApp reservations.
@@ -79,12 +81,14 @@ Every core feature needed to accept direct bookings and run your property is **1
 * ✔ **Content Integration** — 8 native Gutenberg blocks, 11 shortcodes, 3 Elementor widgets, and 15 native translations.
 
 **Added in Modern Hotel Booking Starter:**
+
 * ➜ **Online Payment Gateways** — Stripe Elements (Cards, Apple Pay, Google Pay, 3DS2), PayPal Smart Buttons, and Braintree Drop-in.
 * ➜ **Dynamic Invoicing & Taxes** — PDF/HTML guest tax invoices, VAT inclusive vs Sales Tax exclusive, and split lodging/extras rates.
 * ➜ **Child Pricing & Buffers** — Age-tiered pricing (ages 1 to 17) and same-day turnover buffers.
 * ➜ **Expanded AI Concierge** — Doubled capacity (60 req/hr) and voice features.
 
 **Added in Modern Hotel Booking Pro:**
+
 * 🚀 **Automated 2-Way iCal Sync** — Two-way availability sync with external travel channels and personal calendars.
 * 🚀 **Deposits & Balance Links** — Upfront deposit collection and automated scheduled balance payment links.
 * 🚀 **Front-Desk Tablet Kiosk** — Fullscreen operational workstation with live interactive Gantt tape chart.
@@ -202,6 +206,7 @@ Modern Hotel Booking is self-hosted. By default, **no guest booking data is ever
 ### Third-Party Software Credits
 
 The following open-source JavaScript libraries are bundled locally in the plugin:
+
 * **Flatpickr v4.6.13** — MIT License — [Flatpickr Documentation](https://flatpickr.js.org)
 * **FullCalendar v7.1.3** — MIT License — [FullCalendar Documentation](https://fullcalendar.io)
 * **Chart.js v4.6.1** — MIT License — [Chart.js Documentation](https://www.chartjs.org)
@@ -218,64 +223,68 @@ The following open-source JavaScript libraries are bundled locally in the plugin
 
 ### Complete Setup Guide (From Activation to First Booking)
 
-Once activated, look for the **Hotel Booking** menu in your WordPress admin sidebar.
+After activation, open the new **Hotel Booking** menu in your WordPress admin sidebar.
 
-The plugin features a built-in **Onboarding & Setup Guidance Banner** right at the top of **Hotel Booking > Settings > General**. A real-time **Setup Status Meter** highlights what has been configured and what still needs attention:
+A built-in **Quick Start & Setup Guide** banner sits at the top of **Hotel Booking > Settings > General** (see Screenshot 14). Its **Live Setup Status** meter turns each item green once it is configured:
 
-```
-[Live Setup Status]
-📋 1. Room Types: Active | 🛏️ 2. Physical Rooms: Active | 🏢 3. Business Info: Configured | 🚀 4. Booking Page: Linked
-```
+* 📋 **Room Types** — Shows how many room types are active.
+* 🛏️ **Physical Rooms** — Shows how many bookable rooms or units exist.
+* 🏢 **Business Info** — Shows your property name once saved.
+* 🚀 **Booking Page** — Confirms your public booking page is linked.
 
-Follow this 7-step roadmap to get your property operational:
+Follow these 7 steps to take your first booking:
 
-#### Step 1: Define Your Room Types First
+#### Step 1: Create Your Room Types
+
 * Go to **Hotel Booking > Room Types** and click **Add New**.
-* Define your accommodation categories (for example: *Deluxe Suite*, *Standard Double*, or *Ocean Villa*).
-* Set base nightly prices, standard and maximum adult occupancies, extra guest charges, bed setups, photos, and amenity badges.
-* *Important: Always create your Room Types first, as physical rooms belong to these parent categories.*
+* Create your accommodation categories (e.g., *Deluxe Suite*, *Standard Double*, *Ocean Villa*).
+* Set base nightly price, standard and maximum adults, extra guest charges, beds, photos, and amenities.
+* *Always create Room Types first — physical rooms belong to them.*
 
-#### Step 2: Add Physical Rooms & Keys Second
+#### Step 2: Add Your Physical Rooms
+
 * Go to **Hotel Booking > Rooms** and click **Add Physical Room**.
-* Add your individual physical units or room keys (e.g., *Room 101*, *Room 102*, *Villa 4*) and link each one to its parent Room Type.
+* Add each unit or key (e.g., *Room 101*, *Villa 4*) and link it to its Room Type.
 * Each room receives a unique numeric **Room ID** (`#1`, `#2`, etc.).
-* **Helpful Built-In Tool:** In **Hotel Booking > Settings > General**, expand the **"Your Configured Rooms"** reference table. It displays every active room on your property along with 1-click "Copy" buttons for direct calendar shortcodes and Gutenberg block markup!
+* **Tip:** Expand **Your Configured Rooms** in **Settings > General** for 1-click copy buttons for every room's calendar shortcode and block.
 
-#### Step 3: Set Property Stay Times & Timezone
-* Open **Hotel Booking > Settings > General (Card 1)**:
-  * Select your **Hotel Operational Timezone** (with live active time verification). All booking dates, rates, and reminders operate in this timezone.
-  * Enter your standard **Check-in Time** (e.g., 14:00) and **Check-out Time** (e.g., 11:00).
-  * Set property-wide minimum or maximum stay rules if required.
+#### Step 3: Set Stay Times & Timezone
 
-#### Step 4: Configure Your Business Details & Payment Options
-* Navigate to **Hotel Booking > Settings > Business Info**:
-  * Enter your property name, physical address, contact email, phone, and optional Google Maps Place ID.
-  * Turn on the payment methods you wish to offer guests:
-    * **Pay on Arrival** — Ideal for front-desk cash or terminal payments.
-    * **Direct Bank Wire Transfer** — Enter your Account Holder name, IBAN, and BIC/SWIFT code. The checkout screen and confirmation emails provide convenient 1-click copy buttons for guests.
-    * **Revolut Pay** — Add your payment link or QR code.
-    * **WhatsApp Reservations** — Enable instant click-to-chat bookings.
+* Open **Hotel Booking > Settings > General (Card 1)**.
+* Select your **Hotel Operational Timezone** — all dates, rates, and reminders use it.
+* Enter your **Check-in Time** (e.g., 14:00) and **Check-out Time** (e.g., 11:00).
+* Optionally set property-wide minimum and maximum stay rules.
 
-#### Step 5: Choose Your Booking Presentation & Publish Your Pages
-Open **Hotel Booking > Settings > General (Card 4)** and select your preferred booking flow:
-* **Inline Modal Drawer (Default & Recommended)** — When guests click "Book Now" or choose dates on a room calendar, a smooth slide-out drawer opens on the current page. Guests complete their reservation without navigating away, keeping conversion rates high.
-* **Dedicated Booking Page Redirect** — Guests are redirected to your primary reservations page with dates pre-filled into the full accommodation search form.
+#### Step 4: Add Business Details & Payment Options
 
-Now, place your booking engine on your website:
-* **Using Gutenberg Blocks:** In the block editor, search for **"Hotel"** to insert the **Booking Form** (`mhbo/booking-form`) or **Room Availability Calendar** (`mhbo/room-calendar`).
-* **Using Shortcodes:** Add `[mhbo_booking_form]` to your main booking page to search across all room types. To display a live availability and price calendar for a specific room, use `[mhbo_room_calendar room_id="1"]`.
-* **Guest Self-Service Portal:** Create a new page titled "Manage Reservation" and add the `[mhbo_guest_portal]` shortcode. Link this page in **Settings > General (Card 9)**.
+* Open **Hotel Booking > Settings > Business Info**.
+* Enter your property name, address, email, phone, and optional Google Maps Place ID.
+* Enable the payment methods you want to offer:
+    * **Pay on Arrival** — Cash or card terminal at your front desk.
+    * **Bank Wire Transfer** — Account holder, IBAN, and BIC/SWIFT with 1-click copy buttons at checkout and in emails.
+    * **Revolut Pay** — Your payment link or QR code.
+    * **WhatsApp Reservations** — Instant click-to-chat booking requests.
 
-#### Step 6: Verify Email Inbox Delivery
-Confirmation emails are critical for any hotel. Modern Hotel Booking makes testing delivery effortless:
+#### Step 5: Choose Your Booking Flow & Publish Pages
+
+* Open **Hotel Booking > Settings > General (Card 4)** and pick a booking flow:
+    * **Slide-Out Drawer (Recommended)** — Guests book on the current page without navigating away.
+    * **Booking Page Redirect** — Guests go to your reservations page with dates pre-filled.
+* **Blocks:** In the block editor, search **"Hotel"** and insert **Booking Form** or **Room Availability Calendar**.
+* **Shortcodes:** Add `[mhbo_booking_form]` to your main booking page, or `[mhbo_room_calendar room_id="1"]` to a single room page.
+* **Guest Portal:** Create a "Manage Reservation" page with `[mhbo_guest_portal]` and select it in **Settings > General (Card 9)**.
+
+#### Step 6: Test Email Delivery
+
 * Go to **Hotel Booking > Settings > Emails**.
-* Review the 4-tile **Email Delivery Health Inspector** to verify that your mail transport (SMTP), sender domain, and SPF / DMARC records are aligned.
-* Click the **1-Click Test Email Probe** button to send a diagnostic test message to your inbox and confirm delivery before launching.
+* Check the 4-tile **Email Delivery Health Inspector** (mail transport, sender domain, SPF, and DMARC).
+* Click **Send Test Email** to confirm confirmation emails reach your inbox before launch.
 
-#### Step 7: Explore Front-Desk Reservations & Guest CRM
-* Go to **Bookings > Add New Booking** to explore the manual reservation workstation. Test entering a booking with live USALI price calculation and front-desk tender shortcuts (**Pay in Full**, **Deposit Only**, **Pay on Arrival**).
-* Check the **Executive Command Center** at **Hotel Booking > Command Center** to monitor occupancy, arrivals, departures, and in-house guests at a glance.
-* **Pro Lean Mode:** Once you are comfortable, you can dismiss the top onboarding banner to enter Lean Mode. You can bring it back anytime by clicking the **✨ Property Setup & Shortcode Guide** button at the top of Settings.
+#### Step 7: Take a Test Booking
+
+* Go to **Bookings > Add New Booking** to try the front-desk workstation with live price breakdowns and 1-click tender buttons (**Pay in Full**, **Deposit Only**, **Pay on Arrival**).
+* Monitor occupancy, arrivals, and departures in **Hotel Booking > Command Center**.
+* **Lean Mode:** Dismiss the setup banner once you are done. Reopen it anytime with the **✨ Property Setup & Shortcode Guide** button at the top of Settings.
 
 == Frequently Asked Questions ==
 
@@ -286,6 +295,7 @@ Yes. The Free edition on WordPress.org is a complete, working reservation system
 = What is the difference between the Free, Starter, and Pro editions? =
 
 **Free Edition (WordPress.org):**
+
 * Direct booking engine with unlimited room types and physical units
 * Progressive availability calendar (0 KB jQuery) with slide-out checkout drawer
 * Offline payments: Pay on Arrival, Bank Wire (IBAN/BIC), Revolut Pay, and WhatsApp
@@ -297,6 +307,7 @@ Yes. The Free edition on WordPress.org is a complete, working reservation system
 * AI Concierge Core with 10 WordPress 7.1 abilities and MCP server
 
 **Starter Edition (Commercial Entry):**
+
 * All Free features plus online card processing: **Stripe Elements**, **PayPal Smart Buttons**, and **Braintree Drop-in**
 * Dynamic PDF & HTML guest tax invoices with custom property headers
 * Multi-mode tax engine (VAT inclusive vs Sales Tax exclusive, split accommodation/extras rates)
@@ -304,6 +315,7 @@ Yes. The Free edition on WordPress.org is a complete, working reservation system
 * Doubled AI Concierge capacity (60 req/hr) and voice features
 
 **Pro Edition (Complete Enterprise Hospitality Suite):**
+
 * All Starter features plus **Automated 2-Way iCal Calendar Sync** (RFC 5545 channel synchronization)
 * Upfront deposit collection and automated scheduled balance payment links
 * Fullscreen Front-Desk Tablet Kiosk workstation with live interactive Gantt tape chart
@@ -357,6 +369,7 @@ All booking and guest data is stored locally in your WordPress database. The plu
 11. **Commission-Free Direct & Offline Payment Gateways** — Turnkey payment configuration showing Direct Bank Wire Transfer settings (IBAN, BIC/SWIFT, Account Holder) alongside Revolut Pay QR and WhatsApp options.
 12. **Native Gutenberg Blocks & Block Themes Integration** — WordPress Block Inserter searched for "Hotel", displaying all 8 native Modern Hotel Booking blocks ready to add to any page.
 13. **Automated Transactional Email Templates Catalog & BCC Audit Trail** — 14 transactional email templates with automatic deduplicated admin BCC audit archiving and full HTML customization.
+14. **Quick Start Setup Guide & Live Setup Status Meter** — Onboarding banner at the top of Settings > General tracking Room Types, Physical Rooms, Business Info, and Booking Page readiness, with a 4-step action grid.
 
 == Changelog ==
 
