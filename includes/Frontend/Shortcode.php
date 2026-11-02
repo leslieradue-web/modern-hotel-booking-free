@@ -316,8 +316,8 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			'currency_pos'                    => get_option( 'mhbo_currency_position', 'before' ),
 			'msg_gdpr_required'               => I18n::get_label( 'msg_gdpr_required' ),
 			'msg_paypal_required'             => I18n::get_label( 'msg_paypal_required' ),
-			'msg_fill_all_fields'             => I18n::get_label( 'msg_fill_all_fields' ),
-			'msg_field_required'              => I18n::get_label( 'msg_field_required' ),
+			'msg_fill_all_fields'             => I18n::get_label( 'label_fill_all_fields' ),
+			'msg_field_required'              => I18n::get_label( 'label_field_required' ),
 			'tax_enabled'                     => Tax::is_enabled(),
 			'tax_mode'                        => Tax::get_mode(),
 			'tax_label'                       => Tax::get_label(),
@@ -1329,7 +1329,7 @@ $nights = 0;
 		$available = Pricing::is_room_available( (int) $room_id, $check_in, $check_out, $exclude_id );
 
 		if ( true !== $available ) {
-			$error_key = is_string( $available ) && '' !== $available ? $available : 'msg_room_unavailable';
+			$error_key = is_string( $available ) && '' !== $available ? $available : 'error_room_unavailable';
 			echo '<div class="mhbo-error mhbo-availability-error">' .
 				esc_html( I18n::get_label( $error_key ) ) .
 				'</div>';

@@ -830,6 +830,15 @@ class I18n {
 	 * @return string The localized label.
 	 */
 	public static function get_label( string $key ): string {
+		$aliases = array(
+			'msg_fill_all_fields'  => 'label_fill_all_fields',
+			'msg_field_required'   => 'label_field_required',
+			'msg_room_unavailable' => 'error_room_unavailable',
+		);
+		if ( isset( $aliases[ $key ] ) ) {
+			$key = $aliases[ $key ];
+		}
+
 		// Check for database override first
 		$override = get_option( "mhbo_label_{$key}" );
 
