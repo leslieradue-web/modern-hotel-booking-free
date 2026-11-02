@@ -54,6 +54,8 @@ class I18nLabels {
 			'label_checkout_only'                       => __( 'This date is restricted to check-outs only.', 'modern-hotel-booking' ),
 			'label_checkin_only'                        => __( 'This date is restricted to check-ins only.', 'modern-hotel-booking' ),
 			'label_per_night'                           => __( 'per night', 'modern-hotel-booking' ),
+			/* translators: %1$d: number of nights (1), %2$s: total price */
+			'label_total_night_single'                  => __( '%1$d night: %2$s', 'modern-hotel-booking' ),
 			/* translators: %1$d: number of nights, %2$s: nightly rate */
 			'label_total_nights'                        => __( '%1$d nights: %2$s', 'modern-hotel-booking' ),
 			/* translators: %d: maximum number of guests */
@@ -1443,6 +1445,7 @@ class I18nLabels {
 			'label_desc_available_rooms'                => __( 'Available Rooms Message', 'modern-hotel-booking' ),
 			'label_desc_no_rooms'                       => __( 'No Rooms Found Message', 'modern-hotel-booking' ),
 			'label_desc_per_night'                      => __( 'Per Night Text', 'modern-hotel-booking' ),
+			'label_desc_total_night_single'             => __( 'Total Single Night Price Summary', 'modern-hotel-booking' ),
 			'label_desc_total_nights'                   => __( 'Total Nights Price Summary', 'modern-hotel-booking' ),
 			'label_desc_max_guests'                     => __( 'Max Guests Text', 'modern-hotel-booking' ),
 			'label_desc_loading'                        => __( 'Loading Message', 'modern-hotel-booking' ),
@@ -3069,6 +3072,7 @@ return $labels;
 				'tier'   => 'free',
 				'icon'   => 'dashicons-forms',
 				'labels' => array(
+					'label_total_night_single' => __( 'Total single night', 'modern-hotel-booking' ),
 					'label_total_nights' => __( 'Total nights', 'modern-hotel-booking' ),
 					'btn_book_now' => __( 'Book Now', 'modern-hotel-booking' ),
 					'label_complete_booking' => __( 'Complete Your Booking', 'modern-hotel-booking' ),
@@ -4485,6 +4489,7 @@ return $labels;
 					'label_override_cal_no_id' => __( 'Calendar No ID Error', 'modern-hotel-booking' ),
 					'label_override_cal_config' => __( 'Calendar Config Error', 'modern-hotel-booking' ),
 					'label_desc_per_night' => __( 'Per Night Text', 'modern-hotel-booking' ),
+					'label_desc_total_night_single' => __( 'Total Single Night Price Summary', 'modern-hotel-booking' ),
 					'label_desc_total_nights' => __( 'Total Nights Price Summary', 'modern-hotel-booking' ),
 					'label_desc_loading' => __( 'Loading Message', 'modern-hotel-booking' ),
 					'label_desc_to' => __( 'To Separator', 'modern-hotel-booking' ),

@@ -1038,8 +1038,18 @@ $start_dt = new \DateTime( $check_in_date . ' ' . $ci_time, $tz );
 			$placeholders['{company_email}']        = (string) ( $company['email'] ?? '' );
 			$placeholders['{company_website}']      = (string) ( $company['website'] ?? '' );
 			$placeholders['{company_registration}'] = (string) $c_reg;
-			$placeholders['{whatsapp_number}']      = (string) ( $whatsapp['phone_number'] ?? '' );
-			$placeholders['{whatsapp_link}']        = '' !== (string) ( $whatsapp['phone_number'] ?? '' ) ? 'https://wa.me/' . preg_replace( '/[^0-9]/', '', (string) $whatsapp['phone_number'] ) : '';
+			$raw_wa_digits = preg_replace( '/[^0-9]/', '', (string) ( $whatsapp['phone_number'] ?? '' ) );
+			$clean_wa_num  = (string) preg_replace( '/^00/', '', (string) $raw_wa_digits );
+			$wa_enabled    = ! empty( $whatsapp['enabled'] ) && '' !== $clean_wa_num;
+			$wa_url        = '';
+			if ( $wa_enabled ) {
+				$wa_url = 'https://wa.me/' . $clean_wa_num;
+				if ( ! empty( $whatsapp['default_msg'] ) ) {
+					$wa_url = add_query_arg( 'text', rawurlencode( (string) $whatsapp['default_msg'] ), $wa_url );
+				}
+			}
+			$placeholders['{whatsapp_number}']      = $clean_wa_num;
+			$placeholders['{whatsapp_link}']        = $wa_url;
 			$logo_url                               = '' !== (string) ( $company['logo_url'] ?? '' ) ? esc_url( (string) $company['logo_url'] ) : '';
 			$placeholders['{mhbo_logo_url}']        = $logo_url;
 			$placeholders['{logo_header}']          = '' !== $logo_url ? '<div style="margin-bottom: 14px; text-align: center;"><img src="' . $logo_url . '" alt="' . esc_attr( (string) $c_name ) . '" style="max-height: 56px; max-width: 220px; height: auto; display: inline-block;"></div>' : '';
@@ -1256,6 +1266,9 @@ $start_dt = new \DateTime( $check_in_date . ' ' . $ci_time, $tz );
 
 		// 2. Perform raw replacement
 		$text = str_replace( array_keys( $placeholders ), array_map( 'strval', array_values( $placeholders ) ), $text );
+
+		// Strip dead WhatsApp buttons when WhatsApp is unconfigured or disabled
+		$text = (string) preg_replace( '/<a\b[^>]*\bhref=["\'](?:#)?["\'][^>]*>\s*WhatsApp\s*<\/a>/i', '', $text );
 
 		// 3. Smart Cleanup of messy formatting
 		// Collapse multiple commas/spaces on the same line (e.g., ", , ,") into a single comma

@@ -1521,7 +1521,7 @@ return true;
 			'id'                   => 'room_stay',
 			'label'                => sprintf(
 				/* translators: 1: Room title, 2: Number of nights */
-				__( '%1$s (%2$d nights)', 'modern-hotel-booking' ),
+				_n( '%1$s (%2$d night)', '%1$s (%2$d nights)', $nights, 'modern-hotel-booking' ),
 				$room_title_full,
 				$nights
 			),

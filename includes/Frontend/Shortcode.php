@@ -1245,8 +1245,9 @@ $nights = 0;
 				echo '</div>';
 			}
 
+			$total_nights_label = ( 1 === $days ) ? I18n::get_label( 'label_total_night_single' ) : I18n::get_label( 'label_total_nights' );
 			echo '<div class="mhbo-room-details">';
-			echo wp_kses_post( sprintf( I18n::get_label( 'label_total_nights' ), $days, '<strong>' . esc_html( I18n::format_currency( $total ) ) . '</strong>' ) );
+			echo wp_kses_post( sprintf( $total_nights_label, $days, '<strong>' . esc_html( I18n::format_currency( $total ) ) . '</strong>' ) );
 			echo '<p>' . esc_html( sprintf( I18n::get_label( 'label_max_guests' ), $room->max_adults ) ) . '</p>';
 			echo '</div>';
 
