@@ -74,13 +74,14 @@
 					return response.json();
 				} )
 				.then( function ( data ) {
-					const disabledDates = extractDisabledDates( data );
+					const parsed = extractCalendarConstraints( data );
 					initFlatpickrWithDisabled(
 						pickerInput,
 						checkInInput,
 						checkOutInput,
 						prefix,
-						disabledDates
+						parsed.disabled,
+						parsed.canCheckout
 					);
 				} )
 				.catch( function () {
@@ -90,7 +91,8 @@
 						checkInInput,
 						checkOutInput,
 						prefix,
-						[]
+						[],
+						{}
 					);
 				} )
 				.finally( function () {
@@ -104,34 +106,35 @@
 				checkInInput,
 				checkOutInput,
 				prefix,
-				[]
+				[],
+				{}
 			);
 		}
 	}
 
 	/**
-	 * Extract disabled (booked or unbookable) dates from calendar data.
-	 * Unbookable dates are those with 0 or no price set.
+	 * Extract disabled check-in dates and per-date checkout eligibility from calendar data.
 	 *
 	 * @param {Array} data Calendar data from REST API.
-	 * @return {Array} Array of date strings to disable.
+	 * @return {{disabled: Array<string>, canCheckout: Object<string, boolean>}}
 	 */
-	function extractDisabledDates( data ) {
+	function extractCalendarConstraints( data ) {
 		if ( ! Array.isArray( data ) ) {
-			return [];
+			return { disabled: [], canCheckout: {} };
 		}
 		const disabled = [];
+		const canCheckout = {};
 		data.forEach( function ( item ) {
-			// Disable both booked dates and unbookable dates (no price)
-			// BUT do NOT disable dates that allow check-out (can_checkout !== false)
+			canCheckout[ item.date ] = item.can_checkout !== false;
 			if (
-				( item.status === 'booked' || item.status === 'unbookable' ) &&
-				item.can_checkout === false
+				item.status === 'booked' ||
+				item.status === 'unbookable' ||
+				item.can_checkin === false
 			) {
 				disabled.push( item.date );
 			}
 		} );
-		return disabled;
+		return { disabled, canCheckout };
 	}
 
 	/**
@@ -142,13 +145,15 @@
 	 * @param {HTMLElement} checkOutInput Hidden check-out input.
 	 * @param {string}      prefix        LocalStorage prefix.
 	 * @param {Array}       disabledDates Array of disabled date strings.
+	 * @param {Object}      canCheckout   Map of date -> boolean checkout eligibility.
 	 */
 	function initFlatpickrWithDisabled(
 		pickerInput,
 		checkInInput,
 		checkOutInput,
 		prefix,
-		disabledDates
+		disabledDates,
+		canCheckout
 	) {
 		if ( typeof flatpickr === 'undefined' ) {
 			console.error( 'Flatpickr library not loaded' );
@@ -159,7 +164,8 @@
 					checkInInput,
 					checkOutInput,
 					prefix,
-					disabledDates
+					disabledDates,
+					canCheckout
 				);
 			}, 100 );
 			return;
@@ -223,10 +229,34 @@
 							checkIn,
 							'Y-m-d'
 						);
-						newDisabled = disabledDates.filter(
-							( d ) => d < checkInStr || d > firstBookedAfter
+						const allowCheckout =
+							! canCheckout ||
+							canCheckout[ firstBookedAfter ] !== false;
+						if ( allowCheckout ) {
+							newDisabled = disabledDates.filter(
+								( d ) =>
+									d < checkInStr || d > firstBookedAfter
+							);
+							instance.set( 'maxDate', firstBookedAfter );
+						} else {
+							const fParts = firstBookedAfter
+								.split( '-' )
+								.map( Number );
+							const prevMax = new Date(
+								fParts[ 0 ],
+								fParts[ 1 ] - 1,
+								fParts[ 2 ] - 1
+							);
+							instance.set(
+								'maxDate',
+								instance.formatDate( prevMax, 'Y-m-d' )
+							);
+						}
+					} else {
+						instance.set(
+							'maxDate',
+							new Date().fp_incr( maxDays )
 						);
-						instance.set( 'maxDate', firstBookedAfter );
 					}
 					instance.set( 'disable', newDisabled );
 				} else if ( selectedDates.length === 2 ) {

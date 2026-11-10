@@ -97,6 +97,7 @@ class Complianz {
 			'mhbo-extras.js',
 			'mhbo-payment-gateways.js',
 			'mhbo-chat-widget.js',
+			'mhbo-voice.js',
 
 			// Essential payment gateways (strictly necessary for checkout contract & fraud protection)
 			'js.stripe.com/v3',
@@ -104,10 +105,13 @@ class Complianz {
 			'js.braintreegateway.com',
 			'api.razorpay.com',
 
-			// Inline script signatures
+			// Inline script signatures (wp_localize_script / wp_add_inline_script payloads).
+			// The chat widget JS exits early if `mhboChat` is undefined, so its config must never be blocked.
 			'mhbo_vars',
 			'mhbo_calendar',
 			'mhboFrontendData',
+			'mhboChat',
+			'mhboModalI18n',
 		);
 
 		foreach ( $mhbo_scripts as $script ) {

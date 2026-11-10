@@ -1604,6 +1604,8 @@ class I18nLabels {
 			'api_err_min_stay'                          => __( 'Minimum stay is %d nights.', 'modern-hotel-booking' ),
 			/* translators: %d: maximum number of nights */
 			'api_err_max_stay'                          => __( 'Maximum stay is %d nights.', 'modern-hotel-booking' ),
+			'api_err_cta'                               => __( 'Check-in is not permitted on the selected arrival date (Closed to Arrival).', 'modern-hotel-booking' ),
+			'api_err_ctd'                               => __( 'Check-out is not permitted on the selected departure date (Closed to Departure).', 'modern-hotel-booking' ),
 			'settings_label_advance_window'             => __( 'Advance Booking Window', 'modern-hotel-booking' ),
 			'settings_desc_advance_window'              => __( 'How far in advance guests can reserve rooms. Limiting this window significantly reduces server processing, accelerates calendar loading, and protects future rates.', 'modern-hotel-booking' ),
 			/* translators: %s: earliest valid checkout date (e.g. "May 29") */
@@ -1819,6 +1821,9 @@ class I18nLabels {
 			'calendar_reason_booked'                    => __( 'Booked', 'modern-hotel-booking' ),
 			'calendar_reason_manual'                    => __( 'Unavailable', 'modern-hotel-booking' ),
 			'calendar_reason_maintenance'               => __( 'Maintenance', 'modern-hotel-booking' ),
+			'calendar_reason_turnover'                  => __( 'Turnover Day (No Check-in)', 'modern-hotel-booking' ),
+			'calendar_reason_cta'                       => __( 'Closed to Arrival', 'modern-hotel-booking' ),
+			'calendar_reason_ctd'                       => __( 'Closed to Departure', 'modern-hotel-booking' ),
 
 			/* Admin setup guide */
 			'setup_guide_title'                         => __( 'Shortcode Setup Guide', 'modern-hotel-booking' ),

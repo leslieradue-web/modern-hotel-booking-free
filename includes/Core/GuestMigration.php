@@ -27,10 +27,11 @@ class GuestMigration {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$bookings = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, customer_name, customer_email, customer_phone, status, payment_status, payment_amount, total_price
-                 FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE id > %d AND (guest_id IS NULL OR guest_id = 0) AND customer_email IS NOT NULL AND customer_email != ''
-                 ORDER BY id ASC
+				"SELECT b.id, b.customer_name, b.customer_email, b.customer_phone, b.status, b.payment_status, b.payment_amount, b.total_price
+                 FROM {$wpdb->prefix}mhbo_bookings b
+                 LEFT JOIN {$wpdb->prefix}mhbo_guests g ON b.guest_id = g.id
+                 WHERE b.id > %d AND (b.guest_id IS NULL OR b.guest_id = 0 OR g.id IS NULL) AND b.customer_email IS NOT NULL AND b.customer_email != ''
+                 ORDER BY b.id ASC
                  LIMIT %d",
 				$last_processed_id,
 				$batch_size
@@ -105,10 +106,11 @@ class GuestMigration {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->get_var(
 			"SELECT COUNT(*) 
-             FROM {$wpdb->prefix}mhbo_bookings 
-             WHERE (guest_id IS NULL OR guest_id = 0) 
-               AND customer_email IS NOT NULL 
-               AND customer_email != ''"
+             FROM {$wpdb->prefix}mhbo_bookings b
+             LEFT JOIN {$wpdb->prefix}mhbo_guests g ON b.guest_id = g.id
+             WHERE (b.guest_id IS NULL OR b.guest_id = 0 OR g.id IS NULL) 
+               AND b.customer_email IS NOT NULL 
+               AND b.customer_email != ''"
 		);
 	}
 }

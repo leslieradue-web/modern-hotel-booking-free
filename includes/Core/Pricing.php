@@ -232,11 +232,38 @@ class Pricing {
 	}
 
 	/**
-	 * Find a single available room of a type. (Legacy/Simple)
+	 * Find a single available room of a type, preferring units that satisfy stay and CTA/CTD rules.
 	 */
 	public static function find_available_room( int $type_id, string $check_in, string $check_out, int $guests = 1 ): int|false {
+		unset( $guests );
 		$available = self::get_available_unit_ids_of_type( $type_id, $check_in, $check_out );
-		return array() !== $available ? $available[0] : false;
+		if ( array() === $available ) {
+			return false;
+		}
+		if ( '' !== $check_in && '' !== $check_out ) {
+			try {
+				$nights = (int) ( new \DateTime( $check_in ) )->diff( new \DateTime( $check_out ) )->format( '%a' );
+				if ( $nights > 0 ) {
+					foreach ( $available as $candidate_id ) {
+						if ( self::is_closed_to_arrival( $candidate_id, $check_in ) || self::is_closed_to_departure( $candidate_id, $check_out ) ) {
+							continue;
+						}
+						$eff_min = self::get_effective_min_stay( $candidate_id, $check_in );
+						$eff_max = self::get_effective_max_stay( $candidate_id, $check_in, $check_out );
+						if ( null !== $eff_min && $nights < $eff_min ) {
+							continue;
+						}
+						if ( null !== $eff_max && $nights > $eff_max ) {
+							continue;
+						}
+						return $candidate_id;
+					}
+				}
+			} catch ( \Exception ) {
+				return $available[0];
+			}
+		}
+		return $available[0];
 	}
 
 /**
@@ -312,6 +339,112 @@ class Pricing {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Return the active pending_payment expiration cutoff timestamp (1 hour ago in WP local time).
+	 *
+	 * Matches `current_time( 'mysql' )` written by `PaymentsController` and uses pure ANSI
+	 * string comparison for MySQL + SQLite (Playground) portability.
+	 *
+	 * @return string MySQL datetime string (Y-m-d H:i:s).
+	 */
+	public static function get_pending_payment_cutoff(): string {
+		if ( \function_exists( 'current_time' ) ) {
+			$now_mysql = (string) \current_time( 'mysql' );
+			$ts        = strtotime( $now_mysql );
+			if ( false !== $ts ) {
+				return gmdate( 'Y-m-d H:i:s', $ts - HOUR_IN_SECONDS );
+			}
+		}
+		if ( \function_exists( 'wp_date' ) ) {
+			$wp_now = \wp_date( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
+			if ( is_string( $wp_now ) && '' !== $wp_now ) {
+				return $wp_now;
+			}
+		}
+		return gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Cancel abandoned pending_payment checkout drafts older than 1 hour with zero payment evidence.
+	 *
+	 * @return int Number of stale bookings cancelled.
+	 */
+	public static function cleanup_stale_pending_payments_now(): int {
+		global $wpdb;
+		$table  = $wpdb->prefix . 'mhbo_bookings';
+		$cutoff = self::get_pending_payment_cutoff();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled/throttled batch cancellation of abandoned checkout drafts.
+		$affected = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET status = 'cancelled' WHERE status = 'pending_payment' AND created_at < %s AND COALESCE(payment_capture_id, '') = '' AND COALESCE(payment_received, 0) = 0 AND COALESCE(deposit_received, 0) = 0 AND COALESCE(payment_amount, 0) <= 0 AND COALESCE(balance_collected_via, '') = '' AND COALESCE(payment_status, 'pending') = 'pending'",
+				$table,
+				$cutoff
+			)
+		);
+		$count = is_numeric( $affected ) ? (int) $affected : 0;
+		if ( $count > 0 ) {
+			Cache::invalidate_booking();
+		}
+		return $count;
+	}
+
+	/**
+	 * Throttled lazy cleanup of expired pending_payment drafts (runs at most once per 5 minutes).
+	 */
+	public static function maybe_cleanup_stale_pending_payments(): void {
+		if ( false !== get_transient( 'mhbo_stale_pending_check' ) ) {
+			return;
+		}
+		set_transient( 'mhbo_stale_pending_check', 1, 300 );
+		self::cleanup_stale_pending_payments_now();
+	}
+
+	/**
+	 * Resolve effective maximum stay for a room across all tiers (Pro overrides > Global setting).
+	 *
+	 * @param int    $room_id   Room ID.
+	 * @param string $check_in  Check-in date (Y-m-d).
+	 * @param string $check_out Optional check-out date (Y-m-d) for strictest multi-night resolution.
+	 * @return int|null Effective maximum stay in nights, or null if unlimited.
+	 */
+	public static function get_effective_max_stay( int $room_id, string $check_in, string $check_out = '' ): ?int {
+		$max_stay = null;
+		
+		if ( null === $max_stay ) {
+			$global_max = (int) get_option( 'mhbo_global_max_stay', 0 );
+			if ( $global_max > 0 ) {
+				$max_stay = $global_max;
+			}
+		}
+		return $max_stay;
+	}
+
+	/**
+	 * Check whether arrival is closed (CTA) for a room on a check-in date (Pro overrides; false in Free/Starter).
+	 *
+	 * @param int    $room_id  Room ID.
+	 * @param string $check_in Check-in date (Y-m-d).
+	 * @return bool
+	 */
+	public static function is_closed_to_arrival( int $room_id, string $check_in ): bool {
+		$is_cta = false;
+		
+		return $is_cta;
+	}
+
+	/**
+	 * Check whether departure is closed (CTD) for a room on a check-out date (Pro overrides; false in Free/Starter).
+	 *
+	 * @param int    $room_id   Room ID.
+	 * @param string $check_out Check-out date (Y-m-d).
+	 * @return bool
+	 */
+	public static function is_closed_to_departure( int $room_id, string $check_out ): bool {
+		$is_ctd = false;
+		
+		return $is_ctd;
+	}
+
+/**
 	 * Resolve effective minimum stay for a room and check-in date, considering Orphan Gap Auto-Correction.
 	 *
 	 * @param int    $room_id   Room ID.
@@ -320,54 +453,19 @@ class Pricing {
 	 */
 	public static function get_effective_min_stay( int $room_id, string $check_in ): ?int {
 		$min_stay = null;
-		if ( class_exists( 'ProRemoved' ) ) {
-			$min_stay = ProRemoved::resolve_min_stay( $room_id, $check_in );
-		} else {
-			$min_stay = (int) get_option( 'mhbo_global_min_stay', 0 );
-			if ( $min_stay <= 0 ) {
-				$min_stay = null;
+		
+		if ( null === $min_stay ) {
+			$global_min = (int) get_option( 'mhbo_global_min_stay', 0 );
+			if ( $global_min > 0 ) {
+				$min_stay = $global_min;
 			}
 		}
 
-		if ( $min_stay === null ) {
-			return null;
-		}
-
-		$gap_autocorrect = (int) get_option( 'mhbo_orphan_gap_autocorrection', 0 );
-		if ( $gap_autocorrect !== 1 ) {
+		if ( null === $min_stay || $min_stay <= 1 ) {
 			return $min_stay;
 		}
 
-		$gap_min = (int) get_option( 'mhbo_orphan_gap_min_stay', 1 );
-
-		// Count contiguous available nights starting at $check_in
-		$dt               = new \DateTime( $check_in );
-		$remaining_in_gap = 0;
-		$max_lookahead    = 60;
-		$today            = wp_date( 'Y-m-d' );
-
-		for ( $k = 0; $k < $max_lookahead; $k++ ) {
-			$curr_date = $dt->format( 'Y-m-d' );
-			$next_date = ( clone $dt )->modify( '+1 day' )->format( 'Y-m-d' );
-
-			if ( $curr_date < $today ) {
-				break;
-			}
-
-			$avail = self::is_room_available( $room_id, $curr_date, $next_date );
-			if ( true !== $avail ) {
-				break;
-			}
-
-			++$remaining_in_gap;
-			$dt->modify( '+1 day' );
-		}
-
-		if ( $min_stay > $remaining_in_gap && $remaining_in_gap >= $gap_min && $remaining_in_gap > 0 ) {
-			return $remaining_in_gap;
-		}
-
-		return $min_stay;
+return $min_stay;
 	}
 
 	/**
@@ -383,8 +481,7 @@ class Pricing {
 	public static function is_room_available( int $room_id, string $check_in, string $check_out, int $exclude_booking_id = 0 ): bool|string {
 		global $wpdb;
 
-		// Fast pre-flight: a room marked 'disabled' (Out of Order) is never bookable,
-		// regardless of whether any bookings exist for the date range.
+		// Fast pre-flight: a room marked Out of Order / Maintenance / Disabled is never bookable.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$room_status = $wpdb->get_var(
 			$wpdb->prepare(
@@ -392,31 +489,34 @@ class Pricing {
 				$room_id
 			)
 		);
-		if ( 'disabled' === $room_status ) {
+		if ( is_string( $room_status ) && in_array( $room_status, array( 'disabled', 'maintenance', 'inactive', 'hidden' ), true ) ) {
 			return 'label_room_not_available';
 		}
 
-		// 2026 BP: Respect same-day turnover setting (Synchronization Fix)
+		// 2026 BP: Respect same-day turnover setting and 1-hour pending_payment cutoff in WP timezone.
 		$prevent_same_day = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$pending_cutoff   = self::get_pending_payment_cutoff();
 
 		if ( $exclude_booking_id > 0 ) {
 			if ( $prevent_same_day ) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$conflict = $wpdb->get_var(
 					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (status != 'pending_payment' OR created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) AND check_in <= DATE(%s) AND check_out >= DATE(%s) AND id != %d",
+						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in <= DATE(%s) AND check_out >= DATE(%s) AND id != %d",
 						$room_id,
+						$pending_cutoff,
 						$check_out,
 						$check_in,
 						$exclude_booking_id
 					)
 				);
 			} else {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$conflict = $wpdb->get_var(
 					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (status != 'pending_payment' OR created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) AND check_in < DATE(%s) AND check_out > DATE(%s) AND id != %d",
+						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in < DATE(%s) AND check_out > DATE(%s) AND id != %d",
 						$room_id,
+						$pending_cutoff,
 						$check_out,
 						$check_in,
 						$exclude_booking_id
@@ -424,21 +524,23 @@ class Pricing {
 				);
 			}
 		} elseif ( $prevent_same_day ) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$conflict = $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (status != 'pending_payment' OR created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) AND check_in <= DATE(%s) AND check_out >= DATE(%s)",
-						$room_id,
-						$check_out,
-						$check_in
-					)
-				);
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$conflict = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in <= DATE(%s) AND check_out >= DATE(%s)",
+					$room_id,
+					$pending_cutoff,
+					$check_out,
+					$check_in
+				)
+			);
 		} else {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$conflict = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status != 'cancelled' AND (status != 'pending_payment' OR created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)) AND check_in < DATE(%s) AND check_out > DATE(%s)",
+					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in < DATE(%s) AND check_out > DATE(%s)",
 					$room_id,
+					$pending_cutoff,
 					$check_out,
 					$check_in
 				)

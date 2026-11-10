@@ -36,7 +36,16 @@ class Menu {
 	 * assets/{js,css}/vendor/fullcalendar*. V7 skeleton CSS uses hashed class names that
 	 * change on every release, so JS + CSS MUST always be upgraded together.
 	 */
-	private const FULLCALENDAR_VERSION = '7.1.3';
+	private const FULLCALENDAR_VERSION = '7.1.4';
+
+	/**
+	 * Public FullCalendar handles. Consumers declare these as dependencies; WordPress
+	 * resolves the full vendor chain (core -> classic theme, skeleton -> theme -> palette).
+	 * Prefixed with `mhbo-` so a third-party plugin registering a generic `fullcalendar`
+	 * handle (e.g. a v6 build) can never shadow our V7 bundle.
+	 */
+	private const FULLCALENDAR_SCRIPT_HANDLE = 'mhbo-fullcalendar-classic-theme';
+	private const FULLCALENDAR_STYLE_HANDLE  = 'mhbo-fullcalendar-classic-palette';
 
 	public function init(): void {
 		add_action( 'admin_menu', array( $this, 'add_plugin_admin_menu' ) );
@@ -307,6 +316,25 @@ $stats = array(
 		<?php
 	}
 
+	/**
+	 * Register the bundled FullCalendar V7 (Vanilla JS global build + classic theme).
+	 *
+	 * V7 ships CSS separately (skeleton + classic theme + palette). Assets are only
+	 * registered here; they are enqueued on demand when a consumer lists
+	 * FULLCALENDAR_SCRIPT_HANDLE / FULLCALENDAR_STYLE_HANDLE as a dependency.
+	 */
+	private function register_fullcalendar_assets(): void {
+		$css = MHBO_PLUGIN_URL . 'assets/css/vendor/';
+		$js  = MHBO_PLUGIN_URL . 'assets/js/vendor/';
+
+		wp_register_style( 'mhbo-fullcalendar-skeleton', $css . 'fullcalendar-skeleton.min.css', array(), self::FULLCALENDAR_VERSION );
+		wp_register_style( 'mhbo-fullcalendar-classic-theme-css', $css . 'fullcalendar-classic-theme.min.css', array( 'mhbo-fullcalendar-skeleton' ), self::FULLCALENDAR_VERSION );
+		wp_register_style( self::FULLCALENDAR_STYLE_HANDLE, $css . 'fullcalendar-classic-palette.min.css', array( 'mhbo-fullcalendar-classic-theme-css' ), self::FULLCALENDAR_VERSION );
+
+		wp_register_script( 'mhbo-fullcalendar', $js . 'fullcalendar.global.min.js', array(), self::FULLCALENDAR_VERSION, true );
+		wp_register_script( self::FULLCALENDAR_SCRIPT_HANDLE, $js . 'fullcalendar-classic-theme.global.min.js', array( 'mhbo-fullcalendar' ), self::FULLCALENDAR_VERSION, true );
+	}
+
 	public function enqueue_admin_assets( string $hook ): void {
 		if ( 'index.php' === $hook || 'dashboard' === $hook ) {
 			// Dedicated lightweight dashboard widgets stylesheet (4 KB); avoids loading 229 KB admin CSS suite on index.php.
@@ -389,26 +417,20 @@ $dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 
 			wp_enqueue_script( 'mhbo-flatpickr-js', MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js', array(), '4.6.13', true );
 			wp_enqueue_style( 'mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css', array( 'mhbo-flatpickr-css' ), MHBO_VERSION );
 
-			// FullCalendar V7: CSS must be loaded separately (skeleton + classic theme + palette).
-			wp_enqueue_style( 'fullcalendar-skeleton', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-skeleton.min.css', array(), self::FULLCALENDAR_VERSION );
-			wp_enqueue_style( 'fullcalendar-classic-theme-css', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-theme.min.css', array( 'fullcalendar-skeleton' ), self::FULLCALENDAR_VERSION );
-			wp_enqueue_style( 'fullcalendar-classic-palette', MHBO_PLUGIN_URL . 'assets/css/vendor/fullcalendar-classic-palette.min.css', array( 'fullcalendar-classic-theme-css' ), self::FULLCALENDAR_VERSION );
-			
+			// FullCalendar V7 vendor chain is pulled in via the dependency handles below.
+			$this->register_fullcalendar_assets();
+
 			// Deregister mhbo-admin-css and re-enqueue AFTER vendor styles to ensure proper override
 			$bookings_css_ver = (string) ( file_exists( MHBO_PLUGIN_DIR . 'assets/css/mhbo-admin.css' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/css/mhbo-admin.css' ) : MHBO_VERSION );
 			$bookings_js_ver  = (string) ( file_exists( MHBO_PLUGIN_DIR . 'assets/js/mhbo-admin-bookings.js' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/js/mhbo-admin-bookings.js' ) : MHBO_VERSION );
 			wp_deregister_style( 'mhbo-admin-css' );
-			wp_enqueue_style( 'mhbo-admin-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-admin.css', array( 'fullcalendar-classic-palette', 'mhbo-flatpickr-css' ), $bookings_css_ver );
-
-			// FullCalendar V7: main bundle + classic theme plugin.
-			wp_enqueue_script( 'fullcalendar', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar.global.min.js', array(), self::FULLCALENDAR_VERSION, true );
-			wp_enqueue_script( 'fullcalendar-classic-theme', MHBO_PLUGIN_URL . 'assets/js/vendor/fullcalendar-classic-theme.global.min.js', array( 'fullcalendar' ), self::FULLCALENDAR_VERSION, true );
+			wp_enqueue_style( 'mhbo-admin-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-admin.css', array( self::FULLCALENDAR_STYLE_HANDLE, 'mhbo-flatpickr-css' ), $bookings_css_ver );
 
 			// Enqueue admin bookings script (Pure Vanilla JS)
 			wp_enqueue_script(
 				'mhbo-admin-bookings',
 				MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-bookings.js',
-				array( 'mhbo-admin-js', 'wp-api-fetch', 'mhbo-flatpickr-js', 'fullcalendar', 'fullcalendar-classic-theme' ),
+				array( 'mhbo-admin-js', 'wp-api-fetch', 'mhbo-flatpickr-js', self::FULLCALENDAR_SCRIPT_HANDLE ),
 				$bookings_js_ver,
 				true
 			);
@@ -1550,18 +1572,14 @@ $stats = array(
 			)
 		);
 
-		$is_pro_active = false;
-
-$edit_mode = false;
+		$edit_mode = false;
 		$add_mode  = false;
 		$edit_data = null;
-		$currency  = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
 
 		// Rule 11: Extract and sanitize all inputs at start
-		$action        = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
-		$id            = isset( $_GET['id'] ) ? absint( wp_unslash( $_GET['id'] ) ) : 0;
-		$nonce         = isset( $_GET['_wpnonce'] ) ? sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-		$status_filter = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		$id     = isset( $_GET['id'] ) ? absint( wp_unslash( $_GET['id'] ) ) : 0;
+		$nonce  = isset( $_GET['_wpnonce'] ) ? sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 
 		// GET Actions
 		if ( $action ) {
@@ -1860,7 +1878,23 @@ $rem_balance_m         = $total_m->subtract( $submitted_pay_m );
 			}
 		}
 
-				// Handle folio ledger transaction submission (Cashier Tender Workstation)
+		$this->process_booking_edit_and_render_view( $tb, $edit_mode, $add_mode, $edit_data );
+	}
+
+	/**
+	 * Process booking edit/folio submissions and render the active bookings view.
+	 *
+	 * @param string      $tb        Bookings table name.
+	 * @param bool        $edit_mode Whether edit mode is active.
+	 * @param bool        $add_mode  Whether manual add mode is active.
+	 * @param object|null $edit_data Active booking record when editing.
+	 */
+	private function process_booking_edit_and_render_view( string $tb, bool $edit_mode, bool $add_mode, ?object $edit_data ): void {
+		global $wpdb;
+
+		$is_pro_active = false;
+
+// Handle folio ledger transaction submission (Cashier Tender Workstation)
 		if ( isset( $_POST['submit_record_folio_payment'] ) ) {
 			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
@@ -2082,7 +2116,7 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 				$qty         = 0;
 				if ( $extra && ( $extra['control_type'] ?? 'checkbox' ) === 'quantity' ) {
 					$qty = absint( $val );
-				} elseif ( '1' === (string) $val || true === $val || ( is_numeric( $val ) && (int) $val > 0 ) ) {
+				} elseif ( '1' === $val || ( is_numeric( $val ) && (int) $val > 0 ) ) {
 					$qty = max( 1, absint( $val ) );
 				}
 				if ( $qty > 0 ) {
@@ -2773,15 +2807,56 @@ if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_
 				<?php endif; ?>
 			<?php endif; ?>
 
-			<?php if ( $add_mode ) : ?>
-				<?php
-				$currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
-				$today_dt   = HotelTime::now();
-				$today_date = $today_dt->format( 'Y-m-d' );
-				$tom_date   = $today_dt->modify( '+1 day' )->format( 'Y-m-d' );
-				$crm_active = class_exists( GuestManager::class ) && GuestManager::is_enabled();
-				$crm_guests = $crm_active ? GuestManager::get_recent_active_guests( 100 ) : array();
-				?>
+			<?php
+			$all_rooms_list = is_array( $all_rooms ) ? $all_rooms : array();
+			if ( $add_mode ) {
+				$this->render_add_booking_workstation( $all_rooms_list );
+			}
+			if ( $edit_mode && null !== $edit_data ) {
+				$this->render_edit_booking_workstation( $edit_data, $all_rooms_list );
+			}
+			if ( ! $edit_mode && ! $add_mode ) {
+				$this->render_bookings_list_and_calendar_section(
+					$today_checkins,
+					$today_checkouts,
+					$in_house_rooms,
+					$distinct_room_count,
+					$occupancy_pct,
+					$distinct_rooms,
+					$events,
+					$full_days,
+					$search_query,
+					$bookings_base_url,
+					$status_filter,
+					$per_page,
+					$orderby,
+					$order,
+					$bookings,
+					$total_bookings,
+					$paged,
+					$allowed_per_page
+				);
+			}
+			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the manual reservation creation workstation.
+	 *
+	 * @param array<int, object> $all_rooms Available room records.
+	 */
+	private function render_add_booking_workstation( array $all_rooms ): void {
+		$is_pro_active = false;
+
+$currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
+		$today_dt   = HotelTime::now();
+		$today_date = $today_dt->format( 'Y-m-d' );
+		$tom_date   = $today_dt->modify( '+1 day' )->format( 'Y-m-d' );
+		$crm_active = class_exists( GuestManager::class ) && GuestManager::is_enabled();
+		$crm_guests = $crm_active ? GuestManager::get_recent_active_guests( 100 ) : array();
+		?>
 
 				<!-- 1. Hero Header Strip -->
 				<div class="mhbo-workstation-hero">
@@ -3249,95 +3324,103 @@ if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_
 						</a>
 					</div>
 				</form>
-			<?php endif; ?>
+		<?php
+	}
 
-		<?php if ( $edit_mode && $edit_data ) : ?>
-						<?php
-						$currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
-						$hotel_tax_enabled = class_exists( Tax::class ) && Tax::is_enabled();
-						$hotel_tax_mode    = class_exists( Tax::class ) ? Tax::get_mode() : Tax::MODE_DISABLED;
-						if ( ! $hotel_tax_enabled ) {
-							$edit_tax_mode = Tax::MODE_DISABLED;
-						} else {
-							$edit_tax_mode = sanitize_key( $edit_data->tax_mode ?? $hotel_tax_mode );
-							if ( '' === $edit_tax_mode ) {
-								$edit_tax_mode = $hotel_tax_mode;
-							}
-						}
-						$folio         = ( class_exists( Pricing::class ) ) ? Pricing::get_folio_breakdown( $edit_data, '', $edit_tax_mode ) : array();
-						$edit_amts        = ( class_exists( Pricing::class ) ) ? Pricing::get_booking_payment_amounts( $edit_data ) : null;
-						$group_amts       = ( class_exists( Pricing::class ) && ! empty( $edit_data->multi_room_parent ) ) ? Pricing::get_group_payment_amounts( $edit_data ) : null;
-						$is_group_booking = ( null !== $group_amts && $group_amts['rooms_count'] >= 2 );
-						$room_data        = ( class_exists( Pricing::class ) && ! empty( $edit_data->room_id ) ) ? Pricing::get_room_pricing_data( (int) $edit_data->room_id ) : null;
-						$room_title       = (string) ( ( $folio['room_name'] ?? '' ) ?: ( ( $room_data && $room_data->name ) ? I18n::decode( $room_data->name ) : '' ) ?: __( 'Assigned Unit', 'modern-hotel-booking' ) );
-						$room_num         = $folio['room_number'] ?? ( $room_data ? $room_data->room_number : '' );
+	/**
+	 * Render the reservation editing and folio management workstation.
+	 *
+	 * @param object             $edit_data Active booking record.
+	 * @param array<int, object> $all_rooms Available room records.
+	 */
+	private function render_edit_booking_workstation( object $edit_data, array $all_rooms ): void {
+		$is_pro_active = false;
 
-						$crm_guest_id = 0;
-						$crm_guest    = null;
-						if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() ) {
-							$crm_guest_id = (int) ( $edit_data->guest_id ?? 0 );
-							if ( $crm_guest_id <= 0 && ! empty( $edit_data->customer_email ) ) {
-								$crm_guest_id = GuestIdentityResolver::resolve_and_link_guest(
-									array(
-										'customer_name'  => $edit_data->customer_name,
-										'customer_email' => $edit_data->customer_email,
-										'customer_phone' => $edit_data->customer_phone ?? '',
-									)
-								);
-							}
-							$crm_guest = $crm_guest_id > 0 ? GuestManager::get_guest( $crm_guest_id ) : null;
-						}
+$currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
+		$hotel_tax_enabled = class_exists( Tax::class ) && Tax::is_enabled();
+		$hotel_tax_mode    = class_exists( Tax::class ) ? Tax::get_mode() : Tax::MODE_DISABLED;
+		if ( ! $hotel_tax_enabled ) {
+			$edit_tax_mode = Tax::MODE_DISABLED;
+		} else {
+			$edit_tax_mode = sanitize_key( $edit_data->tax_mode ?? $hotel_tax_mode );
+			if ( '' === $edit_tax_mode ) {
+				$edit_tax_mode = $hotel_tax_mode;
+			}
+		}
+		$folio            = ( class_exists( Pricing::class ) ) ? Pricing::get_folio_breakdown( $edit_data, '', $edit_tax_mode ) : array();
+		$edit_amts        = ( class_exists( Pricing::class ) ) ? Pricing::get_booking_payment_amounts( $edit_data ) : null;
+		$group_amts       = ( class_exists( Pricing::class ) && ! empty( $edit_data->multi_room_parent ) ) ? Pricing::get_group_payment_amounts( $edit_data ) : null;
+		$is_group_booking = ( null !== $group_amts && $group_amts['rooms_count'] >= 2 );
+		$room_data        = ( class_exists( Pricing::class ) && ! empty( $edit_data->room_id ) ) ? Pricing::get_room_pricing_data( (int) $edit_data->room_id ) : null;
+		$room_title       = (string) ( ( $folio['room_name'] ?? '' ) ?: ( ( $room_data && $room_data->name ) ? I18n::decode( $room_data->name ) : '' ) ?: __( 'Assigned Unit', 'modern-hotel-booking' ) );
+		$room_num         = $folio['room_number'] ?? ( $room_data ? $room_data->room_number : '' );
 
-						$has_early = false;
-						$has_late  = false;
-						$saved_custom = ! empty( $edit_data->custom_fields ) ? json_decode( (string) $edit_data->custom_fields, true ) : array();
-						if ( is_array( $saved_custom ) ) {
-							$has_early = ! empty( $saved_custom['_early_checkin'] );
-							$has_late  = ! empty( $saved_custom['_late_checkout'] );
-						}
-						if ( ! empty( $edit_data->booking_extras ) ) {
-							$ex_check = json_decode( (string) $edit_data->booking_extras, true );
-							if ( is_array( $ex_check ) ) {
-								if ( isset( $ex_check['_early_checkin'] ) ) {
-									$has_early = ! empty( $ex_check['_early_checkin']['quantity'] ?? $ex_check['_early_checkin'] );
-								}
-								if ( isset( $ex_check['_late_checkout'] ) ) {
-									$has_late = ! empty( $ex_check['_late_checkout']['quantity'] ?? $ex_check['_late_checkout'] );
-								}
-								foreach ( $ex_check as $k => $item ) {
-									$item_id = is_array( $item ) ? ( $item['id'] ?? $k ) : $k;
-									if ( '_early_checkin' === $item_id ) {
-										$has_early = true;
-									}
-									if ( '_late_checkout' === $item_id ) {
-										$has_late = true;
-									}
-								}
-							}
-						}
+		$crm_guest_id = 0;
+		$crm_guest    = null;
+		if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() ) {
+			$crm_guest_id = (int) ( $edit_data->guest_id ?? 0 );
+			if ( $crm_guest_id <= 0 && ! empty( $edit_data->customer_email ) ) {
+				$crm_guest_id = GuestIdentityResolver::resolve_and_link_guest(
+					array(
+						'customer_name'  => $edit_data->customer_name,
+						'customer_email' => $edit_data->customer_email,
+						'customer_phone' => $edit_data->customer_phone ?? '',
+					)
+				);
+			}
+			$crm_guest = $crm_guest_id > 0 ? GuestManager::get_guest( $crm_guest_id ) : null;
+		}
 
-						$early_fee_m = Money::fromDecimal( (string) get_option( 'mhbo_early_checkin_fee', '0' ), Pricing::get_currency_code() );
-						$late_fee_m  = Money::fromDecimal( (string) get_option( 'mhbo_late_checkout_fee', '0' ), Pricing::get_currency_code() );
+		$has_early    = false;
+		$has_late     = false;
+		$saved_custom = ! empty( $edit_data->custom_fields ) ? json_decode( (string) $edit_data->custom_fields, true ) : array();
+		if ( is_array( $saved_custom ) ) {
+			$has_early = ! empty( $saved_custom['_early_checkin'] );
+			$has_late  = ! empty( $saved_custom['_late_checkout'] );
+		}
+		if ( ! empty( $edit_data->booking_extras ) ) {
+			$ex_check = json_decode( (string) $edit_data->booking_extras, true );
+			if ( is_array( $ex_check ) ) {
+				if ( isset( $ex_check['_early_checkin'] ) ) {
+					$has_early = ! empty( $ex_check['_early_checkin']['quantity'] ?? $ex_check['_early_checkin'] );
+				}
+				if ( isset( $ex_check['_late_checkout'] ) ) {
+					$has_late = ! empty( $ex_check['_late_checkout']['quantity'] ?? $ex_check['_late_checkout'] );
+				}
+				foreach ( $ex_check as $k => $item ) {
+					$item_id = is_array( $item ) ? ( $item['id'] ?? $k ) : $k;
+					if ( '_early_checkin' === $item_id ) {
+						$has_early = true;
+					}
+					if ( '_late_checkout' === $item_id ) {
+						$has_late = true;
+					}
+				}
+			}
+		}
 
-						// Dynamic status badge color & label
-						$status_key   = $folio['status_key'] ?? ( $edit_amts['effective_payment_status'] ?? 'pending' );
-						$status_label = $folio['status_label'] ?? ( $edit_amts['effective_payment_status_label'] ?? __( 'Pending', 'modern-hotel-booking' ) );
-						$badge_bg     = '#f1f5f9';
-						$badge_color  = '#475569';
-						if ( ! empty( $folio['is_overpaid'] ) ) {
-							$badge_bg    = '#e0f2fe';
-							$badge_color = '#0369a1';
-						} elseif ( ! empty( $folio['is_paid_in_full'] ) ) {
-							$badge_bg    = '#dcfce7';
-							$badge_color = '#166534';
-						} elseif ( 'deposit_paid' === $status_key ) {
-							$badge_bg    = '#fef3c7';
-							$badge_color = '#92400e';
-						} elseif ( in_array( $status_key, array( 'urgent_unpaid', 'overdue' ), true ) ) {
-							$badge_bg    = '#fee2e2';
-							$badge_color = '#991b1b';
-						}
-						?>
+		$early_fee_m = Money::fromDecimal( (string) get_option( 'mhbo_early_checkin_fee', '0' ), Pricing::get_currency_code() );
+		$late_fee_m  = Money::fromDecimal( (string) get_option( 'mhbo_late_checkout_fee', '0' ), Pricing::get_currency_code() );
+
+		// Dynamic status badge color & label
+		$status_key   = $folio['status_key'] ?? ( $edit_amts['effective_payment_status'] ?? 'pending' );
+		$status_label = $folio['status_label'] ?? ( $edit_amts['effective_payment_status_label'] ?? __( 'Pending', 'modern-hotel-booking' ) );
+		$badge_bg     = '#f1f5f9';
+		$badge_color  = '#475569';
+		if ( ! empty( $folio['is_overpaid'] ) ) {
+			$badge_bg    = '#e0f2fe';
+			$badge_color = '#0369a1';
+		} elseif ( ! empty( $folio['is_paid_in_full'] ) ) {
+			$badge_bg    = '#dcfce7';
+			$badge_color = '#166534';
+		} elseif ( 'deposit_paid' === $status_key ) {
+			$badge_bg    = '#fef3c7';
+			$badge_color = '#92400e';
+		} elseif ( in_array( $status_key, array( 'urgent_unpaid', 'overdue' ), true ) ) {
+			$badge_bg    = '#fee2e2';
+			$badge_color = '#991b1b';
+		}
+		?>
 
 						<?php if ( $is_group_booking ) : ?>
 							<?php
@@ -4114,8 +4197,54 @@ if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_
 						</div><!-- End .mhbo-workstation-col-sidebar -->
 					</div><!-- End .mhbo-workstation-grid -->
 				</form>
-					<?php endif; // End of $edit_mode && $edit_data ?>
-			<?php if ( ! $edit_mode && ! $add_mode ) : ?>
+		<?php
+	}
+
+	/**
+	 * Render the bookings operations briefing, calendar, table, and import/export modals.
+	 *
+	 * @param int                             $today_checkins      Today's check-in count.
+	 * @param int                             $today_checkouts     Today's check-out count.
+	 * @param int                             $in_house_rooms      Occupied room count tonight.
+	 * @param int                             $distinct_room_count Total distinct rooms count.
+	 * @param int                             $occupancy_pct       Occupancy percentage tonight.
+	 * @param array<string, string|null>      $distinct_rooms      Map of room number to room type name.
+	 * @param array<int, array<string,mixed>> $events              FullCalendar event payloads.
+	 * @param list<string>                    $full_days           Fully booked date strings (Y-m-d).
+	 * @param string                          $search_query        Active search query.
+	 * @param string                          $bookings_base_url   Base admin URL for table links.
+	 * @param string                          $status_filter       Active booking status filter.
+	 * @param int                             $per_page            Items per page (-1 for all).
+	 * @param string                          $orderby             Active sort column key.
+	 * @param string                          $order               Active sort direction (ASC|DESC).
+	 * @param array<int, object>              $bookings            Paginated booking records.
+	 * @param int                             $total_bookings      Total matching bookings count.
+	 * @param int                             $paged               Current pagination page number.
+	 * @param list<int>                       $allowed_per_page    Allowed per-page options.
+	 */
+	private function render_bookings_list_and_calendar_section(
+		int $today_checkins,
+		int $today_checkouts,
+		int $in_house_rooms,
+		int $distinct_room_count,
+		int $occupancy_pct,
+		array $distinct_rooms,
+		array $events,
+		array $full_days,
+		string $search_query,
+		string $bookings_base_url,
+		string $status_filter,
+		int $per_page,
+		string $orderby,
+		string $order,
+		array $bookings,
+		int $total_bookings,
+		int $paged,
+		array $allowed_per_page
+	): void {
+		$is_pro_active = false;
+		
+		?>
 			<!-- 1. Daily Operations Morning Briefing Strip -->
 			<div class="mhbo-ops-briefing-strip">
 				<div class="mhbo-ops-card">
@@ -4455,7 +4584,7 @@ if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_
 								$render_sortable_th( 'payment', I18n::get_label( 'label_payment' ), 'mhbo-col-payment', false );
 								$render_sortable_th( 'lang', I18n::get_label( 'label_lang' ), 'mhbo-col-lang', false );
 								$render_sortable_th( 'actions', I18n::get_label( 'label_actions' ), 'mhbo-col-actions', false );
-	?>
+		?>
 							</tr>
 						</thead>
 						<tbody>
@@ -4640,8 +4769,6 @@ if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_
 				</form>
 			</div>
 				
-			<?php endif; // End of ! $edit_mode && ! $add_mode ?>
-		</div>
 		<?php
 	}
 
@@ -4677,9 +4804,9 @@ public function display_room_types_page(): void {
 			if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_edit_room_type_' . $id ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 			}
-			$edit_mode = true;
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Rationale: Fetching room type configuration for editing.
 			$edit_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mhbo_room_types WHERE id = %d", $id ) );
+			$edit_mode = ( null !== $edit_data );
 		}
 
 		// Save/Update Action
@@ -5022,7 +5149,7 @@ global $wpdb;
 		$submit_room      = isset( $_POST['submit_room'] );
 
 // Delete Room Action
-		if ( 'delete' === $action && $get_id > 0 && ( $sub_action === '' || null === $sub_action ) ) {
+		if ( 'delete' === $action && $get_id > 0 && '' === $sub_action ) {
 			if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_delete_room_' . $get_id ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 			}
@@ -5034,7 +5161,7 @@ global $wpdb;
 		// iCal Mode
 		if ( 'ical' === $action && $get_id > 0 ) {
 			// Sub-actions (delete_feed, sync_now) carry their own nonces — skip page-level check for them.
-			if ( '' === $sub_action || null === $sub_action ) {
+			if ( '' === $sub_action ) {
 				if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_ical_room_' . $get_id ) ) {
 					wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 				}
@@ -5146,9 +5273,9 @@ if ( 'sync_now' === $sub_action ) {
 			if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_edit_room_' . $get_id ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 			}
-			$edit_mode = true;
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$edit_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d", $get_id ) );
+			$edit_mode = ( null !== $edit_data );
 		}
 
 		// Save Room Action

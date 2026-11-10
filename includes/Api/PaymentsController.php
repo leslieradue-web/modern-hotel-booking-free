@@ -335,6 +335,8 @@ if ( $total_money === null || $total_money->isZero() ) {
 			return new WP_Error( 'rest_error', 'Failed to initialize pending booking.', array( 'status' => 500 ) );
 		}
 
+		\MHBO\Core\Cache::invalidate_booking( $booking_id, $room_id );
+
 		// Lightweight session binding transient (1 hour TTL)
 		set_transient(
 			'mhbo_booking_session_' . $booking_token,

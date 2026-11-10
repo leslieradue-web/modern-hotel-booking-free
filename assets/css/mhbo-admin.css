@@ -3694,163 +3694,27 @@
     margin-bottom: 24px !important;
 }
 
-/* Header Toolbar & Title */
-.fc .fc-toolbar,
-#mhbo-calendar .fc-toolbar {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    margin-bottom: 20px !important;
-    padding: 4px 4px 8px 4px !important;
-    gap: 12px !important;
-}
-
-.fc .fc-toolbar-title,
-#mhbo-calendar .fc-toolbar-title {
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    font-size: 1.65rem !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.025em !important;
-    color: #0f172a !important;
-}
-
-/* Toolbar Buttons & View Switcher Segmented Control */
-.fc .fc-button-primary {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
-    border: 1px solid #334155 !important;
-    color: #f8fafc !important;
-    font-family: 'Outfit', sans-serif !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    border-radius: 10px !important;
-    padding: 8px 16px !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 4px rgba(15, 23, 42, 0.1) !important;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.fc .fc-button-primary:hover {
-    background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;
-    border-color: #475569 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 8px rgba(15, 23, 42, 0.15) !important;
-}
-
-.fc .fc-button-primary.fc-button-active,
-.fc .fc-button-primary:active {
-    background: linear-gradient(180deg, #4f46e5 0%, #4338ca 100%) !important;
-    border-color: #4338ca !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-}
-
-.fc .fc-button-primary:disabled {
-    background: #94a3b8 !important;
-    border-color: #94a3b8 !important;
-    opacity: 0.6 !important;
-}
-
-.fc .fc-button-group {
-    background: #f1f5f9 !important;
-    padding: 3px !important;
-    border-radius: 12px !important;
-    border: 1px solid #e2e8f0 !important;
-}
-
-.fc .fc-button-group > .fc-button {
-    border: none !important;
-    background: transparent !important;
-    color: #475569 !important;
-    box-shadow: none !important;
-    border-radius: 8px !important;
-}
-
-.fc .fc-button-group > .fc-button.fc-button-active {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1) !important;
-}
-
-/* Day Column Headers (Sun, Mon, Tue...) */
-.fc .fc-col-header-cell {
-    background: #f8fafc !important;
-    padding: 12px 0 !important;
-    border-color: #e2e8f0 !important;
-}
-
-.fc .fc-col-header-cell-cushion {
-    font-family: 'Outfit', sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 0.75rem !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.08em !important;
-    color: #64748b !important;
-    text-decoration: none !important;
-}
-
-/* Grid Lines & Cell Styling */
-.fc td, .fc th {
-    border-color: #e2e8f0 !important;
-}
-
-.fc-daygrid-day-number {
-    font-family: 'Outfit', sans-serif !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    color: #475569 !important;
-    padding: 6px 10px !important;
-    text-decoration: none !important;
-}
-
-.fc-day-other {
-    background-color: #fafafa !important;
-}
-.fc-day-other .fc-daygrid-day-number {
-    opacity: 0.4 !important;
-}
-
 /* Today Highlight: Gold Inset Border on background layer (underneath events) */
-.mhbo-day-today-highlight,
-.fc-day-today,
-td.fc-day-today,
-.fc-daygrid-day.fc-day-today {
+.mhbo-day-today-highlight {
     box-shadow: inset 0 0 0 3px #f59e0b !important;
     background-color: rgba(254, 240, 138, 0.25) !important;
 }
 
 /* If Today is ALSO a Full Day (100% Occupancy) */
-.mhbo-day-today-highlight.mhbo-day-full,
-.fc-day-today.mhbo-day-full,
-td.fc-day-today.mhbo-day-full {
+.mhbo-day-today-highlight.mhbo-day-full {
     background-color: #fee2e2 !important;
-}
-
-.fc-day-today .fc-daygrid-day-number {
-    background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important;
-    color: #ffffff !important;
-    font-weight: 800 !important;
-    border-radius: 50% !important;
-    width: 26px !important;
-    height: 26px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4) !important;
 }
 
 /* Full Days (100% Occupancy): Solid Red Background Square */
 .mhbo-day-full,
-td.mhbo-day-full,
-.fc-daygrid-day.mhbo-day-full,
-.mhbo-day-full .fc-daygrid-day-frame {
+td.mhbo-day-full {
     background: #fee2e2 !important;
     background-color: #fee2e2 !important;
 }
 
 /* Event Bars Refinement - Substantial 24px Luxury Pill Capsules & Rich Gradients */
 .fc-event,
-.fc-daygrid-event,
-.fc .fc-daygrid-event {
+.fc-daygrid-event {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     font-size: 0.78rem !important;
     font-weight: 600 !important;
@@ -3870,30 +3734,8 @@ td.mhbo-day-full,
     box-sizing: border-box !important;
 }
 
-/* Standardized Date Header with Dedicated Vertical Clearance (Scoped strictly to Admin Bookings Calendar) */
-#mhbo-calendar .fc-daygrid-day-top {
-    min-height: 26px !important;
-    height: 26px !important;
-    padding: 2px 6px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    box-sizing: border-box !important;
-    line-height: 1 !important;
-}
-#mhbo-calendar .fc-daygrid-day-number {
-    padding: 0 2px !important;
-    font-size: 0.82rem !important;
-    font-weight: 600 !important;
-    line-height: 1 !important;
-    margin: 0 !important;
-    display: inline-block !important;
-}
-
 #mhbo-calendar .mhbo-status-confirmed,
 #mhbo-calendar [class*="mhbo-status-confirmed"],
-.fc .mhbo-status-confirmed,
-.fc [class*="mhbo-status-confirmed"],
 .fc-event.mhbo-status-confirmed,
 .fc-event[style*="28a745"],
 .fc-event[style*="059669"],
@@ -3908,8 +3750,6 @@ td.mhbo-day-full,
 
 #mhbo-calendar .mhbo-status-pending,
 #mhbo-calendar [class*="mhbo-status-pending"]:not([class*="pending_payment"]):not([class*="pending-payment"]),
-.fc .mhbo-status-pending,
-.fc [class*="mhbo-status-pending"]:not([class*="pending_payment"]):not([class*="pending-payment"]),
 .fc-event.mhbo-status-pending,
 .fc-event[style*="ffc107"],
 .fc-event[style*="d97706"],
@@ -3926,8 +3766,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-pending-payment,
 #mhbo-calendar [class*="mhbo-status-pending_payment"],
 #mhbo-calendar [class*="mhbo-status-pending-payment"],
-.fc .mhbo-status-pending_payment,
-.fc .mhbo-status-pending-payment,
 .fc-event.mhbo-status-pending_payment,
 .fc-event.mhbo-status-pending-payment {
     background: #dc2626 !important;
@@ -3939,7 +3777,6 @@ td.mhbo-day-full,
 
 #mhbo-calendar .mhbo-status-cancelled,
 #mhbo-calendar [class*="mhbo-status-cancelled"],
-.fc .mhbo-status-cancelled,
 .fc-event.mhbo-status-cancelled {
     background: #be123c !important;
     background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
@@ -3952,8 +3789,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-checked-in,
 #mhbo-calendar [class*="mhbo-status-checked_in"],
 #mhbo-calendar [class*="mhbo-status-checked-in"],
-.fc .mhbo-status-checked_in,
-.fc .mhbo-status-checked-in,
 .fc-event.mhbo-status-checked_in,
 .fc-event.mhbo-status-checked-in {
     background: #2563eb !important;
@@ -3967,8 +3802,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-checked-out,
 #mhbo-calendar [class*="mhbo-status-checked_out"],
 #mhbo-calendar [class*="mhbo-status-checked-out"],
-.fc .mhbo-status-checked_out,
-.fc .mhbo-status-checked-out,
 .fc-event.mhbo-status-checked_out,
 .fc-event.mhbo-status-checked-out {
     background: #475569 !important;
@@ -3982,8 +3815,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-paid,
 #mhbo-calendar [class*="mhbo-status-completed"],
 #mhbo-calendar [class*="mhbo-status-paid"],
-.fc .mhbo-status-completed,
-.fc .mhbo-status-paid,
 .fc-event.mhbo-status-completed,
 .fc-event.mhbo-status-paid {
     background: #047857 !important;
@@ -3997,8 +3828,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-deposit-paid,
 #mhbo-calendar [class*="mhbo-status-deposit_paid"],
 #mhbo-calendar [class*="mhbo-status-deposit-paid"],
-.fc .mhbo-status-deposit_paid,
-.fc .mhbo-status-deposit-paid,
 .fc-event.mhbo-status-deposit_paid,
 .fc-event.mhbo-status-deposit-paid {
     background: #0284c7 !important;
@@ -4010,7 +3839,6 @@ td.mhbo-day-full,
 
 #mhbo-calendar .mhbo-status-refunded,
 #mhbo-calendar [class*="mhbo-status-refunded"],
-.fc .mhbo-status-refunded,
 .fc-event.mhbo-status-refunded {
     background: #7c3aed !important;
     background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
@@ -4021,7 +3849,6 @@ td.mhbo-day-full,
 
 #mhbo-calendar .mhbo-status-failed,
 #mhbo-calendar [class*="mhbo-status-failed"],
-.fc .mhbo-status-failed,
 .fc-event.mhbo-status-failed {
     background: #991b1b !important;
     background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%) !important;
@@ -4034,8 +3861,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-no-show,
 #mhbo-calendar [class*="mhbo-status-no_show"],
 #mhbo-calendar [class*="mhbo-status-no-show"],
-.fc .mhbo-status-no_show,
-.fc .mhbo-status-no-show,
 .fc-event.mhbo-status-no_show,
 .fc-event.mhbo-status-no-show {
     background: #881337 !important;
@@ -4049,8 +3874,6 @@ td.mhbo-day-full,
 #mhbo-calendar .mhbo-status-partially-paid,
 #mhbo-calendar [class*="mhbo-status-partially_paid"],
 #mhbo-calendar [class*="mhbo-status-partially-paid"],
-.fc .mhbo-status-partially_paid,
-.fc .mhbo-status-partially-paid,
 .fc-event.mhbo-status-partially_paid,
 .fc-event.mhbo-status-partially-paid {
     background: #0284c7 !important;
@@ -4062,7 +3885,6 @@ td.mhbo-day-full,
 
 #mhbo-calendar .mhbo-status-processing,
 #mhbo-calendar [class*="mhbo-status-processing"],
-.fc .mhbo-status-processing,
 .fc-event.mhbo-status-processing {
     background: #d97706 !important;
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
@@ -4252,11 +4074,8 @@ td.mhbo-day-full,
 
 .mhbo-event-inner .fc-event-title,
 #mhbo-calendar .fc-event-title,
-.fc .fc-event-title,
 #mhbo-calendar .fc-event,
-#mhbo-calendar a.fc-event,
-.fc .fc-event,
-.fc a.fc-event {
+#mhbo-calendar a.fc-event {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
@@ -4298,51 +4117,7 @@ td.mhbo-day-full,
     flex-shrink: 0 !important;
 }
 
-/* Responsive Minimalist Checkout Badges for Narrow Viewports */
-@container (max-width: 620px) {
-    .fc-daygrid .fc-event.fc-event-end:not(.fc-event-start) .fc-event-title,
-    .fc-daygrid .fc-event.mhbo-event-checkout:not(.mhbo-event-checkin) .fc-event-title {
-        display: none !important;
-    }
-    .fc-daygrid .fc-event.fc-event-end:not(.fc-event-start) .mhbo-dot-checkout,
-    .fc-daygrid .fc-event.mhbo-event-checkout:not(.mhbo-event-checkin) .mhbo-dot-checkout {
-        margin: 0 auto !important;
-    }
-}
-@media (max-width: 782px) {
-    .fc-daygrid .fc-event.fc-event-end:not(.fc-event-start) .fc-event-title,
-    .fc-daygrid .fc-event.mhbo-event-checkout:not(.mhbo-event-checkin) .fc-event-title {
-        display: none !important;
-    }
-    .fc-daygrid .fc-event.fc-event-end:not(.fc-event-start) .mhbo-dot-checkout,
-    .fc-daygrid .fc-event.mhbo-event-checkout:not(.mhbo-event-checkin) .mhbo-dot-checkout {
-        margin: 0 auto !important;
-    }
-}
-
-/* 5. List View Modern 2026 Table Styling */
-.fc-list,
-.fc-list-view,
-.fc-list-table {
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    border: 1px solid #e2e8f0 !important;
-    background: #ffffff !important;
-}
-
-.fc-list-day-header th,
-.fc-list-day-header td,
-.fc .fc-list-day-cushion {
-    background: #f8fafc !important;
-    color: #334155 !important;
-    font-family: 'Outfit', sans-serif !important;
-    font-size: 0.85rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.02em !important;
-    padding: 12px 18px !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-}
-
+/* 5. List View Event Rows (V7: styled via the .fc-list-event bridge class from eventClass) */
 .fc-list-event,
 .fc-list-event * {
     clip-path: none !important;
@@ -4352,52 +4127,6 @@ td.mhbo-day-full,
     background: #ffffff !important;
     transition: background-color 0.15s ease !important;
     cursor: pointer !important;
-}
-
-.fc-list .fc-list-event,
-.fc-list [class*="mhbo-event-checkin"],
-.fc-list [class*="mhbo-event-checkout"],
-.fc-list .mhbo-event-inner {
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-}
-
-.fc-list-event td {
-    padding: 14px 18px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    background: #ffffff !important;
-    font-family: 'Outfit', sans-serif !important;
-    vertical-align: middle !important;
-}
-
-.fc-list-event:hover td {
-    background-color: #f1f5f9 !important;
-}
-
-.fc-list-event-title,
-.fc-list-event-title a,
-.fc-list-day-text,
-.fc-list-day-side-text {
-    font-family: 'Outfit', sans-serif !important;
-    color: #0f172a !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    text-decoration: none !important;
-}
-
-.fc-list-event-time {
-    color: #64748b !important;
-    font-size: 0.85rem !important;
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-}
-
-.fc-list .mhbo-dot-checkin,
-.fc-list .mhbo-dot-checkout {
-    display: none !important;
 }
 
 /* Calendar Legend Bar */
@@ -4480,57 +4209,6 @@ td.mhbo-day-full,
         margin-bottom: 16px !important;
     }
 
-    .fc .fc-toolbar,
-    #mhbo-calendar .fc-toolbar {
-        flex-direction: column !important;
-        gap: 12px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        margin-bottom: 16px !important;
-    }
-
-    #mhbo-calendar .fc-toolbar > div {
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100% !important;
-    }
-
-    .fc .fc-toolbar-title,
-    #mhbo-calendar .fc-toolbar-title {
-        font-size: 1.3rem !important;
-    }
-
-    .fc .fc-button-group {
-        width: 100% !important;
-        display: flex !important;
-        justify-content: center !important;
-    }
-
-    .fc .fc-button-primary {
-        padding: 6px 12px !important;
-        font-size: 0.8rem !important;
-        min-height: 36px !important;
-    }
-
-    .fc .fc-col-header-cell-cushion {
-        font-size: 0.68rem !important;
-        letter-spacing: 0.02em !important;
-        padding: 4px 2px !important;
-    }
-
-    .fc-daygrid-day-number {
-        font-size: 0.75rem !important;
-        padding: 3px 5px !important;
-    }
-
-    .fc-day-today .fc-daygrid-day-number {
-        width: 20px !important;
-        height: 20px !important;
-        font-size: 0.7rem !important;
-    }
-
     .fc-event,
     .fc-daygrid-event {
         font-size: 0.72rem !important;
@@ -4556,21 +4234,6 @@ td.mhbo-day-full,
 @media screen and (max-width: 480px) {
     .mhbo-calendar-card {
         padding: 8px !important;
-    }
-
-    .fc .fc-toolbar,
-    #mhbo-calendar .fc-toolbar {
-        gap: 8px !important;
-    }
-
-    .fc .fc-toolbar-title,
-    #mhbo-calendar .fc-toolbar-title {
-        font-size: 1.15rem !important;
-    }
-
-    .fc .fc-button-primary {
-        padding: 5px 8px !important;
-        font-size: 0.75rem !important;
     }
 }
 

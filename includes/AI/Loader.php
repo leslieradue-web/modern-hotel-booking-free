@@ -117,9 +117,9 @@ class Loader {
 		// breaking the booking flow.  We hook multiple filters to maximise coverage
 		// across Complianz, Cookie Notice, Cookie Caterer, and similar plugins.
 		// These hooks are no-ops when the consent plugin is not active.
+		// NOTE: Never hook `cmplz_known_script_tags` here — that filter is Complianz's
+		// BLOCK list. Whitelisting lives in \MHBO\Integrations\Complianz::whitelist_scripts().
 		add_filter( 'cmplz_safe_scripts', array( self::class, 'cmplz_safe_scripts' ) );
-		add_filter( 'cmplz_known_script_tags', array( self::class, 'cmplz_safe_scripts' ) );
-		add_filter( 'cmplz_accepted_cookie_types', array( self::class, 'cmplz_safe_scripts' ) );
 		add_filter( 'cn_cookie_whitelist', array( self::class, 'cmplz_safe_scripts' ) );
 		add_filter( 'cookie_cat_required_scripts', array( self::class, 'cmplz_safe_scripts' ) );
 

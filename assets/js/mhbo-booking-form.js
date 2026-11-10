@@ -261,15 +261,15 @@
 	 * @param wrapper
 	 */
 	function initBookingFormWrapper( wrapper ) {
-		// Guard: skip if already initialized
-		if ( wrapper.dataset.mhboFormInit === '1' ) {
+		// Guard: skip if already initialized or no active form in wrapper yet
+		if ( ! wrapper || wrapper.dataset.mhboFormInit === '1' ) {
 			return;
 		}
-		wrapper.dataset.mhboFormInit = '1';
 		const form = wrapper.querySelector( '.mhbo-booking-form' );
 		if ( ! form ) {
 			return;
 		}
+		wrapper.dataset.mhboFormInit = '1';
 		form.noValidate = true;
 
 		const childrenSelect = wrapper.querySelector(
@@ -1438,8 +1438,22 @@
 			.forEach( initBookingFormWrapper );
 	} );
 
-	// Re-initialize when the modal injects new booking form content
+	// Re-initialize when the modal injects new booking form content or Gutenberg Interactivity API store fires
 	document.addEventListener( 'mhboModalContent', function () {
+		document
+			.querySelectorAll( '.mhbo-booking-form-wrapper' )
+			.forEach( initBookingFormWrapper );
+	} );
+	document.addEventListener( 'mhbo_init_form', function ( e ) {
+		if ( e && e.target && e.target.closest ) {
+			const targetWrapper =
+				e.target.closest( '.mhbo-booking-form-wrapper' ) ||
+				e.target.querySelector( '.mhbo-booking-form-wrapper' );
+			if ( targetWrapper ) {
+				initBookingFormWrapper( targetWrapper );
+				return;
+			}
+		}
 		document
 			.querySelectorAll( '.mhbo-booking-form-wrapper' )
 			.forEach( initBookingFormWrapper );

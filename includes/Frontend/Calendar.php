@@ -174,6 +174,7 @@ class Calendar {
 					'rest_url'     => get_rest_url( null, 'mhbo/v1/calendar-data' ),
 					'nonce'        => wp_create_nonce( 'wp_rest' ),
 					'auto_nonce'   => wp_create_nonce( 'mhbo_auto_action' ),
+					'booking_url'  => self::resolve_booking_page_url( 0 ),
 					'settings'     => array(
 						'currency_symbol'       => get_option( 'mhbo_currency_symbol', '$' ),
 						'currency_pos'          => get_option( 'mhbo_currency_position', 'before' ),
@@ -205,7 +206,19 @@ class Calendar {
 						'checkin_only_error'  => I18n::get_label( 'label_checkin_only' ),
 						'api_err_min_stay'    => I18n::get_label( 'api_err_min_stay' ),
 						'api_err_max_stay'    => I18n::get_label( 'api_err_max_stay' ),
-						
+						'min_stay_hint'       => I18n::get_label( 'min_stay_hint' ),
+						'max_stay_hint'       => I18n::get_label( 'max_stay_hint' ),
+						'tooltip_min_hint'    => I18n::get_label( 'tooltip_min_hint' ),
+						'tooltip_max_hint'    => I18n::get_label( 'tooltip_max_hint' ),
+						'reason_booked'       => I18n::get_label( 'calendar_reason_booked' ),
+						'reason_manual'       => I18n::get_label( 'calendar_reason_manual' ),
+						'reason_maintenance'  => I18n::get_label( 'calendar_reason_maintenance' ),
+						'reason_turnover'     => I18n::get_label( 'calendar_reason_turnover' ),
+						'reason_cta'          => I18n::get_label( 'calendar_reason_cta' ),
+						'reason_ctd'          => I18n::get_label( 'calendar_reason_ctd' ),
+						'api_err_cta'         => I18n::get_label( 'api_err_cta' ),
+						'api_err_ctd'         => I18n::get_label( 'api_err_ctd' ),
+						'status_pending'      => I18n::get_label( 'label_legend_pending' ),
 					),
 					'inline_modal' => (int) get_option( 'mhbo_modal_enabled', 1 ) === 1,
 					'current_lang' => $current_lang,
@@ -265,6 +278,75 @@ class Calendar {
 		}
 
 		return self::render_unified_view( $room_id );
+	}
+
+	/**
+	 * Resolves the target booking page URL for calendar form submissions and redirects.
+	 *
+	 * @param int $room_id Optional room ID.
+	 * @return string Resolved action URL.
+	 */
+	public static function resolve_booking_page_url( int $room_id = 0 ): string {
+		$action_url = '';
+
+		// 1. Highest priority: dedicated booking page ID resolved via get_permalink().
+		$b_page_id = (int) get_option( 'mhbo_booking_page' );
+		if ( $b_page_id > 0 ) {
+			$b_page_id = I18n::get_translated_page_id( $b_page_id );
+			$permalink = get_permalink( $b_page_id );
+			if ( is_string( $permalink ) && '' !== $permalink ) {
+				$action_url = $permalink;
+			}
+		}
+
+		// 2. Custom booking page URL (if explicitly configured by admin).
+		if ( '' === $action_url ) {
+			$custom_url = I18n::decode( get_option( 'mhbo_booking_page_url' ), null, false );
+			if ( is_string( $custom_url ) && '' !== trim( $custom_url ) ) {
+				$custom_url = trim( $custom_url );
+				if ( preg_match( '#^https?://#i', $custom_url ) ) {
+					$action_url = $custom_url;
+				} else {
+					$rel_path   = '/' . ltrim( $custom_url, '/' );
+					$action_url = function_exists( 'home_url' )
+						? home_url( $rel_path )
+						: ( function_exists( 'get_home_url' ) ? get_home_url( null, $rel_path ) : $rel_path );
+				}
+			}
+		}
+
+		// 3. Fallback: discover a published page with slug 'book-now'.
+		if ( '' === $action_url && function_exists( 'get_page_by_path' ) ) {
+			$discovered_page = get_page_by_path( 'book-now', OBJECT, 'page' );
+			if ( $discovered_page instanceof \WP_Post && 'publish' === $discovered_page->post_status ) {
+				$permalink = get_permalink( $discovered_page->ID );
+				if ( is_string( $permalink ) && '' !== $permalink ) {
+					$action_url = $permalink;
+				}
+			}
+		}
+
+		// 4. Ultimate fallback: site home URL.
+		if ( '' === $action_url ) {
+			$action_url = function_exists( 'home_url' )
+				? home_url( '/' )
+				: ( function_exists( 'get_home_url' ) ? get_home_url( null, '/' ) : '/' );
+		}
+
+		$current_host   = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		$current_scheme = ( isset( $_SERVER['HTTPS'] ) && 'on' === $_SERVER['HTTPS'] ) ? 'https://' : 'http://';
+		if ( '' !== $current_host && ( str_contains( $action_url, 'playground.wordpress.net' ) || str_contains( $action_url, '127.0.0.1' ) ) ) {
+			$parsed_url = wp_parse_url( $action_url );
+			if ( isset( $parsed_url['host'] ) && $parsed_url['host'] !== $current_host ) {
+				$action_url = str_replace( $parsed_url['host'], $current_host, $action_url );
+			}
+			if ( str_contains( $action_url, '/scope:' ) ) {
+				$action_url = (string) preg_replace( '/\/scope:[^\/]+\//', '/', $action_url );
+			}
+			$action_url = str_replace( array( 'https://', 'http://' ), $current_scheme, $action_url );
+		}
+
+		return (string) apply_filters( 'mhbo_calendar_action_url', $action_url, $room_id );
 	}
 
 	/**
@@ -328,6 +410,8 @@ class Calendar {
 		// Ensure assets are loaded
 		self::enqueue_assets();
 
+		$action_url = self::resolve_booking_page_url( $room_id );
+
 		ob_start();
 		// Flag to control whether pricing should be shown in the calendar UI.
 		// Room-specific calendars (room_id > 0) show prices, aggregated views (room_id = 0) do not.
@@ -350,7 +434,8 @@ class Calendar {
 			?>
 			data-wp-interactive="modern-hotel-booking"<?php endif; ?> data-room-id="<?php echo esc_attr( (string) $room_id ); ?>"
 			data-show-price="<?php echo esc_attr( $show_pricing ? '1' : '0' ); ?>"
-			data-modal-mode="<?php echo esc_attr( ( $room_id > 0 && (int) get_option( 'mhbo_modal_enabled', 1 ) === 1 ) ? '1' : '0' ); ?>">
+			data-modal-mode="<?php echo esc_attr( ( $room_id > 0 && (int) get_option( 'mhbo_modal_enabled', 1 ) === 1 ) ? '1' : '0' ); ?>"
+			data-action-url="<?php echo esc_url( $action_url ); ?>">
 			<div class="mhbo-calendar-guide">
 				<?php echo esc_html( I18n::get_label( 'label_select_check_in' ) ); ?>
 			</div>
@@ -373,48 +458,6 @@ class Calendar {
 			<div class="mhbo-calendar-errors mhbo-inline-errors" style="display:none;"></div>
 
 			<?php
-			// Build the action URL for the booking form submission
-			$action_url = I18n::decode( get_option( 'mhbo_booking_page_url' ), null, false );
-			if ( '' === $action_url ) {
-				$b_page_id = (int) get_option( 'mhbo_booking_page' );
-				if ( $b_page_id > 0 ) {
-					$action_url = get_permalink( $b_page_id );
-				}
-			}
-
-			// Fallback: If no booking page is configured, use the home URL to avoid relative path issues
-			$action_url = (string) $action_url;
-			if ( '' === $action_url ) {
-				$action_url = home_url( '/' );
-			}
-
-			// 2026 BP: Playground/Local Domain and Path correction.
-			// If the current site is being accessed via a different host (e.g. 127.0.0.1:9400 vs playground.wordpress.net),
-			// we MUST ensure the action URL uses the current host and strip any Playground scope segments to avoid 404 errors.
-			$current_host   = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
-			$current_scheme = ( isset( $_SERVER['HTTPS'] ) && 'on' === $_SERVER['HTTPS'] ) ? 'https://' : 'http://';
-			if ( '' !== $current_host && ( str_contains( $action_url, 'playground.wordpress.net' ) || str_contains( $action_url, '127.0.0.1' ) ) ) {
-				$parsed_url = wp_parse_url( $action_url );
-				if ( isset( $parsed_url['host'] ) && $parsed_url['host'] !== $current_host ) {
-					$action_url = str_replace( $parsed_url['host'], $current_host, $action_url );
-				}
-				// Strip Playground scope segment (e.g. /scope:excited-abandoned-ocean/) if present
-				if ( str_contains( $action_url, '/scope:' ) ) {
-					$action_url = (string) preg_replace( '/\/scope:[^\/]+\//', '/', $action_url );
-				}
-				// Force scheme to match current to avoid HTTPS errors on 127.0.0.1
-				$action_url = str_replace( array( 'https://', 'http://' ), $current_scheme, $action_url );
-			}
-
-			/*
-			 * Filter the calendar form action URL.
-			 *
-			 * @since 1.0.0
-			 * @param string $action_url The resolved action URL.
-			 * @param int    $room_id    The current room ID (or 0 for aggregated).
-			 */
-			$action_url = apply_filters( 'mhbo_calendar_action_url', $action_url, $room_id );
-
 			// Button label depends on context
 			$btn_label = ( $room_id > 0 ) ? I18n::get_label( 'btn_book_now' ) : I18n::get_label( 'btn_search_rooms' );
 			?>
@@ -487,11 +530,7 @@ class Calendar {
 				// Replicate the transient logic to avoid generating it if already cached
 				$initial_days   = HotelTime::get_initial_calendar_days();
 				$max_days       = HotelTime::get_max_advance_booking_days();
-				$version_hash   = Cache::get_version( Cache::TABLE_BOOKINGS ) . '_' . 
-								Cache::get_version( Cache::TABLE_CALENDAR_OVERRIDES ) . '_' . 
-								Cache::get_version( Cache::TABLE_ROOMS ) . '_' . 
-								Cache::get_version( Cache::TABLE_PRICING_RULES ) . '_' . 
-								Cache::get_version( Cache::TABLE_SETTINGS );
+				$version_hash   = RestApi::get_calendar_version_hash();
 				$transient_key  = 'mhbo_cal_payload_' . $room_id . '_' . $current_year . '_' . $current_month . '_o0_l' . $initial_days . '_v' . md5( $version_hash );
 				$cached_payload = get_transient( $transient_key );
 

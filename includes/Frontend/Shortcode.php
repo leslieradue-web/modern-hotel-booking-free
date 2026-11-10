@@ -267,9 +267,6 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			Calendar::enqueue_assets();
 		}
 
-		// Inject theme styles (must be after enqueuing styles)
-		self::inject_theme_styles();
-
 		// Enqueue booking form script
 		if ( ! wp_script_is( 'mhbo-booking-form', 'enqueued' ) ) {
 			wp_enqueue_script(
@@ -286,7 +283,10 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
 
-// Add localization data (only once)
+// Inject theme styles after all stylesheets (including deposit-checkout) are enqueued
+		self::inject_theme_styles();
+
+		// Add localization data (only once)
 		self::localize_frontend_assets();
 	}
 
@@ -418,9 +418,6 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			Calendar::enqueue_assets();
 		}
 
-		// Inject theme styles (must be after enqueuing styles)
-		self::inject_theme_styles();
-
 		// Booking form interactions
 		wp_enqueue_script(
 			'mhbo-booking-form',
@@ -435,7 +432,10 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
 
-// Localize script for JS strings
+// Inject theme styles after all stylesheets (including deposit-checkout) are enqueued
+		self::inject_theme_styles();
+
+		// Localize script for JS strings
 		self::localize_frontend_assets();
 	}
 
@@ -497,7 +497,8 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			)
 		);
 
-}
+self::inject_theme_styles();
+	}
 
 	/**
 	 * Dynamically deregister jQuery on frontend checkout pages if no third-party plugins require it.
@@ -1070,7 +1071,7 @@ $nights = 0;
 		// Unified Calendar View replacing the old search form
 		// Delegates to the centralized Calendar renderer
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Calendar::render_unified_view returns pre-escaped HTML from internal components
-		echo wp_kses_post( Calendar::render_unified_view( $room_id ) );
+		echo Calendar::render_unified_view( $room_id );
 	}
 
 	/**
@@ -1105,6 +1106,12 @@ $nights = 0;
 			$this->render_search_form();
 			return;
 		}
+		if ( ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
+			$max_window_human = HotelTime::format_advance_window_human( HotelTime::get_max_advance_booking_days() );
+			echo '<div class="mhbo-error">' . esc_html( sprintf( I18n::get_label( 'label_advance_limit_exceeded' ), $max_window_human ) ) . '</div>';
+			$this->render_search_form();
+			return;
+		}
 
 		// $room_id_filter is now passed as an argument, no longer fall back to POST here
 
@@ -1128,16 +1135,17 @@ $nights = 0;
 			$query_args[] = $type_id_filter;
 		}
 
-		// Same-day Turnover Setting
+		// Same-day Turnover & Active Pending-Payment Cutoff
 		$prevent_same_day = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$pending_cutoff   = Pricing::get_pending_payment_cutoff();
 
-		// Industry-standard overlap logic (dynamically settings-aware)
-		// Refactored to avoid dynamic condition interpolation for scanner compliance
+		// Industry-standard overlap logic (dynamically settings-aware across all tiers)
 		if ( $prevent_same_day ) {
 			$sql .= " AND r.id NOT IN ( 
                         SELECT room_id FROM {$wpdb->prefix}mhbo_bookings 
                         WHERE (check_in <= DATE(%s) AND check_out >= DATE(%s))
-                        AND status != 'cancelled' 
+                        AND status NOT IN ('cancelled', 'refunded', 'failed')
+                        AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s)
                         AND room_id IS NOT NULL 
                         AND room_id > 0
                     )";
@@ -1145,35 +1153,71 @@ $nights = 0;
 			$sql .= " AND r.id NOT IN ( 
                         SELECT room_id FROM {$wpdb->prefix}mhbo_bookings 
                         WHERE (check_in < DATE(%s) AND check_out > DATE(%s))
-                        AND status != 'cancelled' 
+                        AND status NOT IN ('cancelled', 'refunded', 'failed')
+                        AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s)
                         AND room_id IS NOT NULL 
                         AND room_id > 0
                     )";
 		}
 
-		// Remove SQL GROUP BY to prevent ONLY_FULL_GROUP_BY mode failures in MySQL 5.7+
-		// $sql .= " GROUP BY r.type_id";
-		
-		$query_args[] = $check_out; 
+		$query_args[] = $check_out;
 		$query_args[] = $check_in;
+		$query_args[] = $pending_cutoff;
 
 		// Implement versioned caching for search results (Rule 13 / 2026 BP)
-		$version_hash = Cache::get_version( Cache::TABLE_BOOKINGS ) . '_' . 
-						Cache::get_version( Cache::TABLE_ROOMS ) . '_' . 
-						Cache::get_version( Cache::TABLE_PRICING_RULES );
-		$cache_key    = 'mhbo_avail_rooms_v6_' . md5( $sql . wp_json_encode( $query_args ) . $version_hash );
+		$version_hash = Cache::get_version( Cache::TABLE_BOOKINGS ) . '_' .
+						Cache::get_version( Cache::TABLE_ROOMS ) . '_' .
+						Cache::get_version( Cache::TABLE_PRICING_RULES ) . '_' .
+						substr( $pending_cutoff, 0, 15 );
+		$cache_key    = 'mhbo_avail_rooms_v7_' . md5( $sql . wp_json_encode( $query_args ) . $version_hash );
 		$all_rooms    = wp_cache_get( $cache_key, 'mhbo_bookings' );
 
 		if ( false === $all_rooms ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: High-performance room availability search across custom relational tables. Query is safely assembled using $wpdb->prepare placeholders
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: High-performance room availability search across custom relational tables. Query is safely assembled using $wpdb->prepare placeholders
 			$all_rooms = $wpdb->get_results( $wpdb->prepare( $sql, ...$query_args ) );
 			if ( ! is_array( $all_rooms ) ) {
 				$all_rooms = array();
 			}
-			wp_cache_set( $cache_key, $all_rooms, 'mhbo_bookings', 300 ); // 5 min cache, auto-invalidated on booking changes via version hash
+			wp_cache_set( $cache_key, $all_rooms, 'mhbo_bookings', 300 );
 		}
 
-// Deduplicate by room type ID. We only need to show one result per room type.
+		// Stay restrictions & Pro calendar overrides filter (Global min/max stay active in Free/Starter/Pro)
+		if ( array() !== $all_rooms ) {
+			try {
+				$start_date        = new \DateTime( $check_in );
+				$end_date_limit    = new \DateTime( $check_out );
+				$nights_for_filter = (int) $start_date->diff( $end_date_limit )->format( '%a' );
+
+				$stay_dates = array();
+
+$all_rooms = array_values(
+					array_filter(
+						$all_rooms,
+						function ( $room ) use ( $check_in, $check_out, $stay_dates, $nights_for_filter ) {
+							$rid = (int) $room->id;
+
+if ( Pricing::is_closed_to_arrival( $rid, $check_in ) || Pricing::is_closed_to_departure( $rid, $check_out ) ) {
+								return false;
+							}
+
+							$eff_min = Pricing::get_effective_min_stay( $rid, $check_in );
+							$eff_max = Pricing::get_effective_max_stay( $rid, $check_in, $check_out );
+							if ( null !== $eff_min && $nights_for_filter < $eff_min ) {
+								return false;
+							}
+							if ( null !== $eff_max && $nights_for_filter > $eff_max ) {
+								return false;
+							}
+							return true;
+						}
+					)
+				);
+			} catch ( \Exception ) {
+				$all_rooms = (array) $all_rooms;
+			}
+		}
+
+		// Deduplicate by room type ID. We only need to show one result per room type.
 		// Doing this AFTER Pro filtering ensures that if Room A is blocked but Room B (same type) is free, the type still shows.
 		$available_rooms = array();
 		$seen_types      = array();
@@ -1314,10 +1358,31 @@ $nights = 0;
 			}
 		}
 
-		// Resolve room_id from type_id if room_id is 0 or if the specified room_id is not available for these dates
+		if ( '' !== $check_in && ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
+			$max_window_human = HotelTime::format_advance_window_human( HotelTime::get_max_advance_booking_days() );
+			echo '<div class="mhbo-error">' . esc_html( sprintf( I18n::get_label( 'label_advance_limit_exceeded' ), $max_window_human ) ) . '</div>';
+			$this->render_search_form();
+			return;
+		}
+
+		// Resolve room_id from type_id if room_id is 0 or if the specified room_id fails availability or stay/CTA/CTD rules
 		if ( $type_id > 0 ) {
 			$is_specified_avail = ( $room_id > 0 ) ? Pricing::is_room_available( (int) $room_id, $check_in, $check_out, $exclude_id ) : false;
-			if ( true !== $is_specified_avail ) {
+			$needs_reassignment = ( true !== $is_specified_avail );
+			if ( ! $needs_reassignment && $room_id > 0 && '' !== $check_in && '' !== $check_out ) {
+				$spec_nights = (int) ( new \DateTime( $check_in ) )->diff( new \DateTime( $check_out ) )->format( '%a' );
+				$spec_min    = Pricing::get_effective_min_stay( $room_id, $check_in );
+				$spec_max    = Pricing::get_effective_max_stay( $room_id, $check_in, $check_out );
+				if (
+					Pricing::is_closed_to_arrival( $room_id, $check_in ) ||
+					Pricing::is_closed_to_departure( $room_id, $check_out ) ||
+					( null !== $spec_min && $spec_nights < $spec_min ) ||
+					( null !== $spec_max && $spec_nights > $spec_max )
+				) {
+					$needs_reassignment = true;
+				}
+			}
+			if ( $needs_reassignment ) {
 				$resolved_room = Pricing::find_available_room( $type_id, $check_in, $check_out, $guests );
 				if ( false !== $resolved_room && 0 !== $resolved_room ) {
 					$room_id = (int) $resolved_room;
@@ -1340,7 +1405,35 @@ $nights = 0;
 			return;
 		}
 
-$cache_key = 'mhbo_room_details_' . md5( (string) $room_id );
+		if ( $room_id > 0 && '' !== $check_in && '' !== $check_out ) {
+			if ( Pricing::is_closed_to_arrival( $room_id, $check_in ) ) {
+				echo '<div class="mhbo-error">' . esc_html( I18n::get_label( 'api_err_cta' ) ) . '</div>';
+				$this->render_search_form();
+				return;
+			}
+			if ( Pricing::is_closed_to_departure( $room_id, $check_out ) ) {
+				echo '<div class="mhbo-error">' . esc_html( I18n::get_label( 'api_err_ctd' ) ) . '</div>';
+				$this->render_search_form();
+				return;
+			}
+
+			$nights_count = (int) ( new \DateTime( $check_in ) )->diff( new \DateTime( $check_out ) )->format( '%a' );
+			$eff_min      = Pricing::get_effective_min_stay( $room_id, $check_in );
+			$eff_max      = Pricing::get_effective_max_stay( $room_id, $check_in, $check_out );
+
+			if ( null !== $eff_min && $nights_count < $eff_min ) {
+				echo '<div class="mhbo-error">' . esc_html( sprintf( I18n::get_label( 'api_err_min_stay' ), $eff_min ) ) . '</div>';
+				$this->render_search_form();
+				return;
+			}
+			if ( null !== $eff_max && $nights_count > $eff_max ) {
+				echo '<div class="mhbo-error">' . esc_html( sprintf( I18n::get_label( 'api_err_max_stay' ), $eff_max ) ) . '</div>';
+				$this->render_search_form();
+				return;
+			}
+		}
+
+		$cache_key = 'mhbo_room_details_' . md5( (string) $room_id );
 		$room      = wp_cache_get( $cache_key, 'mhbo_bookings' );
 		if ( false === $room ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
@@ -1718,7 +1811,8 @@ echo wp_kses_post( Tax::render_breakdown_html( $tax_data, null, false, array(), 
 		}
 		self::$theme_styles_injected = true;
 
-		$active_theme = get_option( 'mhbo_active_theme', 'midnight' );
+		// Free & Starter baseline strictly locks to the original Midnight theme (#1a365d, #f2e2c4, #d4af37).
+		$active_theme = 'midnight';
 		$primary      = '';
 		$secondary    = '';
 		$accent       = '';
@@ -1732,38 +1826,42 @@ echo wp_kses_post( Tax::render_breakdown_html( $tax_data, null, false, array(), 
 			'lavender' => array( '#4c1d95', '#a78bfa', '#8b5cf6' ),
 		);
 
-if ( '' === $primary && isset( $presets[ $active_theme ] ) ) {
-			$primary   = $presets[ $active_theme ][0];
-			$secondary = $presets[ $active_theme ][1];
-			$accent    = $presets[ $active_theme ][2];
+if ( '' === $primary ) {
+			if ( isset( $presets[ $active_theme ] ) ) {
+				$primary   = $presets[ $active_theme ][0];
+				$secondary = $presets[ $active_theme ][1];
+				$accent    = $presets[ $active_theme ][2];
+			} else {
+				$primary   = $presets['midnight'][0];
+				$secondary = $presets['midnight'][1];
+				$accent    = $presets['midnight'][2];
+			}
 		}
 
-		if ( '' !== $primary ) {
-			// SECURITY: Validate hex colors before CSS interpolation
-			$primary   = sanitize_hex_color( $primary ) ?: '#1a365d';
-			$secondary = sanitize_hex_color( $secondary ) ?: '#f2e2c4';
-			$accent    = sanitize_hex_color( $accent ) ?: '#d4af37';
-			
-			// SECURITY: Using printf for clean CSS variable construction with pre-sanitized values
-			$custom_css = sprintf(
-				':root, .mhbo-calendar-wrapper, .mhbo-booking-form-wrapper, .mhbo-deposit-options-wrapper, .mhbo-success-message, .mhbo-guest-portal-wrapper {
-                    --mhbo-primary: %s !important;
-                    --mhbo-secondary: %s !important;
-                    --mhbo-accent: %s !important;
-                    --mhbo-border: color-mix(in srgb, %s, transparent 85%%) !important;
-                    --mhbo-glass: color-mix(in srgb, %s, white 90%%) !important;
-                }',
-				$primary,
-				$secondary,
-				$accent,
-				$primary,
-				$primary
-			);
-			$handles    = array( 'mhbo-style', 'mhbo-calendar-style', 'mhbo-guest-portal', 'mhbo-booking-modal-css' );
-			
-			foreach ( $handles as $handle ) {
-				wp_add_inline_style( $handle, $custom_css );
-			}
+		// SECURITY: Validate hex colors before CSS interpolation
+		$primary   = sanitize_hex_color( $primary ) ?: '#1a365d';
+		$secondary = sanitize_hex_color( $secondary ) ?: '#f2e2c4';
+		$accent    = sanitize_hex_color( $accent ) ?: '#d4af37';
+
+		// SECURITY: Using printf for clean CSS variable construction with pre-sanitized values
+		$custom_css = sprintf(
+			':root, .mhbo-wrapper, .mhbo-calendar-wrapper, .mhbo-booking-form-wrapper, .mhbo-deposit-options-wrapper, .mhbo-success-message, .mhbo-guest-portal-wrapper, .mhbo-modal-overlay, .mhbo-modal-drawer, .mhbo-rooms-grid, .mhbo-room-card, .mhbo-business-card {
+                --mhbo-primary: %s !important;
+                --mhbo-secondary: %s !important;
+                --mhbo-accent: %s !important;
+                --mhbo-border: color-mix(in srgb, %s, transparent 85%%) !important;
+                --mhbo-glass: color-mix(in srgb, %s, white 90%%) !important;
+            }',
+			$primary,
+			$secondary,
+			$accent,
+			$primary,
+			$primary
+		);
+		$handles    = array( 'mhbo-style', 'mhbo-calendar-style', 'mhbo-guest-portal', 'mhbo-booking-modal-css' );
+		
+		foreach ( $handles as $handle ) {
+			wp_add_inline_style( $handle, $custom_css );
 		}
 
 		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
@@ -1847,6 +1945,10 @@ wp_add_inline_style(
 	 * @return string The resolved booking page URL.
 	 */
 	public static function get_checkout_url(): string {
+		if ( class_exists( Calendar::class ) ) {
+			return Calendar::resolve_booking_page_url( 0 );
+		}
+
 		$booking_page_id  = (int) get_option( 'mhbo_booking_page' );
 		$booking_page_url = get_option( 'mhbo_booking_page_url' );
 

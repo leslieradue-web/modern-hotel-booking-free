@@ -20160,26 +20160,26 @@ msgstr ""
 
 #: includes/Core/I18nLabels.php:2635
 #: includes/Core/I18nLabels.php:4195
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Vcs/PluginUpdateChecker.php:117
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Vcs/PluginUpdateChecker.php:117
 msgid "There is no changelog available."
 msgstr ""
 
 #: includes/Core/I18nLabels.php:2636
 #: includes/Core/I18nLabels.php:5658
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:68
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:68
 msgid "View details"
 msgstr ""
 
 #. translators: %s: Plugin name
 #: includes/Core/I18nLabels.php:2638
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:92
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:92
 #, php-format
 msgid "More information about %s"
 msgstr ""
 
 #: includes/Core/I18nLabels.php:2639
 #: includes/Core/I18nLabels.php:3120
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:143
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:143
 msgid "Check for updates"
 msgstr ""
 
@@ -20204,7 +20204,7 @@ msgstr ""
 #. translators: %s: update checker status string
 #. translators: %s: Status code
 #: includes/Core/I18nLabels.php:2647
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:248
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:248
 #, php-format
 msgid "Unknown update checker status \"%s\""
 msgstr ""
@@ -26836,21 +26836,21 @@ msgid "Update package blocked: package URL must originate from the official HTTP
 msgstr ""
 
 #. translators: %s: Plugin title
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:235
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:235
 #, php-format
 msgctxt "the plugin title"
 msgid "The %s plugin is up to date."
 msgstr ""
 
 #. translators: %s: Plugin title
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:238
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:238
 #, php-format
 msgctxt "the plugin title"
 msgid "A new version of the %s plugin is available."
 msgstr ""
 
 #. translators: %s: Plugin title
-#: includes/Pro/Update/puc-lib/Puc/v5p7/Plugin/Ui.php:241
+#: includes/Pro/Update/puc-lib/Puc/v6p0/Plugin/Ui.php:241
 #, php-format
 msgctxt "the plugin title"
 msgid "Could not determine if updates are available for %s."

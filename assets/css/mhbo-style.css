@@ -316,8 +316,8 @@ textarea.mhbo-admin-notes-textarea {
 /* Room Grid */
 .mhbo-rooms-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 40px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
 }
 
 .mhbo-room-card {
@@ -950,23 +950,23 @@ textarea.mhbo-admin-notes-textarea {
 /* Compulsory card — distinct from selectable extras */
 .mhbo-extra-card--compulsory {
     cursor: default;
-    border-color: rgba(99, 102, 241, 0.25);
-    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(238,242,255,0.6) 100%);
+    border-color: color-mix(in srgb, var(--mhbo-primary, #1a365d) 25%, transparent);
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, color-mix(in srgb, var(--mhbo-primary, #1a365d) 8%, #ffffff) 100%);
 }
 
 .mhbo-extra-card--compulsory:hover {
     transform: none;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-    border-color: rgba(99, 102, 241, 0.35);
+    border-color: color-mix(in srgb, var(--mhbo-primary, #1a365d) 35%, transparent);
 }
 
 .mhbo-extra-card--compulsory .mhbo-extra-icon-wrapper {
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+    background: color-mix(in srgb, var(--mhbo-primary, #1a365d) 10%, transparent);
+    color: var(--mhbo-primary, #1a365d);
 }
 
 .mhbo-extra-card--compulsory:hover .mhbo-extra-icon-wrapper {
-    background: #6366f1;
+    background: var(--mhbo-primary, #1a365d);
     color: #fff;
     transform: none;
 }
@@ -983,7 +983,7 @@ textarea.mhbo-admin-notes-textarea {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #fff;
-    background: #6366f1;
+    background: var(--mhbo-primary, #1a365d);
     border-radius: 4px;
     padding: 2px 6px;
     line-height: 1.4;
@@ -2431,7 +2431,7 @@ div.mhbo-tax-breakdown-container[style] {
     border-width: 2px !important;
     padding: 13.5px 17.5px !important;
     background: #f8fafc !important;
-    box-shadow: 0 4px 14px rgba(26, 54, 93, 0.08) !important;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--mhbo-primary, #1a365d) 12%, transparent) !important;
 }
 
 .mhbo-payment-card.active::before {

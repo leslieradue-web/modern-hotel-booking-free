@@ -209,23 +209,23 @@ $children     = 0;
 			}
 		}
 
-		// Stay Restrictions (Global Min/Max Stay in Core; Date-specific rules in Pro)
+		// Stay & Arrival/Departure Restrictions (Global Min/Max Stay in Core; CTA/CTD & Date-specific rules in Pro)
 		// 2026 BP: Privileged sources bypass stay restrictions — external
 		// platforms manage their own minimum/maximum stay rules.
 		if ( ! $is_privileged ) {
+			if ( Pricing::is_closed_to_arrival( $room_id, $check_in ) ) {
+				return new \WP_Error( 'mhbo_cta_restricted', I18n::get_label( 'api_err_cta' ) );
+			}
+			if ( Pricing::is_closed_to_departure( $room_id, $check_out ) ) {
+				return new \WP_Error( 'mhbo_ctd_restricted', I18n::get_label( 'api_err_ctd' ) );
+			}
+
 			$dt_in  = new \DateTime( $check_in );
 			$dt_out = new \DateTime( $check_out );
 			$nights = (int) $dt_in->diff( $dt_out )->format( '%a' );
 
 			$min_stay = Pricing::get_effective_min_stay( $room_id, $check_in );
-			$max_stay = null;
-			
-			if ( null === $max_stay ) {
-				$global_max = (int) get_option( 'mhbo_global_max_stay', 0 );
-				if ( $global_max > 0 ) {
-					$max_stay = $global_max;
-				}
-			}
+			$max_stay = Pricing::get_effective_max_stay( $room_id, $check_in, $check_out );
 
 			if ( null !== $min_stay && $nights < $min_stay ) {
 				return new \WP_Error( 'mhbo_min_stay', sprintf( I18n::get_label( 'api_err_min_stay' ), $min_stay ) );

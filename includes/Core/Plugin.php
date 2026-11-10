@@ -92,13 +92,13 @@ public function __construct() {
 if ( class_exists( 'MHBO\Api\PaymentsController' ) ) {
 					( new \MHBO\Api\PaymentsController() )->register_routes();
 				}
-				if ( class_exists( 'MHBO\Api\CouponsController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\CouponsController' ) ) {
 					( new \MHBO\Api\CouponsController() )->register_routes();
 				}
 				if ( class_exists( 'MHBO\Api\AdminSystemController' ) ) {
 					( new \MHBO\Api\AdminSystemController() )->register_routes();
 				}
-				if ( class_exists( 'MHBO\Api\AdminWebhooksController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\AdminWebhooksController' ) ) {
 					( new \MHBO\Api\AdminWebhooksController() )->register_routes();
 				}
 				if ( class_exists( 'MHBO\Api\AdminIcalController' ) ) {
@@ -114,11 +114,11 @@ if ( class_exists( 'MHBO\Api\PaymentsController' ) ) {
 					( new \MHBO\Api\AdminGuestsController() )->register_routes();
 				}
 
-				if ( class_exists( 'MHBO\Api\MarketingController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\MarketingController' ) ) {
 					( new \MHBO\Api\MarketingController() )->register_routes();
 				}
 
-				if ( class_exists( 'MHBO\Api\BalancePaymentController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\BalancePaymentController' ) ) {
 					( new \MHBO\Api\BalancePaymentController() )->register_routes();
 				}
 
@@ -130,7 +130,7 @@ if ( class_exists( 'MHBO\Api\PaymentsController' ) ) {
 		);
 
 		/* ---- Guest CRM Async Tasks ---- */
-		if ( class_exists( 'MHBO\Core\GuestAsyncTasks' ) ) {
+		if ( GuestManager::is_enabled() && class_exists( 'MHBO\Core\GuestAsyncTasks' ) ) {
 			\MHBO\Core\GuestAsyncTasks::init();
 		}
 
@@ -267,17 +267,6 @@ if ( is_admin() ) {
 	 * or partially-paid reservations whose webhook/status transition is delayed.
 	 */
 	public function cleanup_stale_pending_payments(): void {
-		global $wpdb;
-		$table = $wpdb->prefix . 'mhbo_bookings';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Scheduled batch cancellation of stale pending_payment reservations.
-		$affected = $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE %i SET status = 'cancelled' WHERE status = 'pending_payment' AND created_at < DATE_SUB(NOW(), INTERVAL 1 HOUR) AND COALESCE(payment_transaction_id, '') = '' AND COALESCE(deposit_received, 0) = 0 AND COALESCE(balance_collected_via, '') = '' AND payment_status != 'completed'",
-				$table
-			)
-		);
-		if ( $affected ) {
-			Cache::invalidate_booking();
-		}
+		Pricing::cleanup_stale_pending_payments_now();
 	}
 }

@@ -227,6 +227,7 @@
 					extras,
 					coupon_code: couponCode,
 					tax_mode: taxMode,
+					source: 'admin',
 				};
 				const calcPromise = ( window.wp && window.wp.apiFetch )
 					? window.wp.apiFetch( {
@@ -2467,7 +2468,8 @@
 										ev.start === sunStr;
 								} );
 								if ( hasMatchingSunOut ) {
-									const harness = arg.el.closest( '.fc-daygrid-event-harness' ) || arg.el.parentElement;
+									// V7: the event's parent is its role="listitem" wrapper (no v6 harness class).
+									const harness = arg.el.parentElement;
 									if ( harness && harness.previousElementSibling ) {
 										const prevH = harness.previousElementSibling.offsetHeight || 26;
 										harness.style.marginTop = '-' + prevH + 'px';

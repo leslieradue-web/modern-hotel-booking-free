@@ -628,6 +628,7 @@ $body .= '</div></div>';
 				'tax_registration_number' => $tax_registration_number,
 				'room_name'               => $room_name,
 				'room_number'             => (string) ( $booking->room_number ?? '' ),
+				'payment_details'         => $payment_details,
 			)
 		);
 
@@ -2469,7 +2470,7 @@ if ( ! empty( $booking->special_requests ) ) {
 		$is_writable = is_string( $temp_dir ) && '' !== $temp_dir && is_dir( $temp_dir ) && (
 			function_exists( 'wp_is_writable' )
 				? wp_is_writable( $temp_dir )
-				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Unit test fallback when wp_is_writable is unavailable.
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable, WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_is_writable -- Unit test fallback when wp_is_writable is unavailable.
 				: is_writable( $temp_dir )
 		);
 		if ( ! $is_writable ) {

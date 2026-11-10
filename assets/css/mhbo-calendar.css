@@ -336,12 +336,21 @@
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-completed,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-paid,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-partially_paid,
-.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-no_show {
-    background: rgba(229, 62, 62, 0.15) !important;
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-no_show,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-confirmed,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-booked,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-checked_in,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-checked_out,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-deposit_paid,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-completed,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-paid,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-partially_paid,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-no_show {
+    background: rgba(239, 68, 68, 0.22) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    border-color: rgba(229, 62, 62, 0.3) !important;
-    color: #742a2a !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #991b1b !important;
     opacity: 1 !important;
 }
 
@@ -353,36 +362,63 @@
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-completed .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-paid .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-partially_paid .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-no_show .mhbo-day-number {
-    color: #742a2a !important;
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-no_show .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-confirmed .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-booked .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-checked_in .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-checked_out .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-deposit_paid .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-completed .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-paid .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-partially_paid .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-no_show .mhbo-day-number {
+    color: #991b1b !important;
+    font-weight: 700 !important;
 }
 
 /* Pending bookings - Subtle Orange */
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending_payment,
-.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing {
-    background: rgba(221, 107, 32, 0.15) !important;
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-pending,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-pending_payment,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-processing {
+    background: rgba(249, 115, 22, 0.22) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    border-color: rgba(221, 107, 32, 0.3) !important;
-    color: #744210 !important;
+    border-color: rgba(249, 115, 22, 0.45) !important;
+    color: #9a3412 !important;
     opacity: 1 !important;
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending_payment .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing .mhbo-day-number {
-    color: #744210 !important;
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-pending .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-pending_payment .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-candidate-blocked.mhbo-booking-processing .mhbo-day-number {
+    color: #9a3412 !important;
+    font-weight: 700 !important;
 }
 
 /* --- Half-Day Changeover Styling (Split Backgrounds) --- */
+
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkin,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkout,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkin,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkout {
+    opacity: 1 !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
 
 /* Confirmed: Check-in day (afternoon booked, morning free) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-booking-confirmed.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-checkin-confirmed.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkin-confirmed.mhbo-half-booked-checkin {
-    background: linear-gradient(to bottom right, #fff 50%, rgba(229, 62, 62, 0.15) 50%) !important;
+    background: linear-gradient(135deg, #ffffff 50%, rgba(239, 68, 68, 0.32) 50%) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
 /* Confirmed: Check-out day (morning booked, afternoon free) */
@@ -390,7 +426,8 @@
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-checkout-confirmed.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkout-confirmed.mhbo-half-booked-checkout {
-    background: linear-gradient(to top right, rgba(229, 62, 62, 0.15) 50%, #fff 50%) !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.32) 50%, #ffffff 50%) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
 /* Pending: Check-in day (afternoon booked, morning free) */
@@ -402,7 +439,8 @@
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending_payment.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkin-pending.mhbo-half-booked-checkin {
-    background: linear-gradient(to bottom right, #fff 50%, rgba(221, 107, 32, 0.15) 50%) !important;
+    background: linear-gradient(135deg, #ffffff 50%, rgba(249, 115, 22, 0.35) 50%) !important;
+    border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
 /* Pending: Check-out day (morning booked, afternoon free) */
@@ -414,7 +452,8 @@
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending_payment.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkout-pending.mhbo-half-booked-checkout {
-    background: linear-gradient(to top right, rgba(221, 107, 32, 0.15) 50%, #fff 50%) !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 50%, #ffffff 50%) !important;
+    border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
 /* --- Same-Day Turnover (Both Check-out and Check-in) --- */
@@ -428,50 +467,53 @@
 /* 1. Checkout Confirmed + Checkin Pending (Red morning, Orange afternoon) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-confirmed.mhbo-checkin-pending,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-confirmed.mhbo-checkin-pending {
-    background: linear-gradient(135deg, rgba(229, 62, 62, 0.15) 50%, rgba(221, 107, 32, 0.15) 50%) !important;
-    border-color: rgba(229, 62, 62, 0.3) !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.32) 50%, rgba(249, 115, 22, 0.35) 50%) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
 /* 2. Checkout Pending + Checkin Confirmed (Orange morning, Red afternoon) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-pending.mhbo-checkin-confirmed,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-pending.mhbo-checkin-confirmed {
-    background: linear-gradient(135deg, rgba(221, 107, 32, 0.15) 50%, rgba(229, 62, 62, 0.15) 50%) !important;
-    border-color: rgba(221, 107, 32, 0.3) !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 50%, rgba(239, 68, 68, 0.32) 50%) !important;
+    border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
 /* 3. Checkout Confirmed + Checkin Confirmed (Both Red) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-confirmed.mhbo-checkin-confirmed,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-confirmed.mhbo-checkin-confirmed {
-    background: rgba(229, 62, 62, 0.15) !important;
-    border-color: rgba(229, 62, 62, 0.3) !important;
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
 /* 4. Checkout Pending + Checkin Pending (Both Orange) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-pending.mhbo-checkin-pending,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-pending.mhbo-checkin-pending {
-    background: rgba(221, 107, 32, 0.15) !important;
-    border-color: rgba(221, 107, 32, 0.3) !important;
+    background: rgba(249, 115, 22, 0.22) !important;
+    border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
 /* Fallback for turnover days where specific checkout/checkin classes may be missing */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-booking-pending:not(.mhbo-checkout-confirmed),
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-booking-pending:not(.mhbo-checkout-confirmed) {
-    background: rgba(221, 107, 32, 0.15) !important;
-    border-color: rgba(221, 107, 32, 0.3) !important;
+    background: rgba(249, 115, 22, 0.22) !important;
+    border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both:not(.mhbo-checkout-pending):not(.mhbo-checkin-pending),
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both:not(.mhbo-checkout-pending):not(.mhbo-checkin-pending) {
-    background: rgba(229, 62, 62, 0.15) !important;
-    border-color: rgba(229, 62, 62, 0.3) !important;
+    background: rgba(239, 68, 68, 0.22) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
 /* Overriding the text color for half-booked and turnover days to ensure readability */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkin .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkout .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkin .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkout .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both .mhbo-day-number {
-    color: #2d3748 !important;
+    color: #1e293b !important;
+    font-weight: 700 !important;
 }
 
 /* Unbookable dates (no price set) - Same red as booked */
@@ -636,7 +678,7 @@
 .mhbo-selection-header h3 {
     margin: 0 0 15px;
     font-size: 1.25rem;
-    color: #2d3748;
+    color: var(--mhbo-primary, #1a365d);
     border-bottom: 2px solid var(--mhbo-border);
     padding-bottom: 10px;
 }
@@ -896,7 +938,7 @@
 .mhbo-calendar-tooltip {
     position: fixed;
     pointer-events: none;
-    background: rgba(26, 54, 93, 0.9);
+    background: color-mix(in srgb, var(--mhbo-primary, #1a365d), transparent 8%);
     color: #fff;
     padding: 10px 18px;
     border-radius: 100px; /* Pill shape */
@@ -993,4 +1035,16 @@
 .mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.startRange .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.endRange .mhbo-day-number {
     color: #ffffff !important;
+}
+
+/* Force inRange cells to respect active theme primary color over half-booked states */
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.inRange:not(.selected):not(.startRange):not(.endRange) {
+    background: color-mix(in srgb, var(--mhbo-primary, #1a365d), white 85%) !important;
+    border-color: color-mix(in srgb, var(--mhbo-primary, #1a365d), white 70%) !important;
+    color: var(--mhbo-primary, #1a365d) !important;
+}
+
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.inRange:not(.selected):not(.startRange):not(.endRange) .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-days .dayContainer .flatpickr-day.inRange:not(.selected):not(.startRange):not(.endRange) .mhbo-fp-price {
+    color: var(--mhbo-primary, #1a365d) !important;
 }

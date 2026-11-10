@@ -85,11 +85,33 @@
 			'mhbo_deactivate_license'
 		);
 		const checkBtn = document.getElementById( 'mhbo_check_license_btn' );
+		const keyField = document.getElementById( 'mhbo_license_key' );
 		const spinner = document.getElementById( 'mhbo_license_spinner' );
 		const message = document.getElementById( 'mhbo_license_message' );
 
 		if ( ! activateBtn && ! deactivateBtn && ! checkBtn ) {
 			return;
+		}
+
+		function renderLicenseFeedback( text, color ) {
+			if ( ! message ) {
+				return;
+			}
+			message.textContent = '';
+			const span = document.createElement( 'span' );
+			span.style.color = color;
+			span.style.fontWeight = '600';
+			span.textContent = text;
+			message.appendChild( span );
+		}
+
+		if ( keyField && activateBtn ) {
+			keyField.addEventListener( 'keydown', function ( e ) {
+				if ( 'Enter' === e.key ) {
+					e.preventDefault();
+					activateBtn.click();
+				}
+			} );
 		}
 
 		if ( checkBtn ) {
@@ -117,14 +139,7 @@
 							response && response.data && response.data.warning
 								? '#ea580c'
 								: '#16a34a';
-						if ( message ) {
-							message.innerHTML =
-								'<span style="color:' +
-								color +
-								'; font-weight:600;">' +
-								msg +
-								'</span>';
-						}
+						renderLicenseFeedback( msg, color );
 						setTimeout( function () {
 							location.reload();
 						}, 1500 );
@@ -137,12 +152,7 @@
 							( err && err.message ) ||
 							( config.i18n && config.i18n.connection_error ) ||
 							'Error';
-						if ( message ) {
-							message.innerHTML =
-								'<span style="color:#dc2626; font-weight:600;">' +
-								errorMsg +
-								'</span>';
-						}
+						renderLicenseFeedback( errorMsg, '#dc2626' );
 					} );
 			} );
 		}
@@ -179,12 +189,7 @@
 								response.data.message ) ||
 							( response && response.message ) ||
 							'License activated.';
-						if ( message ) {
-							message.innerHTML =
-								'<span style="color:#16a34a; font-weight:600;">' +
-								msg +
-								'</span>';
-						}
+						renderLicenseFeedback( msg, '#16a34a' );
 						setTimeout( function () {
 							location.reload();
 						}, 1500 );
@@ -197,12 +202,7 @@
 							( err && err.message ) ||
 							( config.i18n && config.i18n.connection_error ) ||
 							'Error';
-						if ( message ) {
-							message.innerHTML =
-								'<span style="color:#dc2626; font-weight:600;">' +
-								errorMsg +
-								'</span>';
-						}
+						renderLicenseFeedback( errorMsg, '#dc2626' );
 					} );
 			} );
 		}

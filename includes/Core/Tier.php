@@ -15,12 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Canonical Tier Resolver & Feature Gate Engine.
- *
- * Implements the 3-tier hierarchy (Free, Starter, Pro) and computes the
- * Effective Tier based on the installed package bounds and validated license entitlements.
- *
- * Effective Tier = min(Package Tier, Validated License Tier).
+ * Runtime profile and capability resolver.
  *
  * @since 2.6.0
  */
@@ -191,10 +186,6 @@ if ( defined( 'MHBO_PRODUCT_TIER' ) ) {
 	}
 
 	/**
-	 * Get the validated license tier.
-	 *
-	 * Thin, non-mutating reader. Checks LicenseValidator or active license state.
-	 *
 	 * @return string 'free' | 'starter' | 'pro' | 'none'
 	 */
 	public static function get_license_tier(): string {
@@ -208,32 +199,43 @@ if ( defined( 'MHBO_PRODUCT_TIER' ) ) {
 	}
 
 	/**
-	 * Compute the effective tier.
-	 *
-	 * Keeps the installed package tier active (Pro stays Pro, Starter stays Starter,
-	 * Free stays Free) so paid commercial installations are never degraded to
-	 * Starter or Free when a license is unvalidated, inactive, or deactivated.
-	 *
 	 * @return string 'free' | 'starter' | 'pro'
 	 */
 	public static function get_effective_tier(): string {
 		$package_tier = self::get_package_tier();
 
-		// Free build has no commercial code physically present.
 		if ( self::TIER_FREE === $package_tier ) {
 			return self::TIER_FREE;
 		}
 
-		$effective = $package_tier;
+		$license_tier = self::get_license_tier();
+
+		if ( self::TIER_NONE === $license_tier || ! isset( self::ORDER[ $license_tier ] ) || self::ORDER[ $license_tier ] <= 0 ) {
+			$effective = self::TIER_FREE;
+		} else {
+			$package_order = self::ORDER[ $package_tier ] ?? 0;
+			$license_order = self::ORDER[ $license_tier ];
+			$min_order     = min( $package_order, $license_order );
+
+			if ( $min_order >= self::ORDER[ self::TIER_PRO ] ) {
+				$effective = self::TIER_PRO;
+			} elseif ( $min_order >= self::ORDER[ self::TIER_STARTER ] ) {
+				$effective = self::TIER_STARTER;
+			} else {
+				$effective = self::TIER_FREE;
+			}
+		}
+
+		// phpcs:disable Squiz.Commenting.BlockComment.NoNewLine
+		
+		// phpcs:enable Squiz.Commenting.BlockComment.NoNewLine
 
 return $effective;
 	}
 
 	/**
-	 * Check if the effective tier is at least the specified tier.
-	 *
-	 * @param string $tier Target tier ('free', 'starter', 'pro').
-	 * @return bool True if effective tier meets or exceeds target tier.
+	 * @param string $tier Target profile ('free', 'starter', 'pro').
+	 * @return bool
 	 */
 	public static function is_effective_at_least( string $tier ): bool {
 		$effective       = self::get_effective_tier();
@@ -244,42 +246,40 @@ return $effective;
 	}
 
 	/**
-	 * Check if the plugin is operating in a commercial tier (Starter or Pro).
-	 *
-	 * @return bool True if Starter or Pro is effectively active.
+	 * @return bool
 	 */
 	public static function is_commercial(): bool {
 		return self::is_effective_at_least( self::TIER_STARTER );
 	}
 
 	/**
-	 * Check if the plugin is operating in at least the Starter tier.
-	 *
-	 * @return bool True if Starter is effectively active.
+	 * @return bool
 	 */
 	public static function is_starter(): bool {
 		return self::is_effective_at_least( self::TIER_STARTER );
 	}
 
 	/**
-	 * Check if the plugin is operating in the Pro tier.
-	 *
-	 * @return bool True if Pro is effectively active.
+	 * @return bool
 	 */
 	public static function is_pro(): bool {
 		return self::is_effective_at_least( self::TIER_PRO );
 	}
 
 	/**
-	 * Check if a specific feature is available under the current effective tier.
-	 *
-	 * @param string $feature Feature slug (e.g. 'payments_stripe', 'rooms').
-	 * @return bool True if available, false otherwise.
+	 * @param string $feature Feature slug.
+	 * @return bool
 	 */
 	public static function has_feature( string $feature ): bool {
 		if ( isset( self::FEATURE_TIERS[ $feature ] ) ) {
 			$required_tier = self::FEATURE_TIERS[ $feature ];
-			return self::is_effective_at_least( $required_tier );
+			if ( ! self::is_effective_at_least( $required_tier ) ) {
+				return false;
+			}
+			// phpcs:disable Squiz.Commenting.BlockComment.NoNewLine
+			
+			// phpcs:enable Squiz.Commenting.BlockComment.NoNewLine
+			return true;
 		}
 
 		if ( in_array( $feature, self::KNOWN_FREE_FEATURES, true ) ) {
@@ -290,15 +290,10 @@ return $effective;
 	}
 
 	/**
-	 * Capability-style permission check for action execution.
-	 *
-	 * Supports historical read-only access when license is expired.
-	 *
-	 * @param string $action Action slug (e.g. 'payments.read', 'payments.create').
-	 * @return bool True if allowed.
+	 * @param string $action Action slug.
+	 * @return bool
 	 */
 	public static function can( string $action ): bool {
-		// Commercial tier active: all actions allowed unless pro-restricted.
 		if ( self::is_commercial() ) {
 			if ( str_starts_with( $action, 'pro.' ) ) {
 				return self::is_effective_at_least( self::TIER_PRO );
@@ -306,7 +301,6 @@ return $effective;
 			return true;
 		}
 
-		// Expired state on commercial package: read-only access to historical data.
 		$package_tier = self::get_package_tier();
 		if ( self::TIER_FREE !== $package_tier ) {
 			if ( in_array( $action, self::EXPIRED_ALLOWED_ACTIONS, true ) ) {

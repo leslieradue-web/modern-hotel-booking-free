@@ -80,7 +80,7 @@ class BookingWidget extends \WP_Widget {
 			// For now, let's assume one calendar per page is safer.
 			echo '<div class="mhbo-widget-context">';
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Calendar::render_unified_view returns pre-escaped HTML from internal components
-			echo wp_kses_post( Calendar::render_unified_view( 0 ) );
+			echo Calendar::render_unified_view( 0 );
 			echo '</div>';
 		}
 

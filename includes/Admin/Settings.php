@@ -21,10 +21,11 @@ class Settings {
         add_action('admin_init', array($this, 'register_settings'));
         add_action('admin_init', array($this, 'process_settings_save'));
         add_action('admin_init', array($this, 'register_wpml_polylang_strings'));
+        
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
 
-    /**
+/**
      * Enqueue admin settings scripts.
      *
      * @param string $hook The current admin page hook.
@@ -327,7 +328,17 @@ add_settings_field('mhbo_global_min_stay', I18n::get_label('settings_label_globa
                 $room_id   = (int) $room->id;
                 $shortcode = '[mhbo_room_calendar room_id="' . $room_id . '"]';
                 $blockcode = '<!-- wp:modern-hotel-booking/room-calendar {"roomId":' . $room_id . '} /-->';
-                $edit_url  = admin_url('admin.php?page=mhbo-rooms&action=edit&id=' . $room_id);
+                $edit_url  = wp_nonce_url(
+                    add_query_arg(
+                        array(
+                            'page'   => 'mhbo-rooms',
+                            'action' => 'edit',
+                            'id'     => $room_id,
+                        ),
+                        admin_url('admin.php')
+                    ),
+                    'mhbo_edit_room_' . $room_id
+                );
                 echo '<tr>';
                 echo '<td><span class="mhbo-badge" style="background:#f1f5f9;color:#0f172a;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid #cbd5e1;font-size:12px;">#' . esc_html( (string) $room_id) . '</span></td>';
                 echo '<td><strong>' . esc_html( (string) ( $room->room_number ?? '—' )) . '</strong></td>';
@@ -1613,7 +1624,7 @@ return false;
      *
      * @return void
      */
-    private static function render_license_tab(): void {
+    public static function render_license_tab(): void {
         
     }
 

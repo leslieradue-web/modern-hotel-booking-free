@@ -119,9 +119,19 @@
 				const changeoverData = {}; // Track changeover status (checkin/checkout/both)
 				const eligibilityData = {}; // Track selection eligibility (can_checkin/can_checkout)
 				const freeRoomsData = {}; // Track specifically which rooms are free PM for continuous availability checking
-				const minStayData = {}; // PRO: Track minimum stay per check-in date
-				const maxStayData = {}; // PRO: Track maximum stay per check-in date
-				const reasonData = {}; // Track block reason per disabled date (booked/manual/maintenance)
+				const roomStatusesData = {}; // Track per-room occupancy status for dynamic candidate room styling
+				const roomMinStaysData = {}; // Track per-room minimum stay overrides per check-in date
+				const roomMaxStaysData = {}; // Track per-room maximum stay overrides per check-in date
+				const roomCtaData = {}; // Track per-room Closed to Arrival overrides per date
+				const roomCtdData = {}; // Track per-room Closed to Departure overrides per date
+				let activeCandidateOverlay = {};
+				const minStayData = {}; // Track minimum stay per check-in date (Free/Starter/Pro)
+				const maxStayData = {}; // Track maximum stay per check-in date (Free/Starter/Pro)
+				const reasonData = {}; // Track block reason per disabled date (booked/manual/maintenance/turnover/cta)
+				const minStayReasonDates = new Set(); // Track dates whose reasonData came from dynamic minStay pre-filtering
+				const minStayStatusDates = new Set(); // Track dates whose bookingStatusData came from dynamic minStay pre-filtering
+				const ctaRestrictedDates = new Set(); // Track available nights restricted to arrival (CTA)
+				const rawChangeoverData = {}; // Preserve server changeover status before dead-gap suppression
 				let pendingCheckIn = null; // Track the first date clicked to detect backwards selection
 				const rawDisabledDates = []; // Track backend disabled dates (ignoring dynamic min-stay blocks)
 				let isHydrated = false;
@@ -339,7 +349,36 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					for ( const key in freeRoomsData ) {
 						delete freeRoomsData[ key ];
 					}
-					
+					for ( const key in roomStatusesData ) {
+						delete roomStatusesData[ key ];
+					}
+					for ( const key in roomMinStaysData ) {
+						delete roomMinStaysData[ key ];
+					}
+					for ( const key in roomMaxStaysData ) {
+						delete roomMaxStaysData[ key ];
+					}
+					for ( const key in roomCtaData ) {
+						delete roomCtaData[ key ];
+					}
+					for ( const key in roomCtdData ) {
+						delete roomCtdData[ key ];
+					}
+					for ( const key in rawChangeoverData ) {
+						delete rawChangeoverData[ key ];
+					}
+					for ( const key in minStayData ) {
+						delete minStayData[ key ];
+					}
+					for ( const key in maxStayData ) {
+						delete maxStayData[ key ];
+					}
+					for ( const key in reasonData ) {
+						delete reasonData[ key ];
+					}
+					minStayReasonDates.clear();
+					minStayStatusDates.clear();
+					ctaRestrictedDates.clear();
 				}
 
 				function verifyCacheState( currentHash, initialDays ) {
@@ -483,10 +522,222 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					return 'confirmed';
 				}
 
+				function formatLocalDate( dateObj ) {
+					const y = dateObj.getFullYear();
+					const m = String( dateObj.getMonth() + 1 ).padStart(
+						2,
+						'0'
+					);
+					const d = String( dateObj.getDate() ).padStart( 2, '0' );
+					return `${ y }-${ m }-${ d }`;
+				}
+
+				function getRoomMinStay( checkInStr, rid ) {
+					if (
+						roomMinStaysData[ checkInStr ] &&
+						roomMinStaysData[ checkInStr ][ rid ]
+					) {
+						return parseInt(
+							roomMinStaysData[ checkInStr ][ rid ],
+							10
+						);
+					}
+					return minStayData[ checkInStr ] || 1;
+				}
+
+				function getRoomMaxStay( nightStr, rid ) {
+					if (
+						roomMaxStaysData[ nightStr ] &&
+						roomMaxStaysData[ nightStr ][ rid ]
+					) {
+						return parseInt(
+							roomMaxStaysData[ nightStr ][ rid ],
+							10
+						);
+					}
+					return maxStayData[ nightStr ] || null;
+				}
+
+				function getStrictestSingleMaxStay( checkInStr, nights ) {
+					const span = Math.max( 1, nights || 1 );
+					const parts = checkInStr.split( '-' ).map( Number );
+					const baseDate = new Date(
+						parts[ 0 ],
+						parts[ 1 ] - 1,
+						parts[ 2 ]
+					);
+					let strictest = null;
+					for ( let j = 0; j < span; j++ ) {
+						const curDate = new Date(
+							baseDate.getFullYear(),
+							baseDate.getMonth(),
+							baseDate.getDate() + j
+						);
+						const curStr = formatLocalDate( curDate );
+						const dayMax = maxStayData[ curStr ] || null;
+						if (
+							dayMax &&
+							( strictest === null || dayMax < strictest )
+						) {
+							strictest = dayMax;
+						}
+					}
+					return strictest;
+				}
+
+				function getRoomStrictestMaxStay( checkInStr, nights, rid ) {
+					const span = Math.max( 1, nights || 1 );
+					const parts = checkInStr.split( '-' ).map( Number );
+					const baseDate = new Date(
+						parts[ 0 ],
+						parts[ 1 ] - 1,
+						parts[ 2 ]
+					);
+					let strictest = null;
+					for ( let j = 0; j < span; j++ ) {
+						const curDate = new Date(
+							baseDate.getFullYear(),
+							baseDate.getMonth(),
+							baseDate.getDate() + j
+						);
+						const curStr = formatLocalDate( curDate );
+						const dayMax = getRoomMaxStay( curStr, rid );
+						if (
+							dayMax &&
+							( strictest === null || dayMax < strictest )
+						) {
+							strictest = dayMax;
+						}
+					}
+					return strictest;
+				}
+
+				function evaluateAggregatedStay( checkInStr, nights ) {
+					const rawStartRooms = freeRoomsData[ checkInStr ] || [];
+					const startRooms = rawStartRooms.filter(
+						( rid ) =>
+							! (
+								roomCtaData[ checkInStr ] &&
+								roomCtaData[ checkInStr ][ rid ]
+							)
+					);
+					if ( startRooms.length === 0 || nights <= 0 ) {
+						return {
+							continuousRooms: [],
+							departableRooms: [],
+							validRooms: [],
+							ctdBlocked: false,
+							minRequired: minStayData[ checkInStr ] || null,
+							maxAllowed: getStrictestSingleMaxStay(
+								checkInStr,
+								nights
+							),
+						};
+					}
+
+					const parts = checkInStr.split( '-' ).map( Number );
+					const checkInDate = new Date(
+						parts[ 0 ],
+						parts[ 1 ] - 1,
+						parts[ 2 ]
+					);
+					let continuousRooms = [ ...startRooms ];
+
+					for ( let j = 1; j < nights; j++ ) {
+						const nextNightDate = new Date(
+							checkInDate.getFullYear(),
+							checkInDate.getMonth(),
+							checkInDate.getDate() + j
+						);
+						const nextNightStr = formatLocalDate( nextNightDate );
+						if ( ! ( nextNightStr in freeRoomsData ) ) {
+							if ( isHydrated ) {
+								continuousRooms = [];
+							}
+							break;
+						}
+						const nextFree = freeRoomsData[ nextNightStr ] || [];
+						continuousRooms = continuousRooms.filter( ( r ) =>
+							nextFree.includes( r )
+						);
+						if ( continuousRooms.length === 0 ) {
+							break;
+						}
+					}
+
+					const checkOutDate = new Date(
+						checkInDate.getFullYear(),
+						checkInDate.getMonth(),
+						checkInDate.getDate() + nights
+					);
+					const checkOutStr = formatLocalDate( checkOutDate );
+					const departableRooms = continuousRooms.filter(
+						( rid ) =>
+							! (
+								roomCtdData[ checkOutStr ] &&
+								roomCtdData[ checkOutStr ][ rid ]
+							)
+					);
+					const ctdBlocked =
+						continuousRooms.length > 0 &&
+						departableRooms.length === 0;
+
+					const validRooms = [];
+					const minReqs = [];
+					const maxAlls = [];
+
+					departableRooms.forEach( ( rid ) => {
+						const rMin = getRoomMinStay( checkInStr, rid );
+						const rMax = getRoomStrictestMaxStay(
+							checkInStr,
+							nights,
+							rid
+						);
+						minReqs.push( rMin );
+						if ( rMax ) {
+							maxAlls.push( rMax );
+						}
+						if (
+							nights >= rMin &&
+							( ! rMax || nights <= rMax )
+						) {
+							validRooms.push( rid );
+						}
+					} );
+
+					return {
+						continuousRooms,
+						departableRooms,
+						validRooms,
+						ctdBlocked,
+						minRequired:
+							minReqs.length > 0 ? Math.min( ...minReqs ) : null,
+						maxAllowed:
+							maxAlls.length > 0 ? Math.max( ...maxAlls ) : null,
+					};
+				}
+
 				function processCalendarData( data ) {
+					// Reset dynamic min-stay mutations before re-evaluating (prevents hydration boundary artifacts at Day 118-120)
+					disabledDates.length = 0;
+					rawDisabledDates.forEach( ( d ) => disabledDates.push( d ) );
+					minStayReasonDates.forEach( ( d ) => {
+						delete reasonData[ d ];
+					} );
+					minStayReasonDates.clear();
+					minStayStatusDates.forEach( ( d ) => {
+						delete bookingStatusData[ d ];
+						if ( rawChangeoverData[ d ] ) {
+							changeoverData[ d ] = rawChangeoverData[ d ];
+						}
+					} );
+					minStayStatusDates.clear();
+					ctaRestrictedDates.clear();
+
 					data.forEach( ( item ) => {
 						if (
 							item.status === 'booked' ||
+							item.status === 'unbookable' ||
 							item.price === 0 ||
 							item.price === '0' ||
 							! item.price
@@ -506,45 +757,442 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 						const normBookingStatus = normalizeBookingStatus( item.booking_status );
 						if ( normBookingStatus ) {
 							bookingStatusData[ item.date ] = normBookingStatus;
+						} else {
+							delete bookingStatusData[ item.date ];
 						}
 						if ( item.raw_booking_status ) {
 							rawBookingStatusData[ item.date ] = String( item.raw_booking_status ).toLowerCase();
 						} else if ( item.booking_status ) {
 							rawBookingStatusData[ item.date ] = String( item.booking_status ).toLowerCase();
+						} else {
+							delete rawBookingStatusData[ item.date ];
 						}
 
 						const normCheckoutStatus = normalizeBookingStatus( item.checkout_booking_status );
 						if ( normCheckoutStatus ) {
 							checkoutStatusData[ item.date ] = normCheckoutStatus;
+						} else {
+							delete checkoutStatusData[ item.date ];
 						}
 						if ( item.raw_checkout_booking_status ) {
 							rawCheckoutStatusData[ item.date ] = String( item.raw_checkout_booking_status ).toLowerCase();
 						} else if ( item.checkout_booking_status ) {
 							rawCheckoutStatusData[ item.date ] = String( item.checkout_booking_status ).toLowerCase();
+						} else {
+							delete rawCheckoutStatusData[ item.date ];
 						}
 
 						// Determine changeover status for split-day styling
 						if ( item.is_checkin && item.is_checkout ) {
 							changeoverData[ item.date ] = 'both';
+							rawChangeoverData[ item.date ] = 'both';
 						} else if ( item.is_checkin ) {
 							changeoverData[ item.date ] = 'checkin';
+							rawChangeoverData[ item.date ] = 'checkin';
 						} else if ( item.is_checkout ) {
 							changeoverData[ item.date ] = 'checkout';
+							rawChangeoverData[ item.date ] = 'checkout';
+						} else {
+							delete changeoverData[ item.date ];
+							delete rawChangeoverData[ item.date ];
 						}
 
 						// Store eligibility for selection guards
 						eligibilityData[ item.date ] = {
 							checkin: item.can_checkin !== false,
 							checkout: item.can_checkout !== false,
+							isCtd: Boolean(
+								item.is_ctd ||
+									( item.room_ctd &&
+										Object.keys( item.room_ctd ).length >
+											0 )
+							),
 						};
 
 						if ( Array.isArray( item.free_rooms ) ) {
 							freeRoomsData[ item.date ] = item.free_rooms;
 						}
 
-} );
+						if (
+							item.room_statuses &&
+							typeof item.room_statuses === 'object' &&
+							! Array.isArray( item.room_statuses )
+						) {
+							roomStatusesData[ item.date ] = item.room_statuses;
+						} else {
+							delete roomStatusesData[ item.date ];
+						}
 
-}
+						if (
+							item.room_min_stays &&
+							typeof item.room_min_stays === 'object' &&
+							! Array.isArray( item.room_min_stays )
+						) {
+							roomMinStaysData[ item.date ] = item.room_min_stays;
+						} else {
+							delete roomMinStaysData[ item.date ];
+						}
+
+						if (
+							item.room_max_stays &&
+							typeof item.room_max_stays === 'object' &&
+							! Array.isArray( item.room_max_stays )
+						) {
+							roomMaxStaysData[ item.date ] = item.room_max_stays;
+						} else {
+							delete roomMaxStaysData[ item.date ];
+						}
+
+						if (
+							item.room_cta &&
+							typeof item.room_cta === 'object' &&
+							! Array.isArray( item.room_cta )
+						) {
+							roomCtaData[ item.date ] = item.room_cta;
+						} else {
+							delete roomCtaData[ item.date ];
+						}
+
+						if (
+							item.room_ctd &&
+							typeof item.room_ctd === 'object' &&
+							! Array.isArray( item.room_ctd )
+						) {
+							roomCtdData[ item.date ] = item.room_ctd;
+						} else {
+							delete roomCtdData[ item.date ];
+						}
+
+						// Store stay restrictions across all tiers (Free, Starter, Pro)
+						if ( item.min_stay && parseInt( item.min_stay, 10 ) > 0 ) {
+							minStayData[ item.date ] = parseInt(
+								item.min_stay,
+								10
+							);
+						} else {
+							delete minStayData[ item.date ];
+						}
+						if ( item.max_stay && parseInt( item.max_stay, 10 ) > 0 ) {
+							maxStayData[ item.date ] = parseInt(
+								item.max_stay,
+								10
+							);
+						} else {
+							delete maxStayData[ item.date ];
+						}
+						if ( item.reason ) {
+							reasonData[ item.date ] = item.reason;
+						} else {
+							delete reasonData[ item.date ];
+						}
+					} );
+
+					// Pre-filter: Disable check-in dates that mathematically cannot satisfy minStay/CTA/CTD requirements.
+					const isAggregated =
+						Object.keys( freeRoomsData ).length > 0;
+					const todayNow = new Date();
+					todayNow.setHours( 0, 0, 0, 0 );
+					const todayStr = formatLocalDate( todayNow );
+
+					const invalidCheckIns = [];
+					const validCheckIns = [];
+
+					Object.keys( eligibilityData ).forEach( ( checkInStr ) => {
+						// Past or already blocked dates cannot be used as check-ins or lookback coverage anchors
+						if (
+							checkInStr < todayStr ||
+							rawDisabledDates.includes( checkInStr )
+						) {
+							return;
+						}
+
+						// Available nights restricted to arrival (CTA) cannot start a stay,
+						// but CAN be stayed through when covered by an earlier valid check-in.
+						if ( ! eligibilityData[ checkInStr ].checkin ) {
+							invalidCheckIns.push( checkInStr );
+							ctaRestrictedDates.add( checkInStr );
+							return;
+						}
+
+						const parts = checkInStr.split( '-' ).map( Number );
+						const checkInDate = new Date(
+							parts[ 0 ],
+							parts[ 1 ] - 1,
+							parts[ 2 ]
+						);
+
+						if ( isAggregated ) {
+							const rawStartRooms =
+								freeRoomsData[ checkInStr ] || [];
+							const startRooms = rawStartRooms.filter(
+								( rid ) =>
+									! (
+										roomCtaData[ checkInStr ] &&
+										roomCtaData[ checkInStr ][ rid ]
+									)
+							);
+							if ( startRooms.length === 0 ) {
+								invalidCheckIns.push( checkInStr );
+								ctaRestrictedDates.add( checkInStr );
+								return;
+							}
+
+							const achievableMins = [];
+							startRooms.forEach( ( rid ) => {
+								const reqMin = Math.max(
+									1,
+									getRoomMinStay( checkInStr, rid )
+								);
+								const maxSearch = reqMin + 14;
+								let foundMinForRoom = null;
+
+								for ( let j = 0; j < maxSearch; j++ ) {
+									const nextNightDate = new Date(
+										checkInDate.getFullYear(),
+										checkInDate.getMonth(),
+										checkInDate.getDate() + j
+									);
+									const nextNightStr =
+										formatLocalDate( nextNightDate );
+									if ( ! ( nextNightStr in freeRoomsData ) ) {
+										if ( ! isHydrated && j + 1 >= reqMin ) {
+											foundMinForRoom = j + 1;
+										}
+										break;
+									}
+									const nextFree =
+										freeRoomsData[ nextNightStr ] || [];
+									if ( ! nextFree.includes( rid ) ) {
+										break;
+									}
+
+									const candidateNights = j + 1;
+									const rStrictMax = getRoomStrictestMaxStay(
+										checkInStr,
+										candidateNights,
+										rid
+									);
+									if (
+										rStrictMax &&
+										candidateNights > rStrictMax
+									) {
+										break;
+									}
+
+									if ( candidateNights >= reqMin ) {
+										const coDate = new Date(
+											checkInDate.getFullYear(),
+											checkInDate.getMonth(),
+											checkInDate.getDate() +
+												candidateNights
+										);
+										const coDateStr =
+											formatLocalDate( coDate );
+										const dayCoOk =
+											! eligibilityData[ coDateStr ] ||
+											eligibilityData[ coDateStr ]
+												.checkout !== false;
+										const roomCoOk = ! (
+											roomCtdData[ coDateStr ] &&
+											roomCtdData[ coDateStr ][ rid ]
+										);
+										if ( dayCoOk && roomCoOk ) {
+											foundMinForRoom = candidateNights;
+											break;
+										}
+									}
+								}
+
+								if ( foundMinForRoom !== null ) {
+									achievableMins.push( foundMinForRoom );
+								}
+							} );
+
+							if ( achievableMins.length === 0 ) {
+								invalidCheckIns.push( checkInStr );
+							} else {
+								validCheckIns.push( checkInStr );
+								const minAchievable = Math.min(
+									...achievableMins
+								);
+								if (
+									minAchievable > 1 ||
+									minStayData[ checkInStr ]
+								) {
+									minStayData[ checkInStr ] = minAchievable;
+								}
+							}
+						} else {
+							const minRequired = Math.max(
+								1,
+								minStayData[ checkInStr ] || 1
+							);
+							const maxSearch = minRequired + 14;
+							let foundValidNights = null;
+
+							for ( let j = 0; j < maxSearch; j++ ) {
+								const nextNightDate = new Date(
+									checkInDate.getFullYear(),
+									checkInDate.getMonth(),
+									checkInDate.getDate() + j
+								);
+								const nextNightStr =
+									formatLocalDate( nextNightDate );
+								if ( ! ( nextNightStr in eligibilityData ) ) {
+									if (
+										! isHydrated &&
+										j + 1 >= minRequired
+									) {
+										foundValidNights = j + 1;
+									}
+									break;
+								}
+								if ( rawDisabledDates.includes( nextNightStr ) ) {
+									break;
+								}
+
+								const candidateNights = j + 1;
+								const strictMax = getStrictestSingleMaxStay(
+									checkInStr,
+									candidateNights
+								);
+								if (
+									strictMax &&
+									candidateNights > strictMax
+								) {
+									break;
+								}
+
+								if ( candidateNights >= minRequired ) {
+									const coDate = new Date(
+										checkInDate.getFullYear(),
+										checkInDate.getMonth(),
+										checkInDate.getDate() + candidateNights
+									);
+									const coDateStr = formatLocalDate( coDate );
+									if (
+										! eligibilityData[ coDateStr ] ||
+										eligibilityData[ coDateStr ]
+											.checkout !== false
+									) {
+										foundValidNights = candidateNights;
+										break;
+									}
+								}
+							}
+
+							if ( foundValidNights === null ) {
+								invalidCheckIns.push( checkInStr );
+							} else {
+								validCheckIns.push( checkInStr );
+								if ( foundValidNights > minRequired ) {
+									minStayData[ checkInStr ] =
+										foundValidNights;
+								}
+							}
+						}
+					} );
+
+					// Determine which invalid check-ins are COMPLETELY DEAD (cannot be covered by any prior valid check-in >= today)
+					const maxLookback = Math.min( 365, getMaxAdvanceDays() );
+					invalidCheckIns.forEach( ( checkInStr ) => {
+						let isCovered = false;
+						const parts = checkInStr.split( '-' ).map( Number );
+						const checkInDate = new Date(
+							parts[ 0 ],
+							parts[ 1 ] - 1,
+							parts[ 2 ]
+						);
+
+						for ( let i = 1; i <= maxLookback; i++ ) {
+							const prevDate = new Date(
+								checkInDate.getFullYear(),
+								checkInDate.getMonth(),
+								checkInDate.getDate() - i
+							);
+							const prevDateStr = formatLocalDate( prevDate );
+
+							if (
+								prevDateStr < todayStr ||
+								rawDisabledDates.includes( prevDateStr )
+							) {
+								break;
+							}
+
+							if ( validCheckIns.includes( prevDateStr ) ) {
+								const neededNights = i + 1;
+								const targetNights = Math.max(
+									neededNights,
+									minStayData[ prevDateStr ] || 1
+								);
+								if ( isAggregated ) {
+									const evalRes = evaluateAggregatedStay(
+										prevDateStr,
+										targetNights
+									);
+									if ( evalRes.validRooms.length > 0 ) {
+										isCovered = true;
+										break;
+									}
+								} else {
+									const prevMax = getStrictestSingleMaxStay(
+										prevDateStr,
+										targetNights
+									);
+									const coCheck = new Date(
+										prevDate.getFullYear(),
+										prevDate.getMonth(),
+										prevDate.getDate() + targetNights
+									);
+									const coCheckStr =
+										formatLocalDate( coCheck );
+									const coOk =
+										! eligibilityData[ coCheckStr ] ||
+										eligibilityData[ coCheckStr ]
+											.checkout !== false;
+									if (
+										coOk &&
+										( ! prevMax || targetNights <= prevMax )
+									) {
+										isCovered = true;
+										break;
+									}
+								}
+							}
+						}
+
+						if ( ctaRestrictedDates.has( checkInStr ) ) {
+							reasonData[ checkInStr ] =
+								mhbo_calendar.i18n.reason_cta ||
+								mhbo_calendar.i18n.api_err_cta ||
+								'Closed to Arrival';
+						} else {
+							const minRequired = minStayData[ checkInStr ] || 2;
+							const baseReason =
+								mhbo_calendar.i18n.api_err_min_stay ||
+								'Minimum stay is %d nights.';
+							reasonData[ checkInStr ] = baseReason
+								.replace( '%d', minRequired )
+								.replace( '%1$d', minRequired );
+						}
+						minStayReasonDates.add( checkInStr );
+
+						if ( ! isCovered ) {
+							if ( ! disabledDates.includes( checkInStr ) ) {
+								disabledDates.push( checkInStr );
+							}
+							if ( ! bookingStatusData[ checkInStr ] ) {
+								bookingStatusData[ checkInStr ] = 'confirmed';
+								minStayStatusDates.add( checkInStr );
+							}
+							// Suppress misleading afternoon-free triangle on a completely unbookable dead gap
+							if ( changeoverData[ checkInStr ] === 'checkout' ) {
+								delete changeoverData[ checkInStr ];
+								minStayStatusDates.add( checkInStr );
+							}
+						}
+					} );
+				}
 
 				function renderFlatpickr() {
 					if ( ! inlineContainer ) {
@@ -616,31 +1264,263 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								if (
 									! eligibilityData[ dateStrClicked ].checkin
 								) {
+									const isCtaBlock =
+										ctaRestrictedDates.has(
+											dateStrClicked
+										) ||
+										reasonData[ dateStrClicked ] === 'cta';
 									showInlineError(
-										mhbo_calendar.i18n
-											.checkout_only_error ||
-											'This date is restricted to check-outs only.'
+										isCtaBlock
+											? mhbo_calendar.i18n.api_err_cta ||
+													mhbo_calendar.i18n
+														.reason_cta ||
+													'Closed to Arrival'
+											: mhbo_calendar.i18n
+													.checkout_only_error ||
+													'This date is restricted to check-outs only.'
 									);
 									instance.clear();
 									return;
 								}
 
-}
+								if (
+									reasonData[ dateStrClicked ] &&
+									! disabledDates.includes( dateStrClicked )
+								) {
+									showConstraintHint(
+										reasonData[ dateStrClicked ]
+									);
+									instance.clear();
+									return;
+								}
+							}
 
-							// 3. Guard: Min/Max Stay Enforcement (PRO)
-
-// 2. Guard: Check-Out Eligibility
+							// Same-date double-click: advance to earliest valid checkout (respecting minStay & checkout eligibility)
 							if (
 								selectedDates.length === 2 &&
-								dateStrClicked &&
-								eligibilityData[ dateStrClicked ]
+								selectedDates[ 0 ].getTime() ===
+									selectedDates[ 1 ].getTime()
+							) {
+								const sameStr = instance.formatDate(
+									selectedDates[ 0 ],
+									'Y-m-d'
+								);
+								const stepNights = Math.max(
+									1,
+									minStayData[ sameStr ] || 1
+								);
+								const targetOut = new Date(
+									selectedDates[ 0 ].getFullYear(),
+									selectedDates[ 0 ].getMonth(),
+									selectedDates[ 0 ].getDate() + stepNights
+								);
+								const targetOutStr = instance.formatDate(
+									targetOut,
+									'Y-m-d'
+								);
+
+								let canAutoAdvance =
+									! eligibilityData[ targetOutStr ] ||
+									eligibilityData[ targetOutStr ].checkout !==
+										false;
+
+								if (
+									canAutoAdvance &&
+									Object.keys( freeRoomsData ).length > 0
+								) {
+									const evalSame = evaluateAggregatedStay(
+										sameStr,
+										stepNights
+									);
+									canAutoAdvance =
+										evalSame.validRooms.length > 0;
+								} else if ( canAutoAdvance ) {
+									for ( let s = 0; s < stepNights; s++ ) {
+										const mid = new Date(
+											selectedDates[ 0 ].getFullYear(),
+											selectedDates[ 0 ].getMonth(),
+											selectedDates[ 0 ].getDate() + s
+										);
+										const midStr = instance.formatDate(
+											mid,
+											'Y-m-d'
+										);
+										if (
+											rawDisabledDates.includes( midStr )
+										) {
+											canAutoAdvance = false;
+											break;
+										}
+									}
+								}
+
+								if ( ! canAutoAdvance ) {
+									instance.setDate(
+										[ selectedDates[ 0 ] ],
+										false
+									);
+									return;
+								}
+
+								selectedDates = [
+									selectedDates[ 0 ],
+									targetOut,
+								];
+								instance.setDate( selectedDates, false );
+							}
+
+							// 3. Guard: Min/Max Stay & Continuous Room Enforcement (Free, Starter & Pro)
+							if ( selectedDates.length === 2 ) {
+								const checkIn = selectedDates[ 0 ];
+								const checkOut = selectedDates[ 1 ];
+								const checkInStr = instance.formatDate(
+									checkIn,
+									'Y-m-d'
+								);
+
+								const nights = Math.round(
+									( checkOut - checkIn ) /
+										( 1000 * 60 * 60 * 24 )
+								);
+								let minRequired = minStayData[ checkInStr ];
+								let maxAllowed = getStrictestSingleMaxStay(
+									checkInStr,
+									nights
+								);
+
+								if ( Object.keys( freeRoomsData ).length > 0 ) {
+									const aggEval = evaluateAggregatedStay(
+										checkInStr,
+										nights
+									);
+									if ( aggEval.continuousRooms.length === 0 ) {
+										showInlineError(
+											mhbo_calendar.i18n
+												.select_dates_error ||
+												'No single room is continuously available for these dates.'
+										);
+										instance.setDate( [ checkIn ], false );
+										return;
+									}
+									if ( aggEval.ctdBlocked ) {
+										showInlineError(
+											mhbo_calendar.i18n.api_err_ctd ||
+												mhbo_calendar.i18n
+													.checkin_only_error ||
+												'Check-out is not permitted on the selected departure date (Closed to Departure).'
+										);
+										instance.setDate( [ checkIn ], false );
+										return;
+									}
+									if ( aggEval.validRooms.length === 0 ) {
+										if (
+											aggEval.minRequired &&
+											nights < aggEval.minRequired
+										) {
+											minRequired = aggEval.minRequired;
+										} else if (
+											aggEval.maxAllowed &&
+											nights > aggEval.maxAllowed
+										) {
+											maxAllowed = aggEval.maxAllowed;
+										}
+									} else {
+										minRequired = null;
+										maxAllowed = null;
+									}
+								}
+
+								if ( minRequired && nights < minRequired ) {
+									const earliest = new Date( checkIn );
+									earliest.setDate(
+										earliest.getDate() + minRequired
+									);
+									const earliestStr =
+										earliest.toLocaleDateString(
+											document.documentElement.lang ||
+												'en',
+											{ month: 'short', day: 'numeric' }
+										);
+									const base =
+										mhbo_calendar.i18n.api_err_min_stay ||
+										'Minimum stay is %d nights.';
+									const hint =
+										mhbo_calendar.i18n.min_stay_hint ||
+										'Please select %s or later as your check-out date.';
+									const msg =
+										base
+											.replace( '%d', minRequired )
+											.replace( '%1$d', minRequired ) +
+										' ' +
+										hint
+											.replace( '%s', earliestStr )
+											.replace( '%2$s', earliestStr );
+									showConstraintHint( msg );
+									instance.setDate( [ checkIn ], false );
+									return;
+								}
+
+								if ( maxAllowed && nights > maxAllowed ) {
+									const latest = new Date( checkIn );
+									latest.setDate(
+										latest.getDate() + maxAllowed
+									);
+									const latestStr = latest.toLocaleDateString(
+										document.documentElement.lang || 'en',
+										{ month: 'short', day: 'numeric' }
+									);
+									const base =
+										mhbo_calendar.i18n.api_err_max_stay ||
+										'Maximum stay is %d nights.';
+									const hint =
+										mhbo_calendar.i18n.max_stay_hint ||
+										'Please select %s or earlier as your check-out date.';
+									const msg =
+										base
+											.replace( '%d', maxAllowed )
+											.replace( '%1$d', maxAllowed ) +
+										' ' +
+										hint
+											.replace( '%s', latestStr )
+											.replace( '%2$s', latestStr );
+									showConstraintHint( msg );
+									instance.setDate( [ checkIn ], false );
+									return;
+								}
+
+								hideConstraintHint();
+							}
+
+							// 2. Guard: Check-Out Eligibility
+							const effectiveCheckOutStr =
+								selectedDates.length === 2
+									? instance.formatDate(
+											selectedDates[ 1 ],
+											'Y-m-d'
+									  )
+									: dateStrClicked;
+							if (
+								selectedDates.length === 2 &&
+								effectiveCheckOutStr &&
+								eligibilityData[ effectiveCheckOutStr ]
 							) {
 								if (
-									! eligibilityData[ dateStrClicked ].checkout
+									! eligibilityData[ effectiveCheckOutStr ]
+										.checkout
 								) {
+									const isCtdCo = Boolean(
+										eligibilityData[ effectiveCheckOutStr ]
+											.isCtd
+									);
 									showInlineError(
-										mhbo_calendar.i18n.checkin_only_error ||
-											'This date is restricted to check-ins only.'
+										isCtdCo
+											? mhbo_calendar.i18n.api_err_ctd ||
+													mhbo_calendar.i18n
+														.reason_ctd ||
+													'Closed to Departure'
+											: mhbo_calendar.i18n
+													.checkin_only_error ||
+													'This date is restricted to check-ins only.'
 									);
 									instance.setDate(
 										[ selectedDates[ 0 ] ],
@@ -650,30 +1530,47 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								}
 							}
 
-							// Dynamically allow next booked date as checkout date
-							if ( selectedDates.length === 1 ) {
-								pendingCheckIn = selectedDates[ 0 ];
-								const checkIn = selectedDates[ 0 ];
-								let firstBookedAfter = null;
-
-								const checkInStr = instance.formatDate(
-									checkIn,
+							function resolveCandidateState(
+								checkInDate,
+								fpInstance
+							) {
+								const checkInStr = fpInstance.formatDate(
+									checkInDate,
 									'Y-m-d'
 								);
-								let currentFreeRooms =
+								let firstBookedAfter = null;
+								const rawInitialFree =
 									freeRoomsData[ checkInStr ] || null;
+								let currentFreeRooms = Array.isArray(
+									rawInitialFree
+								)
+									? rawInitialFree.filter(
+											( r ) =>
+												! (
+													roomCtaData[ checkInStr ] &&
+													roomCtaData[ checkInStr ][
+														r
+													]
+												)
+									  )
+									: null;
+								let candidateRooms =
+									currentFreeRooms &&
+									Array.isArray( currentFreeRooms ) &&
+									currentFreeRooms.length > 0
+										? [ ...currentFreeRooms ]
+										: roomId && parseInt( roomId, 10 ) > 0
+										? [ parseInt( roomId, 10 ) ]
+										: null;
 
-								for (
-									let i = 1;
-									i <= getMaxAdvanceDays();
-									i++
-								) {
+								const maxDays = getMaxAdvanceDays();
+								for ( let i = 1; i <= maxDays; i++ ) {
 									const nextDate = new Date(
-										checkIn.getFullYear(),
-										checkIn.getMonth(),
-										checkIn.getDate() + i
+										checkInDate.getFullYear(),
+										checkInDate.getMonth(),
+										checkInDate.getDate() + i
 									);
-									const nextDateStr = instance.formatDate(
+									const nextDateStr = fpInstance.formatDate(
 										nextDate,
 										'Y-m-d'
 									);
@@ -698,21 +1595,199 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 											);
 
 										if ( intersection.length === 0 ) {
+											candidateRooms = [
+												...currentFreeRooms,
+											];
 											firstBookedAfter = nextDateStr;
 											break;
 										}
 										currentFreeRooms = intersection;
+										candidateRooms = [
+											...currentFreeRooms,
+										];
 									}
 								}
 
+								activeCandidateOverlay = {};
+
+								if (
+									firstBookedAfter &&
+									candidateRooms &&
+									candidateRooms.length > 0 &&
+									Object.keys( freeRoomsData ).length > 0
+								) {
+									const firstParts = firstBookedAfter
+										.split( '-' )
+										.map( Number );
+									const baseBlockedDate = new Date(
+										firstParts[ 0 ],
+										firstParts[ 1 ] - 1,
+										firstParts[ 2 ]
+									);
+
+									let ciHasPending = false;
+									candidateRooms.forEach( ( rid ) => {
+										const rInfo =
+											roomStatusesData[
+												firstBookedAfter
+											] &&
+											roomStatusesData[
+												firstBookedAfter
+											][ rid ];
+										if (
+											rInfo &&
+											( rInfo.status === 'pending' ||
+												rInfo.b_status === 'pending' ||
+												rInfo.co_status === 'pending' )
+										) {
+											ciHasPending = true;
+										}
+									} );
+									const firstStatus = ciHasPending
+										? 'pending'
+										: bookingStatusData[
+												firstBookedAfter
+										  ] || 'confirmed';
+									activeCandidateOverlay[
+										firstBookedAfter
+									] = {
+										changeover: 'checkin',
+										bookingStatus: firstStatus,
+										checkoutStatus: null,
+										isBlocked: false,
+									};
+
+									for (
+										let offset = 1;
+										offset <= 60;
+										offset++
+									) {
+										const curDate = new Date(
+											baseBlockedDate.getFullYear(),
+											baseBlockedDate.getMonth(),
+											baseBlockedDate.getDate() + offset
+										);
+										const curDateStr =
+											fpInstance.formatDate(
+												curDate,
+												'Y-m-d'
+											);
+										const dayMap =
+											roomStatusesData[ curDateStr ];
+
+										let allBookedPm = true;
+										let hasPendingPm = false;
+										let hasCheckoutAm = false;
+										let hasPendingCo = false;
+
+										candidateRooms.forEach( ( rid ) => {
+											const rInfo = ( dayMap &&
+												dayMap[ rid ] ) || {
+												status: 'available',
+											};
+											if (
+												rInfo.status === 'available'
+											) {
+												allBookedPm = false;
+												if ( rInfo.is_checkout ) {
+													hasCheckoutAm = true;
+													if (
+														rInfo.co_status ===
+															'pending' ||
+														rInfo.b_status ===
+															'pending'
+													) {
+														hasPendingCo = true;
+													}
+												}
+											} else if (
+												rInfo.status === 'pending' ||
+												rInfo.b_status === 'pending'
+											) {
+												hasPendingPm = true;
+											}
+										} );
+
+										if ( allBookedPm ) {
+											const bStat = hasPendingPm
+												? 'pending'
+												: 'confirmed';
+											activeCandidateOverlay[
+												curDateStr
+											] = {
+												changeover: null,
+												bookingStatus: bStat,
+												checkoutStatus: null,
+												isBlocked: true,
+											};
+										} else {
+											if ( hasCheckoutAm ) {
+												const coStat =
+													hasPendingCo || hasPendingPm
+														? 'pending'
+														: 'confirmed';
+												activeCandidateOverlay[
+													curDateStr
+												] = {
+													changeover: 'checkout',
+													bookingStatus: coStat,
+													checkoutStatus: coStat,
+													isBlocked: false,
+												};
+											}
+											break;
+										}
+									}
+								}
+
+								return {
+									checkInStr,
+									firstBookedAfter,
+								};
+							}
+
+							// Dynamically allow next booked date as checkout date ONLY if morning checkout is eligible
+							if ( selectedDates.length === 1 ) {
+								pendingCheckIn = selectedDates[ 0 ];
+								const { checkInStr, firstBookedAfter } =
+									resolveCandidateState(
+										selectedDates[ 0 ],
+										instance
+									);
+
 								let newDisabled = [ ...disabledDates ];
 								if ( firstBookedAfter ) {
-									newDisabled = disabledDates.filter(
-										( d ) =>
-											d < checkInStr ||
-											d > firstBookedAfter
-									);
-									instance.set( 'maxDate', firstBookedAfter );
+									const canCheckoutBoundary =
+										! eligibilityData[ firstBookedAfter ] ||
+										eligibilityData[ firstBookedAfter ]
+											.checkout !== false;
+									if ( canCheckoutBoundary ) {
+										newDisabled = disabledDates.filter(
+											( d ) =>
+												d < checkInStr ||
+												d > firstBookedAfter
+										);
+										instance.set(
+											'maxDate',
+											firstBookedAfter
+										);
+									} else {
+										const fParts = firstBookedAfter
+											.split( '-' )
+											.map( Number );
+										const prevMax = new Date(
+											fParts[ 0 ],
+											fParts[ 1 ] - 1,
+											fParts[ 2 ] - 1
+										);
+										instance.set(
+											'maxDate',
+											instance.formatDate(
+												prevMax,
+												'Y-m-d'
+											)
+										);
+									}
 								} else {
 									instance.set(
 										'maxDate',
@@ -728,44 +1803,19 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 									) !== JSON.stringify( newDisabled )
 								) {
 									instance.set( 'disable', newDisabled );
+								} else {
+									instance.redraw();
 								}
 							} else if ( selectedDates.length === 2 ) {
 								pendingCheckIn = null;
+								resolveCandidateState(
+									selectedDates[ 0 ],
+									instance
+								);
 								instance.set(
 									'maxDate',
 									new Date().fp_incr( getMaxAdvanceDays() )
 								);
-
-								if (
-									selectedDates[ 0 ].getTime() ===
-									selectedDates[ 1 ].getTime()
-								) {
-									const nextDay = new Date(
-										selectedDates[ 0 ]
-									);
-									nextDay.setDate( nextDay.getDate() + 1 );
-
-									instance.setDate(
-										[ selectedDates[ 0 ], nextDay ],
-										false
-									);
-
-									const checkOutStr = instance.formatDate(
-										nextDay,
-										'Y-m-d'
-									);
-									const newDisabledFinal =
-										disabledDates.filter(
-											( d ) => d !== checkOutStr
-										);
-									instance.set( 'disable', newDisabledFinal );
-
-									updateBookingForm( [
-										selectedDates[ 0 ],
-										nextDay,
-									] );
-									return;
-								}
 
 								const checkOutStr2 = instance.formatDate(
 									selectedDates[ 1 ],
@@ -775,10 +1825,12 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 									( d ) => d !== checkOutStr2
 								);
 								instance.set( 'disable', newDisabledFinal2 );
+								instance.redraw();
 
 								updateBookingForm( selectedDates );
 							} else {
 								pendingCheckIn = null;
+								activeCandidateOverlay = {};
 								instance.set(
 									'maxDate',
 									new Date().fp_incr( getMaxAdvanceDays() )
@@ -824,8 +1876,28 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							const today = new Date();
 							today.setHours( 0, 0, 0, 0 );
 
+							// Dynamic Candidate Room Resolution for Aggregated Search (room_id = 0)
+							let effectiveChangeover =
+								changeoverData[ date ] || null;
+							let effectiveBookingStatus =
+								bookingStatusData[ date ] || null;
+							let effectiveCheckoutStatus =
+								checkoutStatusData[ date ] || null;
+							let isCandidateBlocked = false;
+
+							if (
+								activeCandidateOverlay &&
+								activeCandidateOverlay[ date ]
+							) {
+								const ov = activeCandidateOverlay[ date ];
+								effectiveChangeover = ov.changeover;
+								effectiveBookingStatus = ov.bookingStatus;
+								effectiveCheckoutStatus = ov.checkoutStatus;
+								isCandidateBlocked = Boolean( ov.isBlocked );
+							}
+
 							// Half-day styling for checkin/checkout changeover dates
-							const changeover = changeoverData[ date ];
+							const changeover = effectiveChangeover;
 							if (
 								changeover &&
 								dayElem.dateObj >= today
@@ -835,49 +1907,56 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								);
 
 								if ( changeover === 'both' ) {
-									const coStatus = checkoutStatusData[ date ] || 'confirmed';
-									const ciStatus = bookingStatusData[ date ] || 'confirmed';
-									dayElem.classList.add( 'mhbo-checkout-' + coStatus );
-									dayElem.classList.add( 'mhbo-checkin-' + ciStatus );
-									dayElem.classList.add( 'mhbo-booking-' + ciStatus );
+									const coStatus =
+										effectiveCheckoutStatus || 'confirmed';
+									const ciStatus =
+										effectiveBookingStatus || 'confirmed';
+									dayElem.classList.add(
+										'mhbo-checkout-' + coStatus
+									);
+									dayElem.classList.add(
+										'mhbo-checkin-' + ciStatus
+									);
+									dayElem.classList.add(
+										'mhbo-booking-' + ciStatus
+									);
 									if ( rawCheckoutStatusData[ date ] ) {
-										dayElem.classList.add( 'mhbo-checkout-' + rawCheckoutStatusData[ date ] );
+										dayElem.classList.add(
+											'mhbo-checkout-' +
+												rawCheckoutStatusData[ date ]
+										);
 									}
 									if ( rawBookingStatusData[ date ] ) {
-										dayElem.classList.add( 'mhbo-booking-' + rawBookingStatusData[ date ] );
+										dayElem.classList.add(
+											'mhbo-booking-' +
+												rawBookingStatusData[ date ]
+										);
 									}
 								} else if ( changeover === 'checkout' ) {
-									const coStatus = checkoutStatusData[ date ] || bookingStatusData[ date ] || 'confirmed';
-									dayElem.classList.add( 'mhbo-booking-' + coStatus );
-									dayElem.classList.add( 'mhbo-checkout-' + coStatus );
+									const coStatus =
+										effectiveCheckoutStatus ||
+										effectiveBookingStatus ||
+										'confirmed';
+									dayElem.classList.add(
+										'mhbo-booking-' + coStatus
+									);
+									dayElem.classList.add(
+										'mhbo-checkout-' + coStatus
+									);
 									if ( rawCheckoutStatusData[ date ] ) {
-										dayElem.classList.add( 'mhbo-booking-' + rawCheckoutStatusData[ date ] );
+										dayElem.classList.add(
+											'mhbo-booking-' +
+												rawCheckoutStatusData[ date ]
+										);
 									}
 								} else if ( changeover === 'checkin' ) {
-									const ciStatus = bookingStatusData[ date ] || 'confirmed';
-									dayElem.classList.add( 'mhbo-booking-' + ciStatus );
-									dayElem.classList.add( 'mhbo-checkin-' + ciStatus );
-									if ( rawBookingStatusData[ date ] ) {
-										dayElem.classList.add( 'mhbo-booking-' + rawBookingStatusData[ date ] );
-									}
-								}
-							}
-
-							// Apply booking status CSS class for full booked days
-							if (
-								! changeover &&
-								bookingStatusData[ date ] &&
-								( dayElem.classList.contains(
-									'flatpickr-disabled'
-								) ||
-									dayElem.classList.contains(
-										'mhbo-unbookable'
-									) )
-							) {
-								if ( dayElem.dateObj >= today ) {
+									const ciStatus =
+										effectiveBookingStatus || 'confirmed';
 									dayElem.classList.add(
-										'mhbo-booking-' +
-											bookingStatusData[ date ]
+										'mhbo-booking-' + ciStatus
+									);
+									dayElem.classList.add(
+										'mhbo-checkin-' + ciStatus
 									);
 									if ( rawBookingStatusData[ date ] ) {
 										dayElem.classList.add(
@@ -886,6 +1965,42 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 										);
 									}
 								}
+							}
+
+							// Apply booking status CSS class for full booked days
+							if (
+								! changeover &&
+								effectiveBookingStatus &&
+								( isCandidateBlocked ||
+									dayElem.classList.contains(
+										'flatpickr-disabled'
+									) ||
+									dayElem.classList.contains(
+										'mhbo-unbookable'
+									) )
+							) {
+								if ( dayElem.dateObj >= today ) {
+									dayElem.classList.add(
+										'mhbo-booking-' +
+											effectiveBookingStatus
+									);
+									if ( isCandidateBlocked ) {
+										dayElem.classList.add(
+											'mhbo-candidate-blocked'
+										);
+									}
+									if ( rawBookingStatusData[ date ] ) {
+										dayElem.classList.add(
+											'mhbo-booking-' +
+												rawBookingStatusData[ date ]
+										);
+									}
+								}
+							}
+
+							// Keep bookingStatusData synced for tooltip and accessibility
+							if ( effectiveBookingStatus ) {
+								bookingStatusData[ date ] = effectiveBookingStatus;
 							}
 
 							// Accessible state annotation (WCAG 2.2 AA)
@@ -898,9 +2013,9 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								ariaDesc = ', Check-out Only';
 							} else if ( changeover === 'checkin' ) {
 								ariaDesc = ', Check-in Only';
-							} else if ( bookingStatusData[ date ] ) {
+							} else if ( effectiveBookingStatus ) {
 								ariaDesc =
-									bookingStatusData[ date ] === 'pending'
+									effectiveBookingStatus === 'pending'
 										? ', Provisional / Pending'
 										: ', Booked';
 							}
@@ -973,7 +2088,79 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							return;
 						}
 
-if ( ! picker || picker.selectedDates.length !== 1 ) {
+						if (
+							dayElem.classList.contains(
+								'flatpickr-disabled'
+							) &&
+							dayElem.dateObj
+						) {
+							const disabledDateStr = picker
+								? picker.formatDate( dayElem.dateObj, 'Y-m-d' )
+								: '';
+							const reason = disabledDateStr
+								? reasonData[ disabledDateStr ]
+								: null;
+							const blockReason =
+								reason ||
+								( bookingStatusData[ disabledDateStr ]
+									? bookingStatusData[ disabledDateStr ]
+									: null );
+							if ( blockReason ) {
+								const reasonLabels = {
+									booked:
+										mhbo_calendar.i18n.reason_booked ||
+										'Booked',
+									confirmed:
+										mhbo_calendar.i18n.reason_booked ||
+										'Booked',
+									pending:
+										mhbo_calendar.i18n.status_pending ||
+										'Provisional / Pending',
+									manual:
+										mhbo_calendar.i18n.reason_manual ||
+										'Unavailable',
+									maintenance:
+										mhbo_calendar.i18n.reason_maintenance ||
+										'Maintenance',
+									turnover:
+										mhbo_calendar.i18n.reason_turnover ||
+										'Turnover Day (No Check-in)',
+									cta:
+										mhbo_calendar.i18n.reason_cta ||
+										'Closed to Arrival',
+									ctd:
+										mhbo_calendar.i18n.reason_ctd ||
+										'Closed to Departure',
+								};
+								const nSpan = tooltip.querySelector(
+									'.mhbo-tooltip-nights'
+								);
+								if ( nSpan ) {
+									nSpan.textContent = '';
+								}
+								const pSpan = tooltip.querySelector(
+									'.mhbo-tooltip-price'
+								);
+								if ( pSpan ) {
+									pSpan.style.display = 'none';
+								}
+								const cSpan = tooltip.querySelector(
+									'.mhbo-tooltip-constraint'
+								);
+								if ( cSpan ) {
+									cSpan.textContent =
+										reasonLabels[ blockReason ] || blockReason;
+									cSpan.style.display = '';
+								}
+								tooltip.style.left = e.clientX + 'px';
+								tooltip.style.top = e.clientY + 'px';
+								tooltip.classList.add( 'mhbo-visible' );
+								tooltip.classList.remove( 'mhbo-tooltip-warn' );
+								return;
+							}
+						}
+
+						if ( ! picker || picker.selectedDates.length !== 1 ) {
 							tooltip.classList.remove( 'mhbo-visible' );
 							wrapper
 								.querySelectorAll( '.mhbo-range-hover' )
@@ -1068,7 +2255,78 @@ if ( ! picker || picker.selectedDates.length !== 1 ) {
 							}
 						}
 
-tooltip.style.left = e.clientX + 'px';
+						const checkInStr = picker.formatDate( start, 'Y-m-d' );
+						let minReqHover = minStayData[ checkInStr ];
+						let maxAllHover = getStrictestSingleMaxStay(
+							checkInStr,
+							nights
+						);
+						let ctdHoverWarn = false;
+						if ( Object.keys( freeRoomsData ).length > 0 ) {
+							const hoverEval = evaluateAggregatedStay(
+								checkInStr,
+								nights
+							);
+							if ( hoverEval.validRooms.length > 0 ) {
+								minReqHover = null;
+								maxAllHover = null;
+							} else if ( hoverEval.ctdBlocked ) {
+								ctdHoverWarn = true;
+							} else if ( hoverEval.continuousRooms.length > 0 ) {
+								minReqHover = hoverEval.minRequired;
+								maxAllHover = hoverEval.maxAllowed;
+							}
+						} else {
+							const endHoverStr = picker.formatDate(
+								end,
+								'Y-m-d'
+							);
+							if (
+								eligibilityData[ endHoverStr ] &&
+								eligibilityData[ endHoverStr ].checkout ===
+									false
+							) {
+								ctdHoverWarn = true;
+							}
+						}
+						const constraintSpan = tooltip.querySelector(
+							'.mhbo-tooltip-constraint'
+						);
+
+						if ( ctdHoverWarn ) {
+							if ( constraintSpan ) {
+								constraintSpan.textContent =
+									mhbo_calendar.i18n.reason_ctd ||
+									'Closed to Departure';
+								constraintSpan.style.display = '';
+							}
+							tooltip.classList.add( 'mhbo-tooltip-warn' );
+						} else if ( minReqHover && nights < minReqHover ) {
+							if ( constraintSpan ) {
+								constraintSpan.textContent = (
+									mhbo_calendar.i18n.tooltip_min_hint ||
+									'⚠ Min stay: %d nights'
+								).replace( '%d', minReqHover );
+								constraintSpan.style.display = '';
+							}
+							tooltip.classList.add( 'mhbo-tooltip-warn' );
+						} else if ( maxAllHover && nights > maxAllHover ) {
+							if ( constraintSpan ) {
+								constraintSpan.textContent = (
+									mhbo_calendar.i18n.tooltip_max_hint ||
+									'⚠ Max stay: %d nights'
+								).replace( '%d', maxAllHover );
+								constraintSpan.style.display = '';
+							}
+							tooltip.classList.add( 'mhbo-tooltip-warn' );
+						} else {
+							if ( constraintSpan ) {
+								constraintSpan.style.display = 'none';
+							}
+							tooltip.classList.remove( 'mhbo-tooltip-warn' );
+						}
+
+						tooltip.style.left = e.clientX + 'px';
 						tooltip.style.top = e.clientY + 'px';
 						tooltip.classList.add( 'mhbo-visible' );
 					} );
@@ -1146,6 +2404,38 @@ tooltip.style.left = e.clientX + 'px';
 							mainOut.dispatchEvent(
 								new Event( 'change', { bubbles: true } )
 							);
+						}
+
+						const summaryScope =
+							mainForm.closest( '.mhbo-booking-wrapper' ) ||
+							document;
+						const dateValEls = summaryScope.querySelectorAll(
+							'.mhbo-booking-dates .mhbo-date-val'
+						);
+						if ( dateValEls.length >= 2 ) {
+							const fmtOpts = {
+								month: 'short',
+								day: 'numeric',
+								year: 'numeric',
+							};
+							const docLang =
+								document.documentElement.lang || 'en-US';
+							dateValEls[ 0 ].textContent =
+								start.toLocaleDateString( docLang, fmtOpts );
+							dateValEls[ 1 ].textContent =
+								end.toLocaleDateString( docLang, fmtOpts );
+						}
+						const nightsCountEl = summaryScope.querySelector(
+							'.mhbo-booking-dates .mhbo-nights-count'
+						);
+						if ( nightsCountEl ) {
+							const diffNights = Math.max(
+								1,
+								Math.round(
+									( end - start ) / ( 1000 * 60 * 60 * 24 )
+								)
+							);
+							nightsCountEl.textContent = String( diffNights );
 						}
 					}
 
@@ -1281,7 +2571,14 @@ tooltip.style.left = e.clientX + 'px';
 
 			const form = wrapper.querySelector( '.mhbo-selection-form' );
 			const roomId = wrapper.dataset.roomId;
-			const action = form ? form.getAttribute( 'action' ) : '';
+			const action = form
+				? form.getAttribute( 'action' )
+				: ( wrapper.dataset.actionUrl ||
+					( typeof mhbo_calendar !== 'undefined' &&
+					mhbo_calendar.booking_url
+						? mhbo_calendar.booking_url
+						: '' ) ||
+					'' );
 			const showError = wrapper._mhboErrorHandler || alert;
 
 			const picker = wrapper._mhboPicker;
@@ -1326,7 +2623,50 @@ tooltip.style.left = e.clientX + 'px';
 				return;
 			}
 
-// Modal mode: dispatch custom event
+			const minStayFinal = wrapper._mhboMinStayData || {};
+			const maxStayFinal = wrapper._mhboMaxStayData || {};
+			if (
+				minStayFinal[ checkIn ] !== undefined ||
+				maxStayFinal[ checkIn ] !== undefined
+			) {
+				const ciParts = checkIn.split( '-' );
+				const coParts = checkOut.split( '-' );
+				const nightsFinal = Math.round(
+					( new Date( coParts[ 0 ], coParts[ 1 ] - 1, coParts[ 2 ] ) -
+						new Date(
+							ciParts[ 0 ],
+							ciParts[ 1 ] - 1,
+							ciParts[ 2 ]
+						) ) /
+						86400000
+				);
+				const minReq = minStayFinal[ checkIn ];
+				const maxAll = maxStayFinal[ checkIn ];
+				if ( minReq && nightsFinal < minReq ) {
+					showError(
+						(
+							mhbo_calendar.i18n.api_err_min_stay ||
+							'Minimum stay is %d nights.'
+						)
+							.replace( '%d', minReq )
+							.replace( '%1$d', minReq )
+					);
+					return;
+				}
+				if ( maxAll && nightsFinal > maxAll ) {
+					showError(
+						(
+							mhbo_calendar.i18n.api_err_max_stay ||
+							'Maximum stay is %d nights.'
+						)
+							.replace( '%d', maxAll )
+							.replace( '%1$d', maxAll )
+					);
+					return;
+				}
+			}
+
+			// Modal mode: dispatch custom event
 			const modalMode =
 				wrapper.dataset.modalMode === '1' ||
 				wrapper.dataset.modalMode === 'true';
@@ -1366,11 +2706,22 @@ tooltip.style.left = e.clientX + 'px';
 				form.submit();
 			} else {
 				let finalUrl;
+				const resolvedAction =
+					action && action !== '#' && action !== ''
+						? action
+						: ( wrapper.dataset.actionUrl ||
+							( typeof mhbo_calendar !== 'undefined' &&
+							mhbo_calendar.booking_url
+								? mhbo_calendar.booking_url
+								: '' ) ||
+							'' );
 				try {
 					const base = window.location.origin;
 					const url =
-						action && action !== '#' && action !== ''
-							? new URL( action, base )
+						resolvedAction &&
+						resolvedAction !== '#' &&
+						resolvedAction !== ''
+							? new URL( resolvedAction, base )
 							: new URL( window.location.href );
 
 					url.searchParams.set( 'room_id', roomId );
@@ -1391,10 +2742,14 @@ tooltip.style.left = e.clientX + 'px';
 				} catch ( err ) {
 					debugLog( 'Redirect error:', err );
 					const sep =
-						action && action.indexOf( '?' ) !== -1 ? '&' : '?';
+						resolvedAction && resolvedAction.indexOf( '?' ) !== -1
+							? '&'
+							: '?';
 					const baseUrl =
-						action && action !== '#' && action !== ''
-							? action
+						resolvedAction &&
+						resolvedAction !== '#' &&
+						resolvedAction !== ''
+							? resolvedAction
 							: window.location.href.split( '?' )[ 0 ];
 					finalUrl =
 						baseUrl +
@@ -1419,10 +2774,12 @@ tooltip.style.left = e.clientX + 'px';
 		document.documentElement.dataset.mhboClickAttached = 'true';
 	}
 
-	// Bootstrap when DOM is ready
+	// Bootstrap when DOM is ready and when Gutenberg Interactivity blocks mount
 	if ( document.readyState === 'loading' ) {
 		document.addEventListener( 'DOMContentLoaded', initAllCalendars );
 	} else {
 		initAllCalendars();
 	}
+	document.addEventListener( 'mhbo_init_calendar', initAllCalendars );
+	document.addEventListener( 'mhbo_init_form', initAllCalendars );
 } )();
