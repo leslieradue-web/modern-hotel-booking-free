@@ -19,7 +19,7 @@
       "step": "unzip",
       "zipFile": {
         "resource": "url",
-        "url": "https://raw.githubusercontent.com/leslieradue-web/modern-hotel-booking-free/main/playground.zip?v=3.0.2.3"
+        "url": "https://raw.githubusercontent.com/leslieradue-web/modern-hotel-booking-free/main/playground.zip?v=3.0.2.4"
       },
       "extractToPath": "/wordpress"
     }
