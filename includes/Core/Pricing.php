@@ -1376,7 +1376,7 @@ return true;
 			'balance_status'          => $is_full ? 'collected' : 'pending',
 			'payment_status'          => $calc_status,
 			'payment_received'        => $is_full ? 1 : 0,
-			'deposit_received'        => ( 'deposit' === $sanitized_type || ! empty( $booking->deposit_received ) || $total_paid_m->isPositive() ) ? 1 : 0,
+			'deposit_received'        => ( ! $is_full && ( 'deposit' === $sanitized_type || ! empty( $booking->deposit_received ) || $total_paid_m->isPositive() ) ) ? 1 : 0,
 			'payment_transaction_id'  => implode( ', ', $existing_txns ),
 			'payment_date'            => empty( $booking->payment_date ) ? HotelTime::now_mysql() : $booking->payment_date,
 		);

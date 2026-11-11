@@ -2005,18 +2005,22 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 						);
 
 						$reloaded_rem_m = ( $reloaded && isset( $reloaded->remaining_balance ) ) ? Money::fromDecimal( (string) $reloaded->remaining_balance, $tender_cur ) : null;
-						if ( 'refund' === $tender_type || $tender_money->isNegative() ) {
-							$guest_ok         = Email::send_payment_confirmation_email( $record_bid, $payment_payload, 'refund' );
-							$admin_ok         = Email::send_admin_payment_notification( $record_bid, $payment_payload );
-							$email_dispatched = ( $guest_ok || $admin_ok );
-						} else {
-							$guest_ok = false;
-							
-							if ( ! $guest_ok ) {
-								$guest_ok = Email::send_payment_confirmation_email( $record_bid, $payment_payload, $tender_type );
+						try {
+							if ( 'refund' === $tender_type || $tender_money->isNegative() ) {
+								$guest_ok         = Email::send_payment_confirmation_email( $record_bid, $payment_payload, 'refund' );
+								$admin_ok         = Email::send_admin_payment_notification( $record_bid, $payment_payload );
+								$email_dispatched = ( $guest_ok || $admin_ok );
+							} else {
+								$guest_ok = false;
+								
+								if ( ! $guest_ok ) {
+									$guest_ok = Email::send_payment_confirmation_email( $record_bid, $payment_payload, $tender_type );
+								}
+								$admin_ok         = Email::send_admin_payment_notification( $record_bid, $payment_payload );
+								$email_dispatched = ( $guest_ok || $admin_ok );
 							}
-							$admin_ok         = Email::send_admin_payment_notification( $record_bid, $payment_payload );
-							$email_dispatched = ( $guest_ok || $admin_ok );
+						} catch ( \Throwable $e ) {
+							$email_dispatched = false;
 						}
 					}
 
@@ -2034,6 +2038,8 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 				} else {
 					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Failed to record folio transaction. Please try again.', 'modern-hotel-booking' ) . '</p></div>';
 				}
+			} else {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Please enter a valid payment amount greater than zero.', 'modern-hotel-booking' ) . '</p></div>';
 			}
 		}
 
@@ -2183,6 +2189,14 @@ $calc_curr       = $curr_code;
 			$old_pay_m  = ( null !== $old_amts && isset( $old_amts['received'] ) ) ? $old_amts['received'] : Money::fromDecimal( (string) ( $old_booking->payment_amount ?? '0' ), $calc_curr );
 			$dep_edit_m = Money::fromDecimal( (string) $deposit_amount_edit, $calc_curr );
 
+			if ( 0 !== $deposit_received && ! $dep_edit_m->isPositive() && class_exists( Pricing::class ) ) {
+				$first_night_m = ( isset( $calc['daily_prices'][0] ) && $calc['daily_prices'][0] instanceof Money ) ? $calc['daily_prices'][0] : Money::fromCents( 0, $calc_curr );
+				$dep_calc      = Pricing::calculate_deposit_money( $total_money_val, $first_night_m );
+				if ( false !== $dep_calc && isset( $dep_calc['deposit_money'] ) && $dep_calc['deposit_money'] instanceof Money && $dep_calc['deposit_money']->isPositive() ) {
+					$dep_edit_m = $dep_calc['deposit_money'];
+				}
+			}
+
 			if ( isset( $_POST['payment_amount'] ) && '' !== $_POST['payment_amount'] ) {
 				$final_pay_m = Money::fromDecimal( sanitize_text_field( (string) wp_unslash( $_POST['payment_amount'] ) ), $calc_curr );
 			} elseif ( 0 !== $payment_received && ! $old_pay_m->isPositive() ) {
@@ -2198,6 +2212,7 @@ $calc_curr       = $curr_code;
 				// Paid in full or overpaid
 				$remaining_balance_str = '0.00';
 				$payment_received      = 1;
+				$deposit_received      = 0;
 				if ( 'pending' === $payment_status || 'deposit_paid' === $payment_status ) {
 					$payment_status = 'completed';
 				}
@@ -2214,25 +2229,30 @@ $calc_curr       = $curr_code;
 				}
 			}
 
-			// If manual payment amount input changed compared to DB, record audit adjustment to folio ledger
+			// If manual payment amount input changed compared to DB, or if the booking lacks ledger transactions, record audit adjustment to folio ledger
+			$existing_ledger_txns  = class_exists( Pricing::class ) ? Pricing::get_payment_ledger( $old_booking ) : array();
+			$has_ledger_txns       = ! empty( $existing_ledger_txns );
+			$should_record_initial = ! $has_ledger_txns && $final_pay_m->isPositive() && ( 1 === $payment_received || 1 === $deposit_received );
+
 			$pay_diff_m = $final_pay_m->subtract( $old_pay_m );
-			if ( ! $pay_diff_m->isZero() && class_exists( Pricing::class ) ) {
+			if ( ( ! $pay_diff_m->isZero() || $should_record_initial ) && class_exists( Pricing::class ) ) {
 				$current_user = wp_get_current_user();
 				$staff_label  = ( $current_user && $current_user->exists() ) ? $current_user->display_name : 'Staff';
-				if ( $pay_diff_m->isPositive() ) {
+				$rec_amount_m = ( $should_record_initial && $pay_diff_m->isZero() ) ? $final_pay_m : $pay_diff_m;
+				if ( $rec_amount_m->isPositive() ) {
 					Pricing::record_payment(
 						$booking_id,
-						$pay_diff_m->toDecimal(),
+						$rec_amount_m->toDecimal(),
 						$payment_method,
-						'balance',
+						( 1 === $payment_received ) ? 'balance' : 'deposit',
 						'',
 						'Manual Payment Adjustment',
 						'Staff: ' . $staff_label
 					);
-				} else {
+				} elseif ( $rec_amount_m->isNegative() ) {
 					Pricing::record_payment(
 						$booking_id,
-						$pay_diff_m->abs()->toDecimal(),
+						$rec_amount_m->abs()->toDecimal(),
 						$payment_method,
 						'refund',
 						'',
@@ -4057,7 +4077,7 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 											<td>
 												<label style="display:flex; align-items:center; gap:8px;">
 													<input type="hidden" name="deposit_received" value="0">
-													<input type="checkbox" name="deposit_received" id="mhbo_edit_deposit_received" value="1" <?php checked( (bool) ( $edit_data->deposit_received ?? false ) ); ?>>
+													<input type="checkbox" name="deposit_received" id="mhbo_edit_deposit_received" value="1" <?php checked( ( ! ( $edit_amts && $edit_amts['is_paid'] ) ) && (bool) ( $edit_data->deposit_received ?? false ) ); ?>>
 													<span><?php echo esc_html( I18n::get_label( 'label_mark_deposit_rcvd' ) ); ?></span>
 												</label>
 											</td>
