@@ -2197,12 +2197,27 @@ $calc_curr       = $curr_code;
 				}
 			}
 
-			if ( isset( $_POST['payment_amount'] ) && '' !== $_POST['payment_amount'] ) {
-				$final_pay_m = Money::fromDecimal( sanitize_text_field( (string) wp_unslash( $_POST['payment_amount'] ) ), $calc_curr );
-			} elseif ( 0 !== $payment_received && ! $old_pay_m->isPositive() ) {
-				$final_pay_m = $total_money_val;
-			} elseif ( 0 !== $deposit_received && ! $old_pay_m->isPositive() ) {
-				$final_pay_m = $dep_edit_m;
+			$submitted_pay_raw = isset( $_POST['payment_amount'] ) ? sanitize_text_field( (string) wp_unslash( $_POST['payment_amount'] ) ) : '';
+			$has_submitted_pay = '' !== $submitted_pay_raw;
+			$submitted_pay_m   = $has_submitted_pay ? Money::fromDecimal( $submitted_pay_raw, $calc_curr ) : Money::fromCents( 0, $calc_curr );
+
+			if ( 0 !== $payment_received ) {
+				// Admin explicitly checked "Mark full payment as received"
+				if ( $submitted_pay_m->greaterThanOrEqual( $total_money_val ) && $total_money_val->isPositive() ) {
+					$final_pay_m = $submitted_pay_m;
+				} else {
+					$final_pay_m = $total_money_val;
+				}
+			} elseif ( 0 !== $deposit_received ) {
+				// Admin explicitly checked "Mark full deposit as received"
+				if ( $submitted_pay_m->isPositive() && $submitted_pay_m->lessThan( $total_money_val ) ) {
+					$final_pay_m = $submitted_pay_m;
+				} else {
+					$final_pay_m = $dep_edit_m;
+				}
+			} elseif ( $has_submitted_pay ) {
+				// Admin manually entered a specific payment amount
+				$final_pay_m = $submitted_pay_m;
 			} else {
 				$final_pay_m = $old_pay_m;
 			}
@@ -2224,8 +2239,19 @@ $calc_curr       = $curr_code;
 				$rem_diff              = $total_money_val->subtract( $final_pay_m );
 				$remaining_balance_str = $rem_diff->isPositive() ? $rem_diff->toDecimal() : '0.00';
 				$payment_received      = 0;
-				if ( 'completed' === $payment_status ) {
-					$payment_status = $final_pay_m->isPositive() ? 'deposit_paid' : 'pending';
+				if ( 0 !== $deposit_received || $final_pay_m->isPositive() ) {
+					$deposit_received = 1;
+					if ( 'pending' === $payment_status || 'completed' === $payment_status ) {
+						$payment_status = 'deposit_paid';
+					}
+					if ( 'pending' === $new_status ) {
+						$new_status = 'confirmed';
+					}
+				} else {
+					$deposit_received = 0;
+					if ( 'completed' === $payment_status ) {
+						$payment_status = 'pending';
+					}
 				}
 			}
 
@@ -2283,9 +2309,11 @@ $calc_curr       = $curr_code;
 						'check_out'              => $check_out,
 						'total_price'            => $total_money_val->toDecimal(),
 						'remaining_balance'      => $remaining_balance_str,
+						'balance_expected_amount'=> $remaining_balance_str,
+						'balance_status'         => ( $final_pay_m->compare( $total_money_val ) >= 0 ) ? 'collected' : 'pending',
 						'discount_amount'        => $edit_coupon_disc_m->toDecimal(),
 						'deposit_amount'         => $dep_edit_m->toDecimal(),
-						'deposit_received'       => ( isset( $_POST['deposit_received'] ) && sanitize_text_field( wp_unslash( $_POST['deposit_received'] ) ) === '1' ) ? 1 : 0,
+						'deposit_received'       => $deposit_received,
 						'payment_method'         => $payment_method,
 						'payment_status'         => 0 !== $payment_received ? 'completed' : $payment_status,
 						'payment_received'       => $payment_received,
@@ -2334,6 +2362,7 @@ if ( $old_status !== $new_status ) {
 				}
 
 				Cache::invalidate_booking( $booking_id, $room_id );
+				Pricing::clear_payment_amounts_cache();
 
 				// Invalidate dashboard statistics transients
 				$today_date = wp_date( 'Y-m-d' );

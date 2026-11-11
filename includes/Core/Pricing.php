@@ -742,6 +742,7 @@ return true;
 				(string) ( $booking->payment_amount ?? '' ) .
 				(string) ( $booking->remaining_balance ?? '' ) .
 				(string) ( $booking->payment_status ?? '' ) .
+				(string) ( $booking->payment_received ?? '' ) .
 				(string) ( $booking->deposit_received ?? '' ) .
 				(string) ( $booking->total_price ?? '' )
 			);
@@ -808,6 +809,9 @@ return true;
 			$received = $ledger_total;
 		} elseif ( $payment->isPositive() ) {
 			$received = $payment;
+		} elseif ( (bool) ( $booking->payment_received ?? false ) && $total->isPositive() ) {
+			// Legacy row explicitly marked payment_received = 1
+			$received = $total;
 		} elseif ( (bool) ( $booking->deposit_received ?? false ) && $deposit->isPositive() ) {
 			// Legacy row explicitly marked deposit_received = 1
 			$received = $deposit;
