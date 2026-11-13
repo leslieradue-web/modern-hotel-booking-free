@@ -230,7 +230,28 @@ class CheckAvailability {
 			);
 		}
 
-// Fetch rooms from DB (mirrors RestApi::get_availability).
+		$global_min_stay = (int) \get_option( 'mhbo_global_min_stay', 0 );
+		$global_max_stay = (int) \get_option( 'mhbo_global_max_stay', 0 );
+		if ( $global_min_stay > 0 && $nights < $global_min_stay ) {
+			return array(
+				'available'    => false,
+				'rooms'        => array(),
+				'nights_count' => $nights,
+				// translators: 1: minimum nights, 2: requested nights
+				'message'      => \sprintf( \__( 'The hotel has a minimum stay requirement of %1$d nights. You requested %2$d night(s). Please adjust the dates and try again.', 'modern-hotel-booking' ), $global_min_stay, $nights ),
+			);
+		}
+		if ( $global_max_stay > 0 && $nights > $global_max_stay ) {
+			return array(
+				'available'    => false,
+				'rooms'        => array(),
+				'nights_count' => $nights,
+				// translators: 1: maximum nights, 2: requested nights
+				'message'      => \sprintf( \__( 'The hotel has a maximum stay limit of %1$d nights. You requested %2$d night(s). Please adjust the dates and try again.', 'modern-hotel-booking' ), $global_max_stay, $nights ),
+			);
+		}
+
+		// Fetch rooms from DB (mirrors RestApi::get_availability).
 		$cache_key = 'rooms_with_types_ai';
 		$rooms     = Cache::get_query( (string) $cache_key, Cache::TABLE_ROOMS );
 
@@ -427,7 +448,12 @@ class CheckAvailability {
 
 		// Capacity guidelines — help the AI explain limits and child policies.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$all_types      = $wpdb->get_results( \sprintf( 'SELECT t.id, t.name, t.max_adults, t.max_children, t.child_age_free_limit FROM %smhbo_room_types t', $wpdb->prefix ) );
+		$all_types      = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT t.id, t.name, t.max_adults, t.max_children, t.child_age_free_limit FROM %i t',
+				$wpdb->prefix . 'mhbo_room_types'
+			)
+		);
 		$capacity_hints = array();
 		foreach ( (array) $all_types as $t ) {
 			$name = I18n::decode( (string) ( $t->name ?? '' ) );

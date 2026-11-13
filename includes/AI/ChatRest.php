@@ -279,9 +279,8 @@ class ChatRest {
 			);
 
 			// 6. System prompt + tools.
-			$lang = (string) ( $request->get_param( 'lang' ) ?? '' );
-
-$system_prompt = KnowledgeBase::get_system_prompt( $lang );
+			$lang          = (string) ( $request->get_param( 'lang' ) ?? '' );
+			$system_prompt = KnowledgeBase::get_system_prompt( $lang );
 			
 			$tools = KnowledgeBase::get_tool_definitions( false );
 
@@ -725,6 +724,7 @@ $system_prompt = KnowledgeBase::get_system_prompt( $lang );
 			}
 			return self::respond( I18n::get_label( 'ai_status_cooling_down' ), $session_id, $is_streaming );
 		} finally {
+			ChatSession::set_active_session_id( '' );
 			Client::set_deadline( 0.0 );
 		}
 	}

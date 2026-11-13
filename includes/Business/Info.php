@@ -60,7 +60,8 @@ class Info {
 	/**
 	 * @param string $hook Current admin page hook suffix.
 	 */
-	public function enqueue_admin_assets( string $hook ): void {
+	public function enqueue_admin_assets( mixed $hook = '' ): void {
+		$hook = is_string( $hook ) ? $hook : '';
 		if ( false === strpos( $hook, 'mhbo-settings' ) ) {
 			return;
 		}
@@ -71,22 +72,28 @@ class Info {
 			return;
 		}
 
-		wp_enqueue_script( 'mhbo-admin-business', MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-business.js', array(), MHBO_VERSION, true );
+		wp_enqueue_script(
+			'mhbo-admin-business',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-admin-business.js' ),
+			array(),
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-admin-business.js' ),
+			true
+		);
 
 		wp_enqueue_media();
 
 		wp_enqueue_style(
 			'mhbo-admin-business',
-			MHBO_PLUGIN_URL . 'assets/css/mhbo-admin-business.css',
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-admin-business.css' ),
 			array(),
-			MHBO_VERSION
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-admin-business.css' )
 		);
 
 		wp_enqueue_script(
 			'mhbo-admin-media-upload',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-media-upload.js',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-admin-media-upload.js' ),
 			array(),
-			MHBO_VERSION,
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-admin-media-upload.js' ),
 			true
 		);
 	}

@@ -716,9 +716,15 @@
 				const skInput = document.querySelector(
 					'input[name="' + skField + '"]'
 				);
-				const maInput = document.querySelector(
-					'input[name="mhbo_braintree_merchant_account_id"]'
-				);
+				const maField =
+					selectedMode === 'production' || selectedMode === 'live'
+						? 'mhbo_braintree_live_merchant_account_id'
+						: 'mhbo_braintree_sandbox_merchant_account_id';
+				const maInput =
+					document.querySelector( 'input[name="' + maField + '"]' ) ||
+					document.querySelector(
+						'input[name="mhbo_braintree_merchant_account_id"]'
+					);
 
 				fetchApi( '/mhbo/v1/admin/gateways/test-braintree', 'POST', {
 					mode: selectedMode,

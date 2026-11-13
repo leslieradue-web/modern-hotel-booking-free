@@ -27,42 +27,42 @@ class ModelCatalog {
 	private const TRANSIENT_TTL    = 86400; // 24 hours
 
 	/**
-	 * Seed catalog of verified production models with capabilities.
+	 * Seed catalog of verified production models (November 2026) with capabilities.
 	 *
 	 * @var array<string, array<string, array{label:string,status:string,tools:bool,thinking:string,api?:string,recommended?:bool,eol?:string}>>
 	 */
 	private const SEED = array(
 		Client::PROVIDER_GEMINI     => array(
 			'gemini-3.8-flash'       => array(
-				'label'       => 'Gemini 3.8 Flash ⚡ Recommended (Frontier Flagship - GA)',
+				'label'       => 'Gemini 3.8 Flash ⚡ Recommended (Frontier Workhorse - GA)',
 				'status'      => 'active',
 				'tools'       => true,
 				'thinking'    => 'adaptive',
 				'recommended' => true,
 			),
-			'gemini-4-argon'         => array(
-				'label'    => 'Gemini 4 Argon — Supreme Agentic & Deep Reasoning Flagship (GA)',
+			'gemini-4-hydrogen'      => array(
+				'label'    => 'Gemini 4 Hydrogen ⚡ (Ultra-Fast Frontier & Agentic - GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
-			'gemini-3.8-pro'         => array(
-				'label'    => 'Gemini 3.8 Pro — Supreme Reasoning Flagship (GA)',
+			'gemini-4-carbon'        => array(
+				'label'    => 'Gemini 4 Carbon (High-Intelligence Reasoning Flagship - GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'gemini-4-argon'         => array(
+				'label'    => 'Gemini 4 Argon (Supreme Deep Reasoning & Coding Flagship - GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
 			'gemini-3.7-flash'       => array(
-				'label'    => 'Gemini 3.7 Flash — High-Efficiency Workhorse (GA)',
+				'label'    => 'Gemini 3.7 Flash — Alias / High-Efficiency Workhorse (GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
-			),
-			'gemini-3.6-flash'       => array(
-				'label'    => 'Gemini 3.6 Flash — Balanced Workhorse (GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'none',
 			),
 			'gemini-3.5-flash-lite'  => array(
 				'label'    => 'Gemini 3.5 Flash-Lite — Ultra Budget (GA)',
@@ -70,40 +70,28 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'gemini-3.5-flash'       => array(
-				'label'    => 'Gemini 3.5 Flash — Balanced Performance (GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'none',
-			),
-			'gemini-3.1-flash-lite'  => array(
-				'label'    => 'Gemini 3.1 Flash-Lite — Stable (GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'none',
-			),
 			'gemini-3-flash-preview' => array(
-				'label'    => 'Gemini 3 Flash Preview (Computer Use)',
+				'label'    => 'Gemini 3 Flash Preview (Computer Use Preview)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
 			'gemini-3.1-pro-preview' => array(
-				'label'    => 'Gemini 3.1 Pro Preview (Flagship Reasoning)',
+				'label'    => 'Gemini 3.1 Pro Preview (Reasoning Preview)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
 			'gemini-2.5-flash'       => array(
-				'label'    => 'Gemini 2.5 Flash — Deprecated (EOL Oct 2026)',
-				'status'   => 'deprecated',
+				'label'    => 'Gemini 2.5 Flash — Retired (EOL Oct 2026)',
+				'status'   => 'retired',
 				'tools'    => true,
 				'thinking' => 'none',
-				'eol'      => '2026-10-16',
+				'eol'      => '2026-10-20',
 			),
 			'gemini-2.5-flash-lite'  => array(
-				'label'    => 'Gemini 2.5 Flash-Lite — Deprecated (EOL Oct 2026)',
-				'status'   => 'deprecated',
+				'label'    => 'Gemini 2.5 Flash-Lite — Retired (EOL Oct 2026)',
+				'status'   => 'retired',
 				'tools'    => true,
 				'thinking' => 'none',
 				'eol'      => '2026-10-20',
@@ -111,47 +99,48 @@ class ModelCatalog {
 		),
 		Client::PROVIDER_OPENAI     => array(
 			'gpt-6.1-sol'   => array(
-				'label'    => 'GPT-6.1 Sol ⚡ Frontier Flagship (Agentic Coding - Sep 2026)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'effort',
-				'api'      => 'responses',
-			),
-			'gpt-6-astra'   => array(
-				'label'    => 'GPT-6 Astra (Supreme Alignment & Reasoning - Sep 2026)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'effort',
-				'api'      => 'responses',
-			),
-			'gpt-6-luna'    => array(
-				'label'    => 'GPT-6 Luna (Ultra Fast High Volume - Sep 2026)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'none',
-				'api'      => 'responses',
-			),
-			'gpt-5.6-luna'  => array(
-				'label'       => 'GPT-5.6 Luna ⚡ Recommended (Fast & Budget - GA)',
+				'label'       => 'GPT-6.1 Sol ⚡ Recommended (Cost-Efficient Frontier - GA)',
 				'status'      => 'active',
 				'tools'       => true,
 				'thinking'    => 'effort',
 				'api'         => 'responses',
 				'recommended' => true,
 			),
-			'gpt-5.6-terra' => array(
-				'label'    => 'GPT-5.6 Terra ⚡ (Workhorse - GA)',
+			'gpt-6-astra'   => array(
+				'label'    => 'GPT-6 Astra (Flagship Alignment & Deep Reasoning - GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'effort',
 				'api'      => 'responses',
 			),
-			'gpt-5.6-sol'   => array(
-				'label'    => 'GPT-5.6 Sol (Supreme Frontier - GA)',
+			'gpt-6.1-terra' => array(
+				'label'    => 'GPT-6.1 Terra (Visual Reasoning & Agentic Workhorse - GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'effort',
 				'api'      => 'responses',
+			),
+			'gpt-6-sol'     => array(
+				'label'    => 'GPT-6 Sol (Frontier General Intelligence - GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
+				'api'      => 'responses',
+			),
+			'gpt-6-luna'    => array(
+				'label'    => 'GPT-6 Luna (Ultra-Fast High-Volume Budget - GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+				'api'      => 'responses',
+			),
+			'gpt-5.6-luna'  => array(
+				'label'    => 'GPT-5.6 Luna (Legacy Budget - EOL Dec 2026)',
+				'status'   => 'deprecated',
+				'tools'    => true,
+				'thinking' => 'effort',
+				'api'      => 'responses',
+				'eol'      => '2026-12-11',
 			),
 			'gpt-4o'        => array(
 				'label'    => 'GPT-4o (Retired - EOL Oct 23, 2026)',
@@ -172,62 +161,87 @@ class ModelCatalog {
 		),
 		Client::PROVIDER_ANTHROPIC  => array(
 			'claude-sonnet-5-5' => array(
-				'label'       => 'Claude Sonnet 5.5 ⚡ Recommended (Frontier Balanced - Sep 2026)',
+				'label'       => 'Claude Sonnet 5.5 ⚡ Recommended (Frontier Balanced - GA)',
 				'status'      => 'active',
 				'tools'       => true,
 				'thinking'    => 'adaptive',
 				'recommended' => true,
 			),
+			'claude-fable-5-2'  => array(
+				'label'    => 'Claude Fable 5.2 (Flagship Complex Reasoning & Agentic - GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
 			'claude-opus-5-5'   => array(
-				'label'    => 'Claude Opus 5.5 (Supreme Intelligence - Sep 2026)',
+				'label'    => 'Claude Opus 5.5 (Advanced Coding & High Intelligence - GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
-			'claude-fable-5-1'  => array(
-				'label'    => 'Claude Fable 5.1 (Deep Long-Horizon Reasoning - Sep 2026)',
+			'claude-haiku-5-5'  => array(
+				'label'    => 'Claude Haiku 5.5 (Ultra-Fast Low-Latency Budget - GA)',
 				'status'   => 'active',
 				'tools'    => true,
-				'thinking' => 'adaptive',
-			),
-			'claude-sonnet-5'   => array(
-				'label'    => 'Claude Sonnet 5 (Production GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'adaptive',
-			),
-			'claude-opus-5'     => array(
-				'label'    => 'Claude Opus 5 (Supreme Reasoning - GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'adaptive',
+				'thinking' => 'none',
 			),
 			'claude-haiku-5'    => array(
-				'label'    => 'Claude Haiku 5 (Ultra Fast Budget - GA)',
+				'label'    => 'Claude Haiku 5 (Previous-Gen Fast Budget)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'claude-haiku-4-5'  => array(
-				'label'    => 'Claude Haiku 4.5 (Budget, Fast - GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'none',
-			),
-			'claude-3-7-sonnet' => array(
-				'label'    => 'Claude 3.7 Sonnet (Legacy Hybrid Reasoning)',
+			'claude-fable-5-1'  => array(
+				'label'    => 'Claude Fable 5.1 (Superseded by Fable 5.2)',
 				'status'   => 'deprecated',
 				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'claude-3-7-sonnet' => array(
+				'label'    => 'Claude 3.7 Sonnet (Deprecated Legacy)',
+				'status'   => 'retired',
+				'tools'    => true,
 				'thinking' => 'none',
+				'eol'      => '2026-10-01',
 			),
 		),
 		Client::PROVIDER_OPENROUTER => array(
-			'anthropic/claude-sonnet-5-5' => array(
+			'anthropic/claude-sonnet-5.5' => array(
 				'label'       => 'Claude Sonnet 5.5 via OpenRouter ⚡ Recommended',
 				'status'      => 'active',
 				'tools'       => true,
 				'thinking'    => 'adaptive',
 				'recommended' => true,
+			),
+			'anthropic/claude-fable-5.2'  => array(
+				'label'    => 'Claude Fable 5.2 via OpenRouter (Complex Reasoning)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'anthropic/claude-opus-5.5'   => array(
+				'label'    => 'Claude Opus 5.5 via OpenRouter (Supreme Coding)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'google/gemini-4-hydrogen'    => array(
+				'label'    => 'Gemini 4 Hydrogen via OpenRouter (Ultra-Fast Agentic)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'google/gemini-4-carbon'      => array(
+				'label'    => 'Gemini 4 Carbon via OpenRouter (Frontier Reasoning)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'google/gemini-4-argon'       => array(
+				'label'    => 'Gemini 4 Argon via OpenRouter (Deep Reasoning Flagship)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
 			),
 			'google/gemini-3.8-flash'     => array(
 				'label'    => 'Gemini 3.8 Flash via OpenRouter',
@@ -235,23 +249,41 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
-			'google/gemini-4-argon'       => array(
-				'label'    => 'Gemini 4 Argon via OpenRouter (Supreme Agentic Reasoning)',
+			'openai/gpt-6.1-sol'          => array(
+				'label'    => 'GPT-6.1 Sol via OpenRouter (Cost-Efficient Frontier)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
+			),
+			'openai/gpt-6-astra'          => array(
+				'label'    => 'GPT-6 Astra via OpenRouter (Frontier Reasoning)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
+			),
+			'openai/gpt-6-luna'           => array(
+				'label'    => 'GPT-6 Luna via OpenRouter (Fast & Budget)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+			),
+			'deepseek/deepseek-v4.1-flash' => array(
+				'label'    => 'DeepSeek V4.1 Flash via OpenRouter (Fast Reasoning)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
-			'openai/gpt-6.1-sol'          => array(
-				'label'    => 'GPT-6.1 Sol via OpenRouter (Frontier Reasoning)',
+			'deepseek/deepseek-v4-pro'    => array(
+				'label'    => 'DeepSeek V4 Pro via OpenRouter (Deep Reasoning)',
 				'status'   => 'active',
 				'tools'    => true,
-				'thinking' => 'effort',
+				'thinking' => 'adaptive',
 			),
-			'openai/gpt-5.6-luna'         => array(
-				'label'    => 'GPT-5.6 Luna via OpenRouter (Fast & Budget)',
+			'qwen/qwen3.6-plus'           => array(
+				'label'    => 'Qwen 3.6 Plus via OpenRouter',
 				'status'   => 'active',
 				'tools'    => true,
-				'thinking' => 'effort',
+				'thinking' => 'none',
 			),
 			'meta-llama/llama-4-maverick' => array(
 				'label'    => 'Meta Llama 4 Maverick via OpenRouter',
@@ -259,47 +291,59 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'deepseek/deepseek-r2'        => array(
-				'label'    => 'DeepSeek R2 via OpenRouter (Deep Reasoning)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'adaptive',
-			),
-			'qwen/qwen-3-235b'            => array(
-				'label'    => 'Qwen 3 235B via OpenRouter',
+			'google/gemma-4-31b-it:free'  => array(
+				'label'    => 'Google Gemma 4 31B via OpenRouter (Free Tier)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
 			),
 		),
 		Client::PROVIDER_OLLAMA     => array(
-			'llama4:latest'    => array(
+			'llama4:latest'     => array(
 				'label'       => 'Meta Llama 4 (Local ⚡ Recommended)',
 				'status'      => 'active',
 				'tools'       => true,
 				'thinking'    => 'none',
 				'recommended' => true,
 			),
-			'qwen3:14b'        => array(
-				'label'    => 'Qwen 3 14B (Strong Tool Calling)',
+			'qwen3.6'           => array(
+				'label'    => 'Qwen 3.6 (Local Tool-Calling Workhorse)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'deepseek-r2:14b'  => array(
-				'label'    => 'DeepSeek R2 14B (Local Reasoning)',
+			'qwen3.5'           => array(
+				'label'    => 'Qwen 3.5 (Local Balanced)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'gemma3:12b'       => array(
-				'label'    => 'Google Gemma 3 12B (Lightweight)',
+			'deepseek-v4-flash' => array(
+				'label'    => 'DeepSeek V4 Flash (Local Fast Reasoning)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'llama3.3:latest'  => array(
-				'label'    => 'Meta Llama 3.3 (Stable Local)',
+			'deepseek-r1'       => array(
+				'label'    => 'DeepSeek R1 (Local Deep Reasoning)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+			),
+			'gemma4:12b'        => array(
+				'label'    => 'Google Gemma 4 12B (Multimodal Balanced)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+			),
+			'gemma4:31b'        => array(
+				'label'    => 'Google Gemma 4 31B (High-Intelligence Local)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+			),
+			'gemma4:e4b'        => array(
+				'label'    => 'Google Gemma 4 E4B (Lightweight Edge)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
@@ -315,6 +359,51 @@ class ModelCatalog {
 	 */
 	public static function get_presets( string $provider ): array {
 		$models = self::SEED[ $provider ] ?? array();
+
+		// For WordPress Core AI Connector, expose 'auto' plus curated active models from
+		// native providers (google/openai/anthropic) whenever live discovery cache is empty.
+		if ( Client::PROVIDER_WP_CONNECTOR === $provider ) {
+			$out = array(
+				'auto' => __( 'Auto — WordPress AI Connectors Priority (Default)', 'modern-hotel-booking' ),
+			);
+
+			$discovered = get_transient( self::TRANSIENT_PREFIX . $provider );
+			if ( is_array( $discovered ) && array() !== $discovered ) {
+				foreach ( $discovered as $id => $meta ) {
+					if ( is_array( $meta ) ) {
+						$out[ (string) $id ] = (string) ( $meta['label'] ?? $id );
+					}
+				}
+				return $out;
+			}
+
+			$configured_native = class_exists( '\MHBO\AI\Client' ) ? Client::get_configured_native_provider_ids() : array();
+			$native_map        = array(
+				'google'    => Client::PROVIDER_GEMINI,
+				'openai'    => Client::PROVIDER_OPENAI,
+				'anthropic' => Client::PROVIDER_ANTHROPIC,
+			);
+			$target_natives    = array() !== $configured_native ? $configured_native : array_keys( $native_map );
+			$today             = gmdate( 'Y-m-d' );
+
+			foreach ( $target_natives as $native_pid ) {
+				$mhbo_prov = $native_map[ $native_pid ] ?? null;
+				if ( null === $mhbo_prov ) {
+					continue;
+				}
+				foreach ( self::SEED[ $mhbo_prov ] as $m_id => $meta ) {
+					if ( 'active' !== $meta['status'] ) {
+						continue;
+					}
+					if ( isset( $meta['eol'] ) && $meta['eol'] <= $today ) {
+						continue;
+					}
+					$out[ $m_id ] = $meta['label'] . ' [' . $native_pid . ']';
+				}
+			}
+
+			return $out;
+		}
 
 		// Merge live-discovered models if cached in transient
 		$discovered = get_transient( self::TRANSIENT_PREFIX . $provider );
@@ -335,6 +424,9 @@ class ModelCatalog {
 		$today = gmdate( 'Y-m-d' );
 		$out   = array();
 		foreach ( $models as $id => $meta ) {
+			if ( 'retired' === ( $meta['status'] ?? 'active' ) ) {
+				continue;
+			}
 			if ( isset( $meta['eol'] ) && $meta['eol'] <= $today ) {
 				continue;
 			}
@@ -345,12 +437,32 @@ class ModelCatalog {
 	}
 
 	/**
+	 * Return every model ID known to the catalog (across all seeded providers).
+	 *
+	 * @return list<string>
+	 */
+	public static function get_all_seed_model_ids(): array {
+		$ids = array();
+		foreach ( self::SEED as $models ) {
+			foreach ( array_keys( $models ) as $model_id ) {
+				$ids[] = (string) $model_id;
+			}
+		}
+
+		return array_values( array_unique( $ids ) );
+	}
+
+	/**
 	 * Return the recommended default model for a provider.
 	 *
 	 * @param string $provider Provider identifier.
 	 * @return string Model identifier.
 	 */
 	public static function get_recommended_model( string $provider ): string {
+		if ( Client::PROVIDER_WP_CONNECTOR === $provider ) {
+			return 'auto';
+		}
+
 		$models = self::SEED[ $provider ] ?? array();
 		foreach ( $models as $id => $meta ) {
 			if ( ! empty( $meta['recommended'] ) ) {
@@ -369,8 +481,9 @@ class ModelCatalog {
 	 * @return string 'responses'|'chat'
 	 */
 	public static function get_openai_api_type( string $model ): string {
+		/** @var array<string, mixed>|null $meta */
 		$meta = self::SEED[ Client::PROVIDER_OPENAI ][ $model ] ?? null;
-		if ( is_array( $meta ) ) {
+		if ( is_array( $meta ) && isset( $meta['api'] ) ) {
 			return (string) $meta['api'];
 		}
 
@@ -395,20 +508,25 @@ class ModelCatalog {
 			return (string) $models[ $model ]['thinking'];
 		}
 
-		if ( Client::PROVIDER_ANTHROPIC === $provider && ! str_contains( $model, 'haiku' ) && ( str_contains( $model, '-5' ) || str_contains( $model, 'sonnet-5' ) || str_contains( $model, 'opus-5' ) ) ) {
+		if ( Client::PROVIDER_ANTHROPIC === $provider && ! str_contains( $model, 'haiku' ) && ( str_contains( $model, '-5' ) || str_contains( $model, 'sonnet-5' ) || str_contains( $model, 'opus-5' ) || str_contains( $model, 'fable' ) ) ) {
 			return 'adaptive';
 		}
 
-		if ( Client::PROVIDER_OPENAI === $provider && ( str_contains( $model, 'gpt-5' ) || ( str_contains( $model, 'gpt-6' ) && ! str_contains( $model, 'luna' ) ) || str_contains( $model, 'o1' ) || str_contains( $model, 'o3' ) ) ) {
+		if ( Client::PROVIDER_OPENAI === $provider && ( str_contains( $model, 'gpt-5' ) || ( str_contains( $model, 'gpt-6' ) && ! str_contains( $model, 'luna' ) ) || str_contains( $model, 'o1' ) || str_contains( $model, 'o3' ) || str_contains( $model, 'o4' ) ) ) {
 			return 'effort';
 		}
 
-		if ( Client::PROVIDER_GEMINI === $provider && ( str_contains( $model, '4' ) || str_contains( $model, 'argon' ) || str_contains( $model, '3.8' ) || str_contains( $model, '3.7' ) || str_contains( $model, 'preview' ) ) ) {
+		if ( Client::PROVIDER_GEMINI === $provider && ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'carbon' ) || str_contains( $model, 'hydrogen' ) || str_contains( $model, '3.8' ) || str_contains( $model, '3.7' ) || str_contains( $model, 'preview' ) ) ) {
 			return 'adaptive';
 		}
 
-		if ( Client::PROVIDER_OPENROUTER === $provider && ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'gemini-3.8' ) || str_contains( $model, 'claude-sonnet-5' ) || str_contains( $model, 'claude-opus-5' ) || str_contains( $model, 'deepseek-r2' ) ) ) {
-			return 'adaptive';
+		if ( Client::PROVIDER_OPENROUTER === $provider ) {
+			if ( str_contains( $model, 'openai/' ) && ( str_contains( $model, 'gpt-5' ) || ( str_contains( $model, 'gpt-6' ) && ! str_contains( $model, 'luna' ) ) || str_contains( $model, 'o1' ) || str_contains( $model, 'o3' ) || str_contains( $model, 'o4' ) ) ) {
+				return 'effort';
+			}
+			if ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'carbon' ) || str_contains( $model, 'hydrogen' ) || str_contains( $model, 'gemini-3.8' ) || str_contains( $model, 'claude-sonnet-5' ) || str_contains( $model, 'claude-opus-5' ) || str_contains( $model, 'claude-fable' ) || str_contains( $model, 'deepseek-v4' ) || str_contains( $model, 'deepseek-r' ) ) {
+				return 'adaptive';
+			}
 		}
 
 		return 'none';
@@ -520,7 +638,16 @@ class ModelCatalog {
 				);
 			}
 
+			$code = (int) wp_remote_retrieve_response_code( $res );
 			$data = json_decode( wp_remote_retrieve_body( $res ), true );
+			if ( $code >= 400 ) {
+				return array(
+					'success' => false,
+					'count'   => 0,
+					'models'  => array(),
+					'message' => (string) ( $data['error']['message'] ?? sprintf( 'HTTP %d', $code ) ),
+				);
+			}
 			if ( isset( $data['models'] ) && is_array( $data['models'] ) ) {
 				foreach ( $data['models'] as $m ) {
 					$methods = implode( ',', (array) ( $m['supportedGenerationMethods'] ?? array() ) );
@@ -559,7 +686,16 @@ class ModelCatalog {
 				);
 			}
 
+			$code = (int) wp_remote_retrieve_response_code( $res );
 			$data = json_decode( wp_remote_retrieve_body( $res ), true );
+			if ( $code >= 400 ) {
+				return array(
+					'success' => false,
+					'count'   => 0,
+					'models'  => array(),
+					'message' => (string) ( $data['error']['message'] ?? sprintf( 'HTTP %d', $code ) ),
+				);
+			}
 			if ( isset( $data['data'] ) && is_array( $data['data'] ) ) {
 				foreach ( $data['data'] as $m ) {
 					$raw_id = (string) ( $m['id'] ?? '' );
@@ -595,7 +731,16 @@ class ModelCatalog {
 				);
 			}
 
+			$code = (int) wp_remote_retrieve_response_code( $res );
 			$data = json_decode( wp_remote_retrieve_body( $res ), true );
+			if ( $code >= 400 ) {
+				return array(
+					'success' => false,
+					'count'   => 0,
+					'models'  => array(),
+					'message' => (string) ( $data['error']['message'] ?? sprintf( 'HTTP %d', $code ) ),
+				);
+			}
 			if ( isset( $data['data'] ) && is_array( $data['data'] ) ) {
 				foreach ( $data['data'] as $m ) {
 					$raw_id = (string) ( $m['id'] ?? '' );
@@ -684,33 +829,45 @@ class ModelCatalog {
 					}
 				}
 			}
-		} elseif ( Client::PROVIDER_WP_CONNECTOR === $provider && class_exists( '\WordPress\AiClient\AiClient' ) ) {
-			try {
-				$registry = AiClient::defaultRegistry();
-				foreach ( $registry->getRegisteredProviderIds() as $pid ) {
-					if ( $registry->isProviderConfigured( $pid ) ) {
-						$cls  = $registry->getProviderClassName( $pid );
-						$list = $cls::modelMetadataDirectory()->listModelMetadata();
-						foreach ( $list as $m ) {
-							$caps = array_map( static fn( $c ) => $c->value, $m->getSupportedCapabilities() );
-							if ( in_array( 'text_generation', $caps, true ) ) {
-								$mid = $m->getId();
-								$found[ $mid ] = array(
-									'label'  => $m->getName() . ' [' . $pid . ']',
-									'status' => 'active',
-									'tools'  => in_array( 'function_calling', $caps, true ),
-								);
+		} elseif ( Client::PROVIDER_WP_CONNECTOR === $provider ) {
+			Loader::ensure_vendor_autoload();
+			if ( class_exists( '\WordPress\AiClient\AiClient' ) ) {
+				try {
+					$registry = AiClient::defaultRegistry();
+					foreach ( $registry->getRegisteredProviderIds() as $pid ) {
+						if ( $registry->isProviderConfigured( $pid ) ) {
+							$cls  = $registry->getProviderClassName( $pid );
+							$list = $cls::modelMetadataDirectory()->listModelMetadata();
+							foreach ( $list as $m ) {
+								$caps = array_map( static fn( $c ) => $c->value, $m->getSupportedCapabilities() );
+								if ( in_array( 'text_generation', $caps, true ) ) {
+									$supports_tools = false;
+									if ( method_exists( $m, 'getSupportedOptions' ) ) {
+										foreach ( $m->getSupportedOptions() as $opt ) {
+											if ( $opt->getName()->isFunctionDeclarations() ) {
+												$supports_tools = true;
+												break;
+											}
+										}
+									}
+									$mid           = $m->getId();
+									$found[ $mid ] = array(
+										'label'  => $m->getName() . ' [' . $pid . ']',
+										'status' => 'active',
+										'tools'  => $supports_tools,
+									);
+								}
 							}
 						}
 					}
+				} catch ( Throwable $e ) {
+					return array(
+						'success' => false,
+						'count'   => 0,
+						'models'  => array(),
+						'message' => $e->getMessage(),
+					);
 				}
-			} catch ( Throwable $e ) {
-				return array(
-					'success' => false,
-					'count'   => 0,
-					'models'  => array(),
-					'message' => $e->getMessage(),
-				);
 			}
 		}
 

@@ -67,10 +67,25 @@ class Elementor {
 	 * Register Elementor specific styles.
 	 */
 	public function register_styles(): void {
-		wp_register_style( 'mhbo-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap', array(), MHBO_VERSION );
-		wp_register_style( 'mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', array( 'mhbo-google-fonts' ), MHBO_VERSION );
+		wp_register_style(
+			'mhbo-google-fonts-inter',
+			\MHBO\Core\Plugin::get_font_url( 'inter' ),
+			array(),
+			\MHBO\Core\Plugin::asset_ver( 'assets/fonts/inter.css' )
+		);
+		wp_register_style(
+			'mhbo-style',
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-style.css' ),
+			array( 'mhbo-google-fonts-inter' ),
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-style.css' )
+		);
 		wp_register_style( 'mhbo-flatpickr-css', MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css', array(), '4.6.13' );
-		wp_register_style( 'mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css', array(), MHBO_VERSION );
+		wp_register_style(
+			'mhbo-calendar-style',
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-calendar.css' ),
+			array(),
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-calendar.css' )
+		);
 	}
 
 	/**
@@ -82,9 +97,27 @@ class Elementor {
 			'in_footer' => true,
 		);
 		wp_register_script( 'mhbo-flatpickr-js', MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js', array(), '4.6.13', $script_args );
-		wp_register_script( 'mhbo-frontend', MHBO_PLUGIN_URL . 'assets/js/mhbo-frontend.js', array( 'mhbo-flatpickr-js' ), MHBO_VERSION, $script_args );
-		wp_register_script( 'mhbo-booking-form', MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-form.js', array( 'mhbo-frontend' ), MHBO_VERSION, $script_args );
-		wp_register_script( 'mhbo-calendar-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js', array( 'mhbo-flatpickr-js' ), MHBO_VERSION, $script_args );
+		wp_register_script(
+			'mhbo-frontend',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-frontend.js' ),
+			array( 'mhbo-flatpickr-js' ),
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-frontend.js' ),
+			$script_args
+		);
+		wp_register_script(
+			'mhbo-booking-form',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-booking-form.js' ),
+			array( 'mhbo-frontend' ),
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-booking-form.js' ),
+			$script_args
+		);
+		wp_register_script(
+			'mhbo-calendar-js',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-calendar.js' ),
+			array( 'mhbo-flatpickr-js' ),
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-calendar.js' ),
+			$script_args
+		);
 		
 		// Ensure localization logic is hooked early enough for these scripts
 		if ( class_exists( '\\MHBO\\Frontend\\Shortcode' ) ) {

@@ -396,6 +396,19 @@
 						? couponAppliedField.value.trim()
 						: '';
 
+					const updateIdField = form.querySelector(
+						'[name="mhbo_update_id"], [name="mhbo_exclude_id"]'
+					);
+					const excludeId = updateIdField
+						? parseInt( updateIdField.value, 10 ) || 0
+						: 0;
+					const tokenField = form.querySelector(
+						'[name="mhbo_booking_token"], [name="mhbo_session_token"]'
+					);
+					const bookingToken = tokenField
+						? tokenField.value.trim()
+						: '';
+
 					const response = await fetch(
 						mhbo_vars.api_base + '/recalculate-price',
 						{
@@ -415,6 +428,9 @@
 								extras,
 								mhbo_payment_type: paymentType,
 								coupon_code: activeCouponCode,
+								exclude_id: excludeId,
+								update_id: excludeId,
+								booking_token: bookingToken,
 							} ),
 						}
 					);
@@ -445,12 +461,15 @@
 							'.mhbo-children-total-display'
 						);
 						if ( childrenRow && childrenTotalEl ) {
+							const numericChildrenTotal =
+								parseFloat( data.children_total ) || 0;
 							if (
-								data.children_total > 0 &&
+								numericChildrenTotal > 0 &&
 								data.children_total_formatted
 							) {
 								childrenTotalEl.textContent =
 									data.children_total_formatted;
+								childrenRow.classList.remove( 'is-hidden' );
 								childrenRow.style.display = '';
 							} else {
 								childrenRow.style.display = 'none';
@@ -763,11 +782,11 @@
 							'.mhbo-booking-errors, .mhbo-errors-container'
 						);
 						if ( errorContainer ) {
-							errorContainer.innerHTML =
-								'<div class="mhbo-error">' +
-								( data.message ||
-									'Error recalculating price.' ) +
-								'</div>';
+							const errEl = document.createElement( 'div' );
+							errEl.className = 'mhbo-error';
+							errEl.textContent =
+								data.message || 'Error recalculating price.';
+							errorContainer.replaceChildren( errEl );
 							errorContainer.style.display = 'block';
 							setTimeout( () => {
 								errorContainer.style.display = 'none';
@@ -941,11 +960,25 @@
 				recalculatePrice();
 			} );
 
+			let childAgeDebounceTimer = null;
+			wrapper.addEventListener( 'input', function ( e ) {
+				if (
+					e.target &&
+					e.target.classList.contains( 'mhbo-child-age-input' )
+				) {
+					clearTimeout( childAgeDebounceTimer );
+					childAgeDebounceTimer = setTimeout( function () {
+						recalculatePrice();
+					}, 300 );
+				}
+			} );
+
 			wrapper.addEventListener( 'change', function ( e ) {
 				if (
 					e.target &&
 					e.target.classList.contains( 'mhbo-child-age-input' )
 				) {
+					clearTimeout( childAgeDebounceTimer );
 					recalculatePrice();
 				}
 			} );
@@ -1166,6 +1199,7 @@
 					} );
 			}
 
+			const origSubmitBtnText = submitBtn ? submitBtn.textContent : '';
 			if ( submitBtn ) {
 				submitBtn.disabled = true;
 				submitBtn.textContent = mhbo_vars.processing || 'Processing...';
@@ -1366,7 +1400,9 @@
 						if ( submitBtn ) {
 							submitBtn.disabled = false;
 							submitBtn.textContent =
-								mhbo_vars.confirm || 'Confirm Booking';
+								origSubmitBtnText ||
+								mhbo_vars.confirm ||
+								'Confirm Booking';
 						}
 					}
 				} )
@@ -1379,7 +1415,9 @@
 					if ( submitBtn ) {
 						submitBtn.disabled = false;
 						submitBtn.textContent =
-							mhbo_vars.confirm || 'Confirm Booking';
+							origSubmitBtnText ||
+							mhbo_vars.confirm ||
+							'Confirm Booking';
 					}
 				} );
 		} );

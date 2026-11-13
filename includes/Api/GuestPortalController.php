@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use MHBO\Core\BookingProcessor;
 use MHBO\Core\Cache;
 use MHBO\Core\Email;
 use MHBO\Core\HotelTime;
@@ -864,29 +865,31 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 		}
 
 		// Group Reservation Metadata (Law 52 & Law 59)
-		$is_group_booking    = ! empty( $booking->is_multi_room ) || ! empty( $booking->multi_room_parent );
-		$group_parent_ref    = ! empty( $booking->multi_room_parent ) ? (string) $booking->multi_room_parent : (string) $booking->id;
-		$group_siblings      = array();
-		$group_total_val     = $total_val;
-		$group_paid_val      = $paid_val;
-		$group_remaining_val = $remaining_val;
-		$group_rooms_count   = 1;
-		$group_is_paid       = $remaining_val <= 0.001;
+		$is_group_booking      = ! empty( $booking->is_multi_room ) || ! empty( $booking->multi_room_parent );
+		$group_parent_ref      = ! empty( $booking->multi_room_parent ) ? (string) $booking->multi_room_parent : (string) $booking->id;
+		$group_siblings        = array();
+		$group_total_val       = $total_val;
+		$group_paid_val        = $paid_val;
+		$group_remaining_val   = $remaining_val;
+		$group_rooms_count     = 1;
+		$group_is_paid         = $remaining_val <= 0.001;
+		$first_unpaid_sibling  = null;
 
 		if ( $is_group_booking ) {
-			// Query all sibling rooms in this group reservation
+			$group_parent_numeric = ctype_digit( $group_parent_ref ) ? (int) $group_parent_ref : 0;
+			// Query all sibling rooms in this group reservation with USALI ledger fields.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$sibling_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT b.id, b.booking_token, b.room_id, b.customer_name, b.check_in, b.check_out, b.status, b.payment_status, b.total_price, b.payment_amount, b.balance_link_token, r.room_number, t.name as type_name
+					"SELECT b.id, b.booking_token, b.room_id, b.customer_name, b.check_in, b.check_out, b.status, b.payment_status, b.payment_type, b.balance_status, b.total_price, b.deposit_amount, b.payment_amount, b.payment_ledger, b.payment_received, b.deposit_received, b.payment_transaction_id, b.remaining_balance, b.balance_link_token, r.room_number, t.name as type_name
 					 FROM {$wpdb->prefix}mhbo_bookings b
 					 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
 					 LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
-					 WHERE (b.multi_room_parent = %s OR b.id = %d)
+					 WHERE (b.multi_room_parent = %s OR (b.id > 0 AND b.id = %d))
 					   AND b.status != 'cancelled'
 					 ORDER BY b.id ASC",
 					$group_parent_ref,
-					(int) $group_parent_ref
+					$group_parent_numeric
 				)
 			);
 
@@ -897,13 +900,18 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				$group_remaining_sum = 0.0;
 
 				foreach ( $sibling_rows as $s_row ) {
-					$s_tot  = (float) ( $s_row->total_price ?? 0 );
-					$s_paid = (float) ( $s_row->payment_amount ?? 0 );
-					$s_rem  = max( 0.0, $s_tot - $s_paid );
+					$s_amts = Pricing::get_booking_payment_amounts( $s_row );
+					$s_tot  = (float) $s_amts['total']->toDecimal();
+					$s_paid = (float) $s_amts['received']->toDecimal();
+					$s_rem  = (float) $s_amts['remaining']->toDecimal();
 
 					$group_total_sum     += $s_tot;
 					$group_paid_sum      += $s_paid;
 					$group_remaining_sum += $s_rem;
+
+					if ( null === $first_unpaid_sibling && $s_rem > 0.001 ) {
+						$first_unpaid_sibling = $s_row;
+					}
 
 					$s_type = ! empty( $s_row->type_name ) ? (string) ( I18n::decode( (string) $s_row->type_name ) ?? $s_row->type_name ) : I18n::get_label( 'label_room' );
 					$s_lbl  = ! empty( $s_row->room_number ) ? "{$s_type} #{$s_row->room_number}" : $s_type;
@@ -915,6 +923,9 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 						'room_name'         => $s_lbl,
 						'guest_name'        => (string) $s_row->customer_name,
 						'status'            => (string) $s_row->status,
+						'total_amount'      => $s_tot,
+						'paid_amount'       => $s_paid,
+						'remaining_balance' => $s_rem,
 						'total_formatted'   => Pricing::format_price( $s_tot ),
 						'paid_formatted'    => Pricing::format_price( $s_paid ),
 						'balance_formatted' => Pricing::format_price( $s_rem ),
@@ -923,36 +934,37 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 					);
 				}
 
-				$group_total_val     = $group_total_sum;
-				$group_paid_val      = $group_paid_sum;
-				$group_remaining_val = $group_remaining_sum;
-				$group_is_paid       = $group_remaining_sum <= 0.001;
+				$group_amounts = Pricing::get_group_payment_amounts( $booking );
+				if ( null !== $group_amounts ) {
+					$group_rooms_count   = (int) $group_amounts['rooms_count'];
+					$group_total_val     = (float) $group_amounts['total']->toDecimal();
+					$group_paid_val      = (float) $group_amounts['received']->toDecimal();
+					$group_remaining_val = (float) $group_amounts['remaining']->toDecimal();
+					$group_is_paid       = (bool) $group_amounts['is_paid'];
+				} else {
+					$group_total_val     = $group_total_sum;
+					$group_paid_val      = $group_paid_sum;
+					$group_remaining_val = $group_remaining_sum;
+					$group_is_paid       = $group_remaining_sum <= 0.001;
+				}
 			}
 		}
 
 		$group_balance_payment_url = '';
 		$room_balance_payment_url  = '';
 		if ( '' !== $balance_payment_url ) {
-			$group_balance_payment_url = add_query_arg( 'pay_scope', 'group', $balance_payment_url );
-			$room_balance_payment_url  = add_query_arg( 'pay_scope', 'room', $balance_payment_url );
+			$room_balance_payment_url = add_query_arg( 'pay_scope', 'room', $balance_payment_url );
+			if ( ! $group_is_paid ) {
+				$group_balance_payment_url = add_query_arg( 'pay_scope', 'group', $balance_payment_url );
+			}
+		} elseif ( $is_group_booking && ! $group_is_paid ) {
+			
 		}
 
 		$attractions = array();
 
-// Strip internal staff/administrative notes and audit entries from guest-facing special requests
-		$raw_special_requests    = (string) ( $booking->admin_notes ?? '' );
-		$filtered_requests_lines = array();
-		foreach ( explode( "\n", $raw_special_requests ) as $req_line ) {
-			$trimmed_req_line = trim( $req_line );
-			if ( preg_match( '/^\[(Staff|Internal|Private|Admin|Guest Cancellation|Guest Modification|AI Assistant Cancellation)/i', $trimmed_req_line ) ) {
-				continue;
-			}
-			if ( false !== stripos( $trimmed_req_line, 'Manually added by administrator' ) ) {
-				continue;
-			}
-			$filtered_requests_lines[] = $req_line;
-		}
-		$guest_special_requests = trim( implode( "\n", $filtered_requests_lines ) );
+// Strip internal staff/administrative notes and audit entries from guest-facing special requests.
+		$guest_special_requests = BookingProcessor::extract_guest_special_requests( $booking );
 
 		$response_data = array(
 			'booking_id'                   => (int) $booking->id,
@@ -973,7 +985,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			'whatsapp_url'                 => $whatsapp_url,
 			'customer_email'               => (string) $booking->customer_email,
 			'customer_phone'               => (string) ( $booking->customer_phone ?? '' ),
-			'arrival_time'                 => ! empty( $portal_custom_data['_arrival_time'] ) ? (string) $portal_custom_data['_arrival_time'] : (string) ( $booking->arrival_time ?? '' ),
+			'arrival_time'                 => BookingProcessor::extract_arrival_time( $booking ),
 			'special_requests'             => $guest_special_requests,
 			'room_id'                      => $room_id,
 			'room_name'                    => $room_name,
@@ -1037,6 +1049,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			'group_total_formatted'        => Pricing::format_price( $group_total_val ),
 			'group_paid_formatted'         => Pricing::format_price( $group_paid_val ),
 			'group_balance_formatted'      => Pricing::format_price( $group_remaining_val ),
+			'group_remaining_balance'      => $group_remaining_val,
 			'group_is_paid'                => $group_is_paid,
 			'group_siblings'               => $group_siblings,
 			'group_balance_payment_url'    => $group_balance_payment_url,
@@ -1155,15 +1168,24 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			);
 		}
 
+		$update_data   = array(
+			'status'     => 'cancelled',
+			'updated_at' => current_time( 'mysql' ),
+		);
+		$update_format = array( '%s', '%s' );
+		if ( '' !== $reason ) {
+			$existing_notes             = (string) ( $booking->admin_notes ?? '' );
+			$reason_note                = '[' . current_time( 'mysql' ) . ' Guest Cancellation Reason]: ' . sanitize_text_field( $reason );
+			$update_data['admin_notes'] = trim( $existing_notes . ( '' !== $existing_notes ? "\n" : '' ) . $reason_note );
+			$update_format[]            = '%s';
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$updated = $wpdb->update(
 			$wpdb->prefix . 'mhbo_bookings',
-			array(
-				'status'     => 'cancelled',
-				'updated_at' => current_time( 'mysql' ),
-			),
+			$update_data,
 			array( 'id' => $booking_id ),
-			array( '%s', '%s' ),
+			$update_format,
 			array( '%d' )
 		);
 
@@ -1175,16 +1197,12 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			);
 		}
 
-		if ( '' !== $reason ) {
-			update_post_meta( $booking_id, '_mhbo_cancellation_reason', sanitize_text_field( $reason ) );
-		}
-
 		// Invalidate availability and booking transients
 		Cache::invalidate_booking( $booking_id, (int) $booking->room_id );
 
 		// Increment iCal sequence for RFC 5545 sync
-		$seq = (int) get_post_meta( $booking_id, '_mhbo_ical_sequence', true );
-		update_post_meta( $booking_id, '_mhbo_ical_sequence', $seq + 1 );
+		$seq = (int) get_option( 'mhbo_bseq_' . $booking_id, 0 );
+		update_option( 'mhbo_bseq_' . $booking_id, $seq + 1, false );
 
 		// Fire booking cancellation actions & send notifications
 		do_action( 'mhbo_booking_cancelled', $booking_id );
@@ -1578,17 +1596,10 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				);
 			}
 
-			// Recalculate price
-			$decoded_extras = ! empty( $booking->booking_extras ) ? json_decode( (string) $booking->booking_extras, true ) : array();
-			/**
-			 * Decoded extras payload.
-			 *
-			 * @var array<string, mixed> $existing_extras
-			 */
-			$existing_extras = is_array( $decoded_extras ) ? $decoded_extras : array();
-			$calc            = Pricing::calculate_booking_money( $room_id, $new_check_in, $new_check_out, $new_guests, $existing_extras, $new_children );
+			// Recalculate full stay financials (child ages, extras, coupon discount, taxes, remaining balance).
+			$recalc_fin = Pricing::recalculate_booking_financials( $booking, $room_id, $new_check_in, $new_check_out, $new_guests, $new_children );
 
-			if ( false === $calc || ! isset( $calc['total'] ) || ! ( $calc['total'] instanceof Money ) ) {
+			if ( null === $recalc_fin ) {
 				return new WP_Error(
 					'mhbo_calc_error',
 					__( 'Could not recalculate stay price for the selected dates.', 'modern-hotel-booking' ),
@@ -1596,7 +1607,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				);
 			}
 
-			$new_total_money = $calc['total'];
+			$new_total_money = $recalc_fin['total'];
 			$new_total_val   = (float) $new_total_money->toDecimal();
 			$old_check_in    = (string) $booking->check_in;
 			$old_check_out   = (string) $booking->check_out;
@@ -1616,21 +1627,31 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			$existing_notes = (string) ( $booking->admin_notes ?? '' );
 			$new_notes      = trim( $existing_notes . "\n\n" . $audit_msg );
 
+			$update_cols = array_merge(
+				array(
+					'check_in'  => $new_check_in,
+					'check_out' => $new_check_out,
+					'guests'    => $new_guests,
+					'children'  => $new_children,
+				),
+				$recalc_fin['db_fields'],
+				array(
+					'admin_notes' => $new_notes,
+					'updated_at'  => $timestamp,
+				)
+			);
+			$update_fmts = array_merge(
+				array( '%s', '%s', '%d', '%d' ),
+				array_fill( 0, count( $recalc_fin['db_fields'] ), '%s' ),
+				array( '%s', '%s' )
+			);
+
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
 				$wpdb->prefix . 'mhbo_bookings',
-				array(
-					'check_in'          => $new_check_in,
-					'check_out'         => $new_check_out,
-					'guests'            => $new_guests,
-					'children'          => $new_children,
-					'total_price'       => $new_total_val,
-					'remaining_balance' => $new_total_val,
-					'admin_notes'       => $new_notes,
-					'updated_at'        => $timestamp,
-				),
+				$update_cols,
 				array( 'id' => $booking_id ),
-				array( '%s', '%s', '%d', '%d', '%f', '%f', '%s', '%s' ),
+				$update_fmts,
 				array( '%d' )
 			);
 		} finally {
@@ -1642,8 +1663,8 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 		Cache::invalidate_date_range( $new_check_in, $new_check_out, $room_id );
 
 		// Fire booking modification action & increment iCal sequence
-		$seq = (int) get_post_meta( $booking_id, '_mhbo_ical_sequence', true );
-		update_post_meta( $booking_id, '_mhbo_ical_sequence', $seq + 1 );
+		$seq = (int) get_option( 'mhbo_bseq_' . $booking_id, 0 );
+		update_option( 'mhbo_bseq_' . $booking_id, $seq + 1, false );
 		do_action( 'mhbo_booking_dates_updated', $booking_id, $new_check_in, $new_check_out );
 
 		// Dispatch confirmation email to guest and property staff
@@ -1660,7 +1681,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 		);
 	}
 
-	/**
+/**
 	 * Translate booking status to human-readable label.
 	 *
 	 * @param string $status

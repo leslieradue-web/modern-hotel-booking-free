@@ -45,9 +45,26 @@ class ChatSession {
 	private const FREE_MAX_TURN = 10;       // max message pairs stored free
 	private const COOKIE_TTL    = 8 * \HOUR_IN_SECONDS;
 
+	/**
+	 * Request-scoped active session ID so in-process ability calls resolve the
+	 * same session even when sessionStorage is passed via JSON body or on turn 1.
+	 *
+	 * @var string
+	 */
+	private static string $active_session_id = '';
+
 	// -------------------------------------------------------------------------
 	// Session ID
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Explicitly set or reset the request-scoped active session ID.
+	 *
+	 * @param string $session_id 64-char hex session ID or empty string to reset.
+	 */
+	public static function set_active_session_id( string $session_id = '' ): void {
+		self::$active_session_id = \preg_match( '/^[a-f0-9]{64}$/', $session_id ) ? $session_id : '';
+	}
 
 	/**
 	 * Return the current session ID, creating one if needed.
@@ -61,8 +78,14 @@ class ChatSession {
 		if ( null !== $requested_id && '' !== $requested_id ) {
 			$clean_requested = \sanitize_text_field( \wp_unslash( $requested_id ) );
 			if ( \preg_match( '/^[a-f0-9]{64}$/', $clean_requested ) ) {
+				self::$active_session_id = $clean_requested;
 				return $clean_requested;
 			}
+		}
+
+		// 1b. Reuse the session resolved earlier in the same PHP request lifecycle.
+		if ( '' !== self::$active_session_id ) {
+			return self::$active_session_id;
 		}
 
 		// 2. Check existing cookie.
@@ -71,11 +94,13 @@ class ChatSession {
 		$existing = '' !== $raw ? \sanitize_text_field( \wp_unslash( (string) $raw ) ) : '';
 
 		if ( $existing && \preg_match( '/^[a-f0-9]{64}$/', (string) $existing ) ) {
+			self::$active_session_id = (string) $existing;
 			return (string) $existing;
 		}
 
 		// Generate a cryptographically secure session ID (random_bytes — PHP 7.0+ built-in).
-		$session_id = \bin2hex( \random_bytes( 32 ) );
+		$session_id              = \bin2hex( \random_bytes( 32 ) );
+		self::$active_session_id = (string) $session_id;
 
 		if ( ! \headers_sent() ) {
 			\setcookie(

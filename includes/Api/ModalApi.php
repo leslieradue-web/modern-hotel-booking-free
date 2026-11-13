@@ -146,6 +146,12 @@ class ModalApi {
 		$raw_price   = (float) $request->get_param( 'total_price' );
 		$currency    = Pricing::get_currency_code();
 		$total_money = Money::fromDecimal( (string) $raw_price, $currency );
+		if ( $room_id > 0 ) {
+			$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, array(), $children );
+			if ( is_array( $calc ) && isset( $calc['total'] ) && $calc['total'] instanceof Money ) {
+				$total_money = $calc['total'];
+			}
+		}
 
 		$shortcode = new Shortcode();
 		$html      = $shortcode->render_booking_form_html(

@@ -296,14 +296,17 @@ class I18n {
 	 * If a translation is found to be empty or just whitespace in the .mo file,
 	 * WP returns it as is. We force it to fallback to the original English string.
 	 *
-	 * @param string $translated
-	 * @param string $text
-	 * @param string $domain
+	 * @param mixed $translated Translated string.
+	 * @param mixed $text       Original text.
+	 * @param mixed $domain     Text domain.
 	 * @return string
 	 */
-	public static function filter_gettext( string $translated, string $text, string $domain ): string {
-		if ( '' === trim( $translated ) ) {
-			return $text;
+	public static function filter_gettext( mixed $translated, mixed $text = '', mixed $domain = '' ): string {
+		unset( $domain );
+		$text_str       = is_string( $text ) ? $text : '';
+		$translated_str = is_string( $translated ) ? $translated : '';
+		if ( '' === trim( $translated_str ) ) {
+			return $text_str;
 		}
 
 		// If a forced frontend locale is active and we're on the public frontend,
@@ -316,11 +319,11 @@ class I18n {
 				$forced_locale = (string) get_option( 'mhbo_force_frontend_locale', '' );
 			}
 			if ( 'en_US' === $forced_locale ) {
-				return $text;
+				return $text_str;
 			}
 		}
 
-		return $translated;
+		return $translated_str;
 	}
 
 	/**
@@ -329,13 +332,14 @@ class I18n {
 	 * Hooked to the `plugin_locale` filter. Only applies to our text domain and only on
 	 * non-admin requests. When left blank (default), existing behaviour is preserved.
 	 *
-	 * @param string $locale The determined locale.
-	 * @param string $domain The text domain.
+	 * @param mixed $locale The determined locale.
+	 * @param mixed $domain The text domain.
 	 * @return string
 	 */
-	public static function maybe_force_site_locale( string $locale, string $domain ): string {
+	public static function maybe_force_site_locale( mixed $locale, mixed $domain = '' ): string {
+		$locale_str = is_string( $locale ) ? $locale : 'en_US';
 		if ( 'modern-hotel-booking' !== $domain ) {
-			return $locale;
+			return $locale_str;
 		}
 
 		// 1. Dynamic REST API override passed from JS (e.g. Polylang/WPML modal requests)
@@ -348,12 +352,12 @@ class I18n {
 		// 2. Static admin option override
 		$forced = (string) get_option( 'mhbo_force_frontend_locale', '' );
 		if ( '' === $forced ) {
-			return $locale; // Disabled — preserve default WP behaviour.
+			return $locale_str; // Disabled — preserve default WP behaviour.
 		}
 
 		// Only override on the public frontend (not wp-admin, not AJAX, not REST).
 		if ( ! self::is_frontend_request() ) {
-			return $locale;
+			return $locale_str;
 		}
 
 		return $forced;

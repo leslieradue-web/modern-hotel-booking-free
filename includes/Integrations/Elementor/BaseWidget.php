@@ -109,7 +109,7 @@ namespace MHBO\Integrations\Elementor {
 		 * @return array<int, string>
 		 */
 		public function get_style_depends(): array {
-			return array( 'mhbo-google-fonts', 'mhbo-flatpickr-css', 'mhbo-style' );
+			return array( 'mhbo-google-fonts-inter', 'mhbo-flatpickr-css', 'mhbo-style' );
 		}
 
 		/**

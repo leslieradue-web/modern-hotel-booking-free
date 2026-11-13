@@ -49,9 +49,9 @@ class Calendar {
 		if ( ! wp_style_is( 'mhbo-calendar-style', 'registered' ) ) {
 			wp_register_style(
 				'mhbo-calendar-style',
-				MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-calendar.css' ),
 				array( 'mhbo-flatpickr-css', 'mhbo-style' ),
-				MHBO_VERSION
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-calendar.css' )
 			);
 		}
 		if ( ! wp_style_is( 'mhbo-flatpickr-css', 'registered' ) ) {
@@ -62,20 +62,28 @@ class Calendar {
 				'4.6.13'
 			);
 		}
+		if ( ! wp_style_is( 'mhbo-google-fonts-inter', 'registered' ) ) {
+			wp_register_style(
+				'mhbo-google-fonts-inter',
+				\MHBO\Core\Plugin::get_font_url( 'inter' ),
+				array(),
+				\MHBO\Core\Plugin::asset_ver( 'assets/fonts/inter.css' )
+			);
+		}
 		if ( ! wp_style_is( 'mhbo-style', 'registered' ) ) {
 			wp_register_style(
 				'mhbo-style',
-				MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css',
-				array(),
-				MHBO_VERSION
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-style.css' ),
+				array( 'mhbo-google-fonts-inter' ),
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-style.css' )
 			);
 		}
 		if ( ! wp_script_is( 'mhbo-calendar-js', 'registered' ) ) {
 			wp_register_script(
 				'mhbo-calendar-js',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-calendar.js' ),
 				array( 'mhbo-flatpickr-js' ),
-				MHBO_VERSION,
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-calendar.js' ),
 				array(
 					'strategy'  => 'defer',
 					'in_footer' => true,
@@ -183,7 +191,7 @@ class Calendar {
 						'currency_space_after'  => 0,
 						'checkin_time'          => get_option( 'mhbo_checkin_time', '14:00' ),
 						'checkout_time'         => get_option( 'mhbo_checkout_time', '11:00' ),
-						'prevent_turnover'      => (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
+						'prevent_turnover'      => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
 						'max_advance_days'      => HotelTime::get_max_advance_booking_days(),
 						'initial_calendar_days' => HotelTime::get_initial_calendar_days(),
 					),
@@ -579,17 +587,17 @@ class Calendar {
 		if ( ! wp_style_is( 'mhbo-booking-modal-css', 'registered' ) ) {
 			wp_register_style(
 				'mhbo-booking-modal-css',
-				MHBO_PLUGIN_URL . 'assets/css/mhbo-booking-modal.css',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-booking-modal.css' ),
 				array( 'mhbo-style' ),
-				MHBO_VERSION
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-booking-modal.css' )
 			);
 		}
 		if ( ! wp_script_is( 'mhbo-booking-modal-js', 'registered' ) ) {
 			wp_register_script(
 				'mhbo-booking-modal-js',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-modal.js',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-booking-modal.js' ),
 				array(),
-				MHBO_VERSION,
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-booking-modal.js' ),
 				array(
 					'strategy'  => 'defer',
 					'in_footer' => true,

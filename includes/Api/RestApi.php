@@ -23,6 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use MHBO\Core\Cache;
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
+use MHBO\Core\Privacy;
 use MHBO\Core\HotelTime;
 use MHBO\Core\Capabilities;
 use MHBO\Core\License;
@@ -217,9 +218,24 @@ register_rest_route(
 							return is_array( $value );
 						},
 						'sanitize_callback' => function ( $value ) {
-							return is_array( $value ) ? array_map( 'absint', $value ) : array();
+							return Pricing::sanitize_child_ages( $value );
 						},
 						'default'           => array(),
+					),
+					'exclude_id'  => array(
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+						'default'           => 0,
+					),
+					'update_id'   => array(
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+						'default'           => 0,
+					),
+					'booking_token' => array(
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+						'default'           => '',
 					),
 					'extras'      => array(
 						'required'          => false,
@@ -567,7 +583,7 @@ if ( $check_in >= $check_out ) {
 		);
 		Pricing::prime_room_cache( $room_ids );
 
-		$available = array();
+$available = array();
 		$nights    = 0;
 		try {
 			$nights = (int) ( new \DateTime( $check_in ) )->diff( new \DateTime( $check_out ) )->format( '%a' );
@@ -634,8 +650,6 @@ if ( $check_in >= $check_out ) {
 	 * @return string Raw version string before MD5 hashing.
 	 */
 	public static function get_calendar_version_hash(): string {
-		Pricing::maybe_cleanup_stale_pending_payments();
-
 		$parts = array(
 			'v4',
 			(string) Cache::get_version( Cache::TABLE_BOOKINGS ),
@@ -643,7 +657,7 @@ if ( $check_in >= $check_out ) {
 			(string) Cache::get_version( Cache::TABLE_ROOMS ),
 			(string) Cache::get_version( Cache::TABLE_PRICING_RULES ),
 			(string) Cache::get_version( Cache::TABLE_SETTINGS ),
-			(string) (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ),
+			(string) ( ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) ? (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) : 0 ),
 			(string) (int) get_option( 'mhbo_global_min_stay', 0 ),
 			(string) (int) get_option( 'mhbo_global_max_stay', 0 ),
 			(string) (int) get_option( 'mhbo_calendar_show_decimals', 0 ),
@@ -805,7 +819,7 @@ $data = self::generate_calendar_payload( $room_id, $year, $month, $days_limit, $
 		$ext_end   = ( clone $end_date )->modify( '+35 days' );
 
 		$pending_cutoff     = Pricing::get_pending_payment_cutoff();
-		$bookings_cache_key = 'calendar_bookings_v4_' . $room_id . '_' . substr( $pending_cutoff, 0, 15 );
+		$bookings_cache_key = 'calendar_bookings_v4_' . $room_id . '_' . substr( $pending_cutoff, 0, 16 );
 		$bookings           = Cache::get_query( $bookings_cache_key, Cache::TABLE_BOOKINGS );
 
 		if ( false === $bookings ) {
@@ -879,7 +893,7 @@ $data = self::generate_calendar_payload( $room_id, $year, $month, $days_limit, $
 		}
 
 		// Hoist options that are loop-invariant out of the per-date iteration.
-		$prevent_turnover = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$prevent_turnover = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 		$show_decimals    = (int) get_option( 'mhbo_calendar_show_decimals', 0 ) === 1;
 		$global_min_stay  = (int) get_option( 'mhbo_global_min_stay', 0 );
 		$global_max_stay  = (int) get_option( 'mhbo_global_max_stay', 0 );
@@ -1044,8 +1058,8 @@ $data = array();
 		$room_ids = array_map( 'intval', array_column( $rooms, 'id' ) );
 		Pricing::prime_room_cache( $room_ids );
 
-		// Same-day Turnover & Core Stay Settings (active across Free, Starter, and Pro)
-		$prevent_turnover = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		// Same-day Turnover & Core Stay Settings (turnover is Starter+, min/max global stay across all tiers)
+		$prevent_turnover = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 		$show_decimals    = (int) get_option( 'mhbo_calendar_show_decimals', 0 ) === 1;
 		$global_min_stay  = (int) get_option( 'mhbo_global_min_stay', 0 );
 		$global_max_stay  = (int) get_option( 'mhbo_global_max_stay', 0 );
@@ -1058,7 +1072,7 @@ $data = array();
 		$query_end     = ( clone $ext_end )->modify( '+1 day' )->format( 'Y-m-d' );
 
 		$pending_cutoff = Pricing::get_pending_payment_cutoff();
-		$cache_key      = 'mhbo_avail_agg_v4_' . md5( implode( ',', $room_ids ) . $ext_start_str . $ext_end_str . (int) $prevent_turnover . substr( $pending_cutoff, 0, 15 ) );
+		$cache_key      = 'mhbo_avail_agg_v4_' . md5( implode( ',', $room_ids ) . $ext_start_str . $ext_end_str . (int) $prevent_turnover . substr( $pending_cutoff, 0, 16 ) );
 		$bookings       = Cache::get_query( $cache_key, Cache::TABLE_BOOKINGS );
 
 		if ( false === $bookings ) {
@@ -1415,12 +1429,14 @@ $data = array();
 		$guests         = absint( $request->get_param( 'guests' ) ?: 1 );
 		$children       = absint( $request->get_param( 'children' ) ?: 0 );
 		$child_ages_raw = $request->get_param( 'child_ages' ) ?: $request->get_param( 'children_ages' );
-		$child_ages     = is_array( $child_ages_raw ) ? array_map( 'absint', $child_ages_raw ) : array();
+		$child_ages     = Pricing::sanitize_child_ages( $child_ages_raw );
 		$raw_extras     = $request->get_param( 'extras' ) ?: $request->get_param( 'mhbo_extras' ) ?: array();
 		$extras         = Pricing::normalize_extras( $raw_extras );
 		$payment_type   = sanitize_text_field( $request->get_param( 'mhbo_payment_type' ) ?: 'full' );
 		$payment_method = sanitize_text_field( $request->get_param( 'mhbo_payment_method' ) ?: '' );
-		$tax_mode       = sanitize_key( (string) ( $request->get_param( 'tax_mode' ) ?: '' ) );
+		$tax_mode       = Capabilities::current_user_can( Capabilities::MANAGE_LHBO )
+			? sanitize_key( (string) ( $request->get_param( 'tax_mode' ) ?: '' ) )
+			: '';
 
 		// Terminology Normalization: Map 'onsite' (Pro) to 'arrival' (Core)
 		if ( 'onsite' === $payment_method ) {
@@ -1441,7 +1457,7 @@ if ( ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
 		$is_admin_override = ( 'admin' === $calc_source ) && Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS );
 
 		if ( ! $is_admin_override && $room_id > 0 && '' !== $check_in && '' !== $check_out ) {
-			$exclude_id  = absint( $request->get_param( 'exclude_id' ) ?: $request->get_param( 'mhbo_exclude_id' ) ?: 0 );
+			$exclude_id  = $this->resolve_authorized_recalculate_exclude_id( $request );
 			$avail_check = Pricing::is_room_available( $room_id, $check_in, $check_out, $exclude_id );
 			if ( true !== $avail_check ) {
 				$avail_label = is_string( $avail_check ) && '' !== $avail_check ? $avail_check : 'label_room_not_available';
@@ -1612,6 +1628,137 @@ return $response;
 	}
 
 	/**
+	 * Resolve an authorized booking ID to exclude from availability checks during /recalculate-price.
+	 *
+	 * Prevents a guest's active provisional pending_payment draft from blocking their own
+	 * live price recalculations when editing children/extras, while rejecting arbitrary
+	 * booking IDs that belong to confirmed bookings or other guests.
+	 *
+	 * @param \WP_REST_Request<array<string, mixed>> $request Incoming REST request.
+	 * @return int Authorized booking ID to exclude, or 0 if none.
+	 */
+	private function resolve_authorized_recalculate_exclude_id( \WP_REST_Request $request ): int {
+		global $wpdb;
+
+		$requested_id = 0;
+		foreach ( array( 'exclude_id', 'mhbo_exclude_id', 'update_id', 'mhbo_update_id' ) as $id_key ) {
+			$raw_id    = $request->get_param( $id_key );
+			$candidate = is_scalar( $raw_id ) ? absint( $raw_id ) : 0;
+			if ( $candidate > 0 ) {
+				$requested_id = $candidate;
+				break;
+			}
+		}
+
+		if ( $requested_id > 0 && Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS ) ) {
+			return $requested_id;
+		}
+
+		$session_id         = Privacy::get_cookie_session_id();
+		$raw_session_id     = '' !== $session_id ? get_transient( 'mhbo_session_pending_booking_' . $session_id ) : 0;
+		$session_pending_id = is_scalar( $raw_session_id ) ? absint( $raw_session_id ) : 0;
+
+		$booking_token = '';
+		foreach ( array( 'booking_token', 'mhbo_booking_token', 'session_token', 'mhbo_session_token' ) as $token_key ) {
+			$raw_token = $request->get_param( $token_key );
+			if ( is_string( $raw_token ) && '' !== trim( $raw_token ) ) {
+				$booking_token = sanitize_text_field( $raw_token );
+				break;
+			}
+		}
+
+		if ( $requested_id > 0 ) {
+			if ( $session_pending_id === $requested_id ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$verified_id = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d AND status = 'pending_payment' LIMIT 1",
+						$requested_id
+					)
+				);
+				if ( $verified_id > 0 ) {
+					return $verified_id;
+				}
+			}
+
+			if ( '' !== $booking_token ) {
+				$raw_token_meta   = get_transient( 'mhbo_booking_session_' . $booking_token );
+				if ( ! is_array( $raw_token_meta ) && ! is_scalar( $raw_token_meta ) ) {
+					$raw_token_meta = get_transient( 'mhbo_session_' . $booking_token );
+				}
+				$token_session_id = 0;
+				$token_cookie_ok  = true;
+				if ( is_array( $raw_token_meta ) ) {
+					$token_session_id = absint( $raw_token_meta['booking_id'] ?? 0 );
+					$bound_sess       = (string) ( $raw_token_meta['session_id'] ?? '' );
+					if ( '' !== $bound_sess && ( '' === $session_id || ! hash_equals( $bound_sess, $session_id ) ) ) {
+						$token_cookie_ok = false;
+					}
+				} elseif ( is_scalar( $raw_token_meta ) ) {
+					$token_session_id = absint( $raw_token_meta );
+				}
+				if ( ! $token_cookie_ok ) {
+					$token_session_id = 0;
+				}
+				if ( $token_session_id === $requested_id ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$verified_id = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d AND status = 'pending_payment' LIMIT 1",
+							$requested_id
+						)
+					);
+					if ( $verified_id > 0 ) {
+						return $verified_id;
+					}
+				}
+
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$verified_id = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d AND booking_token = %s AND status = 'pending_payment' LIMIT 1",
+						$requested_id,
+						$booking_token
+					)
+				);
+				if ( $verified_id > 0 ) {
+					return $verified_id;
+				}
+			}
+
+			return 0;
+		}
+
+		if ( $session_pending_id > 0 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$verified_id = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d AND status = 'pending_payment' LIMIT 1",
+					$session_pending_id
+				)
+			);
+			if ( $verified_id > 0 ) {
+				return $verified_id;
+			}
+		}
+
+		if ( '' !== $booking_token ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$verified_id = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE booking_token = %s AND status = 'pending_payment' ORDER BY id DESC LIMIT 1",
+					$booking_token
+				)
+			);
+			if ( $verified_id > 0 ) {
+				return $verified_id;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
 	 * GET /tax-settings — Get current tax settings for frontend.
 	 *
 	 * @return \WP_REST_Response
@@ -1716,14 +1863,19 @@ return $response;
 		}
 		set_transient( $rate_key, (int) $count + 1, 60 );
 
-		// 1. Prepare data for processor and scrub privileged internal keys (Law 3 Anti-Tamper)
+		// 1. Prepare data for processor and scrub privileged internal keys (Law 3 Anti-Tamper).
+		// Preserve guest special requests submitted via legacy `admin_notes` textarea before scrubbing.
 		$params = array_merge( $request->get_params(), (array) $request->get_json_params() );
+		if ( ! isset( $params['special_requests'] ) && isset( $params['admin_notes'] ) ) {
+			$params['special_requests'] = $params['admin_notes'];
+		}
 		unset(
 			$params['status'],
 			$params['payment_status'],
 			$params['payment_received'],
 			$params['deposit_received'],
 			$params['total_price'],
+			$params['tax_mode'],
 			$params['admin_notes'],
 			$params['external_id']
 		);

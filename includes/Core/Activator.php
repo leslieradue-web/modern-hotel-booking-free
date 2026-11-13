@@ -141,7 +141,7 @@ class Activator {
 			KEY booking_token (booking_token),
 			KEY balance_link_token (balance_link_token),
 			KEY multi_room_parent (multi_room_parent),
-			KEY check_in (check_in),
+			KEY idx_check_in_out (check_in, check_out),
 			KEY check_out (check_out)
 		) $charset_collate;";
 		dbDelta( $sql_bookings );
@@ -221,7 +221,8 @@ class Activator {
 			response_body longtext NOT NULL,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
-			UNIQUE KEY idempotency_key (idempotency_key)
+			UNIQUE KEY idempotency_key (idempotency_key),
+			KEY idx_created_at (created_at)
 		) $charset_collate;";
 		dbDelta( $sql_idempotency );
 
@@ -407,14 +408,14 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 		add_option( 'mhbo_guest_crm_enabled', 0 );
 		add_option( 'mhbo_crm_vip_spend_threshold', 0 );
 		add_option( 'mhbo_crm_vip_stays_threshold', 3 );
-		
-		add_option( 'mhbo_gateway_stripe_enabled', 0 );
+
+add_option( 'mhbo_gateway_stripe_enabled', 0 );
 		add_option( 'mhbo_gateway_paypal_enabled', 0 );
 		add_option( 'mhbo_gateway_onsite_enabled', 0 );
 		add_option( 'mhbo_stripe_mode', 'test' );
 		add_option( 'mhbo_paypal_mode', 'sandbox' );
-		
-		add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 - requires user opt-in
+
+add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 - requires user opt-in
 		add_option( 'mhbo_save_data_on_uninstall', 1 );
 		// Hotel timezone — '' means fall back to WP site timezone (see HotelTime::timezone())
 		add_option( 'mhbo_hotel_timezone', '' );
@@ -496,6 +497,10 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 
 		// Cleanup inactive Pro crons on tier rollbacks/transitions downwards.
 		self::sync_tier_crons( $current_tier );
+
+		if ( class_exists( Plugin::class ) ) {
+			Plugin::ensure_cron_scheduled();
+		}
 	}
 
 	/**
@@ -531,14 +536,7 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 		// Migrate iCal feeds to new connections table
 		self::migrate_ical_feeds_to_connections();
 
-		// Add iCal sync options
-		add_option( 'mhbo_ical_auto_sync_enabled', 1 );
-		add_option( 'mhbo_ical_sync_interval', '6hours' );
-		add_option( 'mhbo_ical_retry_enabled', 1 );
-		add_option( 'mhbo_ical_email_notifications', 0 );
-		add_option( 'mhbo_ical_notification_email', get_option( 'admin_email' ) );
-		add_option( 'mhbo_ical_sync_lock_timeout', 30 );
-		add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 - requires user opt-in
+add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 - requires user opt-in
 		// Core promoted options for existing installations
 		add_option( 'mhbo_hotel_timezone', '' );
 		add_option( 'mhbo_children_enabled', 0 );
@@ -824,16 +822,13 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 	private static function add_performance_indexes(): void {
 		global $wpdb;
 
+		$bookings_table = "{$wpdb->prefix}mhbo_bookings";
+
 		$indexes = array(
 			array(
-				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'table' => $bookings_table,
 				'name'  => 'idx_check_in_out',
 				'cols'  => array( 'check_in', 'check_out' ),
-			),
-			array(
-				'table' => "{$wpdb->prefix}mhbo_bookings",
-				'name'  => 'idx_status_payment',
-				'cols'  => array( 'status', 'payment_status' ),
 			),
 			array(
 				'table' => "{$wpdb->prefix}mhbo_pricing_rules",
@@ -841,49 +836,109 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 				'cols'  => array( 'start_date', 'end_date' ),
 			),
 			array(
-				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'table' => $bookings_table,
 				'name'  => 'idx_booking_token',
 				'alt'   => 'booking_token',
 				'cols'  => array( 'booking_token' ),
 			),
 			array(
-				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'table' => $bookings_table,
 				'name'  => 'idx_balance_link_token',
 				'alt'   => 'balance_link_token',
 				'cols'  => array( 'balance_link_token' ),
 			),
 			array(
-				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'table' => $bookings_table,
 				'name'  => 'idx_multi_room_parent',
 				'alt'   => 'multi_room_parent',
 				'cols'  => array( 'multi_room_parent' ),
 			),
 			array(
-				'table' => "{$wpdb->prefix}mhbo_bookings",
+				'table' => $bookings_table,
 				'name'  => 'idx_guest_id',
 				'alt'   => 'guest_id',
 				'cols'  => array( 'guest_id' ),
 			),
+			array(
+				'table' => $bookings_table,
+				'name'  => 'idx_status_dates',
+				'cols'  => array( 'status', 'check_in', 'check_out' ),
+			),
+			array(
+				'table' => $bookings_table,
+				'name'  => 'idx_status_check_out',
+				'cols'  => array( 'status', 'check_out' ),
+			),
+			array(
+				'table' => $bookings_table,
+				'name'  => 'idx_status_created',
+				'cols'  => array( 'status', 'created_at' ),
+			),
+			array(
+				'table' => $bookings_table,
+				'name'  => 'idx_payment_created',
+				'cols'  => array( 'payment_status', 'created_at' ),
+			),
+			array(
+				'table' => $bookings_table,
+				'name'  => 'idx_balance_expiry',
+				'cols'  => array( 'balance_status', 'balance_link_expires_at' ),
+			),
+			array(
+				'table' => $bookings_table,
+				'name'  => 'idx_updated_at',
+				'cols'  => array( 'updated_at' ),
+			),
+			array(
+				'table' => "{$wpdb->prefix}mhbo_idempotency",
+				'name'  => 'idx_created_at',
+				'cols'  => array( 'created_at' ),
+			),
 		);
 
-foreach ( $indexes as $idx ) {
-			if ( self::index_exists( $idx['table'], $idx['name'] ) ) {
+$table_signatures = array();
+
+		foreach ( $indexes as $idx ) {
+			$table = $idx['table'];
+			if ( ! isset( $table_signatures[ $table ] ) ) {
+				$table_signatures[ $table ] = self::get_table_index_signatures( $table );
+			}
+
+			$existing = $table_signatures[ $table ];
+			$sig      = implode( ',', $idx['cols'] );
+
+			// Skip if key name, alt name, or identical column signature already exists.
+			if ( isset( $existing['names'][ $idx['name'] ] ) || isset( $existing['signatures'][ $sig ] ) ) {
 				continue;
 			}
 
-			if ( isset( $idx['alt'] ) && self::index_exists( $idx['table'], $idx['alt'] ) ) {
+			if ( isset( $idx['alt'] ) && isset( $existing['names'][ $idx['alt'] ] ) ) {
 				continue;
 			}
+
+			$cols      = $idx['cols'];
+			$col_count = count( $cols );
 
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL schema index creation with %i identifier placeholders.
-			if ( 2 === count( $idx['cols'] ) ) {
+			if ( 3 === $col_count && isset( $cols[1], $cols[2] ) ) {
+				$wpdb->query(
+					$wpdb->prepare(
+						'CREATE INDEX %i ON %i (%i, %i, %i)',
+						$idx['name'],
+						$table,
+						$cols[0],
+						$cols[1],
+						$cols[2]
+					)
+				);
+			} elseif ( 2 === $col_count && isset( $cols[1] ) ) {
 				$wpdb->query(
 					$wpdb->prepare(
 						'CREATE INDEX %i ON %i (%i, %i)',
 						$idx['name'],
-						$idx['table'],
-						$idx['cols'][0],
-						$idx['cols'][1]
+						$table,
+						$cols[0],
+						$cols[1]
 					)
 				);
 			} else {
@@ -891,37 +946,64 @@ foreach ( $indexes as $idx ) {
 					$wpdb->prepare(
 						'CREATE INDEX %i ON %i (%i)',
 						$idx['name'],
-						$idx['table'],
-						$idx['cols'][0]
+						$table,
+						$cols[0]
 					)
 				);
 			}
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+			$table_signatures[ $table ]['names'][ $idx['name'] ] = true;
+			$table_signatures[ $table ]['signatures'][ $sig ]    = true;
 		}
 	}
 
 	/**
-	 * Check whether a named index exists on a table.
-	 *
-	 * 2026 BP: Uses SHOW INDEX which works on MySQL 5.7+, 8.x, and MariaDB 10.x+.
+	 * Inspect existing index names and ordered column signatures for a table.
 	 *
 	 * @param string $table Full table name (with prefix).
-	 * @param string $index Index name to look for.
-	 * @return bool True if the index already exists.
+	 * @return array{names: array<string, true>, signatures: array<string, true>}
 	 */
-	private static function index_exists( string $table, string $index ): bool {
+	private static function get_table_index_signatures( string $table ): array {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- DDL introspection, not cacheable.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SHOW INDEX FROM %i WHERE Key_name = %s',
-				$table,
-				$index
-			) 
+				'SHOW INDEX FROM %i',
+				$table
+			)
 		);
 
-		return array() !== $rows;
+		$names   = array();
+		$by_name = array();
+
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( ! is_object( $row ) ) {
+					continue;
+				}
+				$key_name = (string) ( $row->Key_name ?? '' );
+				$col_name = (string) ( $row->Column_name ?? '' );
+				$seq      = (int) ( $row->Seq_in_index ?? 0 );
+				if ( '' === $key_name || '' === $col_name ) {
+					continue;
+				}
+				$names[ $key_name ]         = true;
+				$by_name[ $key_name ][ $seq ] = $col_name;
+			}
+		}
+
+		$signatures = array();
+		foreach ( $by_name as $cols ) {
+			ksort( $cols );
+			$signatures[ implode( ',', $cols ) ] = true;
+		}
+
+		return array(
+			'names'      => $names,
+			'signatures' => $signatures,
+		);
 	}
 
 	/**
@@ -942,6 +1024,9 @@ foreach ( $indexes as $idx ) {
 				'mhbo_dispatch_review_invitations',
 				'mhbo_daily_review_email_cron',
 				'mhbo_ical_scheduled_sync',
+				'mhbo_ical_scheduled_sync_single',
+				'mhbo_send_balance_link',
+				'mhbo_webhook_deliver',
 				'check_updates-modern-hotel-booking-pro',
 			);
 			foreach ( $pro_crons as $hook ) {
@@ -952,16 +1037,54 @@ foreach ( $indexes as $idx ) {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				\as_unschedule_all_actions( 'mhbo_analytics_nightly_rollup' );
 				\as_unschedule_all_actions( 'mhbo_ical_sync_async' );
+				\as_unschedule_all_actions( 'mhbo_send_balance_link' );
 			}
 		}
 
 		if ( 'free' === $current_tier ) {
 			$commercial_crons = array(
-				'mhbo_validate_license',
-				'mhbo_validate_license_retry',
+				'check_updates-modern-hotel-booking',
+				
 			);
 			foreach ( $commercial_crons as $hook ) {
 				if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
+					wp_clear_scheduled_hook( $hook );
+				}
+			}
+
+			// Dynamically sweep non-Free mhbo_* cron hooks (license-named hooks are stripped from Free builds).
+			self::sweep_unwanted_crons(
+				array(
+					'mhbo_hourly_sync',
+					'mhbo_daily_maintenance',
+					'mhbo_hourly_maintenance',
+					'mhbo_recalculate_guest_stats',
+					'mhbo_migrate_guests_batch',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Dynamically unschedule any registered `mhbo_*` cron hooks not in `$keep`.
+	 *
+	 * @param array<int, string> $keep Cron hook names to retain.
+	 * @return void
+	 */
+	public static function sweep_unwanted_crons( array $keep = array() ): void {
+		if ( ! function_exists( '_get_cron_array' ) || ! function_exists( 'wp_clear_scheduled_hook' ) ) {
+			return;
+		}
+		$cron_array = _get_cron_array();
+		if ( ! is_array( $cron_array ) ) {
+			return;
+		}
+		foreach ( $cron_array as $cron_hooks ) {
+			if ( ! is_array( $cron_hooks ) ) {
+				continue;
+			}
+			foreach ( array_keys( $cron_hooks ) as $hook ) {
+				if ( is_string( $hook ) && 0 === strpos( $hook, 'mhbo_' ) && ! in_array( $hook, $keep, true ) ) {
 					wp_clear_scheduled_hook( $hook );
 				}
 			}

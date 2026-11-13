@@ -105,6 +105,7 @@ register_rest_route(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'recalculate_all_stats' ),
 				'permission_callback' => array( $this, 'check_guest_permission' ),
+				'args'                => array(),
 			)
 		);
 
@@ -577,7 +578,7 @@ return $this->success( $guest );
         // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Direct streaming of CSV BOM to php://output
 		fwrite( $out, "\xEF\xBB\xBF" );
 
-		fputcsv( $out, array( 'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'VIP Status', 'Rating', 'Total Stays', 'Total Spend', 'Registration Date' ) );
+		fputcsv( $out, array( 'ID', 'First Name', 'Last Name', 'Email', 'Phone', 'VIP Status', 'Rating', 'Total Stays', 'Total Spend', 'Registration Date' ), ',', '"', '' );
 
 		if ( ! empty( $guests ) ) {
 			foreach ( $guests as $g ) {
@@ -600,7 +601,10 @@ return $this->success( $guest );
 						(int) ( $g['total_stays'] ?? 0 ),
 						number_format( (float) ( $g['total_spend'] ?? 0 ), 2, '.', '' ),
 						! empty( $g['created_at'] ) ? HotelTime::format_datetime( $g['created_at'] ) : '',
-					)
+					),
+					',',
+					'"',
+					''
 				);
 			}
 		}

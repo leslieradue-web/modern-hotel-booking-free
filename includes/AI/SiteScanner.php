@@ -352,8 +352,8 @@ return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 		}
 
 		// Min / max stay.
-		$min_stay = (int) get_option( 'mhbo_min_stay', 1 );
-		$max_stay = (int) get_option( 'mhbo_max_stay', 0 );
+		$min_stay = (int) get_option( 'mhbo_global_min_stay', 0 );
+		$max_stay = (int) get_option( 'mhbo_global_max_stay', 0 );
 		if ( $min_stay > 1 ) {
 			$lines[] = "Minimum stay: {$min_stay} nights.";
 		}

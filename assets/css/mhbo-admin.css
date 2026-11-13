@@ -3706,8 +3706,7 @@
 }
 
 /* Full Days (100% Occupancy): Solid Red Background Square */
-.mhbo-day-full,
-td.mhbo-day-full {
+.mhbo-day-full {
     background: #fee2e2 !important;
     background-color: #fee2e2 !important;
 }

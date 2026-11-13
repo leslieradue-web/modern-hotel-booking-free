@@ -57,7 +57,11 @@ class GetPriceBreakdown {
 			),
 			'room_id'   => array(
 				'type'        => 'integer',
-				'description' => 'Optional room ID or room type ID.',
+				'description' => 'Optional specific physical room ID.',
+			),
+			'type_id'   => array(
+				'type'        => 'integer',
+				'description' => 'Optional room type ID used when a specific physical room ID is not provided.',
 			),
 			'adults'    => array(
 				'type'        => 'integer',
@@ -149,15 +153,35 @@ return array(
 		$children = absint( $args['children'] ?? 0 );
 
 		$room_id = 0;
-		if ( isset( $args['room_id'] ) ) {
+		if ( isset( $args['room_id'] ) && absint( $args['room_id'] ) > 0 ) {
 			$room_id = absint( $args['room_id'] );
-		} elseif ( isset( $args['type_id'] ) ) {
+		} elseif ( isset( $args['type_id'] ) && absint( $args['type_id'] ) > 0 ) {
 			$type_id = absint( $args['type_id'] );
 			$found   = Pricing::find_available_room( $type_id, $check_in_raw, $check_out_raw, $adults + $children );
-			$room_id = ( false !== $found ) ? $found : $type_id;
+			if ( false !== $found && (int) $found > 0 ) {
+				$room_id = (int) $found;
+			} else {
+				global $wpdb;
+				$fallback_key = 'price_type_room_' . $type_id;
+				$fallback_id  = \MHBO\Core\Cache::get_query( $fallback_key, \MHBO\Core\Cache::TABLE_ROOMS );
+				if ( false === $fallback_id ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cached via Cache::set_query immediately below.
+					$fallback_id = $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE type_id = %d ORDER BY id ASC LIMIT 1",
+							$type_id
+						)
+					);
+					\MHBO\Core\Cache::set_query( $fallback_key, (int) $fallback_id, \MHBO\Core\Cache::TABLE_ROOMS, 3600 );
+				}
+				$room_id = absint( $fallback_id );
+			}
 		}
 		if ( $room_id <= 0 ) {
-			$room_id = 1;
+			return array(
+				'error'   => true,
+				'message' => 'A valid room_id or type_id is required to calculate a price breakdown.',
+			);
 		}
 
 		$child_ages = array();
@@ -176,7 +200,7 @@ $nights_count = (int) ( ( $t_out - $t_in ) / DAY_IN_SECONDS );
 			);
 		}
 
-		$currency = (string) get_option( 'mhbo_currency_code', 'RON' );
+		$currency = Pricing::get_currency_code();
 
 		$daily_breakdown = array();
 		if ( isset( $calc['daily_prices'] ) && is_array( $calc['daily_prices'] ) ) {
@@ -186,6 +210,8 @@ $nights_count = (int) ( ( $t_out - $t_in ) / DAY_IN_SECONDS );
 				$daily_breakdown[ $day_date ] = $m instanceof Money ? (float) $m->toDecimal() : (float) $m;
 			}
 		}
+
+		$discount_amount = 0.0;
 
 $subtotal = $calc['subtotal'] instanceof Money ? (float) $calc['subtotal']->toDecimal() : 0.0;
 		$total    = $calc['total'] instanceof Money ? (float) $calc['total']->toDecimal() : 0.0;

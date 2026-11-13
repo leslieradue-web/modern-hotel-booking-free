@@ -2,7 +2,6 @@
 
 namespace MHBO\Core;
 
-use MHBO\Core\ICal;
 use MHBO\Core\License;
 use MHBO\Core\Pricing;
 
@@ -46,33 +45,6 @@ public function __construct() {
 		}
 
 		/* ---- iCal Export (public endpoint) ---- */
-		
-		add_action(
-			'init',
-			function () {
-            // phpcs:disable WordPress.Security.NonceVerification.Recommended -- External API endpoint without nonce
-				$mhbo_action = isset( $_GET['mhbo_action'] ) ? sanitize_key( wp_unslash( $_GET['mhbo_action'] ) ) : '';
-				$room_id     = isset( $_GET['room_id'] ) ? absint( wp_unslash( $_GET['room_id'] ) ) : 0;
-				if (
-					'ical_export' === $mhbo_action
-					&& $room_id > 0
-					&& ! MHBO_IS_PRO // Pro Manager handles this at template_redirect; fallback here for edge cases
-				) {
-					if ( ! MHBO_IS_PRO ) {
-						wp_die( esc_html( I18n::get_label( 'label_pro_required_ical' ) ), '', array( 'response' => 403 ) );
-					}
-					$token       = sanitize_text_field( wp_unslash( $_GET['token'] ?? '' ) );
-					$valid_token = get_option( 'mhbo_ical_token' );
-					if ( $token === '' || ! is_string( $valid_token ) || $valid_token === '' || ! hash_equals( (string) $valid_token, $token ) ) {
-						wp_die( esc_html( I18n::get_label( 'msg_security_check_token' ) ), '', array( 'response' => 403 ) );
-					}
-					if ( $room_id > 0 ) {
-						ICal::generate_ics( $room_id, $token );
-					}
-				}
-            // phpcs:enable WordPress.Security.NonceVerification.Recommended
-			}
-		);
 
 // Note: The specialized Pro scheduler handles intervals (5m, 15m, hourly, etc.)
 		// in ICalManager::maybe_schedule_sync().
@@ -141,6 +113,10 @@ if ( class_exists( 'MHBO\Api\PaymentsController' ) ) {
 		if ( class_exists( 'MHBO\Integrations\Consent' ) ) {
 			\MHBO\Integrations\Consent::init();
 		}
+
+		add_action( 'updated_option', array( __CLASS__, 'maybe_bump_settings_version' ), 10, 1 );
+		add_action( 'added_option', array( __CLASS__, 'maybe_bump_settings_version' ), 10, 1 );
+		add_action( 'deleted_option', array( __CLASS__, 'maybe_bump_settings_version' ), 10, 1 );
 
 		/* ---- GDPR / Privacy & Security Headers ---- */
 		$privacy = new Privacy();
@@ -248,25 +224,170 @@ if ( is_admin() ) {
 	}
 
 	/**
-	 * Schedule maintenance cron jobs.
+	 * Schedule maintenance cron jobs (idempotent, throttled to admin/cron contexts).
 	 */
 	private function schedule_cron(): void {
+		add_action(
+			'mhbo_daily_maintenance',
+			static function (): void {
+				Cache::prune_expired_transients();
+				RestApi::purge_expired_idempotency_keys();
+			}
+		);
+		add_action( 'mhbo_hourly_maintenance', array( $this, 'cleanup_stale_pending_payments' ) );
+
+		if ( ! is_admin() && ! wp_doing_cron() ) {
+			return;
+		}
+
+		$target_version = defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3';
+		if (
+			get_option( 'mhbo_cron_version', '' ) !== $target_version
+			|| false === get_transient( 'mhbo_cron_verified' )
+		) {
+			self::ensure_cron_scheduled();
+		}
+	}
+
+	/**
+	 * Ensure core maintenance cron events are scheduled without running wp_next_scheduled on frontend requests.
+	 *
+	 * @return void
+	 */
+	public static function ensure_cron_scheduled(): void {
 		if ( ! wp_next_scheduled( 'mhbo_daily_maintenance' ) ) {
 			wp_schedule_event( time(), 'daily', 'mhbo_daily_maintenance' );
 		}
 		if ( ! wp_next_scheduled( 'mhbo_hourly_maintenance' ) ) {
 			wp_schedule_event( time(), 'hourly', 'mhbo_hourly_maintenance' );
 		}
-		add_action( 'mhbo_hourly_maintenance', array( $this, 'cleanup_stale_pending_payments' ) );
+
+		update_option( 'mhbo_cron_version', defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3', false );
+		set_transient( 'mhbo_cron_verified', '1', 12 * HOUR_IN_SECONDS );
 	}
 
 	/**
-	 * Cancel stale pending_payment bookings older than 1 hour to release inventory.
+	 * Cancel stale pending_payment checkout holds past the expiry window to release inventory.
 	 *
 	 * Skips bookings with any payment evidence to avoid canceling fully-paid
 	 * or partially-paid reservations whose webhook/status transition is delayed.
 	 */
 	public function cleanup_stale_pending_payments(): void {
 		Pricing::cleanup_stale_pending_payments_now();
+	}
+
+	/**
+	 * Bump TABLE_SETTINGS generation when operational/pricing MHBO options change.
+	 * Prevents cache drift without incurring recursive updates on mhbo_v_* counters.
+	 *
+	 * @param mixed $option Option name mutated.
+	 */
+	public static function maybe_bump_settings_version( mixed $option ): void {
+		static $bumping = false;
+		if ( $bumping || ! is_string( $option ) || ! str_starts_with( $option, 'mhbo_' ) ) {
+			return;
+		}
+
+		// Skip internal version counters and transient/sequence/queue state.
+		if (
+			str_starts_with( $option, 'mhbo_v_' )
+			|| str_starts_with( $option, 'mhbo_bseq_' )
+			|| str_starts_with( $option, 'mhbo_ical_key_' )
+			|| str_starts_with( $option, 'mhbo_marketing_queue' )
+		) {
+			return;
+		}
+
+		$bumping = true;
+		try {
+			Cache::bump( Cache::TABLE_SETTINGS );
+		} finally {
+			$bumping = false;
+		}
+	}
+
+	/**
+	 * Resolve a plugin-relative source asset path (`assets/...`) to its compiled/minified
+	 * `build/...` path when available and `SCRIPT_DEBUG` is disabled.
+	 *
+	 * @param string $relative_path Relative path from plugin root (e.g. 'assets/js/mhbo-admin.js').
+	 * @return string Normalized relative path to serve.
+	 */
+	public static function resolve_asset_relative( string $relative_path ): string {
+		$rel = ltrim( str_replace( '\\', '/', $relative_path ), '/' );
+
+		if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
+			return $rel;
+		}
+
+		$candidate = '';
+		if ( str_starts_with( $rel, 'assets/js/pro/' ) && str_ends_with( $rel, '.js' ) ) {
+			$candidate = 'build/js/pro/' . substr( $rel, strlen( 'assets/js/pro/' ) );
+		} elseif ( str_starts_with( $rel, 'assets/js/' ) && ! str_contains( substr( $rel, strlen( 'assets/js/' ) ), '/' ) && str_ends_with( $rel, '.js' ) ) {
+			$candidate = 'build/' . substr( $rel, strlen( 'assets/js/' ) );
+		} elseif ( str_starts_with( $rel, 'assets/css/' ) && ! str_starts_with( $rel, 'assets/css/vendor/' ) && str_ends_with( $rel, '.css' ) ) {
+			$candidate = 'build/css/' . substr( $rel, strlen( 'assets/css/' ) );
+		}
+
+		if ( '' === $candidate ) {
+			return $rel;
+		}
+
+		$src_full   = MHBO_PLUGIN_DIR . $rel;
+		$build_full = MHBO_PLUGIN_DIR . $candidate;
+
+		if ( ! file_exists( $build_full ) ) {
+			return $rel;
+		}
+
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && file_exists( $src_full ) ) {
+			$src_mtime   = filemtime( $src_full );
+			$build_mtime = filemtime( $build_full );
+			if ( false !== $src_mtime && false !== $build_mtime && $src_mtime > ( $build_mtime + 5 ) ) {
+				return $rel;
+			}
+		}
+
+		return $candidate;
+	}
+
+	/**
+	 * Resolve public URL for a plugin asset, preferring compiled/minified `build/` outputs.
+	 *
+	 * @param string $relative_path Relative path from plugin root (e.g. 'assets/css/mhbo-style.css').
+	 * @return string Full URL to the resolved asset.
+	 */
+	public static function asset_url( string $relative_path ): string {
+		return MHBO_PLUGIN_URL . self::resolve_asset_relative( $relative_path );
+	}
+
+	/**
+	 * Compute cache-busting asset version string using filemtime of the resolved asset.
+	 *
+	 * @param string $relative_path Relative path from plugin root.
+	 * @return string File modification timestamp or plugin version fallback.
+	 */
+	public static function asset_ver( string $relative_path ): string {
+		$resolved = self::resolve_asset_relative( $relative_path );
+		$full     = MHBO_PLUGIN_DIR . $resolved;
+		if ( file_exists( $full ) ) {
+			$mtime = filemtime( $full );
+			if ( false !== $mtime ) {
+				return (string) $mtime;
+			}
+		}
+
+		return defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3';
+	}
+
+	/**
+	 * Resolve self-hosted GDPR-compliant webfont stylesheet URL (OFL-1.1).
+	 *
+	 * @param string $family Font family slug ('inter' or 'outfit').
+	 * @return string Stylesheet URL under `assets/fonts/`.
+	 */
+	public static function get_font_url( string $family ): string {
+		$slug = ( 'outfit' === strtolower( trim( $family ) ) ) ? 'outfit' : 'inter';
+		return MHBO_PLUGIN_URL . 'assets/fonts/' . $slug . '.css';
 	}
 }

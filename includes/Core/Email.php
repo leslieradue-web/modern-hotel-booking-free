@@ -214,8 +214,9 @@ $admin_email = self::get_notification_email();
 		$body .= self::admin_row( _x( 'Name', 'customer detail', 'modern-hotel-booking' ), esc_html( (string) ( $booking->customer_name ?? '' ) ) );
 		$body .= self::admin_row( _x( 'Email', 'customer detail', 'modern-hotel-booking' ), '<a href="mailto:' . esc_attr( (string) ( $booking->customer_email ?? '' ) ) . '">' . esc_html( (string) ( $booking->customer_email ?? '' ) ) . '</a>' );
 		$body .= self::admin_row( _x( 'Phone', 'customer detail', 'modern-hotel-booking' ), esc_html( (string) ( $booking->customer_phone ?? '' ) ) );
-		if ( '' !== (string) ( $booking->special_requests ?? '' ) ) {
-			$body .= self::admin_row( __( 'Special Requests', 'modern-hotel-booking' ), esc_html( (string) $booking->special_requests ) );
+		$email_special_req = BookingProcessor::extract_guest_special_requests( $booking );
+		if ( '' !== $email_special_req ) {
+			$body .= self::admin_row( __( 'Special Requests', 'modern-hotel-booking' ), esc_html( $email_special_req ) );
 		}
 		// Custom fields
 		if ( '' !== (string) ( $booking->custom_fields ?? '' ) ) {
@@ -1113,7 +1114,8 @@ $start_dt = new \DateTime( $check_in_date . ' ' . $ci_time, $tz );
 		$c_name  = '' !== (string) ( $booking->customer_name ?? '' ) ? esc_html( (string) $booking->customer_name ) : I18n::get_label( 'label_guest' );
 		$c_email = '' !== (string) ( $booking->customer_email ?? '' ) ? sanitize_email( (string) $booking->customer_email ) : '';
 		$c_phone = '' !== (string) ( $booking->customer_phone ?? '' ) ? esc_html( (string) $booking->customer_phone ) : '';
-		$special = '' !== (string) ( $booking->special_requests ?? '' ) ? esc_html( (string) $booking->special_requests ) : '';
+		$raw_special = BookingProcessor::extract_guest_special_requests( $booking );
+		$special     = '' !== $raw_special ? esc_html( $raw_special ) : '';
 
 		$booking_token = (string) ( $booking->booking_token ?? '' );
 		$portal_url    = class_exists( \MHBO\Api\GuestPortalController::class )
@@ -1217,7 +1219,7 @@ $start_dt = new \DateTime( $check_in_date . ' ' . $ci_time, $tz );
 			'{guest_phone}'             => $c_phone,
 			'{phone}'                   => $c_phone,
 			'{special_requests}'        => $special,
-			'{arrival_time}'            => esc_html( $booking->arrival_time ?? '' ),
+			'{arrival_time}'            => esc_html( BookingProcessor::extract_arrival_time( $booking ) ),
 
 			// Pre-rendered Components
 			'{custom_fields}'           => $additional['custom_fields_formatted'] ?? '',
@@ -1656,9 +1658,10 @@ $title_text = ( 'pending' === ( $booking->status ?? '' ) )
 			$lines[] = "\u{1F4B3} *Amount Paid:* " . $paid;
 		}
 
-if ( ! empty( $booking->special_requests ) ) {
+$wa_pro_special_req = BookingProcessor::extract_guest_special_requests( $booking );
+		if ( '' !== $wa_pro_special_req ) {
 			$lines[] = '';
-			$lines[] = "\u{1F4DD} *Special Requests:* " . trim( (string) $booking->special_requests );
+			$lines[] = "\u{1F4DD} *Special Requests:* " . $wa_pro_special_req;
 		}
 		$lines[] = '────────────────────────────';
 		if ( '' !== $company_phone ) {
@@ -2519,6 +2522,25 @@ if ( ! empty( $booking->special_requests ) ) {
 		}
 
 		return $file_path;
+	}
+
+	/**
+	 * Send an HTML email with a scoped `wp_mail_content_type` filter cleaned up in `finally`.
+	 *
+	 * @param string             $to      Recipient email address.
+	 * @param string             $subject Email subject.
+	 * @param string             $message HTML body.
+	 * @param array<int, string> $headers Mail headers.
+	 * @return bool Whether wp_mail reported success.
+	 */
+	private static function dispatch_html_mail( string $to, string $subject, string $message, array $headers ): bool {
+		$html_type = static fn(): string => 'text/html';
+		add_filter( 'wp_mail_content_type', $html_type );
+		try {
+			return (bool) wp_mail( $to, $subject, $message, $headers );
+		} finally {
+			remove_filter( 'wp_mail_content_type', $html_type );
+		}
 	}
 
 	/**

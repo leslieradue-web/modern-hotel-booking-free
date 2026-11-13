@@ -102,14 +102,32 @@ class Capabilities {
 	public const ROLE_HOUSEKEEPER = 'mhbo_housekeeper';
 
 	/**
+	 * Internal schema/capabilities version to avoid running role writes on every frontend request.
+	 */
+	public const CAPS_VERSION = '2.6.1';
+
+	/**
 	 * Register MHBO abilities, map roles, and filter editable roles on activation.
 	 */
 	public static function register(): void {
-		// RATIONALE: We use the standard 'init' hook to ensure roles are updated 
-		// if they were modified by other plugins.
-		add_action( 'init', array( self::class, 'init_abilities' ), 1 );
+		add_action( 'init', array( self::class, 'maybe_init_abilities' ), 1 );
 		add_filter( 'editable_roles', array( self::class, 'filter_editable_roles' ) );
 		add_filter( 'translate_user_role', array( self::class, 'translate_custom_role' ), 10, 2 );
+	}
+
+	/**
+	 * Sync MHBO roles and capabilities only when the version marker is stale or custom role is absent.
+	 */
+	public static function maybe_init_abilities(): void {
+		if (
+			self::CAPS_VERSION === (string) get_option( 'mhbo_caps_version', '' )
+			&& null !== get_role( self::ROLE_HOUSEKEEPER )
+		) {
+			return;
+		}
+
+		self::init_abilities();
+		update_option( 'mhbo_caps_version', self::CAPS_VERSION, true );
 	}
 
 	/**
@@ -118,21 +136,23 @@ class Capabilities {
 	 * Prevents early translation loading notices (_load_textdomain_just_in_time)
 	 * during plugin bootstrap and activation before the 'init' action fires.
 	 *
-	 * @param string $translated_name Current translated role name.
-	 * @param string $original_name   Original role name.
+	 * @param mixed $translated_name Current translated role name.
+	 * @param mixed $original_name   Original role name.
 	 * @return string Localized role name.
 	 */
-	public static function translate_custom_role( string $translated_name, string $original_name ): string {
+	public static function translate_custom_role( mixed $translated_name, mixed $original_name = '' ): string {
+		$translated_str = is_string( $translated_name ) ? $translated_name : '';
+		$original_str   = is_string( $original_name ) ? $original_name : '';
 		if ( ! function_exists( 'did_action' ) || ! \did_action( 'init' ) ) {
-			return $translated_name;
+			return $translated_str;
 		}
 
-		return match ( $original_name ) {
+		return match ( $original_str ) {
 			'Hotel Manager'      => __( 'Hotel Manager', 'modern-hotel-booking' ),
 			'Hotel Front Desk'   => __( 'Hotel Front Desk', 'modern-hotel-booking' ),
 			'Housekeeping Staff' => __( 'Housekeeping Staff', 'modern-hotel-booking' ),
 			'Hotel AI Guest'     => __( 'Hotel AI Guest', 'modern-hotel-booking' ),
-			default              => $translated_name,
+			default              => $translated_str,
 		};
 	}
 
@@ -140,10 +160,13 @@ class Capabilities {
 	 * Filter editable roles in WordPress user management screens to hide
 	 * internal machine/AI service roles from the human role dropdown.
 	 *
-	 * @param array<string, array<string, mixed>> $roles Array of role definitions.
-	 * @return array<string, array<string, mixed>> Filtered roles array.
+	 * @param mixed $roles Array of role definitions.
+	 * @return array<string, mixed> Filtered roles array.
 	 */
-	public static function filter_editable_roles( array $roles ): array {
+	public static function filter_editable_roles( mixed $roles ): array {
+		if ( ! is_array( $roles ) ) {
+			return array();
+		}
 		if ( isset( $roles['mhbo_ai_guest'] ) ) {
 			unset( $roles['mhbo_ai_guest'] );
 		}
@@ -217,9 +240,9 @@ class Capabilities {
 			'read'                    => true,
 			self::VIEW_BOOKINGS       => true,
 			self::MANAGE_LHBO         => true,
-			self::MANAGE_ROOMS        => true,
 			self::MANAGE_HOUSEKEEPING => true,
 			self::MANAGE_GUESTS       => true,
+			self::CREATE_BOOKING      => true,
 			self::PROCESS_PAYMENTS    => true,
 		);
 
@@ -235,6 +258,19 @@ class Capabilities {
 			foreach ( array_keys( $front_desk_caps ) as $cap ) {
 				if ( ! $front_desk->has_cap( $cap ) ) {
 					$front_desk->add_cap( $cap );
+				}
+			}
+			// Law 55: Enforce least-privilege boundaries on existing upgraded sites by stripping admin/pricing/room caps.
+			$disallowed_front_desk_caps = array(
+				self::MANAGE_ROOMS,
+				self::MANAGE_PRICING,
+				self::VIEW_ANALYTICS,
+				self::EXPORT_GUESTS,
+				self::MANAGE_SETTINGS,
+			);
+			foreach ( $disallowed_front_desk_caps as $disallowed_cap ) {
+				if ( $front_desk->has_cap( $disallowed_cap ) ) {
+					$front_desk->remove_cap( $disallowed_cap );
 				}
 			}
 		}

@@ -31,6 +31,33 @@ class Loader {
 	private static bool $initialized = false;
 
 	/**
+	 * Guard ensuring Composer vendor autoloader is loaded at most once on demand.
+	 *
+	 * @var bool
+	 */
+	private static bool $autoload_loaded = false;
+
+	/**
+	 * Lazily load Composer dependencies (Jetpack / MCP Adapter) on WP < 7.0 only when AI or hybrid MCP runs.
+	 */
+	public static function ensure_vendor_autoload(): void {
+		if ( self::$autoload_loaded ) {
+			return;
+		}
+		self::$autoload_loaded = true;
+
+		// On WP 7.0+ the wordpress/php-ai-client SDK is bundled in Core.
+		// See: https://make.wordpress.org/core/2026/03/24/introducing-the-ai-client-in-wordpress-7-0/
+		$autoload = MHBO_PLUGIN_DIR . 'vendor/autoload.php';
+		if ( file_exists( $autoload ) ) {
+			if ( ! function_exists( 'wp_get_wp_version' ) || version_compare( call_user_func( 'wp_get_wp_version' ), '7.0', '<' ) ) {
+				// phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable -- Path resolved from MHBO_PLUGIN_DIR constant.
+				require_once $autoload;
+			}
+		}
+	}
+
+	/**
 	 * Boot the AI subsystem.
 	 * Idempotent — safe to call multiple times.
 	 */
@@ -74,18 +101,6 @@ class Loader {
 		// Flush knowledge base cache when rooms or pricing change.
 		add_action( 'mhbo_rooms_invalidated', array( SiteScanner::class, 'clear_cache' ) );
 		add_action( 'mhbo_pricing_invalidated', array( SiteScanner::class, 'clear_cache' ) );
-
-		// Register Composer autoloader (Jetpack Autoloader / MCP Adapter).
-		// On WP 7.0+ the wordpress/php-ai-client SDK is bundled in Core.
-		// Loading our copy again would cause duplicate class definitions.
-		// See: https://make.wordpress.org/core/2026/03/24/introducing-the-ai-client-in-wordpress-7-0/
-		$autoload = MHBO_PLUGIN_DIR . 'vendor/autoload.php';
-		if ( file_exists( $autoload ) ) {
-			if ( ! function_exists( 'wp_get_wp_version' ) || version_compare( call_user_func( 'wp_get_wp_version' ), '7.0', '<' ) ) {
-				// phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable -- Path resolved from MHBO_PLUGIN_DIR constant.
-				require_once $autoload;
-			}
-		}
 
 		// Hooks that must fire early.
 		// WP 7.0+ Abilities API fallback guard.
@@ -145,10 +160,13 @@ class Loader {
 	 * 2026 BP: Include every MHBO script handle — not just AI — so that
 	 * Complianz never blocks the booking modal, calendar, or payment forms.
 	 *
-	 * @param array<string|int,mixed> $scripts
+	 * @param mixed $scripts Existing script handles.
 	 * @return array<string|int,mixed>
 	 */
-	public static function cmplz_safe_scripts( array $scripts ): array {
+	public static function cmplz_safe_scripts( mixed $scripts ): array {
+		if ( ! is_array( $scripts ) ) {
+			$scripts = array();
+		}
 		$scripts[] = 'mhbo-chat-widget';
 		$scripts[] = 'mhbo-voice';
 		$scripts[] = 'mhbo-booking-modal-js';
@@ -249,8 +267,11 @@ class Loader {
 
 	/**
 	 * Enqueue chat widget CSS and JS on the frontend.
+	 *
+	 * @param mixed $force Force enqueue when invoked from shortcode/block rendering.
 	 */
-	public static function enqueue_frontend(): void {
+	public static function enqueue_frontend( mixed $force = false ): void {
+		$force = (bool) $force;
 		if ( is_admin() || is_feed() || is_trackback() || is_attachment() || is_embed() || is_search() || is_author() || is_archive() || is_404() || ( function_exists( 'is_favicon' ) && is_favicon() ) ) {
 			return;
 		}
@@ -261,39 +282,55 @@ class Loader {
 		}
 
 		$widget_enabled = (int) get_option( 'mhbo_ai_widget_enabled', 0 );
-		if ( ! $widget_enabled ) {
+		if ( ! $force && ! $widget_enabled ) {
 			return;
 		}
 
 		$show_globally = (int) get_option( 'mhbo_ai_show_globally', 0 );
 		$is_portal     = false;
+		$is_mhbo_page  = false;
+		$post          = get_post();
+
+		if ( $post instanceof \WP_Post ) {
+			if (
+				has_shortcode( (string) $post->post_content, 'mhbo_booking_form' )
+				|| has_shortcode( (string) $post->post_content, 'modern_hotel_booking' )
+				|| has_shortcode( (string) $post->post_content, 'mhbo_room_calendar' )
+				|| has_shortcode( (string) $post->post_content, 'mhbo_rooms' )
+				|| has_block( 'modern-hotel-booking/booking-form', $post->post_content )
+				|| has_block( 'modern-hotel-booking/room-calendar', $post->post_content )
+				|| ( class_exists( '\\MHBO\\Frontend\\Shortcode' ) && \MHBO\Frontend\Shortcode::is_mhbo_booking_page( $post->ID ) )
+			) {
+				$is_mhbo_page = true;
+			}
+		}
+
 		if ( class_exists( '\\MHBO\\Api\\GuestPortalController' ) && \MHBO\Api\GuestPortalController::is_portal_active() ) {
 			$portal_id = (int) get_option( 'mhbo_guest_portal_page', 0 );
 			if ( $portal_id <= 0 ) {
 				$portal_id = (int) get_transient( 'mhbo_detected_guest_portal_page' );
 			}
-			$post = get_post();
 			if ( ( $portal_id > 0 && is_page( $portal_id ) ) || ( is_singular() && $post instanceof \WP_Post && has_shortcode( (string) $post->post_content, 'mhbo_guest_portal' ) ) ) {
 				$is_portal = true;
 			}
 		}
 
-		if ( ! $show_globally && ! $is_portal ) {
+		if ( ! $force && ! $show_globally && ! $is_portal ) {
 			return;
 		}
 
 		wp_enqueue_style(
-			'mhbo-google-fonts',
-			'https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap',
+			'mhbo-google-fonts-outfit',
+			\MHBO\Core\Plugin::get_font_url( 'outfit' ),
 			array(),
-			'1.0.0'
+			\MHBO\Core\Plugin::asset_ver( 'assets/fonts/outfit.css' )
 		);
 
 		wp_enqueue_style(
 			'mhbo-chat-widget',
-			MHBO_PLUGIN_URL . 'assets/css/mhbo-chat-widget.css',
-			array( 'mhbo-google-fonts' ),
-			MHBO_VERSION
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-chat-widget.css' ),
+			array( 'mhbo-google-fonts-outfit' ),
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-chat-widget.css' )
 		);
 
 		$voice_enabled = (int) get_option( 'mhbo_ai_voice_input_enabled', 1 );
@@ -301,9 +338,9 @@ class Loader {
 		if ( $voice_enabled || $tts_enabled ) {
 			wp_enqueue_script(
 				'mhbo-voice',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-voice.js',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-voice.js' ),
 				array(),
-				MHBO_VERSION,
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-voice.js' ),
 				array(
 					'strategy'  => 'defer',
 					'in_footer' => true,
@@ -313,16 +350,16 @@ class Loader {
 
 		wp_enqueue_script(
 			'mhbo-chat-widget',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-chat-widget.js',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-chat-widget.js' ),
 			( $voice_enabled || $tts_enabled ) ? array( 'mhbo-voice' ) : array(),
-			MHBO_VERSION,
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-chat-widget.js' ),
 			array(
 				'strategy'  => 'defer',
 				'in_footer' => true,
 			)
 		);
 
-		if ( (int) get_option( 'mhbo_modal_enabled', 1 ) === 1 ) {
+		if ( ( $is_mhbo_page || $is_portal ) && (int) get_option( 'mhbo_modal_enabled', 1 ) === 1 ) {
 			if ( class_exists( '\MHBO\Frontend\Calendar' ) ) {
 				\MHBO\Frontend\Calendar::enqueue_modal_assets();
 			}
@@ -343,7 +380,7 @@ class Loader {
 					'personaName'             => get_option( 'mhbo_ai_persona_name', \MHBO\Core\I18n::get_label( 'ai_persona_default' ) ),
 					'position'                => get_option( 'mhbo_ai_widget_position', 'bottom-right' ),
 					'accentColor'             => get_option( 'mhbo_ai_accent_color', '#2C3E50' ),
-					'theme'                   => get_option( 'mhbo_ai_theme', '' ),
+					'theme'                   => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'ai_theme_customization' ) ) ? get_option( 'mhbo_ai_theme', '' ) : '',
 					'welcomeMessage'          => get_option( 'mhbo_ai_welcome_message', '' ),
 					'voiceEnabled'            => (bool) $voice_enabled,
 					'ttsEnabled'              => (bool) get_option( 'mhbo_ai_voice_output_enabled', 0 ),
@@ -462,6 +499,14 @@ class Loader {
 		if ( ! function_exists( 'register_block_type' ) ) {
 			return;
 		}
+		if ( function_exists( 'wp_register_style' ) && ! wp_style_is( 'mhbo-chat-widget', 'registered' ) ) {
+			wp_register_style(
+				'mhbo-chat-widget',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-chat-widget.css' ),
+				array(),
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-chat-widget.css' )
+			);
+		}
 		$block_dir = MHBO_PLUGIN_DIR . 'blocks/ai-concierge';
 		if ( ! file_exists( $block_dir . '/block.json' ) ) {
 			return;
@@ -485,6 +530,9 @@ class Loader {
 		if ( ! $enabled ) {
 			return '';
 		}
+
+		self::enqueue_frontend( true );
+
 		return self::render_widget_div( $attrs );
 	}
 
@@ -521,7 +569,7 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 			return '';
 		}
 
-		self::enqueue_frontend();
+		self::enqueue_frontend( true );
 
 		return self::render_widget_div(
 			array(
@@ -551,11 +599,9 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 		$position = esc_attr( \in_array( $raw_position, $allowed_positions, true ) ? $raw_position : 'bottom-right' );
 		$welcome  = esc_attr( $raw_welcome );
 
-		$theme = is_scalar( $attrs['theme'] ?? null ) ? substr( (string) $attrs['theme'], 0, 64 ) : '';
-		if ( '' === $theme ) {
-			$theme = (string) get_option( 'mhbo_ai_theme', '' );
-		}
-		$theme_class = $theme ? ' mhbo-theme-' . sanitize_html_class( $theme ) : '';
+		$theme = '';
+		
+		$theme_class = '' !== $theme ? ' mhbo-theme-' . sanitize_html_class( $theme ) : '';
 
 		$data  = 'data-variant="' . $variant . '"';
 		$data .= ' data-position="' . $position . '"';
@@ -564,21 +610,6 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 		}
 
 		return '<div class="mhbo-chat-widget' . $theme_class . '" ' . $data . '></div>';
-	}
-
-	// -------------------------------------------------------------------------
-	// Settings Tab Integration
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Add the AI Concierge tab to the MHBO settings page.
-	 *
-	 * @param array<string,string> $tabs
-	 * @return array<string,string>
-	 */
-	public static function add_settings_tab( array $tabs ): array {
-		$tabs['ai_concierge'] = __( 'AI Concierge', 'modern-hotel-booking' );
-		return $tabs;
 	}
 
 	// -------------------------------------------------------------------------
@@ -649,16 +680,16 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 	 * Free: WP_DEBUG telemetry. Pro: future delegation to AiRateLimiter::record_usage().
 	 * Never logs raw $input (PII protection).
 	 *
-	 * @param string $ability_name e.g. 'mhbo/check-availability'.
-	 * @param mixed  $input        The raw input data for the ability, before normalization.
-	 * @param mixed  $ability      The ability instance or null.
+	 * @param mixed $ability_name e.g. 'mhbo/check-availability'.
+	 * @param mixed $input        The raw input data for the ability, before normalization.
+	 * @param mixed $ability      The ability instance or null.
 	 */
-	public static function audit_ability( string $ability_name, mixed $input = null, mixed $ability = null ): void {
+	public static function audit_ability( mixed $ability_name = '', mixed $input = null, mixed $ability = null ): void {
 		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- Parameter required by wp_ability_invoked action signature.
 		unset( $ability );
 
 		// Only process MHBO abilities.
-		if ( ! str_starts_with( $ability_name, 'mhbo/' ) ) {
+		if ( ! is_string( $ability_name ) || ! str_starts_with( $ability_name, 'mhbo/' ) ) {
 			return;
 		}
 
@@ -686,12 +717,12 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 	 *
 	 * @param true|\WP_Error $is_valid     The validation result from default validation.
 	 * @param mixed          $input        The input data being validated.
-	 * @param string         $ability_name e.g. 'mhbo/check-availability'.
+	 * @param mixed          $ability_name e.g. 'mhbo/check-availability'.
 	 * @return true|\WP_Error
 	 */
-	public static function validate_ability_input( mixed $is_valid, mixed $input, string $ability_name = '' ): mixed {
+	public static function validate_ability_input( mixed $is_valid, mixed $input, mixed $ability_name = '' ): mixed {
 		// Pass through non-MHBO abilities or existing errors.
-		if ( ! str_starts_with( $ability_name, 'mhbo/' ) ) {
+		if ( ! is_string( $ability_name ) || ! str_starts_with( $ability_name, 'mhbo/' ) ) {
 			return $is_valid;
 		}
 		if ( is_wp_error( $is_valid ) ) {
@@ -716,13 +747,21 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 				break;
 
 case 'mhbo/get-price-breakdown':
-				// Positive integer guests/nights.
-				$guests = (int) ( $input['guests'] ?? 0 );
-				$nights = (int) ( $input['nights'] ?? 0 );
-				if ( ( isset( $input['guests'] ) && $guests < 1 ) || ( isset( $input['nights'] ) && $nights < 1 ) ) {
+				$adults   = isset( $input['adults'] ) ? (int) $input['adults'] : 2;
+				$children = isset( $input['children'] ) ? (int) $input['children'] : 0;
+				if ( $adults < 1 || $children < 0 ) {
 					return new \WP_Error(
 						'invalid_quantity',
-						__( 'Guests and nights must be positive integers.', 'modern-hotel-booking' ),
+						__( 'Adults must be at least 1 and children cannot be negative.', 'modern-hotel-booking' ),
+						array( 'status' => 400 )
+					);
+				}
+				$check_in  = (string) ( $input['check_in'] ?? '' );
+				$check_out = (string) ( $input['check_out'] ?? '' );
+				if ( '' !== $check_in && '' !== $check_out && $check_out <= $check_in ) {
+					return new \WP_Error(
+						'invalid_dates',
+						__( 'Check-out date must be after check-in date.', 'modern-hotel-booking' ),
 						array( 'status' => 400 )
 					);
 				}
@@ -740,12 +779,12 @@ case 'mhbo/get-price-breakdown':
 	 *
 	 * @param true|\WP_Error $is_valid     The validation result from default validation.
 	 * @param mixed          $output       The ability's return value.
-	 * @param string         $ability_name e.g. 'mhbo/check-availability'.
+	 * @param mixed          $ability_name e.g. 'mhbo/check-availability'.
 	 * @return true|\WP_Error
 	 */
-	public static function validate_ability_output( mixed $is_valid, mixed $output, string $ability_name = '' ): mixed {
+	public static function validate_ability_output( mixed $is_valid, mixed $output, mixed $ability_name = '' ): mixed {
 		// Only process MHBO abilities.
-		if ( ! str_starts_with( $ability_name, 'mhbo/' ) ) {
+		if ( ! is_string( $ability_name ) || ! str_starts_with( $ability_name, 'mhbo/' ) ) {
 			return $is_valid;
 		}
 
@@ -771,10 +810,14 @@ case 'mhbo/get-price-breakdown':
 				break;
 
 			case 'mhbo/get-price-breakdown':
-				if ( ! array_key_exists( 'total', $output ) || ! is_numeric( $output['total'] ) ) {
+				if ( ! empty( $output['error'] ) ) {
+					break;
+				}
+				$total_val = $output['pricing']['total_price'] ?? $output['total'] ?? null;
+				if ( ! is_numeric( $total_val ) ) {
 					return new \WP_Error(
 						'invalid_output',
-						__( 'Price breakdown must contain a numeric "total".', 'modern-hotel-booking' ),
+						__( 'Price breakdown must contain a numeric pricing total.', 'modern-hotel-booking' ),
 						array( 'status' => 500 )
 					);
 				}

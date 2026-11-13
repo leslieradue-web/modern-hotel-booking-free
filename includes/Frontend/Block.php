@@ -31,11 +31,15 @@ class Block {
 	/**
 	 * Add Modern Hotel Booking category to the block inserter.
 	 *
-	 * @param array<int, array<string, mixed>> $categories Existing categories.
-	 * @param mixed                            $post Current post.
-	 * @return array<int, array<string, mixed>> Updated categories.
+	 * @param mixed $categories Existing categories.
+	 * @param mixed $post Current post.
+	 * @return array<int|string, mixed> Updated categories.
 	 */
-	public function add_block_category( array $categories, $post ): array {
+	public function add_block_category( mixed $categories, mixed $post = null ): array {
+		unset( $post );
+		if ( ! is_array( $categories ) ) {
+			$categories = array();
+		}
 		return array_merge(
 			$categories,
 			array(
@@ -65,17 +69,17 @@ class Block {
 		// Register MHBO base style
 		wp_register_style(
 			'mhbo-style',
-			MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css',
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-style.css' ),
 			array(),
-			MHBO_VERSION
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-style.css' )
 		);
 
 		// Register Calendar CSS
 		wp_register_style(
 			'mhbo-calendar-style',
-			MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css',
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-calendar.css' ),
 			array( 'mhbo-flatpickr-css', 'mhbo-style' ),
-			MHBO_VERSION
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-calendar.css' )
 		);
 
 		// Register Flatpickr JS
@@ -93,9 +97,9 @@ class Block {
 		// Register Calendar JS
 		wp_register_script(
 			'mhbo-calendar-js',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-calendar.js',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-calendar.js' ),
 			array( 'mhbo-flatpickr-js' ),
-			MHBO_VERSION,
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-calendar.js' ),
 			array(
 				'strategy'  => 'defer',
 				'in_footer' => true,
@@ -129,7 +133,6 @@ class Block {
 			'banking-details' => 'render_banking_block',
 			'revolut-details' => 'render_revolut_block',
 			'business-card'   => 'render_card_block',
-			'ai-chat-widget'  => 'render_chat_widget_block',
 		);
 
 		foreach ( $blocks as $slug => $callback ) {
@@ -174,6 +177,32 @@ class Block {
 				}
 			}
 		}
+
+		// Legacy alias for previously saved `modern-hotel-booking/ai-chat-widget` blocks;
+		// hidden from the inserter so editors use `modern-hotel-booking/ai-concierge`.
+		register_block_type(
+			'modern-hotel-booking/' . 'ai-chat-widget',
+			array(
+				'api_version'     => 3,
+				'title'           => 'AI Chat Widget',
+				'category'        => 'hotel-booking',
+				'supports'        => array(
+					'inserter' => false,
+					'html'     => false,
+				),
+				'attributes'      => array(
+					'position'       => array(
+						'type'    => 'string',
+						'default' => 'bottom-right',
+					),
+					'welcomeMessage' => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+				'render_callback' => array( $this, 'render_chat_widget_block' ),
+			)
+		);
 	}
 
 	/* ---- Render Callbacks (Dynamic) ---- */
@@ -306,6 +335,9 @@ class Block {
 		$raw_pos  = self::scalar_str( $attributes['position'] ?? 'bottom-right', 'bottom-right', 64 );
 		$position = sanitize_html_class( $raw_pos, 'bottom-right' );
 		$welcome  = esc_attr( self::scalar_str( $attributes['welcomeMessage'] ?? '', '', 500 ) );
-		return sprintf( '<div class="mhbo-chat-widget" data-position="%s" data-welcome-message="%s"></div>', $position, $welcome );
+		if ( class_exists( '\\MHBO\\AI\\Loader' ) && 1 === (int) get_option( 'mhbo_ai_enabled', 0 ) ) {
+			\MHBO\AI\Loader::enqueue_frontend( true );
+		}
+		return sprintf( '<div class="mhbo-chat-widget" data-variant="inline" data-position="%s" data-welcome-message="%s"></div>', $position, $welcome );
 	}
 }

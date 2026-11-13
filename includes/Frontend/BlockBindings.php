@@ -47,18 +47,18 @@ class BlockBindings {
 		);
 
 		// Register attributes for pattern overrides (WP 7.0+).
-		add_filter( 'block_bindings_supported_attributes', array( $this, 'supported_attributes' ), 10, 1 );
+		add_filter( 'block_bindings_supported_attributes', array( $this, 'supported_attributes' ), 10, 2 );
 	}
 
 	/**
 	 * Value callback for the mhbo/booking-total source.
 	 *
-	 * @param array<string, mixed> $source_args    Binding source arguments.
-	 * @param \WP_Block            $block_instance Block instance object.
-	 * @param string               $attribute_name Attribute name bound to the source.
+	 * @param mixed $source_args    Binding source arguments.
+	 * @param mixed $block_instance Block instance object.
+	 * @param mixed $attribute_name Attribute name bound to the source.
 	 * @return string Formatted booking total string.
 	 */
-	public function get_booking_total_value( $source_args, $block_instance, string $attribute_name ): string {
+	public function get_booking_total_value( mixed $source_args, mixed $block_instance, mixed $attribute_name = '' ): string {
 		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 		unset( $source_args, $block_instance, $attribute_name );
 
@@ -89,14 +89,20 @@ class BlockBindings {
 	/**
 	 * Filter supported block attributes for bindings.
 	 *
-	 * @param string[] $supported_attributes Array of supported block attribute names.
-	 * @return string[] Updated array of supported block attribute names.
+	 * @param mixed $supported_attributes Array of supported block attribute names.
+	 * @param mixed $block_type           Optional block type slug (WordPress core may pass null for unnamed blocks).
+	 * @return array<int|string, mixed> Updated array of supported block attribute names.
 	 */
-	public function supported_attributes( array $supported_attributes ): array {
-		// Support text attributes (e.g., core/paragraph content).
-		if ( is_array( $supported_attributes ) && ! in_array( 'mhbo/booking-total', $supported_attributes, true ) ) {
-			$supported_attributes[] = 'mhbo/booking-total';
+	public function supported_attributes( mixed $supported_attributes, mixed $block_type = null ): array {
+		if ( ! is_array( $supported_attributes ) ) {
+			$supported_attributes = array();
 		}
+
+		// Ensure core text blocks retain bindable `content` attribute support while tolerating null $block_type.
+		if ( is_string( $block_type ) && in_array( $block_type, array( 'core/paragraph', 'core/heading' ), true ) && ! in_array( 'content', $supported_attributes, true ) ) {
+			$supported_attributes[] = 'content';
+		}
+
 		return $supported_attributes;
 	}
 }

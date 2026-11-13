@@ -78,16 +78,16 @@ class Shortcodes {
 	public function register_frontend_assets(): void {
 		wp_register_style(
 			'mhbo-business-front',
-			MHBO_PLUGIN_URL . 'assets/css/mhbo-business-front.css',
+			\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-business-front.css' ),
 			array(),
-			MHBO_VERSION
+			\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-business-front.css' )
 		);
 
 		wp_register_script(
 			'mhbo-business-front',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-business-front.js',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-business-front.js' ),
 			array(),
-			MHBO_VERSION,
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-business-front.js' ),
 			array(
 				'strategy'  => 'defer',
 				'in_footer' => true,
@@ -116,17 +116,17 @@ class Shortcodes {
 		if ( ! wp_style_is( 'mhbo-business-front', 'registered' ) ) {
 			wp_register_style(
 				'mhbo-business-front',
-				MHBO_PLUGIN_URL . 'assets/css/mhbo-business-front.css',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-business-front.css' ),
 				array(),
-				MHBO_VERSION
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-business-front.css' )
 			);
 		}
 		if ( ! wp_script_is( 'mhbo-business-front', 'registered' ) ) {
 			wp_register_script(
 				'mhbo-business-front',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-business-front.js',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-business-front.js' ),
 				array(),
-				MHBO_VERSION,
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-business-front.js' ),
 				array(
 					'strategy'  => 'defer',
 					'in_footer' => true,

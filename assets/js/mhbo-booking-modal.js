@@ -165,18 +165,22 @@
 		document.body.style.overflow = '';
 		document.body.classList.remove( 'mhbo-modal-open' );
 
-		overlay.addEventListener(
-			'transitionend',
-			function onEnd() {
-				overlay.removeEventListener( 'transitionend', onEnd );
-				body.innerHTML = '';
-				if ( _previousFocus && _previousFocus.focus ) {
-					_previousFocus.focus();
-				}
-				document.dispatchEvent( new CustomEvent( 'mhboModalClosed' ) );
-			},
-			{ once: true }
-		);
+		let cleaned = false;
+		const cleanup = () => {
+			if ( cleaned ) {
+				return;
+			}
+			cleaned = true;
+			overlay.removeEventListener( 'transitionend', cleanup );
+			body.innerHTML = '';
+			if ( _previousFocus && _previousFocus.focus ) {
+				_previousFocus.focus();
+			}
+			document.dispatchEvent( new CustomEvent( 'mhboModalClosed' ) );
+		};
+
+		overlay.addEventListener( 'transitionend', cleanup, { once: true } );
+		setTimeout( cleanup, 350 );
 	}
 
 	/* ── setLoading ──────────────────────────────────────────── */

@@ -71,19 +71,12 @@ abstract class AbstractAdminRestController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
 	 */
 	public function check_admin_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
-		$can_manage = current_user_can( 'manage_options' )
-			|| Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS )
-			|| Capabilities::current_user_can( Capabilities::MANAGE_LHBO );
-
-		if ( ! $can_manage ) {
-			return new WP_Error(
-				'rest_forbidden',
-				(string) I18n::get_label( 'label_permission_denied' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		return true;
+		return $this->require_any_capability(
+			array(
+				Capabilities::MANAGE_SETTINGS,
+				Capabilities::MANAGE_LHBO,
+			)
+		);
 	}
 
 	/**
@@ -97,18 +90,110 @@ abstract class AbstractAdminRestController extends WP_REST_Controller {
 	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
 	 */
 	public function check_system_admin_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
-		$is_system_admin = current_user_can( 'manage_options' )
-			|| Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS );
+		return $this->require_any_capability( array( Capabilities::MANAGE_SETTINGS ) );
+	}
 
-		if ( ! $is_system_admin ) {
-			return new WP_Error(
-				'rest_forbidden',
-				(string) I18n::get_label( 'label_permission_denied' ),
-				array( 'status' => 403 )
-			);
+	/**
+	 * Requirement 1c: Pricing, Rate Overrides, Extras, and Coupons Capability Check.
+	 *
+	 * Permits administrators and Hotel Managers (MANAGE_PRICING or MANAGE_SETTINGS),
+	 * blocking Front Desk Receptionists (MANAGE_LHBO only).
+	 *
+	 * @param WP_REST_Request|null $request Request object (optional).
+	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
+	 */
+	public function check_pricing_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		return $this->require_any_capability(
+			array(
+				Capabilities::MANAGE_PRICING,
+				Capabilities::MANAGE_SETTINGS,
+			)
+		);
+	}
+
+	/**
+	 * Requirement 1d: Room Inventory Capability Check.
+	 *
+	 * @param WP_REST_Request|null $request Request object (optional).
+	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
+	 */
+	public function check_rooms_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		return $this->require_any_capability(
+			array(
+				Capabilities::MANAGE_ROOMS,
+				Capabilities::MANAGE_SETTINGS,
+			)
+		);
+	}
+
+	/**
+	 * Requirement 1e: Financial Analytics Capability Check.
+	 *
+	 * @param WP_REST_Request|null $request Request object (optional).
+	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
+	 */
+	public function check_analytics_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		return $this->require_any_capability(
+			array(
+				Capabilities::VIEW_ANALYTICS,
+				Capabilities::MANAGE_SETTINGS,
+			)
+		);
+	}
+
+	/**
+	 * Requirement 1f: Housekeeping & Front Desk Turnovers Capability Check.
+	 *
+	 * @param WP_REST_Request|null $request Request object (optional).
+	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
+	 */
+	public function check_housekeeping_or_desk_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		return $this->require_any_capability(
+			array(
+				Capabilities::MANAGE_HOUSEKEEPING,
+				Capabilities::MANAGE_LHBO,
+				Capabilities::MANAGE_SETTINGS,
+			)
+		);
+	}
+
+	/**
+	 * Requirement 1g: Cashier Payment & Desk Balance Link Operations Capability Check.
+	 *
+	 * @param WP_REST_Request|null $request Request object (optional).
+	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
+	 */
+	public function check_payments_or_desk_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		return $this->require_any_capability(
+			array(
+				Capabilities::PROCESS_PAYMENTS,
+				Capabilities::MANAGE_LHBO,
+				Capabilities::MANAGE_SETTINGS,
+			)
+		);
+	}
+
+	/**
+	 * Shared capability evaluation helper returning standardized HTTP 403 WP_Error on denial.
+	 *
+	 * @param list<string> $capabilities Allowed MHBO capability keys.
+	 * @return bool|WP_Error True if current user holds any required capability or manage_options.
+	 */
+	protected function require_any_capability( array $capabilities ): bool|WP_Error {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+		foreach ( $capabilities as $capability ) {
+			if ( Capabilities::current_user_can( $capability ) ) {
+				return true;
+			}
 		}
 
-		return true;
+		return new WP_Error(
+			'rest_forbidden',
+			(string) I18n::get_label( 'label_permission_denied' ),
+			array( 'status' => 403 )
+		);
 	}
 
 	/**

@@ -113,7 +113,9 @@ if ( 0 === $update_id && '' !== $session_token ) {
 				)
 			);
 			if ( $existing_booking ) {
-				if ( 'pending_payment' !== $existing_booking->status ) {
+				if ( ! self::caller_owns_booking( $existing_booking, $data ) ) {
+					$update_id = 0;
+				} elseif ( 'pending_payment' !== $existing_booking->status ) {
 					// Existing booking is already completed or confirmed — must not overwrite!
 					$update_id = 0;
 					$raw_sess  = Privacy::get_cookie_session_id();
@@ -247,8 +249,10 @@ $children     = 0;
 				return new \WP_Error( 'mhbo_unavailable', I18n::get_label( $label ) );
 			}
 
-			// 4. Pricing Calculation
-			$tax_mode = isset( $data['tax_mode'] ) && '' !== (string) $data['tax_mode'] ? sanitize_key( (string) $data['tax_mode'] ) : null;
+			// 4. Pricing Calculation (public/unprivileged callers cannot override property tax mode).
+			$tax_mode = ( $is_privileged && isset( $data['tax_mode'] ) && '' !== (string) $data['tax_mode'] )
+				? sanitize_key( (string) $data['tax_mode'] )
+				: null;
 			$calc     = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, $extras_input, $children, $child_ages, $tax_mode );
 			if ( ! $calc ) {
 				return new \WP_Error( 'mhbo_pricing_failed', I18n::get_label( 'label_price_calc_error' ) );
@@ -325,7 +329,33 @@ $charge_amount = $total;
 				}
 			}
 
-// 6. Database Insertion
+if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) ) {
+				$clean_arrival = sanitize_text_field( (string) $data['arrival_time'] );
+				if ( '' !== $clean_arrival ) {
+					$custom_data['_arrival_time'] = $clean_arrival;
+				}
+			}
+
+			$raw_admin_notes = (string) ( $data['admin_notes'] ?? ( $data['notes'] ?? '' ) );
+			if ( ! $is_privileged ) {
+				$raw_guest_req = (string) ( $data['special_requests'] ?? $raw_admin_notes );
+				$clean_lines   = array();
+				foreach ( explode( "\n", sanitize_textarea_field( $raw_guest_req ) ) as $req_line ) {
+					$trimmed_req_line = trim( $req_line );
+					if ( preg_match( '/^\[(Staff|Internal|Private|Admin|Guest Cancellation|Guest Modification|AI Assistant Cancellation)/i', $trimmed_req_line ) ) {
+						continue;
+					}
+					if ( false !== stripos( $trimmed_req_line, 'Manually added by administrator' ) ) {
+						continue;
+					}
+					$clean_lines[] = $req_line;
+				}
+				$resolved_notes = trim( implode( "\n", $clean_lines ) );
+			} else {
+				$resolved_notes = sanitize_textarea_field( '' !== trim( $raw_admin_notes ) ? $raw_admin_notes : (string) ( $data['special_requests'] ?? '' ) );
+			}
+
+			// 6. Database Insertion
 			$insert_data = array(
 				'room_id'                => $room_id,
 				'customer_name'          => $customer_name,
@@ -360,7 +390,7 @@ $charge_amount = $total;
 				'guests'                 => $guests,
 				'children'               => $children,
 				'children_ages'          => $children > 0 ? wp_json_encode( $child_ages ) : null,
-				'admin_notes'            => sanitize_textarea_field( $data['admin_notes'] ?? '' ),
+				'admin_notes'            => $resolved_notes,
 				'custom_fields'          => array() !== $custom_data ? wp_json_encode( $custom_data ) : null,
 				'source'                 => $source,
 				'external_id'            => $external_id ?: null,
@@ -521,5 +551,112 @@ $charge_amount = $total;
 				Pricing::release_booking_lock( $room_id );
 			}
 		}
+	}
+
+	/**
+	 * Extract guest-facing special requests from a booking record.
+	 *
+	 * Falls back to filtered `admin_notes` (excluding internal staff markers)
+	 * because `wp_mhbo_bookings` has no dedicated `special_requests` column.
+	 *
+	 * @param object $booking Booking database row object.
+	 * @return string
+	 */
+	public static function extract_guest_special_requests( object $booking ): string {
+		$legacy = trim( (string) ( $booking->special_requests ?? '' ) );
+		if ( '' !== $legacy ) {
+			return $legacy;
+		}
+
+		$raw_notes = (string) ( $booking->admin_notes ?? '' );
+		if ( '' === $raw_notes ) {
+			return '';
+		}
+
+		$filtered_lines = array();
+		foreach ( explode( "\n", $raw_notes ) as $line ) {
+			$trimmed = trim( $line );
+			if ( preg_match( '/^\[(Staff|Internal|Private|Admin|Guest Cancellation|Guest Modification|AI Assistant Cancellation)/i', $trimmed ) ) {
+				continue;
+			}
+			if ( false !== stripos( $trimmed, 'Manually added by administrator' ) ) {
+				continue;
+			}
+			$filtered_lines[] = $line;
+		}
+
+		return trim( implode( "\n", $filtered_lines ) );
+	}
+
+	/**
+	 * Extract guest arrival time from a booking record.
+	 *
+	 * Falls back to `custom_fields['_arrival_time']` because `wp_mhbo_bookings`
+	 * has no dedicated `arrival_time` column.
+	 *
+	 * @param object $booking Booking database row object.
+	 * @return string
+	 */
+	public static function extract_arrival_time( object $booking ): string {
+		$legacy = trim( (string) ( $booking->arrival_time ?? '' ) );
+		if ( '' !== $legacy ) {
+			return $legacy;
+		}
+
+		$raw_custom = (string) ( $booking->custom_fields ?? '' );
+		if ( '' === $raw_custom ) {
+			return '';
+		}
+
+		$decoded = json_decode( $raw_custom, true );
+		if ( is_array( $decoded ) && ! empty( $decoded['_arrival_time'] ) ) {
+			return trim( (string) $decoded['_arrival_time'] );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Verify whether the active caller owns a booking draft/record before reuse or ID return.
+	 *
+	 * @param object               $booking Booking database row object.
+	 * @param array<string, mixed> $data    Submitted booking request data.
+	 * @return bool
+	 */
+	private static function caller_owns_booking( object $booking, array $data ): bool {
+		if ( current_user_can( Capabilities::MANAGE_LHBO ) ) {
+			return true;
+		}
+		$booking_id    = (int) ( $booking->id ?? 0 );
+		$booking_token = (string) ( $booking->booking_token ?? '' );
+		$caller_token  = sanitize_text_field( (string) ( $data['booking_token'] ?? ( $data['token'] ?? '' ) ) );
+		if ( '' !== $caller_token && '' !== $booking_token && hash_equals( $booking_token, $caller_token ) ) {
+			return true;
+		}
+		$sess_tok = sanitize_text_field( (string) ( $data['session_token'] ?? ( $data['mhbo_session_token'] ?? '' ) ) );
+		$raw_sess = Privacy::get_cookie_session_id();
+		if ( '' !== $sess_tok ) {
+			$session_meta = get_transient( 'mhbo_booking_session_' . $sess_tok );
+			if ( ! is_array( $session_meta ) ) {
+				$session_meta = get_transient( 'mhbo_session_' . $sess_tok );
+			}
+			if ( is_array( $session_meta ) && (int) ( $session_meta['booking_id'] ?? 0 ) === $booking_id ) {
+				$bound_sess = (string) ( $session_meta['session_id'] ?? '' );
+				if ( '' === $bound_sess || ( '' !== $raw_sess && hash_equals( $bound_sess, $raw_sess ) ) ) {
+					return true;
+				}
+			}
+		}
+		if ( '' !== $raw_sess && (int) get_transient( 'mhbo_session_pending_booking_' . $raw_sess ) === $booking_id ) {
+			return true;
+		}
+		$resume_nonce = sanitize_text_field( (string) ( $data['resume_nonce'] ?? '' ) );
+		if ( '' !== $resume_nonce && wp_verify_nonce( $resume_nonce, 'mhbo_auto_action' ) ) {
+			$resume_meta = get_transient( 'mhbo_resume_nonce_' . $resume_nonce );
+			if ( is_array( $resume_meta ) && (int) ( $resume_meta['booking_id'] ?? 0 ) === $booking_id ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

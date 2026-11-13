@@ -27,7 +27,7 @@ use Throwable;
  *
  * @package MHBO\AI
  * @since   2.3.8
- * @version 3.0.2 (Streamable HTTP 2026 Edition)
+ * @version 3.0.3 (Streamable HTTP 2026 Edition)
  */
 class McpServer {
 
@@ -75,13 +75,17 @@ class McpServer {
 		// WP 7.0 native Connectors API forward compatibility.
 		$hybrid_enabled = (bool) get_option( 'mhbo_ai_mcp_hybrid_bridge', 0 );
 
-		if ( $hybrid_enabled && function_exists( 'wp_register_mcp_server' ) ) {
-			self::register_native();
-		}
+		if ( $hybrid_enabled ) {
+			Loader::ensure_vendor_autoload();
 
-		// Official WordPress/mcp-adapter plugin bridge compatibility.
-		if ( $hybrid_enabled && class_exists( '\WP\MCP\Core\McpAdapter' ) ) {
-			add_action( 'mcp_adapter_init', array( self::class, 'register_adapter' ) );
+			if ( function_exists( 'wp_register_mcp_server' ) ) {
+				self::register_native();
+			}
+
+			// Official WordPress/mcp-adapter plugin bridge compatibility.
+			if ( class_exists( '\WP\MCP\Core\McpAdapter' ) ) {
+				add_action( 'mcp_adapter_init', array( self::class, 'register_adapter' ) );
+			}
 		}
 	}
 
@@ -192,7 +196,7 @@ class McpServer {
 				array(
 					'name'                => 'Modern Hotel Booking MCP Server',
 					'server_id'           => self::SERVER_ID,
-					'version'             => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.2',
+					'version'             => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
 					'status'              => 'active',
 					'transport'           => 'Streamable HTTP (JSON-RPC 2.0 over POST)',
 					'supported_protocols' => self::SUPPORTED_VERSIONS,
@@ -310,7 +314,7 @@ class McpServer {
 					),
 					'serverInfo'      => array(
 						'name'    => 'Modern Hotel Booking MCP Server',
-						'version' => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.2',
+						'version' => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
 					),
 					'instructions'    => __( 'Official Model Context Protocol server for Modern Hotel Booking. Query real-time room availability, policies, rates, and direct booking links.', 'modern-hotel-booking' ),
 				),
@@ -559,7 +563,7 @@ return self::json_rpc_error(
 			'get_knowledge_base'  => Abilities\GetKnowledgeBase::class,
 			'create_booking_link' => Abilities\CreateBookingLink::class,
 			'get_business_card'   => Abilities\GetBusinessCard::class,
-			'local_tips'          => Abilities\LocalTips::class,
+			'get_local_tips'      => Abilities\LocalTips::class,
 			'get_price_breakdown' => Abilities\GetPriceBreakdown::class,
 			'recommend_rooms'     => Abilities\RecommendRooms::class,
 		);
@@ -628,6 +632,9 @@ $all_tools = array_merge( $guest_tools, $operator_tools );
 			'mhbo/get-business-card'   => Abilities\GetBusinessCard::class,
 			'get_business_card'        => Abilities\GetBusinessCard::class,
 
+			'mhbo_get_local_tips'      => Abilities\LocalTips::class,
+			'mhbo/get-local-tips'      => Abilities\LocalTips::class,
+			'get_local_tips'           => Abilities\LocalTips::class,
 			'mhbo_local_tips'          => Abilities\LocalTips::class,
 			'mhbo/local-tips'          => Abilities\LocalTips::class,
 			'local_tips'               => Abilities\LocalTips::class,
@@ -645,6 +652,25 @@ return $map;
 	}
 
 	/**
+	 * Return canonical WordPress Ability names (`mhbo/*`) for native MCP server bridging.
+	 *
+	 * Filters out legacy tool aliases (`mhbo/local-tips`) and snake/short duplicates
+	 * that are only maintained for backward-compatible JSON-RPC `tools/call` routing.
+	 *
+	 * @return list<string>
+	 */
+	private static function get_registered_ability_names(): array {
+		$names = array();
+		foreach ( array_keys( self::get_ability_map() ) as $slug ) {
+			if ( str_starts_with( $slug, 'mhbo/' ) && 'mhbo/local-tips' !== $slug ) {
+				$names[] = $slug;
+			}
+		}
+
+		return array_values( array_unique( $names ) );
+	}
+
+	/**
 	 * Output OpenAPI 3.1.0 specification for ChatGPT Custom Actions.
 	 *
 	 * @return WP_REST_Response
@@ -657,7 +683,7 @@ return $map;
 			'info'    => array(
 				'title'       => __( 'Modern Hotel Booking AI Assistant API', 'modern-hotel-booking' ),
 				'description' => __( 'Public machine-readable API for room availability, rates, policies, and direct booking links.', 'modern-hotel-booking' ),
-				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.2',
+				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
 			),
 			'servers' => array(
 				array(
@@ -714,6 +740,25 @@ return $map;
 						'responses'   => array(
 							'200' => array(
 								'description' => __( 'Hotel policies', 'modern-hotel-booking' ),
+							),
+						),
+					),
+				),
+				'/quote'        => array(
+					'post' => array(
+						'operationId' => 'getPriceQuote',
+						'summary'     => __( 'Calculate itemized stay price breakdown', 'modern-hotel-booking' ),
+						'requestBody' => array(
+							'required' => true,
+							'content'  => array(
+								'application/json' => array(
+									'schema' => Abilities\GetPriceBreakdown::get_definition()['input_schema'],
+								),
+							),
+						),
+						'responses'   => array(
+							'200' => array(
+								'description' => __( 'Itemized stay pricing breakdown', 'modern-hotel-booking' ),
 							),
 						),
 					),
@@ -843,8 +888,8 @@ return $map;
 				'id'          => self::SERVER_ID,
 				'name'        => I18n::get_label( 'ai_mcp_name' ),
 				'description' => I18n::get_label( 'ai_mcp_description' ),
-				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.2',
-				'abilities'   => array_keys( self::get_ability_map() ),
+				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
+				'abilities'   => self::get_registered_ability_names(),
 				'resources'   => array( self::SERVER_ID . '/site-knowledge-base' ),
 			)
 		);
@@ -867,11 +912,11 @@ return $map;
 				self::SERVER_ROUTE,
 				I18n::get_label( 'ai_mcp_name' ),
 				I18n::get_label( 'ai_mcp_description' ),
-				defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.2',
+				defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
 				array( 'WP\\MCP\\Transport\\Http\\RestTransport' ),
 				null,
 				null,
-				array_keys( self::get_ability_map() )
+				self::get_registered_ability_names()
 			);
 		} catch ( Throwable $e ) {
 			if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {

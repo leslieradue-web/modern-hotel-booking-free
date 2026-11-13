@@ -46,6 +46,22 @@ $mhbo_clear_crons = static function () use ( $mhbo_cron_hooks ): void {
 		wp_clear_scheduled_hook( $mhbo_hook );
 	}
 
+	if ( function_exists( '_get_cron_array' ) ) {
+		$mhbo_cron_array = _get_cron_array();
+		if ( is_array( $mhbo_cron_array ) ) {
+			foreach ( $mhbo_cron_array as $mhbo_cron_entries ) {
+				if ( ! is_array( $mhbo_cron_entries ) ) {
+					continue;
+				}
+				foreach ( array_keys( $mhbo_cron_entries ) as $mhbo_registered_hook ) {
+					if ( is_string( $mhbo_registered_hook ) && 0 === strpos( $mhbo_registered_hook, 'mhbo_' ) ) {
+						wp_clear_scheduled_hook( $mhbo_registered_hook );
+					}
+				}
+			}
+		}
+	}
+
 	if ( function_exists( 'as_unschedule_all_actions' ) ) {
 		\as_unschedule_all_actions( 'mhbo_analytics_nightly_rollup' );
 		\as_unschedule_all_actions( 'mhbo_migrate_guests_batch' );
@@ -101,6 +117,12 @@ $mhbo_purge_single_blog = static function () use ( $wpdb, $mhbo_clear_crons ): v
 	$wpdb->query(
 		"DELETE FROM {$wpdb->options} WHERE option_name LIKE 'mhbo_%'"
 	);
+
+	// Delete widget settings, PUC external update state, and stale rewrite rules
+	delete_option( 'widget_mhbo_booking_widget' );
+	delete_option( 'external_updates-modern-hotel-booking' );
+	delete_option( 'external_updates-modern-hotel-booking-pro' );
+	delete_option( 'rewrite_rules' );
 
 	// Clear scheduled background events
 	$mhbo_clear_crons();
@@ -199,11 +221,17 @@ if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 	if ( isset( $wpdb->sitemeta ) ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$wpdb->query(
-			"DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE 'mhbo_%' OR meta_key LIKE '_site_transient_mhbo_%' OR meta_key LIKE '_site_transient_timeout_mhbo_%'"
+			"DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE 'mhbo_%' OR meta_key LIKE '_site_transient_mhbo_%' OR meta_key LIKE '_site_transient_timeout_mhbo_%' OR meta_key IN ('external_updates-modern-hotel-booking', 'external_updates-modern-hotel-booking-pro')"
 		);
+	}
+	if ( function_exists( 'delete_site_transient' ) ) {
+		delete_site_transient( 'update_plugins' );
 	}
 } else {
 	$mhbo_purge_single_blog();
+	if ( function_exists( 'delete_site_transient' ) ) {
+		delete_site_transient( 'update_plugins' );
+	}
 }
 
 // Remove generated hotel feed files and clean AI discovery markers from filesystem
@@ -222,10 +250,24 @@ if ( WP_Filesystem() ) {
 			if ( $wp_filesystem->exists( $mhbo_llm_path ) ) {
 				$mhbo_llm_content = $wp_filesystem->get_contents( $mhbo_llm_path );
 				if ( false !== $mhbo_llm_content ) {
-					$mhbo_start = strpos( $mhbo_llm_content, '<!-- MHBO_AI_DISCOVERY_START -->' );
-					$mhbo_end   = strpos( $mhbo_llm_content, '<!-- MHBO_AI_DISCOVERY_END -->' );
+					$mhbo_start      = false;
+					$mhbo_end        = false;
+					$mhbo_end_marker = '';
+					foreach ( array(
+						'<!-- MHBO:START -->'              => '<!-- MHBO:END -->',
+						'<!-- MHBO_AI_DISCOVERY_START -->' => '<!-- MHBO_AI_DISCOVERY_END -->',
+					) as $mhbo_m_start => $mhbo_m_end ) {
+						$mhbo_s = strpos( $mhbo_llm_content, $mhbo_m_start );
+						$mhbo_e = false !== $mhbo_s ? strpos( $mhbo_llm_content, $mhbo_m_end, $mhbo_s ) : false;
+						if ( false !== $mhbo_s && false !== $mhbo_e && $mhbo_e > $mhbo_s ) {
+							$mhbo_start      = $mhbo_s;
+							$mhbo_end        = $mhbo_e;
+							$mhbo_end_marker = $mhbo_m_end;
+							break;
+						}
+					}
 					if ( false !== $mhbo_start && false !== $mhbo_end && $mhbo_end > $mhbo_start ) {
-						$mhbo_rem = trim( substr( $mhbo_llm_content, 0, $mhbo_start ) . substr( $mhbo_llm_content, $mhbo_end + strlen( '<!-- MHBO_AI_DISCOVERY_END -->' ) ) );
+						$mhbo_rem = trim( substr( $mhbo_llm_content, 0, $mhbo_start ) . substr( $mhbo_llm_content, $mhbo_end + strlen( $mhbo_end_marker ) ) );
 						if ( '' === $mhbo_rem ) {
 							$wp_filesystem->delete( $mhbo_llm_path );
 						} else {

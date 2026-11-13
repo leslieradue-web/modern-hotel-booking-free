@@ -26,6 +26,12 @@ class Deactivator {
 		// Clear all scheduled cron events
 		self::clear_scheduled_crons();
 
+		delete_option( 'mhbo_cron_version' );
+		delete_transient( 'mhbo_cron_verified' );
+		delete_transient( 'mhbo_ai_cron_verified' );
+		delete_transient( 'mhbo_analytics_cron_verified' );
+		delete_transient( 'mhbo_analytics_rollup_data' );
+
 		// Clear plugin transients
 		self::clear_transients();
 
@@ -56,9 +62,10 @@ class Deactivator {
 			'mhbo_dispatch_review_invitations',
 			'mhbo_daily_review_email_cron',
 			'mhbo_send_balance_link',
+			'mhbo_webhook_deliver',
 			'check_updates-modern-hotel-booking',
-			
-		);
+
+);
 
 		foreach ( $crons as $cron_hook ) {
 			$timestamp = wp_next_scheduled( $cron_hook );
@@ -68,6 +75,8 @@ class Deactivator {
 			// Clear any remaining scheduled events
 			wp_clear_scheduled_hook( $cron_hook );
 		}
+
+		Activator::sweep_unwanted_crons();
 
 if ( function_exists( 'as_unschedule_all_actions' ) ) {
 			\as_unschedule_all_actions( 'mhbo_migrate_guests_batch' );
@@ -84,11 +93,14 @@ if ( function_exists( 'as_unschedule_all_actions' ) ) {
 		global $wpdb;
 
 		// Rule 13 rationale: Bulk cleanup of temporary transients during deactivation.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk cleanup during deactivation
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk cleanup during deactivation
 		$wpdb->query(
-			"DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_mhbo_%' 
-             OR option_name LIKE '_site_transient_mhbo_%'"
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s',
+				$wpdb->options,
+				$wpdb->esc_like( '_transient_mhbo_' ) . '%',
+				$wpdb->esc_like( '_site_transient_mhbo_' ) . '%'
+			)
 		);
 	}
 }

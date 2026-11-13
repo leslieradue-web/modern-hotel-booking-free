@@ -9,7 +9,7 @@
  *
  * @package ModernHotelBooking
  * @since 2.0.1
- * @version 2.6.2
+ * @version 3.0.3
  */
 
 ( function () {
@@ -780,7 +780,7 @@
 				rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">—</td>';
 				rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">' + children + '</td>';
 				rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + childTaxDisplay + '</td>';
-				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + ( data.children_total_formatted || ( currSymbol + parseFloat( data.children_total ).toFixed( 2 ) ) ) + '</td>';
+				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + escapeHtml( data.children_total_formatted || ( currSymbol + parseFloat( data.children_total ).toFixed( 2 ) ) ) + '</td>';
 				rowsHtml += '</tr>';
 			}
 
@@ -803,10 +803,10 @@
 					rowsHtml += '<tr>';
 					rowsHtml += '<td><span class="mhbo-charge-category-badge ' + catBadgeClass + '">' + catBadgeLabel + '</span></td>';
 					rowsHtml += '<td><strong>' + escapeHtml( ex.name ) + '</strong>' + ( ex.compulsory ? ' <span style="font-size:10px; color:#5b72b8; font-weight:600;">(Compulsory)</span>' : '' ) + detailsHtml + '</td>';
-					rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">' + ( ex.unit_price_formatted || ( currSymbol + parseFloat( ex.unit_price_value || 0 ).toFixed( 2 ) ) ) + '</td>';
-					rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">' + ( ex.quantity || 1 ) + '</td>';
-					rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + extraTaxDisplay + '</td>';
-					rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + ( ex.formatted || ( currSymbol + parseFloat( ex.value || 0 ).toFixed( 2 ) ) ) + '</td>';
+					rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">' + escapeHtml( ex.unit_price_formatted || ( currSymbol + parseFloat( ex.unit_price_value || 0 ).toFixed( 2 ) ) ) + '</td>';
+					rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">' + escapeHtml( String( ex.quantity || 1 ) ) + '</td>';
+					rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + escapeHtml( extraTaxDisplay ) + '</td>';
+					rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + escapeHtml( ex.formatted || ( currSymbol + parseFloat( ex.value || 0 ).toFixed( 2 ) ) ) + '</td>';
 					rowsHtml += '</tr>';
 				} );
 			}
@@ -815,11 +815,11 @@
 			if ( data.coupon_applied && data.coupon_discount && parseFloat( data.coupon_discount ) > 0 ) {
 				rowsHtml += '<tr>';
 				rowsHtml += '<td><span class="mhbo-charge-category-badge mhbo-cat-discount">PROMO</span></td>';
-				rowsHtml += '<td><strong style="color:#166534;">' + ( ( config.i18n && config.i18n.couponDiscount ) ? config.i18n.couponDiscount : 'Promo Discount' ) + '</strong></td>';
+				rowsHtml += '<td><strong style="color:#166534;">' + escapeHtml( ( config.i18n && config.i18n.couponDiscount ) ? config.i18n.couponDiscount : 'Promo Discount' ) + '</strong></td>';
 				rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">—</td>';
 				rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">1</td>';
 				rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">—</td>';
-				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#166534;">−' + ( data.coupon_discount_formatted || ( currSymbol + parseFloat( data.coupon_discount ).toFixed( 2 ) ) ) + '</td>';
+				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#166534;">−' + escapeHtml( data.coupon_discount_formatted || ( currSymbol + parseFloat( data.coupon_discount ).toFixed( 2 ) ) ) + '</td>';
 				rowsHtml += '</tr>';
 			}
 
@@ -828,7 +828,7 @@
 			if ( manualDisc > 0 && ! data.coupon_applied ) {
 				rowsHtml += '<tr>';
 				rowsHtml += '<td><span class="mhbo-charge-category-badge mhbo-cat-discount">CONCESSION</span></td>';
-				rowsHtml += '<td><strong style="color:#92400e;">' + ( ( config.i18n && config.i18n.courtesyDiscount ) ? config.i18n.courtesyDiscount : 'Manual Discount / Concession' ) + '</strong></td>';
+				rowsHtml += '<td><strong style="color:#92400e;">' + escapeHtml( ( config.i18n && config.i18n.courtesyDiscount ) ? config.i18n.courtesyDiscount : 'Manual Discount / Concession' ) + '</strong></td>';
 				rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">—</td>';
 				rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">1</td>';
 				rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">—</td>';
@@ -2137,8 +2137,19 @@
 			const statusKey = escapeHtml( props.status_key || 'confirmed' );
 			const vipTier = escapeHtml( props.vip_tier || '' );
 			const cautionFlag = Boolean( props.caution_flag );
-			const crmUrl = props.crm_url ? encodeURI( props.crm_url ) : '';
-			const balanceUrl = props.balance_url ? encodeURI( props.balance_url ) : '';
+			const sanitizeActionUrl = ( raw ) => {
+				if ( ! raw || typeof raw !== 'string' ) {
+					return '';
+				}
+				const trimmed = raw.trim();
+				if ( trimmed.startsWith( '/' ) || /^https?:\/\//i.test( trimmed ) ) {
+					return escapeHtml( encodeURI( trimmed ) );
+				}
+				return '';
+			};
+			const crmUrl = sanitizeActionUrl( props.crm_url );
+			const balanceUrl = sanitizeActionUrl( props.balance_url );
+			const editUrl = sanitizeActionUrl( event.url );
 			const balancePending = escapeHtml( props.remaining_balance || '' );
 
 			let vipBadgeHtml = '';
@@ -2156,8 +2167,8 @@
 			}
 
 			let actionButtonsHtml = '';
-			if ( event.url ) {
-				actionButtonsHtml += `<a href="${encodeURI( event.url )}" class="button button-primary button-small">Edit Booking</a>`;
+			if ( editUrl ) {
+				actionButtonsHtml += `<a href="${editUrl}" class="button button-primary button-small">Edit Booking</a>`;
 			}
 			if ( crmUrl ) {
 				actionButtonsHtml += `<a href="${crmUrl}" target="_blank" rel="noopener noreferrer" class="button button-small" style="margin-left:6px;">Guest CRM ↗</a>`;
@@ -2403,36 +2414,12 @@
 				}
 				return classes.join( ' ' );
 			},
-			dayCellDidMount: function(arg) {
-				if (arg.el) {
-					const year = arg.date.getFullYear();
-					const month = String(arg.date.getMonth() + 1).padStart(2, '0');
-					const day = String(arg.date.getDate()).padStart(2, '0');
-					const dateStr = `${year}-${month}-${day}`;
-					if (config.fullDays && config.fullDays.includes(dateStr)) {
-						arg.el.classList.add('mhbo-day-full');
-					}
-					if (arg.isToday) {
-						arg.el.classList.add('mhbo-day-today-highlight');
-					}
-				}
-			},
+			// Bridge classes come exclusively from dayCellClass / eventClass above: V7 applies
+			// them through its VDOM, so they survive re-renders (classList edits in *DidMount do not).
 			eventDidMount: function( arg ) {
 				if ( arg.el ) {
 					const isList = arg.view?.type?.startsWith( 'list' );
-					arg.el.classList.add( 'fc-event', isList ? 'fc-list-event' : 'fc-daygrid-event', 'mhbo-calendar-event' );
-					if ( isList ) {
-						arg.el.classList.add( 'mhbo-list-event' );
-					}
 					const isSunOut = Boolean( arg.event.extendedProps?.is_sunday_checkout );
-					const isSatEnd = Boolean( arg.event.extendedProps?.ends_on_saturday );
-
-					if ( isSunOut ) {
-						arg.el.classList.add( 'mhbo-sunday-checkout' );
-					}
-					if ( isSatEnd && ! isList ) {
-						arg.el.classList.add( 'mhbo-event-saturday-end' );
-					}
 					const roomNum = arg.event.extendedProps?.room_number || '';
 					const bookingId = arg.event.extendedProps?.booking_id || '';
 					if ( roomNum ) {
@@ -2446,16 +2433,6 @@
 					}
 
 					if ( ! isList ) {
-						// Ensure check-in / check-out markers are reliably attached in daygrid
-						if ( ! isSunOut && ( arg.el.querySelector( '.mhbo-dot-checkin' ) || arg.isStart ) ) {
-							arg.el.classList.add( 'mhbo-event-checkin' );
-							arg.el.classList.add( 'fc-event-start' );
-						}
-						if ( ! isSatEnd && ( arg.el.querySelector( '.mhbo-dot-checkout' ) || arg.isEnd ) ) {
-							arg.el.classList.add( 'mhbo-event-checkout' );
-							arg.el.classList.add( 'fc-event-end' );
-						}
-
 						// Same-room turnover on Sunday: If this is a Sunday check-in following a Sunday checkout for the SAME room,
 						// align check-in into the same slot alongside the checkout capsule
 						if ( arg.isStart && ! isSunOut && roomNum && arg.event.start ) {

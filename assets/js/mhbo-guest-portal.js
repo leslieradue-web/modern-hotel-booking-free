@@ -240,7 +240,8 @@
 				if (b.is_group_booking) {
 					if (groupIdLabel) groupIdLabel.textContent = '#' + (b.group_id || b.group_parent_ref || b.booking_id);
 					if (groupPayBtn) {
-						if (b.balance_remaining > 0.001 && b.group_balance_payment_url) {
+						const groupRemaining = b.group_remaining_balance !== undefined ? parseFloat(b.group_remaining_balance) : parseFloat(b.balance_remaining || 0);
+						if (groupRemaining > 0.001 && b.group_balance_payment_url) {
 							groupPayBtn.href = b.group_balance_payment_url;
 							groupPayBtn.style.display = 'inline-flex';
 						} else {

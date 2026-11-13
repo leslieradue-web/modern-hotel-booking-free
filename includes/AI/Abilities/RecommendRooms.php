@@ -130,9 +130,21 @@ return array(
 			);
 		}
 
-		$adults   = absint( $args['adults'] ?? 2 );
-		$children = absint( $args['children'] ?? 0 );
-		$budget   = isset( $args['max_budget'] ) ? floatval( $args['max_budget'] ) : 0.0;
+		$adults              = absint( $args['adults'] ?? 2 );
+		$children            = absint( $args['children'] ?? 0 );
+		$budget              = isset( $args['max_budget'] ) ? floatval( $args['max_budget'] ) : 0.0;
+		$preferred_amenities = array();
+		if ( isset( $args['preferred_amenities'] ) && is_array( $args['preferred_amenities'] ) ) {
+			foreach ( $args['preferred_amenities'] as $amenity ) {
+				if ( is_string( $amenity ) ) {
+					$clean_amenity = strtolower( trim( sanitize_text_field( $amenity ) ) );
+					if ( '' !== $clean_amenity ) {
+						$preferred_amenities[] = $clean_amenity;
+					}
+				}
+			}
+			$preferred_amenities = array_values( array_unique( $preferred_amenities ) );
+		}
 
 		$child_ages = array();
 
@@ -155,10 +167,14 @@ return array(
 			);
 		}
 
-		$recommendations = array();
-		$total_guests    = $adults + $children;
+		$recommendations  = array();
+		$total_guests     = $adults + $children;
+		$default_currency = Pricing::get_currency_code();
 
 		foreach ( $avail['rooms'] as $room ) {
+			if ( ! is_array( $room ) ) {
+				continue;
+			}
 			$total_price = floatval( $room['total_price'] ?? 0 );
 
 			// Budget filter
@@ -166,28 +182,77 @@ return array(
 				continue;
 			}
 
-			// Calculate match score
-			$capacity  = absint( $room['max_occupancy'] ?? $room['capacity'] ?? $total_guests );
-			$fit_score = 100;
-
-			// Ideal capacity match
-			$diff = $capacity - $total_guests;
-			if ( $diff < 0 ) {
-				continue; // Cannot fit
+			// Check guest capacity using CheckAvailability's canonical fields.
+			$max_adults   = absint( $room['max_adults'] ?? $adults );
+			$max_children = absint( $room['max_children'] ?? 0 );
+			$capacity     = absint( $room['max_guests'] ?? $room['max_occupancy'] ?? $room['capacity'] ?? ( $max_adults + $max_children ) );
+			if ( $capacity < $total_guests || $max_adults < $adults ) {
+				continue; // Cannot fit.
 			}
-			$fit_score -= ( $diff * 10 ); // Slightly penalize overly large rooms for small groups
 
-			$why = sprintf( 'Fits %d guests comfortably with a total stay price of %s %s.', $total_guests, number_format( $total_price, 2 ), $avail['currency'] ?? 'RON' );
+			$fit_score = 100;
+			$diff      = $capacity - $total_guests;
+			$fit_score -= ( $diff * 10 ); // Slightly penalize overly large rooms for small groups.
+
+			$raw_amenities  = isset( $room['amenities'] ) && is_array( $room['amenities'] ) ? $room['amenities'] : array();
+			$room_amenities = array();
+			foreach ( $raw_amenities as $raw_amenity ) {
+				if ( is_string( $raw_amenity ) ) {
+					$clean = strtolower( trim( $raw_amenity ) );
+					if ( '' !== $clean ) {
+						$room_amenities[] = $clean;
+					}
+				}
+			}
+
+			$matched_amenities = array();
+			foreach ( $preferred_amenities as $pref ) {
+				$matched = false;
+				foreach ( $room_amenities as $avail_amenity ) {
+					if ( $avail_amenity === $pref || str_contains( $avail_amenity, $pref ) || str_contains( $pref, $avail_amenity ) ) {
+						$matched = true;
+						break;
+					}
+				}
+				if ( $matched ) {
+					$matched_amenities[] = $pref;
+					$fit_score          += 15;
+				} else {
+					$fit_score -= 5;
+				}
+			}
+
+			$room_id      = absint( $room['room_id'] ?? $room['id'] ?? 0 );
+			$room_type_id = absint( $room['type_id'] ?? 0 );
+			if ( 0 === $room_type_id && isset( $room['room_type'] ) && is_string( $room['room_type'] ) && preg_match( '/^type_(\d+)$/', $room['room_type'], $type_match ) ) {
+				$room_type_id = absint( $type_match[1] );
+			}
+			$room_name = (string) ( $room['room_name'] ?? $room['name'] ?? 'Standard Room' );
+			$currency  = (string) ( $room['currency'] ?? $avail['currency'] ?? $default_currency );
+
+			$why = sprintf(
+				'Fits %d guests comfortably with a total stay price of %s %s.',
+				$total_guests,
+				number_format( $total_price, 2 ),
+				$currency
+			);
+			if ( count( $matched_amenities ) > 0 ) {
+				$why .= ' Matches requested amenities: ' . implode( ', ', $matched_amenities ) . '.';
+			}
 
 			$recommendations[] = array(
-				'room_type_id'    => $room['type_id'] ?? $room['id'] ?? 0,
-				'room_name'       => $room['name'] ?? 'Standard Room',
-				'total_price'     => $total_price,
-				'price_per_night' => $room['price_per_night'] ?? 0,
-				'currency'        => $avail['currency'] ?? 'RON',
-				'max_capacity'    => $capacity,
-				'match_score'     => $fit_score,
-				'why_recommended' => $why,
+				'room_id'           => $room_id,
+				'room_type_id'      => $room_type_id,
+				'room_name'         => $room_name,
+				'total_price'       => $total_price,
+				'price_per_night'   => floatval( $room['price_per_night'] ?? 0 ),
+				'currency'          => $currency,
+				'max_capacity'      => $capacity,
+				'max_adults'        => $max_adults,
+				'max_children'      => $max_children,
+				'matched_amenities' => $matched_amenities,
+				'match_score'       => $fit_score,
+				'why_recommended'   => $why,
 			);
 		}
 

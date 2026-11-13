@@ -56,7 +56,7 @@ class AdminSystemController extends AbstractAdminRestController {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'dismiss_banner' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
+				'permission_callback' => array( $this, 'check_system_admin_permission' ),
 			)
 		);
 
@@ -67,7 +67,7 @@ class AdminSystemController extends AbstractAdminRestController {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'mark_balance_collected' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
+				'permission_callback' => array( $this, 'check_payments_or_desk_permission' ),
 				'args'                => array(
 					'id' => array(
 						'description'       => 'Booking database ID.',
@@ -89,7 +89,7 @@ class AdminSystemController extends AbstractAdminRestController {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_email_diagnostic' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
+				'permission_callback' => array( $this, 'check_system_admin_permission' ),
 			)
 		);
 
@@ -100,7 +100,7 @@ class AdminSystemController extends AbstractAdminRestController {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'send_test_email' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
+				'permission_callback' => array( $this, 'check_system_admin_permission' ),
 				'args'                => array(
 					'recipient' => array(
 						'description'       => 'Recipient email address for diagnostic test probe.',
@@ -119,7 +119,7 @@ class AdminSystemController extends AbstractAdminRestController {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'clear_email_failure' ),
-				'permission_callback' => array( $this, 'check_admin_permission' ),
+				'permission_callback' => array( $this, 'check_system_admin_permission' ),
 			)
 		);
 	}

@@ -11,7 +11,7 @@ use MHBO\Core\Capabilities;
 use MHBO\Core\Email;
 use MHBO\Core\HotelTime;
 use MHBO\Core\I18n;
-use MHBO\Core\ICal;
+
 use MHBO\Core\License;
 use MHBO\Core\Security;
 use MHBO\Core\Money;
@@ -36,7 +36,7 @@ class Menu {
 	 * assets/{js,css}/vendor/fullcalendar*. V7 skeleton CSS uses hashed class names that
 	 * change on every release, so JS + CSS MUST always be upgraded together.
 	 */
-	private const FULLCALENDAR_VERSION = '7.1.4';
+	private const FULLCALENDAR_VERSION = '7.1.5';
 
 	/**
 	 * Public FullCalendar handles. Consumers declare these as dependencies; WordPress
@@ -93,7 +93,11 @@ public function add_dashboard_widgets(): void {
 
 	public function render_dashboard_widget(): void {
 		// Explicit capability check for defense-in-depth
-		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+		if (
+			! Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS )
+			&& ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO )
+			&& ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS )
+		) {
 			return;
 		}
 
@@ -108,67 +112,13 @@ public function add_dashboard_widgets(): void {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$total_rooms = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_rooms" );
 
-			// Occupied physical rooms today
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$occupied_rooms = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(DISTINCT room_id) FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE status NOT IN ('cancelled', 'refunded')
-                   AND check_in <= DATE(%s) AND check_out > DATE(%s)",
-					$today_date,
-					$today_date
-				)
-			);
-
-			// Today's Check-ins (Arrivals)
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$arrivals = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE status NOT IN ('cancelled', 'refunded') AND check_in = DATE(%s)",
-					$today_date
-				)
-			);
-
-			// Today's Check-outs (Departures)
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$departures = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE status NOT IN ('cancelled', 'refunded') AND check_out = DATE(%s)",
-					$today_date
-				)
-			);
-
-			// Currently Staying In-House
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$in_house = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE status NOT IN ('cancelled', 'refunded')
-                   AND check_in <= DATE(%s) AND check_out > DATE(%s)",
-					$today_date,
-					$today_date
-				)
-			);
-
-			// Status counts (total and pending)
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$counts = $wpdb->get_results(
-				$wpdb->prepare( 'SELECT status, COUNT(*) as qty FROM %i GROUP BY status', $wpdb->prefix . 'mhbo_bookings' ),
-				ARRAY_A
-			);
-
-			$total_bookings = 0;
-			$pending_count  = 0;
-			if ( is_array( $counts ) ) {
-				foreach ( $counts as $row ) {
-					$total_bookings += (int) $row['qty'];
-					if ( 'pending' === $row['status'] ) {
-						$pending_count = (int) $row['qty'];
-					}
-				}
-			}
+			$ops_metrics    = Booking_Query::get_operational_metrics( $today_date );
+			$occupied_rooms = $ops_metrics['occupied_rooms'];
+			$arrivals       = $ops_metrics['arrivals'];
+			$departures     = $ops_metrics['departures'];
+			$in_house       = $ops_metrics['in_house'];
+			$total_bookings = $ops_metrics['total_bookings'];
+			$pending_count  = $ops_metrics['pending_count'];
 
 			// Guest CRM counts
 			$guests_table_exists = Cache::table_exists( $wpdb->prefix . 'mhbo_guests' );
@@ -273,7 +223,7 @@ $stats = array(
 				
 				?>
 
-				<?php if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() ) : ?>
+				<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_GUESTS ) && class_exists( GuestManager::class ) && GuestManager::is_enabled() ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-guests' ) ); ?>" class="mhbo-widget-meta-item">
 					<span>👥 <strong><?php esc_html_e( 'Guest CRM:', 'modern-hotel-booking' ); ?></strong></span>
 					<span>
@@ -288,10 +238,12 @@ $stats = array(
 
 			<!-- Action Shortcuts Grid -->
 			<div class="mhbo-widget-actions-grid">
+				<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings&action=add' ) ); ?>" class="mhbo-widget-btn mhbo-widget-btn-primary">
 					<span class="dashicons dashicons-plus-alt2" style="font-size: 14px; width: 14px; height: 14px;"></span>
 					<?php echo esc_html( I18n::get_label( 'label_add_booking' ) ); ?>
 				</a>
+				<?php endif; ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="mhbo-widget-btn">
 					<span class="dashicons dashicons-calendar-alt" style="font-size: 14px; width: 14px; height: 14px;"></span>
 					<?php echo esc_html( I18n::get_label( 'menu_bookings' ) ); ?>
@@ -335,11 +287,16 @@ $stats = array(
 		wp_register_script( self::FULLCALENDAR_SCRIPT_HANDLE, $js . 'fullcalendar-classic-theme.global.min.js', array( 'mhbo-fullcalendar' ), self::FULLCALENDAR_VERSION, true );
 	}
 
-	public function enqueue_admin_assets( string $hook ): void {
+	public function enqueue_admin_assets( mixed $hook = '' ): void {
+		$hook = is_string( $hook ) ? $hook : '';
 		if ( 'index.php' === $hook || 'dashboard' === $hook ) {
 			// Dedicated lightweight dashboard widgets stylesheet (4 KB); avoids loading 229 KB admin CSS suite on index.php.
-			$dash_css_ver = (string) ( file_exists( MHBO_PLUGIN_DIR . 'assets/css/mhbo-dashboard.css' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/css/mhbo-dashboard.css' ) : MHBO_VERSION );
-			wp_enqueue_style( 'mhbo-dashboard-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-dashboard.css', array( 'dashicons' ), $dash_css_ver );
+			wp_enqueue_style(
+				'mhbo-dashboard-css',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-dashboard.css' ),
+				array( 'dashicons' ),
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-dashboard.css' )
+			);
 			return;
 		}
 
@@ -348,20 +305,18 @@ $stats = array(
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Screen tab routing check
 		$current_tab   = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
-		$admin_css_ver = (string) ( file_exists( MHBO_PLUGIN_DIR . 'assets/css/mhbo-admin.css' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/css/mhbo-admin.css' ) : MHBO_VERSION );
-		wp_enqueue_style( 'mhbo-admin-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-admin.css', array(), $admin_css_ver );
-		wp_enqueue_script( 'mhbo-admin-js', MHBO_PLUGIN_URL . 'assets/js/mhbo-admin.js', array( 'wp-api-fetch' ), MHBO_VERSION, true );
+		$admin_css_ver = \MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-admin.css' );
+		wp_enqueue_style( 'mhbo-admin-css', \MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-admin.css' ), array(), $admin_css_ver );
+		wp_enqueue_script(
+			'mhbo-admin-js',
+			\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-admin.js' ),
+			array( 'wp-api-fetch' ),
+			\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-admin.js' ),
+			true
+		);
 
-$dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 'mhbo-rooms', 'mhbo-guests' );
-		$is_dataview_page = false;
-		foreach ( $dataview_pages as $page ) {
-			if ( false !== strpos( $hook, $page ) ) {
-				$is_dataview_page = true;
-				break;
-			}
-		}
-		
-		if ( $is_dataview_page ) {
+// Enqueue React DataViews bundle strictly on pages that mount #mhbo-dataviews-root (Guest CRM).
+		if ( false !== strpos( $hook, 'mhbo-guests' ) ) {
 			$asset_file_path = MHBO_PLUGIN_DIR . 'build/admin/dataviews.asset.php';
 			if ( file_exists( $asset_file_path ) ) {
 				// phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
@@ -397,16 +352,7 @@ $dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 
 						$asset_file['version']
 					);
 				}
-				
-				// True zero-latency preloading
-				// Step 1: Preload actual data
-				$preload_paths = array( '/mhbo/v1/bookings?per_page=20' );
-				if ( function_exists( 'rest_preload_api_request' ) ) {
-					$preload_data = array_reduce( $preload_paths, 'rest_preload_api_request', array() );
-					wp_add_inline_script( 'wp-api-fetch', sprintf( 'wp.apiFetch.use( wp.apiFetch.createPreloadingMiddleware( %s ) );', wp_json_encode( $preload_data ) ), 'after' );
-				}
 
-				// Step 2: Nonce middleware
 				wp_add_inline_script( 'wp-api-fetch', sprintf( 'wp.apiFetch.use( wp.apiFetch.createNonceMiddleware( "%s" ) );', wp_create_nonce( 'wp_rest' ) ), 'after' );
 			}
 		}
@@ -415,21 +361,26 @@ $dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 
 			// Flatpickr date range picker assets for add/edit workstations
 			wp_enqueue_style( 'mhbo-flatpickr-css', MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css', array(), '4.6.13' );
 			wp_enqueue_script( 'mhbo-flatpickr-js', MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js', array(), '4.6.13', true );
-			wp_enqueue_style( 'mhbo-calendar-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-calendar.css', array( 'mhbo-flatpickr-css' ), MHBO_VERSION );
+			wp_enqueue_style(
+				'mhbo-calendar-style',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-calendar.css' ),
+				array( 'mhbo-flatpickr-css' ),
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-calendar.css' )
+			);
 
 			// FullCalendar V7 vendor chain is pulled in via the dependency handles below.
 			$this->register_fullcalendar_assets();
 
 			// Deregister mhbo-admin-css and re-enqueue AFTER vendor styles to ensure proper override
-			$bookings_css_ver = (string) ( file_exists( MHBO_PLUGIN_DIR . 'assets/css/mhbo-admin.css' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/css/mhbo-admin.css' ) : MHBO_VERSION );
-			$bookings_js_ver  = (string) ( file_exists( MHBO_PLUGIN_DIR . 'assets/js/mhbo-admin-bookings.js' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/js/mhbo-admin-bookings.js' ) : MHBO_VERSION );
+			$bookings_css_ver = \MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-admin.css' );
+			$bookings_js_ver  = \MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-admin-bookings.js' );
 			wp_deregister_style( 'mhbo-admin-css' );
-			wp_enqueue_style( 'mhbo-admin-css', MHBO_PLUGIN_URL . 'assets/css/mhbo-admin.css', array( self::FULLCALENDAR_STYLE_HANDLE, 'mhbo-flatpickr-css' ), $bookings_css_ver );
+			wp_enqueue_style( 'mhbo-admin-css', \MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-admin.css' ), array( self::FULLCALENDAR_STYLE_HANDLE, 'mhbo-flatpickr-css' ), $bookings_css_ver );
 
 			// Enqueue admin bookings script (Pure Vanilla JS)
 			wp_enqueue_script(
 				'mhbo-admin-bookings',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-bookings.js',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-admin-bookings.js' ),
 				array( 'mhbo-admin-js', 'wp-api-fetch', 'mhbo-flatpickr-js', self::FULLCALENDAR_SCRIPT_HANDLE ),
 				$bookings_js_ver,
 				true
@@ -441,13 +392,13 @@ $dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 
 				'currencySymbol'  => (string) get_option( 'mhbo_currency_symbol', '$' ),
 				'currencyCode'    => strtoupper( (string) get_option( 'mhbo_currency_code', 'USD' ) ),
 				'extrasCount'     => 0,
-				'preventTurnover' => (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
+				'preventTurnover' => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
 				'minNights'       => (int) get_option( 'mhbo_global_min_stay', 0 ),
 				'maxNights'       => (int) get_option( 'mhbo_global_max_stay', 0 ),
-				'gapAutocorrect'  => (int) get_option( 'mhbo_orphan_gap_autocorrection', 0 ) === 1,
+				'gapAutocorrect'  => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'orphan_gap_optimization' ) ) && (int) get_option( 'mhbo_orphan_gap_autocorrection', 0 ) === 1,
 				'gapMinNights'    => (int) get_option( 'mhbo_orphan_gap_min_stay', 1 ),
 				'dateFormat'      => (string) get_option( 'date_format', 'Y-m-d' ),
-				'depositsEnabled' => (int) get_option( 'mhbo_deposits_enabled', 0 ) === 1,
+				'depositsEnabled' => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'deposits' ) ) && (int) get_option( 'mhbo_deposits_enabled', 0 ) === 1,
 				'depositType'     => (string) get_option( 'mhbo_deposit_type', 'percentage' ),
 				'depositValue'    => (float) get_option( 'mhbo_deposit_value', 20 ),
 				'i18n'            => array(
@@ -473,9 +424,9 @@ $dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 
 			wp_enqueue_media();
 			wp_enqueue_script(
 				'mhbo-admin-media-upload',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-media-upload.js',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-admin-media-upload.js' ),
 				array(),
-				MHBO_VERSION,
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-admin-media-upload.js' ),
 				true
 			);
 		}
@@ -483,25 +434,33 @@ $dataview_pages   = array( 'mhbo-bookings', 'mhbo-calendar', 'mhbo-room-types', 
 }
 
 	public function add_plugin_admin_menu(): void {
-		$manage_cap = Capabilities::MANAGE_LHBO;
-		$view_cap   = Capabilities::VIEW_ANALYTICS;
-		$set_cap    = Capabilities::MANAGE_SETTINGS;
+		$manage_cap       = Capabilities::MANAGE_LHBO;
+		$view_cap         = Capabilities::VIEW_BOOKINGS;
+		$set_cap          = Capabilities::MANAGE_SETTINGS;
+		$rooms_cap        = Capabilities::MANAGE_ROOMS;
+		$pricing_cap      = Capabilities::MANAGE_PRICING;
+		$housekeeping_cap = Capabilities::MANAGE_HOUSEKEEPING;
+		$analytics_cap    = Capabilities::VIEW_ANALYTICS;
 
 		add_menu_page( I18n::get_label( 'menu_main' ), I18n::get_label( 'menu_main' ), $view_cap, 'mhbo-hotel-booking', array( $this, 'display_dashboard_page' ), 'dashicons-building', 26 );
-		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_bookings' ), I18n::get_label( 'menu_bookings' ), $manage_cap, 'mhbo-bookings', array( $this, 'display_bookings_page' ) );
+		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_bookings' ), I18n::get_label( 'menu_bookings' ), $view_cap, 'mhbo-bookings', array( $this, 'display_bookings_page' ) );
 		if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() ) {
 			add_submenu_page( 'mhbo-hotel-booking', __( 'Guests', 'modern-hotel-booking' ), __( 'Guests', 'modern-hotel-booking' ), Capabilities::MANAGE_GUESTS, 'mhbo-guests', array( $this, 'display_dataviews_page' ) );
 			
 		}
-		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_room_types' ), I18n::get_label( 'menu_room_types' ), $set_cap, 'mhbo-room-types', array( $this, 'display_room_types_page' ) );
-		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_rooms' ), I18n::get_label( 'menu_rooms' ), $set_cap, 'mhbo-rooms', array( $this, 'display_rooms_page' ) );
-		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_advanced_pricing' ), I18n::get_label( 'menu_pricing' ), $set_cap, 'mhbo-pricing-rules', array( 'MHBO\\Admin\\PricingController', 'render' ) );
+		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_room_types' ), I18n::get_label( 'menu_room_types' ), $rooms_cap, 'mhbo-room-types', array( $this, 'display_room_types_page' ) );
+		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_rooms' ), I18n::get_label( 'menu_rooms' ), $rooms_cap, 'mhbo-rooms', array( $this, 'display_rooms_page' ) );
+		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_advanced_pricing' ), I18n::get_label( 'menu_pricing' ), $pricing_cap, 'mhbo-pricing-rules', array( 'MHBO\\Admin\\PricingController', 'render' ) );
 		add_submenu_page( 'mhbo-hotel-booking', I18n::get_label( 'menu_settings' ), I18n::get_label( 'menu_settings' ), $set_cap, 'mhbo-settings', array( 'MHBO\\Admin\\Settings', 'render' ) );
 
 }
 
 public function display_dashboard_page(): void {
-		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+		if (
+			! Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS )
+			&& ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO )
+			&& ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS )
+		) {
 			wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 		}
 
@@ -519,115 +478,25 @@ public function display_dashboard_page(): void {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$total_rooms = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_rooms" );
 
-			// Occupied physical rooms today
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$occupied_rooms = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(DISTINCT room_id) FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE status NOT IN ('cancelled', 'refunded')
-                   AND check_in <= DATE(%s) AND check_out > DATE(%s)",
-					$today_date,
-					$today_date
-				)
-			);
+			$ops_metrics    = Booking_Query::get_operational_metrics( $today_date );
+			$occupied_rooms = $ops_metrics['occupied_rooms'];
+			$total_bookings = $ops_metrics['total_bookings'];
+			$pending_count  = $ops_metrics['pending_count'];
 
-			// Status counts
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$counts = $wpdb->get_results(
-				$wpdb->prepare( 'SELECT status, COUNT(*) as qty FROM %i GROUP BY status', $wpdb->prefix . 'mhbo_bookings' ),
-				ARRAY_A
-			);
-
-			$total_bookings = 0;
-			$pending_count  = 0;
-			if ( is_array( $counts ) ) {
-				foreach ( $counts as $row ) {
-					$total_bookings += (int) $row['qty'];
-					if ( 'pending' === $row['status'] ) {
-						$pending_count = (int) $row['qty'];
-					}
-				}
-			}
-
-			// Confirmed & Completed Revenue vs Pipeline
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$revenue_raw = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT
-                        COALESCE(SUM(CASE WHEN status IN ('confirmed', 'checked_in', 'checked_out', 'completed', 'paid') THEN total_price ELSE 0 END), 0) as confirmed_revenue,
-                        COALESCE(SUM(CASE WHEN status IN ('confirmed', 'checked_in', 'checked_out', 'completed', 'paid') THEN 1 ELSE 0 END), 0) as confirmed_count,
-                        COALESCE(SUM(total_price), 0) as total_pipeline,
-                        COALESCE(SUM(CASE WHEN payment_received = 1 OR payment_status IN ('completed', 'paid') THEN total_price WHEN deposit_received = 1 OR payment_status = 'deposit_paid' THEN deposit_amount ELSE payment_amount END), 0) as total_collected
-                     FROM %i WHERE status NOT IN ('cancelled', 'refunded')",
-					$wpdb->prefix . 'mhbo_bookings'
+			$revenue_raw = array(
+				array(
+					'confirmed_revenue' => $ops_metrics['confirmed_revenue'],
+					'confirmed_count'   => $ops_metrics['confirmed_count'],
+					'total_pipeline'    => $ops_metrics['total_pipeline'],
+					'total_collected'   => $ops_metrics['total_collected'],
 				),
-				ARRAY_A
 			);
 
-			// Arrivals Today
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$arrivals_list = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT b.*, r.room_number, rt.name as room_type_name
-                 FROM {$wpdb->prefix}mhbo_bookings b
-                 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
-                 LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
-                 WHERE b.status NOT IN ('cancelled', 'refunded') AND b.check_in = DATE(%s)
-                 ORDER BY b.id DESC LIMIT 15",
-					$today_date
-				)
-			);
-
-			// Departures Today
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$departures_list = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT b.*, r.room_number, rt.name as room_type_name
-                 FROM {$wpdb->prefix}mhbo_bookings b
-                 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
-                 LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
-                 WHERE b.status NOT IN ('cancelled', 'refunded') AND b.check_out = DATE(%s)
-                 ORDER BY b.id DESC LIMIT 15",
-					$today_date
-				)
-			);
-
-			// In-House Guests
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$inhouse_list = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT b.*, r.room_number, rt.name as room_type_name
-                 FROM {$wpdb->prefix}mhbo_bookings b
-                 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
-                 LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
-                 WHERE b.status NOT IN ('cancelled', 'refunded')
-                   AND b.check_in <= DATE(%s) AND b.check_out > DATE(%s)
-                 ORDER BY b.check_out ASC LIMIT 15",
-					$today_date,
-					$today_date
-				)
-			);
-
-			// Pending Bookings
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$pending_list = $wpdb->get_results(
-				"SELECT b.*, r.room_number, rt.name as room_type_name
-                 FROM {$wpdb->prefix}mhbo_bookings b
-                 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
-                 LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
-                 WHERE b.status = 'pending'
-                 ORDER BY b.id DESC LIMIT 15"
-			);
-
-			// Recent Bookings
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$recent_list = $wpdb->get_results(
-				"SELECT b.*, r.room_number, rt.name as room_type_name
-                 FROM {$wpdb->prefix}mhbo_bookings b
-                 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
-                 LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
-                 ORDER BY b.id DESC LIMIT 10"
-			);
+			$arrivals_list   = Booking_Query::get_dashboard_bookings( 'arrivals', $today_date, 15 );
+			$departures_list = Booking_Query::get_dashboard_bookings( 'departures', $today_date, 15 );
+			$inhouse_list    = Booking_Query::get_dashboard_bookings( 'inhouse', $today_date, 15 );
+			$pending_list    = Booking_Query::get_dashboard_bookings( 'pending', $today_date, 15 );
+			$recent_list     = Booking_Query::get_dashboard_bookings( 'recent', $today_date, 10 );
 
 			// Guest CRM counts
 			$guests_table_exists = Cache::table_exists( $wpdb->prefix . 'mhbo_guests' );
@@ -786,6 +655,7 @@ $stats = array(
 					</div>
 				</div>
 
+				<?php if ( Capabilities::current_user_can( Capabilities::VIEW_ANALYTICS ) ) : ?>
 				<!-- 6. Total Stay Revenue / Volume -->
 				<div class="mhbo-hero-kpi-card accent-emerald">
 					<div class="mhbo-hero-kpi-top">
@@ -797,6 +667,7 @@ $stats = array(
 						<span><?php echo esc_html( sprintf( I18n::get_label( 'dash_confirmed_bookings_desc' ), $confirmed_count, $total_bookings ) ); ?></span>
 					</div>
 				</div>
+				<?php endif; ?>
 			</div>
 
 			<!-- Executive Command Center (Hub Grid Shortcuts across all modules) -->
@@ -811,6 +682,7 @@ $stats = array(
 				</div>
 
 				<div class="mhbo-command-grid">
+					<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) ) : ?>
 					<!-- 1. New Reservation (Core/Free & Pro) -->
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings&action=add' ) ); ?>" class="mhbo-command-tile">
 						<div class="mhbo-command-icon-wrap" style="background:#eff6ff; color:#2563eb;">
@@ -821,6 +693,7 @@ $stats = array(
 							<p><?php echo esc_html( I18n::get_label( 'dash_hub_new_booking_desc' ) ); ?></p>
 						</div>
 					</a>
+					<?php endif; ?>
 
 					<!-- 2. Master Calendar (Core/Free & Pro) -->
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="mhbo-command-tile">
@@ -833,6 +706,7 @@ $stats = array(
 						</div>
 					</a>
 
+					<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_ROOMS ) ) : ?>
 					<!-- 3. Physical Rooms (Core/Free & Pro) -->
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-rooms' ) ); ?>" class="mhbo-command-tile">
 						<div class="mhbo-command-icon-wrap" style="background:#f1f5f9; color:#475569;">
@@ -854,7 +728,9 @@ $stats = array(
 							<p><?php echo esc_html( I18n::get_label( 'dash_hub_room_types_desc' ) ); ?></p>
 						</div>
 					</a>
+					<?php endif; ?>
 
+					<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_PRICING ) ) : ?>
 					<!-- 4.5 Dynamic Pricing Rules (Core/Free & Pro) -->
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-pricing-rules' ) ); ?>" class="mhbo-command-tile">
 						<div class="mhbo-command-icon-wrap" style="background:#e0e7ff; color:#4f46e5;">
@@ -865,9 +741,10 @@ $stats = array(
 							<p><?php echo esc_html( I18n::get_label( 'dash_hub_pricing_desc' ) ); ?></p>
 						</div>
 					</a>
+					<?php endif; ?>
 
 					<!-- 5. Guest CRM (Core/Free when enabled & Pro) -->
-					<?php if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() ) : ?>
+					<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_GUESTS ) && class_exists( GuestManager::class ) && GuestManager::is_enabled() ) : ?>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-guests' ) ); ?>" class="mhbo-command-tile">
 						<div class="mhbo-command-icon-wrap" style="background:#f3e8ff; color:#9333ea;">
 							<span class="dashicons dashicons-groups"></span>
@@ -880,7 +757,7 @@ $stats = array(
 					<?php endif; ?>
 
 					<!-- 5.5 AI Concierge & Abilities (Core/Free & Pro) -->
-					<?php if ( class_exists( \MHBO\AI\Loader::class ) ) : ?>
+					<?php if ( current_user_can( 'manage_options' ) && class_exists( \MHBO\AI\Loader::class ) ) : ?>
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-ai-concierge' ) ); ?>" class="mhbo-command-tile">
 						<div class="mhbo-command-icon-wrap" style="background:#fdf4ff; color:#c026d3;">
 							<span class="dashicons dashicons-format-chat"></span>
@@ -892,7 +769,8 @@ $stats = array(
 					</a>
 					<?php endif; ?>
 
-<!-- Global Hotel Settings (Core/Free & Pro) -->
+<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) : ?>
+					<!-- Global Hotel Settings (Core/Free & Pro) -->
 					<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-settings' ) ); ?>" class="mhbo-command-tile">
 						<div class="mhbo-command-icon-wrap" style="background:#f8fafc; color:#334155;">
 							<span class="dashicons dashicons-admin-generic"></span>
@@ -902,6 +780,7 @@ $stats = array(
 							<p><?php echo esc_html( I18n::get_label( 'dash_hub_settings_desc' ) ); ?></p>
 						</div>
 					</a>
+					<?php endif; ?>
 				</div>
 			</div>
 
@@ -1553,7 +1432,11 @@ $stats = array(
 	}
 
 	public function display_bookings_page(): void {
-		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+		if (
+			! Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS )
+			&& ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO )
+			&& ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS )
+		) {
 			wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 		}
 
@@ -1584,8 +1467,14 @@ $stats = array(
 		// GET Actions
 		if ( $action ) {
 			if ( 'add' === $action ) {
+				if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+					wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
+				}
 				$add_mode = true;
 			} elseif ( 'sync_crm_guests' === $action ) {
+				if ( ! Capabilities::current_user_can( Capabilities::MANAGE_GUESTS ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+					wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
+				}
 				if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_sync_crm_guests' ) ) {
 					wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 				}
@@ -1598,13 +1487,19 @@ $stats = array(
 				
 			} elseif ( $id > 0 ) {
 				if ( 'edit' === $action ) {
-					if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) && ( ! $nonce || ( ! wp_verify_nonce( $nonce, 'mhbo_edit_booking_' . $id ) && ! wp_verify_nonce( $nonce, 'mhbo_booking_action' ) ) ) ) {
+					if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+						wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
+					}
+					if ( ! $nonce || ( ! wp_verify_nonce( $nonce, 'mhbo_edit_booking_' . $id ) && ! wp_verify_nonce( $nonce, 'mhbo_booking_action' ) ) ) {
 						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 					}
 					$edit_mode = true;
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$edit_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $id ) );
 				} elseif ( 'confirm' === $action ) {
+					if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+						wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
+					}
 					if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_confirm_booking_' . $id ) ) {
 						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 					}
@@ -1615,6 +1510,9 @@ $stats = array(
 					do_action( 'mhbo_booking_status_changed', $id, 'confirmed' );
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_booking_confirmed_email' ) ) . '</p></div>';
 				} elseif ( 'cancel' === $action ) {
+					if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+						wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
+					}
 					if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_cancel_booking_' . $id ) ) {
 						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 					}
@@ -1625,14 +1523,17 @@ $stats = array(
 					do_action( 'mhbo_booking_status_changed', $id, 'cancelled' );
 					echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_booking_cancelled' ) ) . '</p></div>';
 				} elseif ( 'delete' === $action ) {
+					if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+						wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
+					}
 					if ( ! $nonce || ! wp_verify_nonce( $nonce, 'mhbo_delete_booking_' . $id ) ) {
 						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 					}
 					$wpdb->delete( $tb, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
 					Cache::invalidate_booking( $id );
 					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_booking_deleted' ) ) . '</p></div>';
-					
-				}
+
+}
 				if ( isset( $_GET['return'] ) && 'edit' === sanitize_key( wp_unslash( $_GET['return'] ) ) ) {
 					$edit_mode = true;
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1702,6 +1603,7 @@ $stats = array(
 					delete_transient( 'mhbo_dashboard_total_bookings' );
 					delete_transient( 'mhbo_dashboard_pending_bookings' );
 					delete_transient( 'mhbo_dashboard_stats_' . $today_date );
+					delete_transient( 'mhbo_dashboard_ops_v260_' . $today_date );
 
 					/* translators: %d: number of deleted bookings */
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( sprintf( I18n::get_label( 'msg_bulk_bookings_deleted' ), (int) $deleted_count ) ) . '</p></div>';
@@ -1718,7 +1620,7 @@ $stats = array(
 
 		// Handle manual booking submission
 		if ( isset( $_POST['submit_manual_booking'] ) ) {
-			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 			}
 			if ( ! check_admin_referer( 'mhbo_add_manual_booking' ) ) {
@@ -1734,7 +1636,7 @@ $stats = array(
 			$check_out        = sanitize_text_field( wp_unslash( $_POST['check_out'] ?? '' ) );
 			$guests           = absint( wp_unslash( $_POST['guests'] ?? 1 ) );
 			$children_count   = absint( wp_unslash( $_POST['children'] ?? 0 ) );
-			$child_ages       = isset( $_POST['child_ages'] ) && is_array( $_POST['child_ages'] ) ? array_map( 'intval', wp_unslash( $_POST['child_ages'] ) ) : array();
+			$child_ages       = isset( $_POST['child_ages'] ) && is_array( $_POST['child_ages'] ) ? Pricing::sanitize_child_ages( map_deep( wp_unslash( $_POST['child_ages'] ), 'sanitize_text_field' ) ) : array();
 			$total_price      = floatval( wp_unslash( $_POST['total_price'] ?? 0 ) );
 			$discount_amount  = floatval( wp_unslash( $_POST['discount_amount'] ?? 0 ) );
 			$coupon_code      = sanitize_text_field( wp_unslash( $_POST['coupon_code'] ?? '' ) );
@@ -1896,7 +1798,7 @@ $rem_balance_m         = $total_m->subtract( $submitted_pay_m );
 
 // Handle folio ledger transaction submission (Cashier Tender Workstation)
 		if ( isset( $_POST['submit_record_folio_payment'] ) ) {
-			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+			if ( ! Capabilities::current_user_can( Capabilities::PROCESS_PAYMENTS ) && ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 			}
 			$record_bid = absint( wp_unslash( $_POST['record_payment_booking_id'] ?? 0 ) );
@@ -2045,7 +1947,7 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 
 		// Handle edit submission
 		if ( isset( $_POST['submit_booking_update'] ) ) {
-			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 			}
 			if ( ! check_admin_referer( 'mhbo_update_booking' ) ) {
@@ -2060,7 +1962,7 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 			$check_out        = sanitize_text_field( wp_unslash( $_POST['check_out'] ?? '' ) );
 			$guests           = absint( wp_unslash( $_POST['guests'] ?? 1 ) );
 			$children_count   = absint( wp_unslash( $_POST['children'] ?? 0 ) );
-			$child_ages          = isset( $_POST['child_ages'] ) && is_array( $_POST['child_ages'] ) ? array_map( 'intval', wp_unslash( $_POST['child_ages'] ) ) : array();
+			$child_ages          = isset( $_POST['child_ages'] ) && is_array( $_POST['child_ages'] ) ? Pricing::sanitize_child_ages( map_deep( wp_unslash( $_POST['child_ages'] ), 'sanitize_text_field' ) ) : array();
 			$payment_received    = ( isset( $_POST['payment_received'] ) && sanitize_text_field( wp_unslash( $_POST['payment_received'] ) ) === '1' ) ? 1 : 0;
 			$deposit_received    = ( isset( $_POST['deposit_received'] ) && sanitize_text_field( wp_unslash( $_POST['deposit_received'] ) ) === '1' ) ? 1 : 0;
 			$deposit_amount_edit = floatval( wp_unslash( $_POST['deposit_amount'] ?? 0 ) );
@@ -2308,8 +2210,8 @@ $calc_curr       = $curr_code;
 						'check_in'               => $check_in,
 						'check_out'              => $check_out,
 						'total_price'            => $total_money_val->toDecimal(),
-						'remaining_balance'      => $remaining_balance_str,
-						'balance_expected_amount'=> $remaining_balance_str,
+						'remaining_balance'       => $remaining_balance_str,
+						'balance_expected_amount' => $remaining_balance_str,
 						'balance_status'         => ( $final_pay_m->compare( $total_money_val ) >= 0 ) ? 'collected' : 'pending',
 						'discount_amount'        => $edit_coupon_disc_m->toDecimal(),
 						'deposit_amount'         => $dep_edit_m->toDecimal(),
@@ -2462,7 +2364,7 @@ if ( $old_status !== $new_status ) {
 		$seen_calendar_events = array();
 		$occupancy            = array();
 		$distinct_rooms       = array();
-		$prevent_turnover     = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$prevent_turnover     = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 
 		if ( is_array( $all_rooms ) ) {
 			foreach ( $all_rooms as $r ) {
@@ -2701,12 +2603,10 @@ $extended_props = array(
 
 		// Operational Daily Briefing KPI Metrics
 		$today_ymd = HotelTime::today();
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$today_checkins = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE check_in = %s AND status NOT IN ('cancelled', 'refunded')", $today_ymd ) );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$today_checkouts = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_bookings WHERE check_out = %s AND status NOT IN ('cancelled', 'refunded')", $today_ymd ) );
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$in_house_rooms      = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT room_id) FROM {$wpdb->prefix}mhbo_bookings WHERE check_in <= %s AND check_out > %s AND status NOT IN ('cancelled', 'refunded')", $today_ymd, $today_ymd ) );
+		$ops_metrics     = Booking_Query::get_operational_metrics( $today_ymd );
+		$today_checkins  = $ops_metrics['arrivals'];
+		$today_checkouts = $ops_metrics['departures'];
+		$in_house_rooms  = $ops_metrics['occupied_rooms'];
 		$distinct_room_count = $total_rooms ?: ( is_array( $all_rooms ) ? max( 1, count( $all_rooms ) ) : 1 );
 		$occupancy_pct       = min( 100, (int) round( ( $in_house_rooms / max( 1, $distinct_room_count ) ) * 100 ) );
 
@@ -2781,13 +2681,14 @@ AdminUI::render_header(
 					)
 				);
 			} else {
-				$header_actions = array(
-					array(
+				$header_actions = array();
+				if ( Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) ) {
+					$header_actions[] = array(
 						'label' => '+ ' . I18n::get_label( 'label_add_manual_booking' ),
 						'url'   => admin_url( 'admin.php?page=mhbo-bookings&action=add' ),
 						'class' => 'button-primary',
-					),
-				);
+					);
+				}
 
 AdminUI::render_header(
 					I18n::get_label( 'menu_bookings' ),
@@ -2805,7 +2706,7 @@ AdminUI::render_header(
 			<?php
 			if ( ! $add_mode && ! $edit_mode ) :
 
-if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_exists( GuestMigration::class ) ) {
+if ( Capabilities::current_user_can( Capabilities::MANAGE_GUESTS ) && class_exists( GuestManager::class ) && GuestManager::is_enabled() && class_exists( GuestMigration::class ) ) {
 					$unmigrated_count = GuestMigration::get_unmigrated_count();
 					if ( $unmigrated_count > 0 ) {
 						if ( class_exists( GuestAsyncTasks::class ) ) {
@@ -4237,9 +4138,11 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 								<div class="mhbo-card-body-padded">
 									<input type="submit" name="submit_booking_update" class="button button-primary button-hero" value="<?php esc_attr_e( '💾 Save Reservation Changes', 'modern-hotel-booking' ); ?>" style="width:100%; text-align:center; justify-content:center; height:44px; font-size:14px; font-weight:700;">
 
-									<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=delete&id={$edit_data->id}" ), 'mhbo_delete_booking_' . $edit_data->id ) ); ?>" class="button button-link-delete mhbo-delete-action" style="margin-top:14px; display:block; text-align:center; color:#dc2626;" data-confirm="<?php echo esc_attr( I18n::get_label( 'msg_confirm_delete_bk' ) ); ?>">
-												<?php echo esc_html( I18n::get_label( 'btn_delete_booking' ) ); ?>
-									</a>
+									<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) : ?>
+										<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=delete&id={$edit_data->id}" ), 'mhbo_delete_booking_' . $edit_data->id ) ); ?>" class="button button-link-delete mhbo-delete-action" style="margin-top:14px; display:block; text-align:center; color:#dc2626;" data-confirm="<?php echo esc_attr( I18n::get_label( 'msg_confirm_delete_bk' ) ); ?>">
+													<?php echo esc_html( I18n::get_label( 'btn_delete_booking' ) ); ?>
+										</a>
+									<?php endif; ?>
 								</div>
 							</div>
 
@@ -4291,7 +4194,13 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 		int $paged,
 		array $allowed_per_page
 	): void {
-		$is_pro_active = false;
+		$is_pro_active       = false;
+		$can_manage_bookings = Capabilities::current_user_can( Capabilities::MANAGE_LHBO );
+		$can_pay_links       = Capabilities::current_user_can( Capabilities::PROCESS_PAYMENTS ) || $can_manage_bookings;
+		$can_delete_bookings = Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS );
+		$can_view_guests     = Capabilities::current_user_can( Capabilities::MANAGE_GUESTS );
+		$can_manifest        = Capabilities::current_user_can( Capabilities::MANAGE_HOUSEKEEPING ) || $can_manage_bookings || $can_delete_bookings;
+		$can_bulk_delete     = false;
 		
 		?>
 			<!-- 1. Daily Operations Morning Briefing Strip -->
@@ -4400,7 +4309,7 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 				$calendar_config = array(
 					'events'          => $events,
 					'fullDays'        => $full_days,
-					'preventTurnover' => (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
+					'preventTurnover' => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
 				);
 				wp_add_inline_script( 'mhbo-admin-bookings', 'window.mhboCalendarConfig = ' . wp_json_encode( $calendar_config ) . ';', 'before' );
 				wp_add_inline_script( 'mhbo-admin-bookings', 'document.addEventListener("DOMContentLoaded", function() { document.querySelectorAll(".mhbo-schedule-balance-link").forEach(function(btn) { btn.addEventListener("click", function() { var id = this.getAttribute("data-id"); var nonce = this.getAttribute("data-nonce"); var rule = document.getElementById("mhbo-schedule-rule-" + id).value; if (!rule) { alert("Please select a schedule rule."); return; } window.location.href = "' . esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ) . '&action=schedule_balance_link&id=" + id + "&rule=" + rule + "&_wpnonce=" + nonce; }); }); });', 'after' );
@@ -4657,7 +4566,7 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 										<td class="mhbo-col-guest" data-colname="<?php esc_attr_e( 'Guest', 'modern-hotel-booking' ); ?>">
 										<div class="mhbo-guest-info">
 											<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-												<?php if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() && ! empty( $bk->guest_id ) ) : ?>
+												<?php if ( $can_view_guests && class_exists( GuestManager::class ) && GuestManager::is_enabled() && ! empty( $bk->guest_id ) ) : ?>
 													<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-guests&guest_id=' . (int) $bk->guest_id ) ); ?>" target="_blank" class="mhbo-primary-text" style="font-weight:700; color:#2563eb; text-decoration:none;" title="<?php esc_attr_e( 'Open Guest CRM Profile in new tab', 'modern-hotel-booking' ); ?>">
 														<?php echo esc_html( (string) ( I18n::decode( $bk->customer_name ) ?? '' ) ); ?> ↗
 													</a>
@@ -4762,31 +4671,37 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 									</td>
 									<td class="mhbo-col-actions" data-colname="<?php esc_attr_e( 'Actions', 'modern-hotel-booking' ); ?>">
 										<div class="mhbo-actions-group">
-											<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=edit&id={$bk->id}" ), 'mhbo_edit_booking_' . $bk->id ) ); ?>"
-												class="mhbo-action-btn mhbo-btn-edit" 
-												title="<?php esc_attr_e( 'Edit Booking', 'modern-hotel-booking' ); ?>">
-												<span class="dashicons dashicons-edit"></span>
-											</a>
-											<?php if ( 'pending' === $bk->status ) : ?>
-												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=confirm&id={$bk->id}" ), 'mhbo_confirm_booking_' . $bk->id ) ); ?>"
-													class="mhbo-action-btn mhbo-btn-confirm" 
-													title="<?php esc_attr_e( 'Confirm Booking', 'modern-hotel-booking' ); ?>"
-													onclick="return confirm('<?php echo esc_js( __( 'Confirm this reservation and send confirmation email to guest?', 'modern-hotel-booking' ) ); ?>');">
-													<span class="dashicons dashicons-yes-alt"></span>
+											<?php if ( $can_manage_bookings ) : ?>
+												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=edit&id={$bk->id}" ), 'mhbo_edit_booking_' . $bk->id ) ); ?>"
+													class="mhbo-action-btn mhbo-btn-edit" 
+													title="<?php esc_attr_e( 'Edit Booking', 'modern-hotel-booking' ); ?>">
+													<span class="dashicons dashicons-edit"></span>
 												</a>
+												<?php if ( 'pending' === $bk->status ) : ?>
+													<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=confirm&id={$bk->id}" ), 'mhbo_confirm_booking_' . $bk->id ) ); ?>"
+														class="mhbo-action-btn mhbo-btn-confirm" 
+														title="<?php esc_attr_e( 'Confirm Booking', 'modern-hotel-booking' ); ?>"
+														onclick="return confirm('<?php echo esc_js( __( 'Confirm this reservation and send confirmation email to guest?', 'modern-hotel-booking' ) ); ?>');">
+														<span class="dashicons dashicons-yes-alt"></span>
+													</a>
+												<?php endif; ?>
 											<?php endif; ?>
 											
-											<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=cancel&id={$bk->id}" ), 'mhbo_cancel_booking_' . $bk->id ) ); ?>"
-												class="mhbo-action-btn mhbo-btn-cancel" 
-												title="<?php esc_attr_e( 'Cancel Booking', 'modern-hotel-booking' ); ?>">
-												<span class="dashicons dashicons-no-alt"></span>
-											</a>
-											<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=delete&id={$bk->id}" ), 'mhbo_delete_booking_' . $bk->id ) ); ?>"
-												class="mhbo-action-btn mhbo-btn-delete mhbo-confirm-delete" 
-												title="<?php esc_attr_e( 'Delete Booking', 'modern-hotel-booking' ); ?>"
-												data-confirm="<?php echo esc_attr( I18n::get_label( 'msg_confirm_remove' ) ); ?>">
-												<span class="dashicons dashicons-trash"></span>
-											</a>
+											<?php if ( $can_manage_bookings ) : ?>
+												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=cancel&id={$bk->id}" ), 'mhbo_cancel_booking_' . $bk->id ) ); ?>"
+													class="mhbo-action-btn mhbo-btn-cancel" 
+													title="<?php esc_attr_e( 'Cancel Booking', 'modern-hotel-booking' ); ?>">
+													<span class="dashicons dashicons-no-alt"></span>
+												</a>
+											<?php endif; ?>
+											<?php if ( $can_delete_bookings ) : ?>
+												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=delete&id={$bk->id}" ), 'mhbo_delete_booking_' . $bk->id ) ); ?>"
+													class="mhbo-action-btn mhbo-btn-delete mhbo-confirm-delete" 
+													title="<?php esc_attr_e( 'Delete Booking', 'modern-hotel-booking' ); ?>"
+													data-confirm="<?php echo esc_attr( I18n::get_label( 'msg_confirm_remove' ) ); ?>">
+													<span class="dashicons dashicons-trash"></span>
+												</a>
+											<?php endif; ?>
 										</div>
 									</td>
 								</tr>
@@ -4795,7 +4710,7 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 						else :
 							?>
 							<tr>
-								<td colspan="10" class="mhbo-empty-state-cell">
+								<td colspan="<?php echo $can_bulk_delete ? 10 : 9; ?>" class="mhbo-empty-state-cell">
 									<div class="mhbo-empty-state">
 										<span class="dashicons dashicons-calendar-alt"></span>
 										<h3><?php esc_html_e( 'No bookings found.', 'modern-hotel-booking' ); ?></h3>
@@ -4822,7 +4737,7 @@ $currency          = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_
 	}
 
 public function display_room_types_page(): void {
-		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_ROOMS ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 		}
 
@@ -5168,7 +5083,7 @@ public function display_room_types_page(): void {
 	}
 
 	public function display_rooms_page(): void {
-		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_ROOMS ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 		}
 
@@ -5221,8 +5136,17 @@ global $wpdb;
 				<div class="wrap mhbo-admin-wrap">
 					<h1><?php esc_html_e( 'Manage Rooms', 'modern-hotel-booking' ); ?></h1>
 					<?php
-					if ( class_exists( Settings::class ) ) {
+					if ( class_exists( Settings::class ) && method_exists( Settings::class, 'render_pro_upsell' ) ) {
 						Settings::render_pro_upsell();
+					} elseif ( class_exists( Upsell::class ) ) {
+						Upsell::render_card(
+							__( 'iCal Two-Way Channel Synchronization', 'modern-hotel-booking' ),
+							__( 'Sync room availability automatically with Airbnb, Booking.com, and Vrbo using real-time iCal feeds.', 'modern-hotel-booking' )
+						);
+					} else {
+						AdminUI::render_card_start( __( 'iCal Two-Way Channel Synchronization', 'modern-hotel-booking' ) );
+						echo '<p>' . esc_html__( 'Two-way iCal synchronization is available in Modern Hotel Booking Pro.', 'modern-hotel-booking' ) . '</p>';
+						AdminUI::render_card_end();
 					}
 					?>
 					<p style="margin-top: 20px;">
@@ -5303,15 +5227,10 @@ if ( $submit_ical_feed ) {
 					),
 					array( '%d', '%d' ) 
 				);
+				Cache::invalidate_rooms();
 			}
 
-if ( 'sync_now' === $sub_action ) {
-				check_admin_referer( 'mhbo_sync_now_' . $get_id );
-				ICal::sync_external_calendars();
-				echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_sync_completed' ) ) . '</p></div>';
-			}
-
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$ical_feeds = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mhbo_ical_connections WHERE room_id = %d", $get_id ) );
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$room_info = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mhbo_rooms WHERE id = %d", $get_id ) );
@@ -5609,13 +5528,13 @@ if ( 'sync_now' === $sub_action ) {
 	}
 
 public function display_extras_page(): void {
-		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+		if ( ! Capabilities::current_user_can( Capabilities::MANAGE_PRICING ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 		}
 
 		// Handle Form Submission
 		if ( isset( $_POST['mhbo_save_extras'] ) ) {
-			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+			if ( ! Capabilities::current_user_can( Capabilities::MANAGE_PRICING ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 				wp_die( esc_html( I18n::get_label( 'msg_insufficient_perms_short' ) ) );
 			}
 			if ( ! check_admin_referer( 'mhbo_save_extras_action' ) ) {
@@ -5863,9 +5782,15 @@ public function display_extras_page(): void {
 	}
 	/**
 	 * Fix the missing page title in admin-header.php for hidden submenus.
-	 * Prevents "strip_tags(null)" warning in 2026 strict environments.
+	 * Prevents "strip_tags(null)" and strict TypeError crashes when core passes null $title.
+	 *
+	 * @param mixed $admin_title Full page title with context.
+	 * @param mixed $title       Base page title (may be null on hidden submenus).
+	 * @return string
 	 */
-	public function fix_hidden_page_titles( string $admin_title, string $title ): string {
+	public function fix_hidden_page_titles( mixed $admin_title, mixed $title = '' ): string {
+		unset( $title );
+		$admin_title_str = is_string( $admin_title ) ? $admin_title : '';
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		if ( str_starts_with( $page, 'mhbo-pro-' ) || 'mhbo-tablet-mode' === $page ) {
@@ -5893,6 +5818,6 @@ public function display_extras_page(): void {
 				return sprintf( '%s &lsaquo; %s &#8212; WordPress', $new_title, get_bloginfo( 'name' ) );
 			}
 		}
-		return $admin_title;
+		return $admin_title_str;
 	}
 }

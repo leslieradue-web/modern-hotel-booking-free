@@ -10,11 +10,13 @@ use WP_REST_Response;
 
 use MHBO\Database\Queries\Booking_Query;
 use MHBO\Core\Pricing;
+use MHBO\Core\Capabilities;
 use MHBO\Core\Money;
 use MHBO\Core\I18n;
 use MHBO\Core\Cache;
 use MHBO\Core\Privacy;
 use MHBO\Core\Security;
+use MHBO\Core\BookingProcessor;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -57,6 +59,51 @@ class PaymentsController extends WP_REST_Controller {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'calculate_session' ),
 				'permission_callback' => '__return_true', // Rate limiting and nonces verified inside callback
+				'args'                => array(
+					'room_id'     => array(
+						'type'              => 'integer',
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+					),
+					'check_in'    => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'check_out'   => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'coupon_code' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		// 1b. Immediate pending draft release on payment cancel/failure
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/release',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'release_pending_draft' ),
+				'permission_callback' => '__return_true', // Nonce + cryptographic booking_token verified inside callback
+				'args'                => array(
+					'booking_token' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'session_token' => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
 			)
 		);
 
@@ -166,8 +213,10 @@ class PaymentsController extends WP_REST_Controller {
 		
 		$payment_type = sanitize_text_field( (string) ( $request->get_param( 'mhbo_payment_type' ) ?: 'full' ) );
 
+		$was_type_auto_resolved = ( 0 === $room_id && 0 !== $type_id );
+
 		// Resolve room_id from type_id if category booking
-		if ( 0 === $room_id && 0 !== $type_id ) {
+		if ( $was_type_auto_resolved ) {
 			if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'find_available_room' ) ) {
 				$resolved_room = Pricing::find_available_room( $type_id, $check_in, $check_out );
 				if ( $resolved_room ) {
@@ -181,6 +230,10 @@ class PaymentsController extends WP_REST_Controller {
 		}
 
 		global $wpdb;
+		$table        = $wpdb->prefix . 'mhbo_bookings';
+		$hold_seconds = class_exists( Pricing::class ) && method_exists( Pricing::class, 'get_pending_payment_hold_seconds' )
+			? Pricing::get_pending_payment_hold_seconds()
+			: 900;
 
 		// Gap 1: Bind session to cookie early
 		$session_id = Privacy::get_cookie_session_id();
@@ -202,12 +255,31 @@ class PaymentsController extends WP_REST_Controller {
 			}
 		}
 
-		// Check if the current user session already holds a pending provisional draft (e.g. switching payment gateways or re-calculating)
+		// Check if the current user session already holds a pending provisional draft (e.g. switching payment gateways or retrying)
 		$existing_pending_id = (int) get_transient( 'mhbo_session_pending_booking_' . $session_id );
+		if ( $existing_pending_id <= 0 ) {
+			$req_booking_id    = absint( $request->get_param( 'booking_id' ) ?: $request->get_param( 'mhbo_update_id' ) ?: 0 );
+			$req_booking_token = sanitize_text_field( (string) ( $request->get_param( 'booking_token' ) ?: $request->get_param( 'session_token' ) ?: '' ) );
+			if ( $req_booking_id > 0 && '' !== $req_booking_token ) {
+				// Direct DB query required: reuse provisional draft across cookie-restricted sessions when token matches.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$matched_id = (int) $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT id FROM %i WHERE id = %d AND status = 'pending_payment' AND booking_token = %s LIMIT 1",
+						$table,
+						$req_booking_id,
+						$req_booking_token
+					)
+				);
+				if ( $matched_id > 0 ) {
+					$existing_pending_id = $matched_id;
+				}
+			}
+		}
 		if ( $existing_pending_id > 0 ) {
 			// Direct DB query required: verify whether the provisional record is still in draft state.
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$pending_status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $existing_pending_id ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$pending_status = $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $table, $existing_pending_id ) );
 			if ( 'pending_payment' !== $pending_status ) {
 				// Not a draft — stale or already completed reservation; discard and start fresh!
 				delete_transient( 'mhbo_session_pending_booking_' . $session_id );
@@ -219,136 +291,165 @@ class PaymentsController extends WP_REST_Controller {
 			Pricing::ensure_pro_init();
 		}
 
-		// Availability check (exclude the user's current pending booking if re-calculating)
-		if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'is_room_available' ) ) {
-			$availability = Pricing::is_room_available( $room_id, $check_in, $check_out, $existing_pending_id );
-			if ( $availability !== true ) {
-				return new WP_Error( 'availability_conflict', 'Selected dates are no longer available.', array( 'status' => 409 ) );
+		// Atomic lock around availability check, pricing calculation, and pending_payment hold persistence.
+		$locked_room_id = 0;
+		try {
+			$max_attempts = $was_type_auto_resolved ? 3 : 1;
+			for ( $attempt = 0; $attempt < $max_attempts; $attempt++ ) {
+				if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'acquire_booking_lock' ) ) {
+					if ( ! Pricing::acquire_booking_lock( $room_id, 10 ) ) {
+						return new WP_Error( 'lock_timeout', 'Selected room is currently being finalized by another guest. Please try again shortly.', array( 'status' => 409 ) );
+					}
+					$locked_room_id = $room_id;
+				}
+
+				if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'is_room_available' ) ) {
+					$availability = Pricing::is_room_available( $room_id, $check_in, $check_out, $existing_pending_id );
+					if ( true === $availability ) {
+						break;
+					}
+
+					if ( $locked_room_id > 0 && method_exists( Pricing::class, 'release_booking_lock' ) ) {
+						Pricing::release_booking_lock( $locked_room_id );
+						$locked_room_id = 0;
+					}
+
+					if ( $was_type_auto_resolved && $attempt < $max_attempts - 1 && method_exists( Pricing::class, 'find_available_room' ) ) {
+						$fallback_room = Pricing::find_available_room( $type_id, $check_in, $check_out );
+						if ( $fallback_room && (int) $fallback_room !== $room_id ) {
+							$room_id = (int) $fallback_room;
+							continue;
+						}
+					}
+
+					return new WP_Error( 'availability_conflict', 'Selected dates are no longer available.', array( 'status' => 409 ) );
+				}
+				break;
 			}
-		}
 
-		$calc        = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, $extras, $children, $child_ages );
-		$total_money = $calc['total'] ?? null;
+			$calc        = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, $extras, $children, $child_ages );
+			$total_money = $calc['total'] ?? null;
 
-		// Coupon code handling if provided
-		$coupon_code             = sanitize_text_field( (string) ( $request->get_param( 'mhbo_coupon_code' ) ?: $request->get_param( 'mhbo_coupon_applied' ) ?: '' ) );
-		$applied_coupon_code     = '';
-		$applied_coupon_discount = null;
+			// Coupon code handling if provided
+			$coupon_code             = sanitize_text_field( (string) ( $request->get_param( 'mhbo_coupon_code' ) ?: $request->get_param( 'mhbo_coupon_applied' ) ?: '' ) );
+			$applied_coupon_code     = '';
+			$applied_coupon_discount = null;
 
 if ( $total_money === null || $total_money->isZero() ) {
-			return new WP_Error( 'rest_error', 'Invalid booking calculation.', array( 'status' => 400 ) );
-		}
+				return new WP_Error( 'rest_error', 'Invalid booking calculation.', array( 'status' => 400 ) );
+			}
 
-		// Deposit handling
-		$deposit_money   = null;
-		$remaining_money = null;
-		$payable_money   = $total_money;
+			// Deposit handling
+			$deposit_money   = null;
+			$remaining_money = null;
+			$payable_money   = $total_money;
 
 // Cryptographically secure 64-char booking token
-		$booking_token   = bin2hex( random_bytes( 32 ) );
-		$total_decimal   = $total_money->toDecimal();
-		$payable_decimal = $payable_money->toDecimal();
-		$currency_code   = $total_money->getCurrency();
+			$booking_token   = bin2hex( random_bytes( 32 ) );
+			$total_decimal   = $total_money->toDecimal();
+			$payable_decimal = $payable_money->toDecimal();
+			$currency_code   = $total_money->getCurrency();
 
-		// Customer details if provided during calculation
-		$customer_name  = sanitize_text_field( (string) ( $request->get_param( 'customer_name' ) ?: 'Guest' ) );
-		$customer_email = sanitize_email( (string) ( $request->get_param( 'customer_email' ) ?: 'guest@pending.local' ) );
-		$customer_phone = sanitize_text_field( (string) ( $request->get_param( 'customer_phone' ) ?: '' ) );
+			// Customer details if provided during calculation
+			$customer_name  = sanitize_text_field( (string) ( $request->get_param( 'customer_name' ) ?: 'Guest' ) );
+			$customer_email = sanitize_email( (string) ( $request->get_param( 'customer_email' ) ?: 'guest@pending.local' ) );
+			$customer_phone = sanitize_text_field( (string) ( $request->get_param( 'customer_phone' ) ?: '' ) );
 
-		// Insert durable booking in pending_payment status (prevents webhook timing gap)
-		$table = $wpdb->prefix . 'mhbo_bookings';
+			// Insert durable booking in pending_payment status (prevents webhook timing gap)
+			$table = $wpdb->prefix . 'mhbo_bookings';
 
-		$booking_data = array(
-			'room_id'           => $room_id,
-			'customer_name'     => $customer_name,
-			'customer_email'    => $customer_email,
-			'customer_phone'    => $customer_phone,
-			'check_in'          => $check_in,
-			'check_out'         => $check_out,
-			'guests'            => $guests,
-			'children'          => $children,
-			'children_ages'     => ! empty( $child_ages ) ? wp_json_encode( $child_ages ) : null,
-			// Store the canonical extras breakdown (objects with name/quantity), NOT the raw
-			// id=>qty map produced by normalize_extras(), which downstream readers (admin edit
-			// form, email/invoice formatters) cannot consume and would fatal on.
-			'booking_extras'    => ! empty( $calc['extras_breakdown'] ) ? wp_json_encode( $calc['extras_breakdown'] ) : null,
-			'total_price'       => $total_decimal,
-			'deposit_amount'    => $deposit_money ? (string) $deposit_money->toDecimal() : null,
-			'remaining_balance' => $remaining_money ? (string) $remaining_money->toDecimal() : null,
-			'status'            => 'pending_payment',
-			'booking_token'     => $booking_token,
-			'payment_status'    => 'pending',
-			'payment_type'      => $payment_type,
-			'payment_method'    => sanitize_key( (string) ( $request->get_param( 'gateway' ) ?: $request->get_param( 'mhbo_payment_method' ) ?: 'stripe' ) ),
-			'created_at'        => current_time( 'mysql' ),
-		);
+			$booking_data = array(
+				'room_id'           => $room_id,
+				'customer_name'     => $customer_name,
+				'customer_email'    => $customer_email,
+				'customer_phone'    => $customer_phone,
+				'check_in'          => $check_in,
+				'check_out'         => $check_out,
+				'guests'            => $guests,
+				'children'          => $children,
+				'children_ages'     => ! empty( $child_ages ) ? wp_json_encode( $child_ages ) : null,
+				// Store the canonical extras breakdown (objects with name/quantity), NOT the raw
+				// id=>qty map produced by normalize_extras(), which downstream readers (admin edit
+				// form, email/invoice formatters) cannot consume and would fatal on.
+				'booking_extras'    => ! empty( $calc['extras_breakdown'] ) ? wp_json_encode( $calc['extras_breakdown'] ) : null,
+				'total_price'       => $total_decimal,
+				'deposit_amount'    => $deposit_money ? (string) $deposit_money->toDecimal() : null,
+				'remaining_balance' => $remaining_money ? (string) $remaining_money->toDecimal() : null,
+				'status'            => 'pending_payment',
+				'booking_token'     => $booking_token,
+				'payment_status'    => 'pending',
+				'payment_type'      => $payment_type,
+				'payment_method'    => sanitize_key( (string) ( $request->get_param( 'gateway' ) ?: $request->get_param( 'mhbo_payment_method' ) ?: 'stripe' ) ),
+				'created_at'        => current_time( 'mysql' ),
+			);
 
-		// Store tax breakdown and net columns if tax data is present
-		if ( ! empty( $calc['tax'] ) ) {
-			$tax_obj                                = $calc['tax'];
-			$booking_data['tax_enabled']            = ( $tax_obj['enabled'] ?? false ) ? 1 : 0;
-			$booking_data['tax_mode']               = sanitize_key( $tax_obj['mode'] ?? 'disabled' );
-			$booking_data['tax_rate_accommodation'] = $tax_obj['rates']['accommodation'] ?? 0;
-			$booking_data['tax_rate_extras']        = $tax_obj['rates']['extras'] ?? 0;
-			$booking_data['room_total_net']         = ( $tax_obj['totals']['room_net'] instanceof Money ) ? $tax_obj['totals']['room_net']->toDecimal() : ( $tax_obj['totals']['room_net'] ?? ( $tax_obj['breakdown']['room']['net'] ?? '0.00' ) );
-			$booking_data['room_tax']               = ( $tax_obj['totals']['room_tax'] instanceof Money ) ? $tax_obj['totals']['room_tax']->toDecimal() : ( $tax_obj['totals']['room_tax'] ?? ( $tax_obj['breakdown']['room']['tax'] ?? '0.00' ) );
-			$booking_data['children_total_net']     = ( $tax_obj['totals']['children_net'] instanceof Money ) ? $tax_obj['totals']['children_net']->toDecimal() : ( $tax_obj['totals']['children_net'] ?? ( $tax_obj['breakdown']['children']['net'] ?? '0.00' ) );
-			$booking_data['children_tax']           = ( $tax_obj['totals']['children_tax'] instanceof Money ) ? $tax_obj['totals']['children_tax']->toDecimal() : ( $tax_obj['totals']['children_tax'] ?? ( $tax_obj['breakdown']['children']['tax'] ?? '0.00' ) );
-			$booking_data['extras_total_net']       = ( $tax_obj['totals']['extras_net'] instanceof Money ) ? $tax_obj['totals']['extras_net']->toDecimal() : ( $tax_obj['totals']['extras_net'] ?? '0.00' );
-			$booking_data['extras_tax']             = ( $tax_obj['totals']['extras_tax'] instanceof Money ) ? $tax_obj['totals']['extras_tax']->toDecimal() : ( $tax_obj['totals']['extras_tax'] ?? '0.00' );
-			$booking_data['total_tax']              = ( $tax_obj['totals']['total_tax'] instanceof Money ) ? $tax_obj['totals']['total_tax']->toDecimal() : ( $tax_obj['totals']['total_tax'] ?? '0.00' );
-			$booking_data['subtotal_net']           = ( $tax_obj['totals']['subtotal_net'] instanceof Money ) ? $tax_obj['totals']['subtotal_net']->toDecimal() : ( $tax_obj['totals']['subtotal_net'] ?? $total_decimal );
-			$booking_data['total_gross']            = ( $tax_obj['totals']['total_gross'] instanceof Money ) ? $tax_obj['totals']['total_gross']->toDecimal() : ( $tax_obj['totals']['total_gross'] ?? $total_decimal );
-			$booking_data['tax_breakdown']          = wp_json_encode( $tax_obj );
-		}
+			// Store tax breakdown and net columns if tax data is present
+			if ( ! empty( $calc['tax'] ) ) {
+				$tax_obj                                = $calc['tax'];
+				$booking_data['tax_enabled']            = ( $tax_obj['enabled'] ?? false ) ? 1 : 0;
+				$booking_data['tax_mode']               = sanitize_key( $tax_obj['mode'] ?? 'disabled' );
+				$booking_data['tax_rate_accommodation'] = $tax_obj['rates']['accommodation'] ?? 0;
+				$booking_data['tax_rate_extras']        = $tax_obj['rates']['extras'] ?? 0;
+				$booking_data['room_total_net']         = ( $tax_obj['totals']['room_net'] instanceof Money ) ? $tax_obj['totals']['room_net']->toDecimal() : ( $tax_obj['totals']['room_net'] ?? ( $tax_obj['breakdown']['room']['net'] ?? '0.00' ) );
+				$booking_data['room_tax']               = ( $tax_obj['totals']['room_tax'] instanceof Money ) ? $tax_obj['totals']['room_tax']->toDecimal() : ( $tax_obj['totals']['room_tax'] ?? ( $tax_obj['breakdown']['room']['tax'] ?? '0.00' ) );
+				$booking_data['children_total_net']     = ( $tax_obj['totals']['children_net'] instanceof Money ) ? $tax_obj['totals']['children_net']->toDecimal() : ( $tax_obj['totals']['children_net'] ?? ( $tax_obj['breakdown']['children']['net'] ?? '0.00' ) );
+				$booking_data['children_tax']           = ( $tax_obj['totals']['children_tax'] instanceof Money ) ? $tax_obj['totals']['children_tax']->toDecimal() : ( $tax_obj['totals']['children_tax'] ?? ( $tax_obj['breakdown']['children']['tax'] ?? '0.00' ) );
+				$booking_data['extras_total_net']       = ( $tax_obj['totals']['extras_net'] instanceof Money ) ? $tax_obj['totals']['extras_net']->toDecimal() : ( $tax_obj['totals']['extras_net'] ?? '0.00' );
+				$booking_data['extras_tax']             = ( $tax_obj['totals']['extras_tax'] instanceof Money ) ? $tax_obj['totals']['extras_tax']->toDecimal() : ( $tax_obj['totals']['extras_tax'] ?? '0.00' );
+				$booking_data['total_tax']              = ( $tax_obj['totals']['total_tax'] instanceof Money ) ? $tax_obj['totals']['total_tax']->toDecimal() : ( $tax_obj['totals']['total_tax'] ?? '0.00' );
+				$booking_data['subtotal_net']           = ( $tax_obj['totals']['subtotal_net'] instanceof Money ) ? $tax_obj['totals']['subtotal_net']->toDecimal() : ( $tax_obj['totals']['subtotal_net'] ?? $total_decimal );
+				$booking_data['total_gross']            = ( $tax_obj['totals']['total_gross'] instanceof Money ) ? $tax_obj['totals']['total_gross']->toDecimal() : ( $tax_obj['totals']['total_gross'] ?? $total_decimal );
+				$booking_data['tax_breakdown']          = wp_json_encode( $tax_obj );
+			}
 
 // Auto-resolve guest profile for session if customer email is known
-		if ( \MHBO\Core\GuestManager::is_enabled() && ! empty( $customer_email ) && 'guest@pending.local' !== $customer_email ) {
-			$resolved_guest_id = \MHBO\Core\GuestManager::resolve_and_link_guest(
+			if ( \MHBO\Core\GuestManager::is_enabled() && ! empty( $customer_email ) && 'guest@pending.local' !== $customer_email ) {
+				$resolved_guest_id = \MHBO\Core\GuestManager::resolve_and_link_guest(
 				array(
 					'customer_name'  => $customer_name,
 					'customer_email' => $customer_email,
 					'customer_phone' => $customer_phone,
 				)
-			);
-			if ( $resolved_guest_id > 0 ) {
-				$booking_data['guest_id'] = $resolved_guest_id;
+				);
+				if ( $resolved_guest_id > 0 ) {
+					$booking_data['guest_id'] = $resolved_guest_id;
+				}
 			}
-		}
 
-		if ( $existing_pending_id > 0 ) {
-			// Direct DB update required: provisional reservation state must reflect real-time session parameters.
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->update( $table, $booking_data, array( 'id' => $existing_pending_id ) );
-			$booking_id = $existing_pending_id;
-		} else {
-			// Direct DB insert required: creating a provisional booking record to bind against payment intents.
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->insert( $table, $booking_data );
-			$booking_id = (int) $wpdb->insert_id;
+			if ( $existing_pending_id > 0 ) {
+				// Direct DB update required: provisional reservation state must reflect real-time session parameters.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->update( $table, $booking_data, array( 'id' => $existing_pending_id ) );
+				$booking_id = $existing_pending_id;
+			} else {
+				// Direct DB insert required: creating a provisional booking record to bind against payment intents.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->insert( $table, $booking_data );
+				$booking_id = (int) $wpdb->insert_id;
+			}
+
 			if ( $booking_id > 0 ) {
-				set_transient( 'mhbo_session_pending_booking_' . $session_id, $booking_id, HOUR_IN_SECONDS );
+				set_transient( 'mhbo_session_pending_booking_' . $session_id, $booking_id, $hold_seconds );
 			}
-		}
 
-		if ( $booking_id <= 0 ) {
-			return new WP_Error( 'rest_error', 'Failed to initialize pending booking.', array( 'status' => 500 ) );
-		}
+			if ( $booking_id <= 0 ) {
+				return new WP_Error( 'rest_error', 'Failed to initialize pending booking.', array( 'status' => 500 ) );
+			}
 
-		\MHBO\Core\Cache::invalidate_booking( $booking_id, $room_id );
+			Cache::invalidate_booking( $booking_id, $room_id );
 
-		// Lightweight session binding transient (1 hour TTL)
-		set_transient(
+			// Lightweight session binding transient aligned to checkout hold lifetime.
+			set_transient(
 			'mhbo_booking_session_' . $booking_token,
 			array(
 				'booking_id' => $booking_id,
 				'session_id' => $session_id,
 			),
-			HOUR_IN_SECONDS
-		);
+			$hold_seconds
+			);
 
-		// Backward compatibility alias for session_token
-		set_transient(
+			// Backward compatibility alias for session_token
+			set_transient(
 			'mhbo_session_' . $booking_token,
 			array(
 				'price'      => $total_decimal,
@@ -356,10 +457,10 @@ if ( $total_money === null || $total_money->isZero() ) {
 				'booking_id' => $booking_id,
 				'session_id' => $session_id,
 			),
-			HOUR_IN_SECONDS
-		);
+			$hold_seconds
+			);
 
-		return new WP_REST_Response(
+			return new WP_REST_Response(
 			array(
 				'success'       => true,
 				'amount'        => $payable_decimal,
@@ -377,7 +478,81 @@ if ( $total_money === null || $total_money->isZero() ) {
 					'session_token' => $booking_token,
 				),
 			)
+			);
+		} finally {
+			if ( $locked_room_id > 0 && class_exists( Pricing::class ) && method_exists( Pricing::class, 'release_booking_lock' ) ) {
+				Pricing::release_booking_lock( $locked_room_id );
+			}
+		}
+	}
+
+	/**
+	 * Immediately release an unpaid pending_payment checkout hold when payment is cancelled or fails.
+	 *
+	 * Requires matching 64-char booking_token and guards against cancelling any record with payment evidence.
+	 *
+	 * @param WP_REST_Request $request Incoming REST request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function release_pending_draft( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$nonce = (string) ( $request->get_param( 'nonce' ) ?: $request->get_header( 'X-WP-Nonce' ) ?: '' );
+		if ( ! $this->verify_action_nonce( $nonce, array( 'mhbo_stripe_nonce', 'mhbo_paypal_nonce', 'mhbo_braintree_nonce', 'wp_rest' ) ) ) {
+			return new WP_Error( 'rest_forbidden', 'Invalid security token.', array( 'status' => 403 ) );
+		}
+
+		$booking_token = sanitize_text_field( (string) ( $request->get_param( 'booking_token' ) ?: $request->get_param( 'session_token' ) ?: '' ) );
+		if ( '' === $booking_token ) {
+			return new WP_REST_Response(
+				array(
+					'success'  => true,
+					'released' => false,
+				)
+			);
+		}
+
+		$session_err = $this->validate_booking_session( $booking_token );
+		if ( null !== $session_err ) {
+			return $session_err;
+		}
+		$session_id = Privacy::get_cookie_session_id();
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'mhbo_bookings';
+
+		// Direct DB query required: verify authoritative draft status before releasing room hold.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$booking = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT id, room_id, status FROM %i WHERE booking_token = %s LIMIT 1',
+				$table,
+				$booking_token
+			)
 		);
+
+		$released = false;
+
+return new WP_REST_Response(
+			array(
+				'success'  => true,
+				'released' => $released,
+			)
+		);
+	}
+
+	/**
+	 * Enforce fail-closed session cookie ownership when booking session metadata binds a session ID.
+	 *
+	 * @param string $booking_token Booking token.
+	 * @return WP_Error|null Error response on mismatch or stripped cookie, null when authorized.
+	 */
+	private function validate_booking_session( string $booking_token ): ?WP_Error {
+		$session_meta = get_transient( 'mhbo_booking_session_' . $booking_token ) ?: get_transient( 'mhbo_session_' . $booking_token );
+		$session_id   = Privacy::get_cookie_session_id();
+		if ( is_array( $session_meta ) && ! empty( $session_meta['session_id'] ) && ( '' === $session_id || ! hash_equals( (string) $session_meta['session_id'], $session_id ) ) ) {
+			return new WP_Error( 'rest_forbidden', 'Session mismatch.', array( 'status' => 403 ) );
+		}
+
+		return null;
 	}
 
 }

@@ -62,34 +62,14 @@ class Shortcode {
 		add_shortcode( 'mhbo_guest_portal', array( $this, 'render_guest_portal_shortcode' ) );
 
 add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		
-		// Phase 5: jQuery Purge. Late priority to check dependencies.
-		add_action( 'wp_enqueue_scripts', array( $this, 'purge_jquery' ), 9999 );
-
-// Premium Typography: Standard Google Fonts (Inter) for 2026 aesthetics via enqueue_assets
-		add_filter(
-			'wp_resource_hints',
-			function ( $urls, $relation_type ) {
-				if ( 'preconnect' === $relation_type ) {
-					$urls[] = 'https://fonts.googleapis.com';
-					$urls[] = array(
-						'href' => 'https://fonts.gstatic.com',
-						'crossorigin',
-					);
-				}
-				return $urls;
-			},
-			10,
-			2
-		);
 
 		// SECURITY: Handle booking submissions immediately.
 		// CRITICAL FIX: This code runs inside init priority 20 (via Plugin::run()).
 		// Using add_action('init', ..., 10) here would NEVER fire because priority 10
 		// has already passed. We must call these directly.
 		$this->handle_form_submissions();
-		
-	}
+
+}
 
 /**
 	 * Entry point for standard POST form submissions.
@@ -214,6 +194,93 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
 
 	/**
+	 * Register and enqueue core booking styles, Flatpickr, frontend JS, and Pro checkout scripts.
+	 *
+	 * @param bool $include_calendar Whether to also enqueue calendar assets.
+	 */
+	private static function enqueue_booking_core_assets( bool $include_calendar = true ): void {
+		if ( ! wp_style_is( 'mhbo-google-fonts-inter', 'registered' ) ) {
+			wp_register_style(
+				'mhbo-google-fonts-inter',
+				\MHBO\Core\Plugin::get_font_url( 'inter' ),
+				array(),
+				\MHBO\Core\Plugin::asset_ver( 'assets/fonts/inter.css' )
+			);
+		}
+		if ( ! wp_style_is( 'mhbo-google-fonts-inter', 'enqueued' ) ) {
+			wp_enqueue_style( 'mhbo-google-fonts-inter' );
+		}
+
+		if ( ! wp_style_is( 'mhbo-style', 'registered' ) ) {
+			wp_register_style(
+				'mhbo-style',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-style.css' ),
+				array( 'mhbo-google-fonts-inter' ),
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-style.css' )
+			);
+		}
+		if ( ! wp_style_is( 'mhbo-style', 'enqueued' ) ) {
+			wp_enqueue_style( 'mhbo-style' );
+		}
+
+		// Enqueue flatpickr first since frontend script depends on it.
+		if ( ! wp_style_is( 'mhbo-flatpickr-css', 'registered' ) ) {
+			wp_register_style( 'mhbo-flatpickr-css', MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css', array(), '4.6.13' );
+		}
+		if ( ! wp_style_is( 'mhbo-flatpickr-css', 'enqueued' ) ) {
+			wp_enqueue_style( 'mhbo-flatpickr-css' );
+		}
+
+		$defer_args = array(
+			'strategy'  => 'defer',
+			'in_footer' => true,
+		);
+		if ( ! wp_script_is( 'mhbo-flatpickr-js', 'registered' ) ) {
+			wp_register_script(
+				'mhbo-flatpickr-js',
+				MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
+				array(),
+				'4.6.13',
+				$defer_args
+			);
+		}
+		if ( ! wp_script_is( 'mhbo-flatpickr-js', 'enqueued' ) ) {
+			wp_enqueue_script( 'mhbo-flatpickr-js' );
+		}
+
+		if ( ! wp_script_is( 'mhbo-frontend', 'enqueued' ) ) {
+			wp_enqueue_script(
+				'mhbo-frontend',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-frontend.js' ),
+				array( 'mhbo-flatpickr-js' ),
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-frontend.js' ),
+				$defer_args
+			);
+		}
+
+		if ( $include_calendar && class_exists( 'MHBO\Frontend\Calendar' ) ) {
+			Calendar::enqueue_assets();
+		}
+
+		self::localize_frontend_assets();
+
+		if ( ! wp_script_is( 'mhbo-booking-form', 'enqueued' ) ) {
+			wp_enqueue_script(
+				'mhbo-booking-form',
+				\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-booking-form.js' ),
+				array( 'mhbo-frontend' ),
+				\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-booking-form.js' ),
+				$defer_args
+			);
+		}
+
+		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
+
+// Inject theme styles after all stylesheets (including deposit-checkout) are enqueued.
+		self::inject_theme_styles();
+	}
+
+/**
 	 * Ensure assets are loaded (late enqueue fallback for widgets/templates).
 	 * 
 	 * This method is called during shortcode rendering to ensure assets
@@ -221,73 +288,11 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	 * other areas not checked by has_shortcode().
 	 */
 	private function ensure_assets_loaded(): void {
-		// Enqueue main styles
-		if ( ! wp_style_is( 'mhbo-style', 'enqueued' ) ) {
-			wp_enqueue_style( 'mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', array(), MHBO_VERSION );
+		if ( self::$assets_enqueued ) {
+			return;
 		}
-
-		// Enqueue flatpickr first since frontend script depends on it
-		if ( ! wp_style_is( 'mhbo-flatpickr-css', 'enqueued' ) ) {
-			wp_enqueue_style(
-				'mhbo-flatpickr-css',
-				MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css',
-				array(),
-				'4.6.13'
-			);
-		}
-		if ( ! wp_script_is( 'mhbo-flatpickr-js', 'enqueued' ) ) {
-			wp_enqueue_script(
-				'mhbo-flatpickr-js',
-				MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
-				array(),
-				'4.6.13',
-				array(
-					'strategy'  => 'defer',
-					'in_footer' => true,
-				)
-			);
-		}
-
-		// Enqueue frontend script
-		if ( ! wp_script_is( 'mhbo-frontend', 'enqueued' ) ) {
-			wp_enqueue_script(
-				'mhbo-frontend',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-frontend.js',
-				array( 'mhbo-flatpickr-js' ),
-				MHBO_VERSION,
-				array(
-					'strategy'  => 'defer',
-					'in_footer' => true,
-				)
-			);
-		}
-
-		// Enqueue calendar assets via centralized handler
-		if ( class_exists( 'MHBO\Frontend\Calendar' ) ) {
-			Calendar::enqueue_assets();
-		}
-
-		// Enqueue booking form script
-		if ( ! wp_script_is( 'mhbo-booking-form', 'enqueued' ) ) {
-			wp_enqueue_script(
-				'mhbo-booking-form',
-				MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-form.js',
-				array( 'mhbo-frontend' ),
-				MHBO_VERSION,
-				array(
-					'strategy'  => 'defer',
-					'in_footer' => true,
-				)
-			);
-		}
-
-		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
-
-// Inject theme styles after all stylesheets (including deposit-checkout) are enqueued
-		self::inject_theme_styles();
-
-		// Add localization data (only once)
-		self::localize_frontend_assets();
+		self::$assets_enqueued = true;
+		self::enqueue_booking_core_assets( true );
 	}
 
 	/**
@@ -310,7 +315,7 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			'rest_url'                        => rest_url( 'mhbo/v1/frontend/book' ),
 			'api_base'                        => get_rest_url( null, 'mhbo/v1' ),
 			'nonce'                           => wp_create_nonce( 'wp_rest' ),
-			'prevent_turnover'                => (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
+			'prevent_turnover'                => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
 			'label_child_n_age'               => I18n::get_label( 'label_child_n_age' ),
 			'currency_symbol'                 => get_option( 'mhbo_currency_symbol', '$' ),
 			'currency_pos'                    => get_option( 'mhbo_currency_position', 'before' ),
@@ -379,64 +384,7 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		}
 
 		self::$assets_enqueued = true;
-
-		wp_enqueue_style( 'mhbo-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap', array(), MHBO_VERSION );
-		wp_enqueue_style( 'mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', array( 'mhbo-google-fonts' ), MHBO_VERSION );
-
-		// Enqueue flatpickr first since frontend script depends on it
-		wp_enqueue_style(
-			'mhbo-flatpickr-css',
-			MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css',
-			array(),
-			'4.6.13'
-		);
-		wp_enqueue_script(
-			'mhbo-flatpickr-js',
-			MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
-			array(),
-			'4.6.13',
-			array(
-				'strategy'  => 'defer',
-				'in_footer' => true,
-			)
-		);
-
-		// Enqueue frontend script
-		wp_enqueue_script(
-			'mhbo-frontend',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-frontend.js',
-			array( 'mhbo-flatpickr-js' ),
-			MHBO_VERSION,
-			array(
-				'strategy'  => 'defer',
-				'in_footer' => true,
-			)
-		);
-
-		// Enqueue calendar assets via centralized handler (with proper dependency chains)
-		if ( class_exists( 'MHBO\Frontend\Calendar' ) ) {
-			Calendar::enqueue_assets();
-		}
-
-		// Booking form interactions
-		wp_enqueue_script(
-			'mhbo-booking-form',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-form.js',
-			array( 'mhbo-frontend' ),
-			MHBO_VERSION,
-			array(
-				'strategy'  => 'defer',
-				'in_footer' => true,
-			)
-		);
-
-		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
-
-// Inject theme styles after all stylesheets (including deposit-checkout) are enqueued
-		self::inject_theme_styles();
-
-		// Localize script for JS strings
-		self::localize_frontend_assets();
+		self::enqueue_booking_core_assets( true );
 	}
 
 	/**
@@ -449,91 +397,9 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			return;
 		}
 
-		// Main plugin stylesheet — required for the booking form UI.
-		if ( ! wp_style_is( 'mhbo-style', 'enqueued' ) ) {
-			if ( ! wp_style_is( 'mhbo-style', 'registered' ) ) {
-				wp_register_style( 'mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', array(), MHBO_VERSION );
-			}
-			wp_enqueue_style( 'mhbo-style' );
-		}
+		self::enqueue_booking_core_assets( false );
 
-		if ( ! wp_script_is( 'mhbo-flatpickr-js', 'enqueued' ) ) {
-			if ( ! wp_script_is( 'mhbo-flatpickr-js', 'registered' ) ) {
-				wp_register_script(
-					'mhbo-flatpickr-js',
-					MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
-					array(),
-					'4.6.13',
-					array(
-						'strategy'  => 'defer',
-						'in_footer' => true,
-					)
-				);
-				wp_register_style( 'mhbo-flatpickr-css', MHBO_PLUGIN_URL . 'assets/css/vendor/flatpickr.min.css', array(), '4.6.13' );
-			}
-			wp_enqueue_script( 'mhbo-flatpickr-js' );
-			wp_enqueue_style( 'mhbo-flatpickr-css' );
-		}
-
-		wp_enqueue_script(
-			'mhbo-frontend',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-frontend.js',
-			array( 'mhbo-flatpickr-js' ),
-			MHBO_VERSION,
-			array(
-				'strategy'  => 'defer',
-				'in_footer' => true,
-			)
-		);
-		self::localize_frontend_assets();
-		wp_enqueue_script(
-			'mhbo-booking-form',
-			MHBO_PLUGIN_URL . 'assets/js/mhbo-booking-form.js',
-			array( 'mhbo-frontend' ),
-			MHBO_VERSION,
-			array(
-				'strategy'  => 'defer',
-				'in_footer' => true,
-			)
-		);
-
-self::inject_theme_styles();
-	}
-
-	/**
-	 * Dynamically deregister jQuery on frontend checkout pages if no third-party plugins require it.
-	 */
-	public function purge_jquery(): void {
-		global $post;
-		
-		// 1. Only act if we are on a checkout page.
-		$has_shortcode = is_a( $post, 'WP_Post' ) && (
-			has_shortcode( $post->post_content, 'mhbo_booking_form' ) ||
-			has_shortcode( $post->post_content, 'modern_hotel_booking' )
-		);
-		$has_block     = is_a( $post, 'WP_Post' ) && has_block( 'modern-hotel-booking/booking-form', $post->post_content );
-		
-		if ( ! $has_shortcode && ! $has_block ) {
-			return;
-		}
-
-		// 2. Check if any scripts require jQuery.
-		$scripts      = wp_scripts();
-		$needs_jquery = false;
-		
-		foreach ( $scripts->queue as $handle ) {
-			if ( isset( $scripts->registered[ $handle ] ) && is_array( $scripts->registered[ $handle ]->deps ) ) {
-				if ( in_array( 'jquery', $scripts->registered[ $handle ]->deps, true ) || in_array( 'jquery-core', $scripts->registered[ $handle ]->deps, true ) ) {
-					$needs_jquery = true;
-					break;
-				}
-			}
-		}
-
-		if ( ! $needs_jquery ) {
-			wp_deregister_script( 'jquery' );
-		}
-	}
+}
 
 	/**
 	 * Render the booking form HTML as a string for the inline modal.
@@ -926,7 +792,7 @@ $nights = 0;
 
 			// 2026 BP: Persist child_ages across the PRG redirect via a short-lived transient.
 			$child_ages_redirect = isset( $_GET['child_ages'] ) && is_array( $_GET['child_ages'] )
-				? array_map( 'absint', wp_unslash( $_GET['child_ages'] ) ) : array();
+				? Pricing::sanitize_child_ages( map_deep( wp_unslash( $_GET['child_ages'] ), 'sanitize_text_field' ) ) : array();
 			if ( array() !== $child_ages_redirect ) {
 				set_transient(
 					'mhbo_child_ages_' . $redirect_args['mhbo_nonce'],
@@ -961,34 +827,36 @@ $nights = 0;
 		}
 
 		// 3. Check for Automatic Booking/Search (GET)
+		// Copy query parameters locally rather than mutating $_GET superglobal directly.
         // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Reading QUERY_STRING to unescape entity-encoded ampersands before individual parameter sanitization below.
+		$get_params = $_GET; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_SERVER['QUERY_STRING'] ) ) {
 			$raw_qs = function_exists( 'wp_unslash' ) ? wp_unslash( $_SERVER['QUERY_STRING'] ) : $_SERVER['QUERY_STRING'];
 			if ( is_string( $raw_qs ) && ( str_contains( $raw_qs, '&#038;' ) || str_contains( $raw_qs, '&amp;' ) ) ) {
 				$clean_query = str_replace( array( '&#038;', '&amp;' ), '&', $raw_qs );
 				parse_str( $clean_query, $parsed_get );
 				if ( is_array( $parsed_get ) ) {
-					$_GET = array_merge( $_GET, $parsed_get );
+					$get_params = array_merge( $get_params, $parsed_get );
 				}
 			}
 		}
         // phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Search parameters do not require nonce verification.
-		$is_auto_book   = isset( $_GET['mhbo_auto_book'] );
-		$is_auto_search = isset( $_GET['mhbo_auto_search'] ) || ( isset( $_GET['check_in'] ) && isset( $_GET['check_out'] ) );
+		$is_auto_book   = isset( $get_params['mhbo_auto_book'] );
+		$is_auto_search = isset( $get_params['mhbo_auto_search'] ) || ( isset( $get_params['check_in'] ) && isset( $get_params['check_out'] ) );
 
 		if ( $is_auto_book || $is_auto_search ) {
-			$room_id    = isset( $_GET['room_id'] ) ? absint( wp_unslash( $_GET['room_id'] ) ) : $room_id_attr;
-			$type_id    = isset( $_GET['type_id'] ) ? absint( wp_unslash( $_GET['type_id'] ) ) : 0;
-			$check_in   = isset( $_GET['check_in'] ) ? sanitize_text_field( wp_unslash( $_GET['check_in'] ) ) : '';
-			$check_out  = isset( $_GET['check_out'] ) ? sanitize_text_field( wp_unslash( $_GET['check_out'] ) ) : '';
-			$guests     = isset( $_GET['guests'] ) ? absint( wp_unslash( $_GET['guests'] ) ) : 2;
-			$children   = isset( $_GET['children'] ) ? absint( wp_unslash( $_GET['children'] ) ) : 0;
-			$exclude_id = isset( $_GET['exclude_id'] ) ? absint( wp_unslash( $_GET['exclude_id'] ) ) : 0;
+			$room_id    = isset( $get_params['room_id'] ) ? absint( wp_unslash( $get_params['room_id'] ) ) : $room_id_attr;
+			$type_id    = isset( $get_params['type_id'] ) ? absint( wp_unslash( $get_params['type_id'] ) ) : 0;
+			$check_in   = isset( $get_params['check_in'] ) ? sanitize_text_field( wp_unslash( $get_params['check_in'] ) ) : '';
+			$check_out  = isset( $get_params['check_out'] ) ? sanitize_text_field( wp_unslash( $get_params['check_out'] ) ) : '';
+			$guests     = isset( $get_params['guests'] ) ? absint( wp_unslash( $get_params['guests'] ) ) : 2;
+			$children   = isset( $get_params['children'] ) ? absint( wp_unslash( $get_params['children'] ) ) : 0;
+			$exclude_id = isset( $get_params['exclude_id'] ) ? absint( wp_unslash( $get_params['exclude_id'] ) ) : 0;
             // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 			if ( $is_auto_book ) {
-				$nonce = isset( $_GET['mhbo_nonce'] ) ? sanitize_key( wp_unslash( $_GET['mhbo_nonce'] ) ) : '';
+				$nonce = isset( $get_params['mhbo_nonce'] ) ? sanitize_key( wp_unslash( $get_params['mhbo_nonce'] ) ) : '';
 				if ( wp_verify_nonce( $nonce, 'mhbo_auto_action' ) ) {
 					if ( $room_id === 0 && $type_id > 0 && '' !== $check_in && '' !== $check_out ) {
 						$resolved_room_id = Pricing::find_available_room( $type_id, $check_in, $check_out, $guests );
@@ -1136,7 +1004,7 @@ $nights = 0;
 		}
 
 		// Same-day Turnover & Active Pending-Payment Cutoff
-		$prevent_same_day = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$prevent_same_day = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 		$pending_cutoff   = Pricing::get_pending_payment_cutoff();
 
 		// Industry-standard overlap logic (dynamically settings-aware across all tiers)
@@ -1168,7 +1036,7 @@ $nights = 0;
 		$version_hash = Cache::get_version( Cache::TABLE_BOOKINGS ) . '_' .
 						Cache::get_version( Cache::TABLE_ROOMS ) . '_' .
 						Cache::get_version( Cache::TABLE_PRICING_RULES ) . '_' .
-						substr( $pending_cutoff, 0, 15 );
+						substr( $pending_cutoff, 0, 16 );
 		$cache_key    = 'mhbo_avail_rooms_v7_' . md5( $sql . wp_json_encode( $query_args ) . $version_hash );
 		$all_rooms    = wp_cache_get( $cache_key, 'mhbo_bookings' );
 
@@ -1183,6 +1051,11 @@ $nights = 0;
 
 		// Stay restrictions & Pro calendar overrides filter (Global min/max stay active in Free/Starter/Pro)
 		if ( array() !== $all_rooms ) {
+			$room_ids_to_prime = array_values( array_unique( array_map( static fn( $r ): int => (int) ( $r->id ?? 0 ), $all_rooms ) ) );
+			if ( array() !== $room_ids_to_prime ) {
+				Pricing::prime_room_cache( $room_ids_to_prime );
+				
+			}
 			try {
 				$start_date        = new \DateTime( $check_in );
 				$end_date_limit    = new \DateTime( $check_out );
@@ -1348,14 +1221,60 @@ if ( Pricing::is_closed_to_arrival( $rid, $check_in ) || Pricing::is_closed_to_d
 		$customer_phone = isset( $params['customer_phone'] ) ? sanitize_text_field( $params['customer_phone'] ) : '';
 		$admin_notes    = isset( $params['admin_notes'] ) ? sanitize_textarea_field( $params['admin_notes'] ) : '';
 
-		$exclude_id = isset( $params['exclude_id'] ) ? intval( $params['exclude_id'] ) : 0;
-		$update_id  = isset( $params['mhbo_update_id'] ) ? intval( $params['mhbo_update_id'] ) : 0;
+		$exclude_id       = isset( $params['exclude_id'] ) ? intval( $params['exclude_id'] ) : 0;
+		$update_id        = isset( $params['mhbo_update_id'] ) ? intval( $params['mhbo_update_id'] ) : 0;
+		$caller_url_token = isset( $_GET['booking_token'] ) ? sanitize_text_field( wp_unslash( $_GET['booking_token'] ) ) : ( isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : ( isset( $params['booking_token'] ) ? sanitize_text_field( (string) $params['booking_token'] ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$auto_nonce       = isset( $params['mhbo_nonce'] ) ? sanitize_key( (string) $params['mhbo_nonce'] ) : ( isset( $_GET['mhbo_nonce'] ) ? sanitize_key( wp_unslash( $_GET['mhbo_nonce'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$sess_tok         = isset( $params['mhbo_session_token'] ) ? sanitize_text_field( (string) $params['mhbo_session_token'] ) : ( isset( $_GET['session_token'] ) ? sanitize_text_field( wp_unslash( $_GET['session_token'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$cookie_sid       = \MHBO\Core\Privacy::get_cookie_session_id();
+
+		$verify_target_ownership = static function ( int $target_id ) use ( $wpdb, $caller_url_token, $auto_nonce, $sess_tok, $cookie_sid ): ?object {
+			if ( $target_id <= 0 ) {
+				return null;
+			}
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$row = $wpdb->get_row( $wpdb->prepare( "SELECT id, status, booking_token FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $target_id ) );
+			if ( ! $row ) {
+				return null;
+			}
+			if ( current_user_can( Capabilities::MANAGE_LHBO ) ) {
+				return $row;
+			}
+			if ( '' !== $caller_url_token && '' !== (string) $row->booking_token && hash_equals( (string) $row->booking_token, $caller_url_token ) ) {
+				return $row;
+			}
+			if ( '' !== $auto_nonce && wp_verify_nonce( $auto_nonce, 'mhbo_auto_action' ) ) {
+				$resume_meta = get_transient( 'mhbo_resume_nonce_' . $auto_nonce );
+				if ( is_array( $resume_meta ) && (int) ( $resume_meta['booking_id'] ?? 0 ) === $target_id ) {
+					return $row;
+				}
+			}
+			if ( '' !== $sess_tok ) {
+				$s_meta = get_transient( 'mhbo_booking_session_' . $sess_tok );
+				if ( ! is_array( $s_meta ) ) {
+					$s_meta = get_transient( 'mhbo_session_' . $sess_tok );
+				}
+				if ( is_array( $s_meta ) && (int) ( $s_meta['booking_id'] ?? 0 ) === $target_id ) {
+					$bound = (string) ( $s_meta['session_id'] ?? '' );
+					if ( '' === $bound || '' === $cookie_sid || hash_equals( $bound, $cookie_sid ) ) {
+						return $row;
+					}
+				}
+			}
+			if ( '' !== $cookie_sid && (int) get_transient( 'mhbo_session_pending_booking_' . $cookie_sid ) === $target_id ) {
+				return $row;
+			}
+			return null;
+		};
+
 		if ( $update_id > 0 ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$existing_status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $update_id ) );
-			if ( 'pending_payment' !== $existing_status ) {
+			$existing_row = $verify_target_ownership( $update_id );
+			if ( ! $existing_row || 'pending_payment' !== $existing_row->status ) {
 				$update_id = 0;
 			}
+		}
+		if ( $exclude_id > 0 && null === $verify_target_ownership( $exclude_id ) ) {
+			$exclude_id = 0;
 		}
 
 		if ( '' !== $check_in && ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
@@ -1474,7 +1393,7 @@ if ( Pricing::is_closed_to_arrival( $rid, $check_in ) || Pricing::is_closed_to_d
 		// Always recalculate on render to ensure we have the full $calc breakdown for display
 		$calc_guests     = $guests;
 		$calc_children   = isset( $params['children'] ) ? intval( $params['children'] ) : 0;
-		$calc_child_ages = isset( $params['child_ages'] ) ? array_map( 'absint', (array) $params['child_ages'] ) : array();
+		$calc_child_ages = isset( $params['child_ages'] ) ? Pricing::sanitize_child_ages( $params['child_ages'] ) : array();
 		$calc_extras     = isset( $params['extras'] ) ? array_map( 'sanitize_text_field', (array) $params['extras'] ) : array();
 
 		$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $calc_guests, $calc_extras, $calc_children, $calc_child_ages );
@@ -1589,11 +1508,14 @@ $deposit_data = null;
 				<?php
                     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Token is rigorously verified in the process_payment flow.
 					$url_token      = isset( $_GET['booking_token'] ) ? sanitize_text_field( wp_unslash( $_GET['booking_token'] ) ) : '';
-                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Querying custom mhbo_bookings table; token fetched for form rehydration.
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- 2026 BP: Querying custom mhbo_bookings table; token fetched only after ownership verification.
 					$existing_token = ( $update_id > 0 ) ? (string) $wpdb->get_var( $wpdb->prepare( "SELECT booking_token FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $update_id ) ) : '';
-					$final_token    = $url_token ?: $existing_token;
+					$final_token    = $existing_token ?: $url_token;
 				?>
 				<input type="hidden" name="mhbo_booking_token" value="<?php echo esc_attr( $final_token ); ?>">
+				<?php if ( '' !== $auto_nonce ) : ?>
+					<input type="hidden" name="mhbo_resume_nonce" value="<?php echo esc_attr( $auto_nonce ); ?>">
+				<?php endif; ?>
 				<!-- Hidden field so JS form.submit() includes the booking action -->
 				<input type="hidden" name="mhbo_confirm_booking" value="1">
 				<input type="hidden" name="mhbo_room_id" value="<?php echo esc_attr( (string) $room_id ); ?>">
@@ -1769,7 +1691,7 @@ echo wp_kses_post( Tax::render_breakdown_html( $tax_data, null, false, array(), 
 			'customer_phone'      => isset( $_POST['customer_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['customer_phone'] ) ) : '',
 			'guests'              => isset( $_POST['guests'] ) ? absint( wp_unslash( $_POST['guests'] ) ) : 1,
 			'children'            => isset( $_POST['children'] ) ? absint( wp_unslash( $_POST['children'] ) ) : 0,
-			'child_ages'          => isset( $_POST['child_ages'] ) && is_array( $_POST['child_ages'] ) ? array_map( 'absint', wp_unslash( $_POST['child_ages'] ) ) : array(),
+			'child_ages'          => isset( $_POST['child_ages'] ) && is_array( $_POST['child_ages'] ) ? Pricing::sanitize_child_ages( wp_unslash( $_POST['child_ages'] ) ) : array(), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized element-wise via Pricing::sanitize_child_ages().
 			'extras'              => isset( $_POST['mhbo_extras'] ) && is_array( $_POST['mhbo_extras'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mhbo_extras'] ) ) : array(),
 			'payment_method'      => isset( $_POST['mhbo_payment_method'] ) ? sanitize_key( wp_unslash( $_POST['mhbo_payment_method'] ) ) : 'arrival',
 			'payment_type'        => isset( $_POST['mhbo_payment_type'] ) ? sanitize_key( wp_unslash( $_POST['mhbo_payment_type'] ) ) : 'full',
@@ -1780,6 +1702,8 @@ echo wp_kses_post( Tax::render_breakdown_html( $tax_data, null, false, array(), 
 			'admin_notes'         => isset( $_POST['admin_notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['admin_notes'] ) ) : '',
 			'update_id'           => isset( $_POST['mhbo_update_id'] ) ? absint( wp_unslash( $_POST['mhbo_update_id'] ) ) : 0,
 			'session_token'       => isset( $_POST['mhbo_session_token'] ) ? sanitize_text_field( wp_unslash( $_POST['mhbo_session_token'] ) ) : '',
+			'booking_token'       => isset( $_POST['mhbo_booking_token'] ) ? sanitize_text_field( wp_unslash( $_POST['mhbo_booking_token'] ) ) : '',
+			'resume_nonce'        => isset( $_POST['mhbo_resume_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['mhbo_resume_nonce'] ) ) : '',
 			'page_url'            => $this->get_booking_page_url(),
 			'language'            => isset( $_POST['booking_language'] ) ? sanitize_key( wp_unslash( $_POST['booking_language'] ) ) : I18n::get_current_language(),
 			'consent'             => isset( $_POST['mhbo_consent'] ) ? (bool) sanitize_text_field( wp_unslash( $_POST['mhbo_consent'] ) ) : false,
@@ -1865,23 +1789,7 @@ if ( '' === $primary ) {
 		}
 
 		// phpcs:ignore Squiz.Commenting.BlockComment.NoNewLine
-
-wp_add_inline_style(
-			'mhbo-frontend',
-			'
-            .mhbo-child-age-group { 
-                display: flex; 
-                align-items: center; 
-                justify-content: space-between; 
-                background: rgba(0,0,0,0.03); 
-                padding: 8px 12px; 
-                border-radius: 6px; 
-                margin-bottom: 8px !important;
-            }
-            .mhbo-child-age-group label { margin: 0 !important; font-weight: normal !important; }
-            .mhbo_faded { opacity: 0.5; transition: opacity 0.3s; pointer-events: none; }
-        '
-		);
+		
 	}
 
 	/**
@@ -1911,6 +1819,8 @@ wp_add_inline_style(
 				'mhbo_payment_return',
 				'payment_intent',
 				'payment_intent_client_secret',
+				'redirect_status',
+				'mhbo_modal_return',
 				'mhbo_booking',
 				'token',
 				'mhbo_success',
@@ -2446,7 +2356,7 @@ $extras_sum = Money::fromCents( 0, $currency );
 		if ( class_exists( '\\MHBO\\Api\\GuestPortalController' ) && ! empty( $booking->booking_token ) ) {
 			$portal_url = \MHBO\Api\GuestPortalController::get_portal_url( (string) $booking->booking_token, (int) $booking->id, (string) $booking->customer_email );
 		}
-		$conf_btn_enabled = (int) get_option( 'mhbo_confirmation_btn_enabled', 0 ) === 1;
+		$conf_btn_enabled = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'confirmation_cta' ) ) && (int) get_option( 'mhbo_confirmation_btn_enabled', 0 ) === 1;
 		if ( $portal_url || $conf_btn_enabled ) :
 			?>
 			<div class="mhbo-confirmation-actions" style="margin-top:28px; display:flex; flex-wrap:wrap; justify-content:center; gap:12px; text-align:center;">
@@ -2508,18 +2418,26 @@ $extras_sum = Money::fromCents( 0, $currency );
 
 		// Ensure core mhbo-style and guest portal assets are enqueued.
 		if ( function_exists( 'wp_enqueue_style' ) && defined( 'MHBO_PLUGIN_URL' ) && defined( 'MHBO_VERSION' ) ) {
-			wp_enqueue_style( 'mhbo-style', MHBO_PLUGIN_URL . 'assets/css/mhbo-style.css', array(), MHBO_VERSION );
+			wp_enqueue_style(
+				'mhbo-style',
+				\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-style.css' ),
+				array(),
+				\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-style.css' )
+			);
 			if ( ! wp_style_is( 'mhbo-guest-portal', 'enqueued' ) ) {
-				$portal_css_ver = (string) ( defined( 'MHBO_PLUGIN_DIR' ) && file_exists( MHBO_PLUGIN_DIR . 'assets/css/mhbo-guest-portal.css' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/css/mhbo-guest-portal.css' ) : MHBO_VERSION );
-				wp_enqueue_style( 'mhbo-guest-portal', MHBO_PLUGIN_URL . 'assets/css/mhbo-guest-portal.css', array( 'mhbo-style' ), $portal_css_ver );
+				wp_enqueue_style(
+					'mhbo-guest-portal',
+					\MHBO\Core\Plugin::asset_url( 'assets/css/mhbo-guest-portal.css' ),
+					array( 'mhbo-style' ),
+					\MHBO\Core\Plugin::asset_ver( 'assets/css/mhbo-guest-portal.css' )
+				);
 			}
 			if ( function_exists( 'wp_enqueue_script' ) && ! wp_script_is( 'mhbo-guest-portal', 'enqueued' ) ) {
-				$portal_js_ver = (string) ( defined( 'MHBO_PLUGIN_DIR' ) && file_exists( MHBO_PLUGIN_DIR . 'assets/js/mhbo-guest-portal.js' ) ? filemtime( MHBO_PLUGIN_DIR . 'assets/js/mhbo-guest-portal.js' ) : MHBO_VERSION );
 				wp_enqueue_script(
 					'mhbo-guest-portal',
-					MHBO_PLUGIN_URL . 'assets/js/mhbo-guest-portal.js',
+					\MHBO\Core\Plugin::asset_url( 'assets/js/mhbo-guest-portal.js' ),
 					array(),
-					$portal_js_ver,
+					\MHBO\Core\Plugin::asset_ver( 'assets/js/mhbo-guest-portal.js' ),
 					array(
 						'strategy'  => 'defer',
 						'in_footer' => true,

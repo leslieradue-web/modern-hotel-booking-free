@@ -4,7 +4,7 @@ Donate link: https://modernhotelwp.com/
 Tags: hotel booking, vacation rental, booking engine, bed and breakfast, accommodation
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 3.0.2
+Stable tag: 3.0.3
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -215,7 +215,7 @@ Modern Hotel Booking is self-hosted. By default, **no guest booking data is sent
 The following open-source JavaScript libraries are bundled locally in the plugin:
 
 * **Flatpickr v4.6.13** — MIT License — [Flatpickr Documentation](https://flatpickr.js.org)
-* **FullCalendar v7.1.4** — MIT License — [FullCalendar Documentation](https://fullcalendar.io)
+* **FullCalendar v7.1.5** — MIT License — [FullCalendar Documentation](https://fullcalendar.io)
 * **Chart.js v4.6.1** — MIT License — [Chart.js Documentation](https://www.chartjs.org)
 
 == Installation ==
@@ -390,6 +390,13 @@ All booking and guest data is stored locally in your WordPress database. The plu
 
 == Changelog ==
 
+= 3.0.3 =
+* **Security**: Hardened SSRF URL and IP validation on external HTTP requests and webhook endpoints.
+* **Privacy**: Bundled self-hosted GDPR-compliant typography assets locally with zero external font requests.
+* **Performance**: Added minified CSS (`cssnano`) and JavaScript (`terser`) asset delivery with dynamic `.min` resolution.
+* **Updated**: Upgraded bundled FullCalendar scheduling engine to v7.1.5.
+* **Compatibility**: Restored WordPress core `jquery` script registration while maintaining 100% Zero-jQuery architecture in Modern Hotel Booking.
+
 = 3.0.2 =
 * **Improved**: WordPress.org catalog documentation and parser compliance optimizations.
 * **Improved**: Embedded tutorial and getting started video walkthrough references.
@@ -398,19 +405,7 @@ All booking and guest data is stored locally in your WordPress database. The plu
 * **Fix**: Admin notification email settings in Free & Starter editions.
 * **Improved**: Upgraded FullCalendar engine to v7.1.4 with scoped `mhbo-` asset handles.
 
-= 3.0.0 =
-* **Added**: Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`) with live USALI billing ledger and printable vouchers.
-* **Added**: 2-Column Front-Desk Manual Reservation PMS Workstation with CRM Quick-Fill and live price recalculations.
-* **Added**: Guest CRM Core with React DataViews directory and slide-out profile drawers.
-* **Added**: Email Delivery Health Inspector (SMTP, SPF, DMARC diagnostics) with 14 modular email templates.
-* **Added**: Executive Hotel Command Center & WP Dashboard Widget with live occupancy pulse.
-* **Added**: Hospitality staff roles (Hotel Manager, Front Desk Staff, Housekeeping Staff).
-* **Added**: Native translations across 15 languages with quad-core multilingual plugin compatibility.
-* **Improved**: Front-heavy progressive calendar hydration (~70% smaller initial HTML payload).
-* **Improved**: FullCalendar v7 integration with interactive reservation popovers.
-* **Improved**: Enterprise WordPress 7.1+ and PHP 8.2–8.4 architecture with zero-jQuery Vanilla JS and React.
-
 == Upgrade Notice ==
 
-= 3.0.2 =
-Documentation and catalog compliance release. Recommended for all users.
+= 3.0.3 =
+GDPR self-hosted fonts, minified asset delivery, third-party jQuery compatibility, and security hardening release. Recommended for all users.

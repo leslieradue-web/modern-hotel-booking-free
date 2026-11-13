@@ -444,24 +444,23 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 
 		$groups_map = array();
 		if ( ! empty( $group_tokens ) ) {
-			$tokens_list        = array_keys( $group_tokens );
-			$escaped_tokens_arr = array();
-			foreach ( $tokens_list as $single_token ) {
-				$escaped_tokens_arr[] = $wpdb->prepare( '%s', $single_token );
-			}
-			$escaped_tokens_str = implode( ',', $escaped_tokens_arr );
+			$tokens_list  = array_keys( $group_tokens );
+			$placeholders = implode( ', ', array_fill( 0, count( $tokens_list ), '%s' ) );
 
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic %s placeholders generated via array_fill().
 			$all_group_siblings = $wpdb->get_results(
-				"SELECT b.id, b.multi_room_parent, b.check_in, b.check_out, b.total_price, b.payment_amount, b.remaining_balance, b.status, b.payment_status, b.payment_received, b.room_id, r.room_number, COALESCE(NULLIF(rt.name, ''), '') as room_type_name
+				$wpdb->prepare(
+					"SELECT b.id, b.multi_room_parent, b.check_in, b.check_out, b.total_price, b.payment_amount, b.remaining_balance, b.status, b.payment_status, b.payment_received, b.room_id, r.room_number, COALESCE(NULLIF(rt.name, ''), '') as room_type_name
                  FROM {$wpdb->prefix}mhbo_bookings b
                  LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
                  LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
-                 WHERE b.multi_room_parent IN ({$escaped_tokens_str})
+                 WHERE b.multi_room_parent IN ({$placeholders})
                    AND b.status NOT IN ('cancelled', 'refunded', 'deleted')
-                 ORDER BY b.id ASC"
+                 ORDER BY b.id ASC",
+					...$tokens_list
+				)
 			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 			if ( ! empty( $all_group_siblings ) ) {
 				foreach ( $all_group_siblings as $gsib ) {

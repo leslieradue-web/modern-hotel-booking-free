@@ -46,7 +46,7 @@ class Pricing {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- result is cached above via wp_cache_get/set
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT r.*, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate
+				"SELECT r.*, t.name AS type_name, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate
              FROM {$wpdb->prefix}mhbo_rooms r
              JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
              WHERE r.id = %d",
@@ -220,8 +220,9 @@ class Pricing {
 	 */
 	public static function get_available_unit_ids_of_type( int $type_id, string $check_in, string $check_out ): array {
 		global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rooms     = $wpdb->get_results( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE type_id = %d ORDER BY id ASC", $type_id ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rooms = $wpdb->get_results( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mhbo_rooms WHERE type_id = %d ORDER BY id ASC", $type_id ) );
+		
 		$available = array();
 		foreach ( $rooms as $r ) {
 			if ( true === self::is_room_available( (int) $r->id, $check_in, $check_out ) ) {
@@ -339,7 +340,31 @@ class Pricing {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Return the active pending_payment expiration cutoff timestamp (1 hour ago in WP local time).
+	 * Default lifetime (in seconds) of an unpaid active-checkout pending_payment lock.
+	 *
+	 * Covers external 3DS challenges and off-site PayPal/Braintree handshakes (15 minutes).
+	 */
+	public const PENDING_PAYMENT_HOLD_SECONDS = 900;
+
+	/**
+	 * Resolve the configured checkout hold duration in seconds (minimum 60 seconds).
+	 *
+	 * @return int Hold lifetime in seconds.
+	 */
+	public static function get_pending_payment_hold_seconds(): int {
+		$seconds = self::PENDING_PAYMENT_HOLD_SECONDS;
+		if ( \function_exists( 'apply_filters' ) ) {
+			$filtered = \apply_filters( 'mhbo_pending_payment_hold_seconds', $seconds );
+			if ( is_numeric( $filtered ) ) {
+				$seconds = (int) $filtered;
+			}
+		}
+
+		return max( 60, $seconds );
+	}
+
+	/**
+	 * Return the active pending_payment expiration cutoff timestamp (15 minutes ago in WP local time).
 	 *
 	 * Matches `current_time( 'mysql' )` written by `PaymentsController` and uses pure ANSI
 	 * string comparison for MySQL + SQLite (Playground) portability.
@@ -347,44 +372,57 @@ class Pricing {
 	 * @return string MySQL datetime string (Y-m-d H:i:s).
 	 */
 	public static function get_pending_payment_cutoff(): string {
+		$hold_seconds = self::get_pending_payment_hold_seconds();
 		if ( \function_exists( 'current_time' ) ) {
 			$now_mysql = (string) \current_time( 'mysql' );
 			$ts        = strtotime( $now_mysql );
 			if ( false !== $ts ) {
-				return gmdate( 'Y-m-d H:i:s', $ts - HOUR_IN_SECONDS );
+				return gmdate( 'Y-m-d H:i:s', $ts - $hold_seconds );
 			}
 		}
 		if ( \function_exists( 'wp_date' ) ) {
-			$wp_now = \wp_date( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
+			$wp_now = \wp_date( 'Y-m-d H:i:s', time() - $hold_seconds );
 			if ( is_string( $wp_now ) && '' !== $wp_now ) {
 				return $wp_now;
 			}
 		}
-		return gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
+		return gmdate( 'Y-m-d H:i:s', time() - $hold_seconds );
 	}
 
 	/**
-	 * Cancel abandoned pending_payment checkout drafts older than 1 hour with zero payment evidence.
+	 * Cancel abandoned pending_payment checkout drafts past the hold window with zero payment evidence.
 	 *
 	 * @return int Number of stale bookings cancelled.
 	 */
 	public static function cleanup_stale_pending_payments_now(): int {
 		global $wpdb;
-		$table  = $wpdb->prefix . 'mhbo_bookings';
-		$cutoff = self::get_pending_payment_cutoff();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled/throttled batch cancellation of abandoned checkout drafts.
-		$affected = $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE %i SET status = 'cancelled' WHERE status = 'pending_payment' AND created_at < %s AND COALESCE(payment_capture_id, '') = '' AND COALESCE(payment_received, 0) = 0 AND COALESCE(deposit_received, 0) = 0 AND COALESCE(payment_amount, 0) <= 0 AND COALESCE(balance_collected_via, '') = '' AND COALESCE(payment_status, 'pending') = 'pending'",
-				$table,
-				$cutoff
-			)
-		);
-		$count = is_numeric( $affected ) ? (int) $affected : 0;
-		if ( $count > 0 ) {
+		$table       = $wpdb->prefix . 'mhbo_bookings';
+		$cutoff      = self::get_pending_payment_cutoff();
+		$batch_size  = 200;
+		$max_batches = 25;
+		$total       = 0;
+
+		for ( $batch = 0; $batch < $max_batches; $batch++ ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled/throttled batched cancellation of abandoned checkout drafts.
+			$affected = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i SET status = 'cancelled' WHERE status = 'pending_payment' AND created_at < %s AND COALESCE(payment_capture_id, '') = '' AND COALESCE(payment_received, 0) = 0 AND COALESCE(deposit_received, 0) = 0 AND COALESCE(payment_amount, 0) <= 0 AND COALESCE(balance_collected_via, '') = '' AND COALESCE(payment_status, 'pending') = 'pending' LIMIT %d",
+					$table,
+					$cutoff,
+					$batch_size
+				)
+			);
+			$count = is_numeric( $affected ) ? (int) $affected : 0;
+			$total += $count;
+			if ( $count < $batch_size ) {
+				break;
+			}
+		}
+
+		if ( $total > 0 ) {
 			Cache::invalidate_booking();
 		}
-		return $count;
+		return $total;
 	}
 
 	/**
@@ -493,8 +531,8 @@ return $min_stay;
 			return 'label_room_not_available';
 		}
 
-		// 2026 BP: Respect same-day turnover setting and 1-hour pending_payment cutoff in WP timezone.
-		$prevent_same_day = (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		// 2026 BP: Respect same-day turnover setting and active pending_payment checkout hold cutoff in WP timezone.
+		$prevent_same_day = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 		$pending_cutoff   = self::get_pending_payment_cutoff();
 
 		if ( $exclude_booking_id > 0 ) {
@@ -502,7 +540,7 @@ return $min_stay;
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$conflict = $wpdb->get_var(
 					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in <= DATE(%s) AND check_out >= DATE(%s) AND id != %d",
+						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in <= DATE(%s) AND check_out >= DATE(%s) AND id != %d LIMIT 1",
 						$room_id,
 						$pending_cutoff,
 						$check_out,
@@ -514,7 +552,7 @@ return $min_stay;
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$conflict = $wpdb->get_var(
 					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in < DATE(%s) AND check_out > DATE(%s) AND id != %d",
+						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in < DATE(%s) AND check_out > DATE(%s) AND id != %d LIMIT 1",
 						$room_id,
 						$pending_cutoff,
 						$check_out,
@@ -527,7 +565,7 @@ return $min_stay;
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$conflict = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in <= DATE(%s) AND check_out >= DATE(%s)",
+					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in <= DATE(%s) AND check_out >= DATE(%s) LIMIT 1",
 					$room_id,
 					$pending_cutoff,
 					$check_out,
@@ -538,7 +576,7 @@ return $min_stay;
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$conflict = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in < DATE(%s) AND check_out > DATE(%s)",
+					"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE room_id = %d AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND check_in < DATE(%s) AND check_out > DATE(%s) LIMIT 1",
 					$room_id,
 					$pending_cutoff,
 					$check_out,
@@ -562,18 +600,35 @@ return true;
 	 * @return bool True if lock acquired.
 	 */
 	public static function acquire_booking_lock( int $room_id, int $timeout = 10 ): bool {
+		return self::acquire_named_lock( 'mhbo_booking_lock_' . $room_id, $timeout );
+	}
+
+	/**
+	 * Release a MySQL advisory lock.
+	 *
+	 * @param int $room_id Room ID.
+	 */
+	public static function release_booking_lock( int $room_id ): void {
+		self::release_named_lock( 'mhbo_booking_lock_' . $room_id );
+	}
+
+	/**
+	 * Acquire a named MySQL advisory lock with SQLite/Playground fallback.
+	 *
+	 * @param string $lock_name Advisory lock identifier.
+	 * @param int    $timeout   Timeout in seconds.
+	 * @return bool True if lock acquired or unsupported by driver.
+	 */
+	public static function acquire_named_lock( string $lock_name, int $timeout = 10 ): bool {
 		global $wpdb;
 
 		// Detect SQLite/Playground where GET_LOCK is unsupported.
-		// In these environments, we bypass the advisory lock as concurrency is typically handled
 		$wpdb_class = is_object( $wpdb ) ? get_class( $wpdb ) : '';
-		$is_sqlite  = ( str_contains( strtolower( $wpdb_class ), 'sqlite' ) );
-		if ( $is_sqlite ) {
+		if ( str_contains( strtolower( $wpdb_class ), 'sqlite' ) ) {
 			return true;
 		}
 
-		$lock_name = 'mhbo_booking_lock_' . $room_id;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock, not a data query.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock, not a data query.
 		$result = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, $timeout ) );
 
 		// If the DB doesn't support GET_LOCK (returns NULL or errors), fallback to true.
@@ -585,22 +640,57 @@ return true;
 	}
 
 	/**
-	 * Release a MySQL advisory lock.
+	 * Release a named MySQL advisory lock.
 	 *
-	 * @param int $room_id Room ID.
+	 * @param string $lock_name Advisory lock identifier.
 	 */
-	public static function release_booking_lock( int $room_id ): void {
+	public static function release_named_lock( string $lock_name ): void {
 		global $wpdb;
 
-		$wpdb_class = is_object( $wpdb ) ? get_class( $wpdb ) : '';
-		$is_sqlite  = ( str_contains( strtolower( $wpdb_class ), 'sqlite' ) );
-		if ( $is_sqlite ) {
+		if ( ! is_object( $wpdb ) ) {
 			return;
 		}
 
-		$lock_name = 'mhbo_booking_lock_' . $room_id;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release.
-		$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+		$wpdb_class = get_class( $wpdb );
+		if ( str_contains( strtolower( $wpdb_class ), 'sqlite' ) ) {
+			return;
+		}
+
+		if ( $wpdb instanceof \wpdb ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- MySQL advisory lock release.
+			$wpdb->query( (string) $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+			return;
+		}
+
+		// Lightweight unit-test mock fallback when stub does not extend \wpdb or implement query().
+		$sql = self::invoke_db_mock_method( $wpdb, 'prepare', array( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+		if ( null === $sql ) {
+			return;
+		}
+
+		foreach ( array( 'query', 'get_var' ) as $method ) {
+			if ( is_callable( array( $wpdb, $method ) ) ) {
+				self::invoke_db_mock_method( $wpdb, $method, array( $sql ) );
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Invoke an optional method on a lightweight unit-test database double.
+	 *
+	 * @param object            $db     Database mock instance.
+	 * @param string            $method Method name to invoke.
+	 * @param array<int, mixed> $args   Positional arguments.
+	 * @return mixed
+	 */
+	private static function invoke_db_mock_method( object $db, string $method, array $args ): mixed {
+		$callable = array( $db, $method );
+		if ( ! is_callable( $callable ) ) {
+			return null;
+		}
+
+		return call_user_func_array( $callable, $args );
 	}
 
 	// -------------------------------------------------------------------------
@@ -713,8 +803,8 @@ return true;
 			}
 		}
 
-		if ( $has_legacy ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- diagnostic for corrupt legacy data
+		if ( $has_legacy && defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- diagnostic for corrupt legacy data, guarded by WP_DEBUG_LOG
 			error_log( 'MHBO: booking_extras stored in legacy id=>qty map shape; ignored and not displayed.' );
 		}
 
@@ -942,23 +1032,43 @@ return true;
 		global $wpdb;
 
 		$parent = trim( (string) ( $booking->multi_room_parent ?? '' ) );
-		if ( '' === $parent ) {
+		if ( '' === $parent && ! empty( $booking->is_multi_room ) ) {
+			$parent = (string) (int) ( $booking->id ?? 0 );
+		}
+		if ( '' === $parent || '0' === $parent ) {
 			return array();
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT b.*, t.name AS room_name, r.room_number, r.type_id AS room_type_id
-				 FROM {$wpdb->prefix}mhbo_bookings b
-				 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
-				 LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
-				 WHERE b.multi_room_parent = %s
-				   AND b.status NOT IN ('cancelled', 'refunded', 'deleted')
-				 ORDER BY b.id ASC",
-				$parent
-			)
-		);
+		if ( ctype_digit( $parent ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT b.*, t.name AS room_name, r.room_number, r.type_id AS room_type_id
+					 FROM {$wpdb->prefix}mhbo_bookings b
+					 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
+					 LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
+					 WHERE (b.multi_room_parent = %s OR b.id = %d)
+					   AND b.status NOT IN ('cancelled', 'refunded', 'deleted')
+					 ORDER BY b.id ASC",
+					$parent,
+					(int) $parent
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT b.*, t.name AS room_name, r.room_number, r.type_id AS room_type_id
+					 FROM {$wpdb->prefix}mhbo_bookings b
+					 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
+					 LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
+					 WHERE b.multi_room_parent = %s
+					   AND b.status NOT IN ('cancelled', 'refunded', 'deleted')
+					 ORDER BY b.id ASC",
+					$parent
+				)
+			);
+		}
 
 		/** @var list<\stdClass> $result */
 		$result = is_array( $rows ) ? array_values( $rows ) : array();
@@ -1205,6 +1315,7 @@ return true;
 								),
 								array( 'id' => (int) $booking->id )
 							);
+							Cache::invalidate_booking( (int) $booking->id, (int) ( $booking->room_id ?? 0 ) );
 						}
 						return $cleaned;
 					}
@@ -2110,6 +2221,26 @@ return true;
 	}
 
 	/**
+	 * Sanitize an array of child ages, omitting blank/empty entries so unspecified
+	 * ages are not coerced to age 0 (free infant) by absint().
+	 *
+	 * @param mixed $raw_ages Raw child_ages input.
+	 * @return list<int>
+	 */
+	public static function sanitize_child_ages( mixed $raw_ages ): array {
+		if ( ! is_array( $raw_ages ) ) {
+			return array();
+		}
+		$ages = array();
+		foreach ( $raw_ages as $age ) {
+			if ( is_scalar( $age ) && '' !== trim( (string) $age ) ) {
+				$ages[] = absint( $age );
+			}
+		}
+		return $ages;
+	}
+
+	/**
 	 * Calculate complete booking pricing server-side.
 	 *
 	 * @param int                      $room_id    Room ID.
@@ -2460,6 +2591,136 @@ return true;
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Check whether children pricing / fields are globally enabled.
+	 *
+	 * @return bool
+	 */
+	public static function is_children_enabled(): bool {
+		return (bool) (int) get_option( 'mhbo_children_enabled', 0 );
+	}
+
+	/**
+	 * Recalculate pricing, coupon discount, taxes, and DB column updates for an existing booking.
+	 *
+	 * Preserves child ages, stored extras, early check-in/late check-out flags, and coupon codes
+	 * across self-service guest portal and AI modification workflows.
+	 *
+	 * @param object               $booking                Existing booking row.
+	 * @param int                  $room_id                Room ID.
+	 * @param string               $check_in               Y-m-d check-in date.
+	 * @param string               $check_out              Y-m-d check-out date.
+	 * @param int                  $adults                 Adult count.
+	 * @param int                  $children               Children count.
+	 * @param array<string, mixed> $custom_fields_override Optional updated custom fields map.
+	 * @return array{total: Money, discount: Money, db_fields: array<string, string>}|null
+	 */
+	public static function recalculate_booking_financials(
+		object $booking,
+		int $room_id,
+		string $check_in,
+		string $check_out,
+		int $adults,
+		int $children,
+		array $custom_fields_override = array()
+	): ?array {
+		self::ensure_pro_init();
+		$currency = self::get_currency_code();
+
+		$custom_fields = $custom_fields_override;
+		if ( array() === $custom_fields && ! empty( $booking->custom_fields ) ) {
+			$decoded_cf = json_decode( (string) $booking->custom_fields, true );
+			if ( is_array( $decoded_cf ) ) {
+				$custom_fields = $decoded_cf;
+			}
+		}
+
+		$raw_ages = $custom_fields['_child_ages'] ?? ( $custom_fields['child_ages'] ?? array() );
+		if ( array() === (array) $raw_ages ) {
+			$stored_ages_col = $booking->children_ages ?? ( $booking->child_ages ?? null );
+			if ( ! empty( $stored_ages_col ) ) {
+				$decoded_ages = is_string( $stored_ages_col ) ? json_decode( $stored_ages_col, true ) : $stored_ages_col;
+				if ( is_array( $decoded_ages ) ) {
+					$raw_ages = $decoded_ages;
+				}
+			}
+		}
+		$child_ages = self::sanitize_child_ages( $raw_ages );
+
+		$calc_extras  = array();
+		$saved_extras = self::decode_stored_extras( $booking->booking_extras ?? null );
+		foreach ( $saved_extras as $ex_key => $ex ) {
+			if ( isset( $ex['id'], $ex['quantity'] ) ) {
+				$calc_extras[ (string) $ex['id'] ] = max( 1, (int) $ex['quantity'] );
+			} elseif ( isset( $ex['quantity'] ) ) {
+				$calc_extras[ (string) $ex_key ] = max( 1, (int) $ex['quantity'] );
+			}
+		}
+		if ( ! empty( $custom_fields['_early_checkin'] ) ) {
+			$calc_extras['_early_checkin'] = 1;
+		} else {
+			unset( $calc_extras['_early_checkin'] );
+		}
+		if ( ! empty( $custom_fields['_late_checkout'] ) ) {
+			$calc_extras['_late_checkout'] = 1;
+		} else {
+			unset( $calc_extras['_late_checkout'] );
+		}
+
+		$recalc = self::calculate_booking_money( $room_id, $check_in, $check_out, max( 1, $adults ), $calc_extras, max( 0, $children ), $child_ages );
+		if ( ! is_array( $recalc ) || ! isset( $recalc['total'] ) || ! ( $recalc['total'] instanceof Money ) ) {
+			return null;
+		}
+
+		/** @var Money $new_total */
+		$new_total  = $recalc['total'];
+		$tax_data   = is_array( $recalc['tax'] ?? null ) ? $recalc['tax'] : array();
+		$discount_m = Money::fromCents( 0, $currency );
+
+$zero_str  = Money::fromCents( 0, $currency )->toDecimal();
+		$to_str    = static function ( mixed $val ) use ( $currency, $zero_str ): string {
+			if ( $val instanceof Money ) {
+				return $val->toDecimal();
+			}
+			if ( null === $val || '' === (string) $val ) {
+				return $zero_str;
+			}
+			return Money::fromDecimal( (string) $val, $currency )->toDecimal();
+		};
+		$totals    = is_array( $tax_data['totals'] ?? null ) ? $tax_data['totals'] : array();
+		$pay_amts  = self::get_booking_payment_amounts( $booking );
+		$rem_money = $new_total->subtract( $pay_amts['received'] );
+		if ( $rem_money->isNegative() ) {
+			$rem_money = Money::fromCents( 0, $currency );
+		}
+
+		$db_fields = array(
+			'total_price'        => $new_total->toDecimal(),
+			'total_gross'        => $new_total->toDecimal(),
+			'coupon_discount'    => $discount_m->toDecimal(),
+			'discount_amount'    => $discount_m->toDecimal(),
+			'subtotal_net'       => $to_str( $totals['subtotal_net'] ?? $recalc['subtotal'] ),
+			'total_tax'          => $to_str( $totals['total_tax'] ?? null ),
+			'room_total_net'     => $to_str( $totals['room_net'] ?? $recalc['room_total'] ),
+			'children_total_net' => $to_str( $totals['children_net'] ?? $recalc['children_total'] ),
+			'extras_total_net'   => $to_str( $totals['extras_net'] ?? $recalc['extras_total'] ),
+			'room_tax'           => $to_str( $totals['room_tax'] ?? null ),
+			'children_tax'       => $to_str( $totals['children_tax'] ?? null ),
+			'extras_tax'         => $to_str( $totals['extras_tax'] ?? null ),
+			'service_fee_amount' => $to_str( $recalc['service_fee'] ?? null ),
+			'service_fee_net'    => $to_str( $totals['service_fee_net'] ?? null ),
+			'service_fee_tax'    => $to_str( $totals['service_fee_tax'] ?? null ),
+			'tax_breakdown'      => (string) wp_json_encode( $tax_data ),
+			'remaining_balance'  => $rem_money->toDecimal(),
+		);
+
+		return array(
+			'total'     => $new_total,
+			'discount'  => $discount_m,
+			'db_fields' => $db_fields,
+		);
 	}
 
 	/**

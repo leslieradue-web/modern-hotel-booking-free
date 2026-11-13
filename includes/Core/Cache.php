@@ -313,6 +313,7 @@ class Cache {
 		delete_transient( 'mhbo_widget_pending_bookings' );
 		delete_transient( 'mhbo_dashboard_total_bookings' );
 		delete_transient( 'mhbo_dashboard_pending_bookings' );
+		delete_transient( 'mhbo_analytics_rollup_data' );
 
 		foreach ( $dates as $today ) {
 			// Dashboard Widget Transients
@@ -546,13 +547,93 @@ class Cache {
 
 	/**
 	 * Rule 13: Invalidate room-related caches.
+	 *
+	 * @param int $room_id Optional room ID for targeted key deletion.
 	 */
-	public static function invalidate_rooms(): void {
+	public static function invalidate_rooms( int $room_id = 0 ): void {
 		self::bump( self::TABLE_ROOMS );
 		self::bump( self::TABLE_ROOM_TYPES );
 		wp_cache_delete( 'mhbo_all_rooms', 'mhbo_rooms' );
 		wp_cache_delete( 'mhbo_room_types_all', 'mhbo' );
+		if ( $room_id > 0 ) {
+			wp_cache_delete( 'mhbo_room_' . $room_id, 'mhbo_rooms' );
+			wp_cache_delete( 'mhbo_room_type_id_' . $room_id, 'mhbo' );
+		}
 		do_action( 'mhbo_rooms_invalidated' );
+	}
+
+	/**
+	 * Resolve the type_id for a room via versioned TABLE_ROOMS cache.
+	 *
+	 * @param int $room_id Room ID.
+	 * @return int Room type ID (0 when missing).
+	 */
+	public static function get_room_type_id( int $room_id ): int {
+		if ( $room_id <= 0 ) {
+			return 0;
+		}
+
+		$cached = self::get_row( 'room_type_id_' . $room_id, self::TABLE_ROOMS );
+		if ( false !== $cached && is_numeric( $cached ) ) {
+			return (int) $cached;
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Cached via versioned TABLE_ROOMS object cache.
+		$type_id = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT type_id FROM %i WHERE id = %d',
+				$wpdb->prefix . 'mhbo_rooms',
+				$room_id
+			)
+		);
+
+		self::set_row( 'room_type_id_' . $room_id, $type_id, self::TABLE_ROOMS, 3600 );
+		return $type_id;
+	}
+
+	/**
+	 * Prune expired MHBO transients in bounded batches to prevent wp_options bloat.
+	 *
+	 * @param int $batch_limit Maximum expired transients to purge per run.
+	 * @return int Number of expired transients removed.
+	 */
+	public static function prune_expired_transients( int $batch_limit = 200 ): int {
+		/** @var \wpdb $wpdb */
+		global $wpdb;
+
+		if ( empty( $wpdb->options ) ) {
+			return 0;
+		}
+
+		$prefix = $wpdb->esc_like( '_transient_timeout_mhbo_' ) . '%';
+		$now    = time();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bounded maintenance cleanup of expired plugin transients.
+		$expired_timeouts = $wpdb->get_col(
+			$wpdb->prepare(
+				'SELECT option_name FROM %i WHERE option_name LIKE %s AND CAST(option_value AS UNSIGNED) < %d LIMIT %d',
+				$wpdb->options,
+				$prefix,
+				$now,
+				max( 1, $batch_limit )
+			)
+		);
+
+		if ( ! is_array( $expired_timeouts ) || array() === $expired_timeouts ) {
+			return 0;
+		}
+
+		$deleted = 0;
+		$cut     = strlen( '_transient_timeout_' );
+		foreach ( $expired_timeouts as $opt_name ) {
+			$transient_name = substr( (string) $opt_name, $cut );
+			if ( '' !== $transient_name && delete_transient( $transient_name ) ) {
+				++$deleted;
+			}
+		}
+
+		return $deleted;
 	}
 
 	/**

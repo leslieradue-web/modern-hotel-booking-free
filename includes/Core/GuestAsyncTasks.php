@@ -81,9 +81,9 @@ class GuestAsyncTasks {
 	}
 
 	/**
-	 * Enqueue an asynchronous stats recalculation job.
+	 * Recalculate guest CRM statistics synchronously for immediate CRM accuracy.
 	 *
-	 * @param int $guest_id
+	 * @param int $guest_id Guest ID.
 	 * @return void
 	 */
 	public static function queue_stats_recalculation( int $guest_id ): void {
@@ -91,16 +91,8 @@ class GuestAsyncTasks {
 			return;
 		}
 
-		// Instant synchronous calculation for zero-lag CRM accuracy
+		// Execute once synchronously so downstream CRM views and API responses read current totals without duplicate background runs.
 		GuestStatsService::recalculate_guest_stats( $guest_id );
-
-		if ( function_exists( 'as_enqueue_async_action' ) ) {
-			\as_enqueue_async_action(
-				'mhbo_recalculate_guest_stats',
-				array( 'guest_id' => $guest_id ),
-				'mhbo-crm'
-			);
-		}
 	}
 
 	/**

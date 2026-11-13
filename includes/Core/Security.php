@@ -27,17 +27,21 @@ class Security {
 	 * @return bool True if safe, false otherwise.
 	 */
 	public static function is_safe_url( string $url ): bool {
-		// Must be a valid URL
-		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+		if ( '' === trim( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			return false;
 		}
 
 		$parsed = wp_parse_url( $url );
-		if ( ! isset( $parsed['host'] ) || $parsed['host'] === '' ) {
+		if ( ! is_array( $parsed ) || ! isset( $parsed['host'] ) || '' === $parsed['host'] ) {
 			return false;
 		}
 
-		// Only allow HTTP/HTTPS schemes and standard ports
+		// Reject embedded userinfo credentials (parser-confusion SSRF vector).
+		if ( isset( $parsed['user'] ) || isset( $parsed['pass'] ) ) {
+			return false;
+		}
+
+		// Only allow HTTP/HTTPS schemes and standard ports.
 		$scheme = strtolower( (string) ( $parsed['scheme'] ?? '' ) );
 		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
 			return false;
@@ -47,69 +51,139 @@ class Security {
 			return false;
 		}
 
-		$host = (string) ( $parsed['host'] ?? '' );
-		if ( $host === '' ) {
+		// Normalize bracketed IPv6 hosts (e.g. '[::1]' -> '::1') and trailing DNS dot.
+		$host = strtolower( rtrim( trim( (string) $parsed['host'], '[]' ), '.' ) );
+		if ( '' === $host ) {
 			return false;
 		}
 
-		// Block localhost and common loopback variations
-		$blocked_hosts = array( 'localhost', '127.0.0.1', '::1', '0.0.0.0' );
-		if ( in_array( strtolower( $host ), $blocked_hosts, true ) ) {
+		// Block loopback, unspecified, cloud metadata, and internal hostnames/suffixes.
+		$blocked_hosts = array( 'localhost', '127.0.0.1', '::1', '0.0.0.0', '::', 'metadata.google.internal', 'metadata' );
+		if ( in_array( $host, $blocked_hosts, true ) ) {
 			return false;
 		}
+		foreach ( array( '.localhost', '.local', '.internal', '.localdomain', '.arpa' ) as $internal_suffix ) {
+			if ( str_ends_with( $host, $internal_suffix ) ) {
+				return false;
+			}
+		}
 
-		// 2026 BP: Trusted OTAs are safe by design. Bypassing resolution speeds up sync.
+		// 2026 BP: Trusted OTAs are safe by design. Bypassing DNS resolution speeds up sync.
 		if ( self::is_trusted_platform( $host ) ) {
 			return true;
 		}
 
-		// Resolve hostname to IP
-		$resolved_ip = gethostbyname( $host );
+		// Resolve host literals and both DNS A (IPv4) + AAAA (IPv6) records.
+		$ips = array();
+		if ( false !== filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			$ips[] = $host;
+		} else {
+			if ( function_exists( 'gethostbynamel' ) ) {
+				$v4_list = gethostbynamel( $host );
+				if ( is_array( $v4_list ) ) {
+					$ips = array_merge( $ips, $v4_list );
+				}
+			}
+			if ( function_exists( 'dns_get_record' ) ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				$records = @dns_get_record( $host, DNS_A | DNS_AAAA );
+				if ( is_array( $records ) ) {
+					foreach ( $records as $record ) {
+						if ( ! is_array( $record ) ) {
+							continue;
+						}
+						if ( ! empty( $record['ip'] ) && is_string( $record['ip'] ) ) {
+							$ips[] = $record['ip'];
+						}
+						if ( ! empty( $record['ipv6'] ) && is_string( $record['ipv6'] ) ) {
+							$ips[] = $record['ipv6'];
+						}
+					}
+				}
+			}
+		}
 
-		// SSRF HARDENING: If DNS fails to resolve and it's not already a valid IP, block it.
-		// This prevents "unresolved host" bypasses where malicious inputs might slip through.
-		if ( $host === $resolved_ip && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+		$ips = array_values( array_unique( $ips ) );
+		if ( array() === $ips ) {
 			return false;
 		}
 
-		$ip = $resolved_ip;
+		foreach ( $ips as $resolved_ip ) {
+			if ( ! self::is_public_routable_ip( (string) $resolved_ip ) ) {
+				return false;
+			}
+		}
 
-		// Use PHP's built-in filters for private/reserved ranges
-		// FILTER_FLAG_NO_PRIV_RANGE - Blocks 10.x, 172.16-31.x, 192.168.x
-		// FILTER_FLAG_NO_RES_RANGE - Blocks 169.254.x.x (cloud metadata), 0.x.x.x, etc.
-		$valid_ip = filter_var(
-			$ip,
-			FILTER_VALIDATE_IP,
-			FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-		);
+		// Use WordPress built-in validation as final safety net.
+		if ( function_exists( 'wp_http_validate_url' ) ) {
+			return (bool) wp_http_validate_url( $url );
+		}
 
-		if ( false === $valid_ip ) {
+		return true;
+	}
+
+	/**
+	 * Verify that an IPv4 or IPv6 address (including IPv4-mapped/compatible IPv6)
+	 * is globally routable and outside all private, loopback, link-local, or reserved ranges.
+	 *
+	 * @param string $ip IP address literal.
+	 * @return bool True if safe public routable IP.
+	 */
+	private static function is_public_routable_ip( string $ip ): bool {
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
 			return false;
 		}
 
-		// Additional CIDR-based check for edge cases
+		// Unwrap IPv4-mapped (::ffff:0:0/96), IPv4-compatible (::/96), and NAT64 (64:ff9b::/96) IPv6 addresses.
+		if ( false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			$bin = inet_pton( $ip );
+			if ( false === $bin || 16 !== strlen( $bin ) ) {
+				return false;
+			}
+
+			$prefix_v4_mapped = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff";
+			$prefix_v4_compat = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+			$prefix_nat64     = "\x00\x64\xff\x9b\x00\x00\x00\x00\x00\x00\x00\x00";
+			$head             = substr( $bin, 0, 12 );
+
+			if ( $head === $prefix_v4_mapped || $head === $prefix_v4_compat || $head === $prefix_nat64 ) {
+				$embedded_v4 = inet_ntop( substr( $bin, 12, 4 ) );
+				if ( false === $embedded_v4 || ! self::is_public_routable_ip( $embedded_v4 ) ) {
+					return false;
+				}
+			}
+		}
+
 		$blocked_ranges = array(
-			'127.0.0.0/8',      // Loopback
-			'10.0.0.0/8',       // Private Class A
-			'172.16.0.0/12',    // Private Class B
-			'192.168.0.0/16',   // Private Class C
-			'169.254.0.0/16',   // Link-local (AWS/GCP/Azure/OCI metadata)
-			'0.0.0.0/8',        // Current network
-			'100.64.0.0/10',    // Shared Address Space (CGNAT)
-			'192.0.0.0/24',     // IETF Protocol Assignments
-			'198.18.0.0/15',    // Network Interconnect Device Benchmark testing
-			'240.0.0.0/4',      // Reserved
+			'127.0.0.0/8',      // IPv4 Loopback.
+			'10.0.0.0/8',       // RFC 1918 Private Class A.
+			'172.16.0.0/12',    // RFC 1918 Private Class B.
+			'192.168.0.0/16',   // RFC 1918 Private Class C.
+			'169.254.0.0/16',   // IPv4 Link-local & cloud metadata (169.254.169.254).
+			'0.0.0.0/8',        // Current network.
+			'100.64.0.0/10',    // CGNAT Shared Address Space.
+			'192.0.0.0/24',     // IETF Protocol Assignments.
+			'192.0.2.0/24',     // TEST-NET-1.
+			'198.18.0.0/15',    // Benchmarking.
+			'198.51.100.0/24',  // TEST-NET-2.
+			'203.0.113.0/24',   // TEST-NET-3.
+			'224.0.0.0/4',      // Multicast.
+			'240.0.0.0/4',      // Reserved.
+			'::1/128',          // IPv6 Loopback.
+			'::/128',           // IPv6 Unspecified.
+			'::ffff:0:0/96',    // IPv4-mapped IPv6.
+			'100::/64',         // Discard-Only.
+			'2001::/32',        // Teredo tunneling.
+			'2001:db8::/32',    // IPv6 Documentation.
+			'fc00::/7',         // IPv6 Unique Local Addresses (ULA).
+			'fe80::/10',        // IPv6 Link-Local.
+			'ff00::/8',         // IPv6 Multicast.
 		);
 
 		foreach ( $blocked_ranges as $range ) {
 			if ( self::ip_in_range( $ip, $range ) ) {
 				return false;
 			}
-		}
-
-		// Use WordPress built-in validation as final safety net
-		if ( function_exists( 'wp_http_validate_url' ) ) {
-			return (bool) wp_http_validate_url( $url );
 		}
 
 		return true;
@@ -129,11 +203,19 @@ class Security {
 			return $ip === $range;
 		}
 
-		[$subnet, $bits] = explode( '/', $range );
-		$bits            = (int) $bits;
+		$parts = explode( '/', $range, 2 );
+		$subnet   = $parts[0];
+		$raw_bits = trim( $parts[1] ?? '' );
+		if ( '' === $raw_bits || ! ctype_digit( $raw_bits ) ) {
+			return false;
+		}
+		$bits = (int) $raw_bits;
 
 		// IPv4 Logic
 		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) && filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+			if ( $bits < 0 || $bits > 32 ) {
+				return false;
+			}
 			$ip_long     = ip2long( $ip );
 			$subnet_long = ip2long( $subnet );
 
@@ -141,12 +223,15 @@ class Security {
 				return false;
 			}
 
-			$mask = -1 << ( 32 - $bits );
+			$mask = ( 0 === $bits ) ? 0 : ( -1 << ( 32 - $bits ) );
 			return ( $ip_long & $mask ) === ( $subnet_long & $mask );
 		}
 
 		// IPv6 Logic (2026 BP: Full CIDR support for modern networking)
 		if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) && filter_var( $subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			if ( $bits < 0 || $bits > 128 ) {
+				return false;
+			}
 			// Convert IPs to binary strings
 			$ip_bin     = (string) inet_pton( $ip );
 			$subnet_bin = (string) inet_pton( $subnet );
@@ -260,19 +345,8 @@ class Security {
 			}
 		}
 
-		// 3. Local/Dev environment allowance for proxy simulation & loopback testing.
-		if ( ! $is_trusted ) {
-			$is_local_env = ( function_exists( 'wp_get_environment_type' ) && in_array( wp_get_environment_type(), array( 'local', 'development' ), true ) )
-				|| '127.0.0.1' === $remote_addr
-				|| '::1' === $remote_addr;
-
-			if ( $is_local_env && ( isset( $server['HTTP_CF_CONNECTING_IP'] ) || isset( $server['HTTP_X_FORWARDED_FOR'] ) ) ) {
-				$is_trusted    = true;
-				$is_cloudflare = isset( $server['HTTP_CF_CONNECTING_IP'] );
-			}
-		}
-
-		// Only process proxy headers if the direct connecting IP is verified and trusted.
+		// Only process proxy headers if the direct connecting IP is verified and trusted
+		// via mhbo_trusted_proxies or verified Cloudflare proxy IP ranges.
 		if ( $is_trusted ) {
 			// If request arrived via Cloudflare, check HTTP_CF_CONNECTING_IP first.
 			if ( $is_cloudflare && isset( $server['HTTP_CF_CONNECTING_IP'] ) && '' !== (string) $server['HTTP_CF_CONNECTING_IP'] ) {

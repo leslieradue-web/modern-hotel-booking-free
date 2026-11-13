@@ -588,6 +588,78 @@ class Money implements \JsonSerializable {
 	}
 
 	/**
+	 * Stripe's true zero-decimal currencies (amount passed directly as whole units).
+	 * Note: HUF, TWD, IDR, ISK, and UGX are intentionally excluded because Stripe's
+	 * PaymentIntents API requires two-decimal minor units for them (* 100).
+	 *
+	 * @var list<string>
+	 */
+	private const STRIPE_ZERO_DECIMAL = array(
+		'BIF',
+		'CLP',
+		'DJF',
+		'GNF',
+		'JPY',
+		'KMF',
+		'KRW',
+		'MGA',
+		'PYG',
+		'RWF',
+		'VND',
+		'VUV',
+		'XAF',
+		'XOF',
+		'XPF',
+	);
+
+	/**
+	 * Stripe's backwards-compatible two-decimal currencies requiring whole-unit multiples of 100.
+	 *
+	 * @var list<string>
+	 */
+	private const STRIPE_WHOLE_UNIT_2DEC = array(
+		'ISK',
+		'UGX',
+	);
+
+	/**
+	 * Stripe's three-decimal currencies (* 1000, final digit must be 0).
+	 *
+	 * @var list<string>
+	 */
+	private const STRIPE_THREE_DECIMAL = array(
+		'BHD',
+		'JOD',
+		'KWD',
+		'OMR',
+		'TND',
+	);
+
+	/**
+	 * PayPal Orders API v2 zero-decimal currencies.
+	 *
+	 * @var list<string>
+	 */
+	private const PAYPAL_ZERO_DECIMAL = array(
+		'HUF',
+		'JPY',
+		'TWD',
+	);
+
+	/**
+	 * Braintree zero-decimal currencies (must be formatted without decimal places).
+	 *
+	 * @var list<string>
+	 */
+	private const BRAINTREE_ZERO_DECIMAL = array(
+		'CLP',
+		'JPY',
+		'KRW',
+		'TWD',
+		'VND',
+	);
+
+	/**
 	 * Get the decimal precision for a currency.
 	 * 
 	 * @param string $currency ISO-4217 code.
@@ -596,6 +668,103 @@ class Money implements \JsonSerializable {
 	public static function get_precision( string $currency ): int {
 		$currency = strtoupper( $currency );
 		return self::$CURRENCY_PRECISION[ $currency ] ?? 2;
+	}
+
+	/**
+	 * Get the minor-unit exponent expected by Stripe's PaymentIntents/Charges API.
+	 *
+	 * @param string $currency ISO-4217 currency code.
+	 * @return int 0, 2, or 3.
+	 */
+	public static function get_stripe_exponent( string $currency ): int {
+		$code = strtoupper( $currency );
+		if ( in_array( $code, self::STRIPE_ZERO_DECIMAL, true ) ) {
+			return 0;
+		}
+		if ( in_array( $code, self::STRIPE_THREE_DECIMAL, true ) ) {
+			return 3;
+		}
+		return 2;
+	}
+
+	/**
+	 * Convert this Money instance into Stripe API integer minor units.
+	 * Enforces backwards-compatible 2-decimal whole-unit rounding for ISK/UGX
+	 * and divisible-by-10 minor-unit rounding for 3-decimal currencies (BHD/JOD/KWD/OMR/TND).
+	 *
+	 * @return int
+	 */
+	public function toStripeMinorUnits(): int {
+		$code     = strtoupper( $this->currency );
+		$exponent = self::get_stripe_exponent( $code );
+
+		if ( 0 === $exponent ) {
+			return (int) $this->toDecimal( 0 );
+		}
+
+		if ( in_array( $code, self::STRIPE_WHOLE_UNIT_2DEC, true ) ) {
+			return (int) $this->toDecimal( 0 ) * 100;
+		}
+
+		if ( 3 === $exponent ) {
+			// Stripe requires BHD/JOD/KWD/OMR/TND amounts to be divisible by 10.
+			return (int) round( (float) $this->toDecimal( 2 ) * 100 ) * 10;
+		}
+
+		// Standard 2-decimal Stripe API minor units (including HUF, TWD, IDR).
+		$scaled = $this->toDecimal( 2 );
+		if ( function_exists( 'bcmul' ) ) {
+			/** @var numeric-string $scaled */
+			return (int) bcmul( $scaled, '100', 0 );
+		}
+		return (int) round( (float) $scaled * 100 );
+	}
+
+	/**
+	 * Construct a Money instance from Stripe PaymentIntent/Charge API integer minor units.
+	 *
+	 * @param int         $minor_units Stripe integer amount (e.g. amount or amount_received).
+	 * @param string|null $currency    Optional ISO-4217 currency code.
+	 * @return self
+	 */
+	public static function fromStripeMinorUnits( int $minor_units, ?string $currency = null ): self {
+		$currency = strtoupper( $currency ?? Pricing::get_currency_code() );
+		$exponent = self::get_stripe_exponent( $currency );
+
+		if ( 0 === $exponent ) {
+			return self::fromDecimal( (string) $minor_units, $currency );
+		}
+
+		if ( function_exists( 'bcdiv' ) && function_exists( 'bcpow' ) ) {
+			/** @var numeric-string $divisor */
+			$divisor = bcpow( '10', (string) $exponent );
+			/** @var numeric-string $decimal */
+			$decimal = bcdiv( (string) $minor_units, $divisor, $exponent );
+			return self::fromDecimal( $decimal, $currency );
+		}
+
+		$decimal = number_format( $minor_units / ( 10 ** $exponent ), $exponent, '.', '' );
+		return self::fromDecimal( $decimal, $currency );
+	}
+
+	/**
+	 * Format this Money instance as a decimal string compliant with PayPal Orders API v2.
+	 *
+	 * @return string
+	 */
+	public function toPayPalDecimal(): string {
+		$decimals = in_array( strtoupper( $this->currency ), self::PAYPAL_ZERO_DECIMAL, true ) ? 0 : 2;
+		return $this->toDecimal( $decimals );
+	}
+
+	/**
+	 * Format this Money instance as a decimal string compliant with Braintree API & 3DS.
+	 *
+	 * @return string
+	 */
+	public function toBraintreeDecimal(): string {
+		$decimals = in_array( strtoupper( $this->currency ), self::BRAINTREE_ZERO_DECIMAL, true ) ? 0 : 2;
+		return $this->toDecimal( $decimals );
 	}
 
 	/**

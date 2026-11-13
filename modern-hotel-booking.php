@@ -5,7 +5,7 @@
  * Plugin Name:       Modern Hotel Booking — Direct Booking Engine, Availability Calendar & Vacation Rental PMS
  * Plugin URI:        https://modernhotelwp.com/
  * Description:       Hotel booking plugin & availability calendar for vacation rentals, B&Bs & accommodations. Direct booking engine, hotel reservations & guest portal.
- * Version:           3.0.2
+ * Version:           3.0.3
  * Requires at least: 6.6
  * Requires PHP:      8.0
  * Author:            StartMySuccess
@@ -60,7 +60,7 @@ if ( ! extension_loaded( 'bcmath' ) ) {
 	);
 }
 
-define( 'MHBO_VERSION', '3.0.2' );
+define( 'MHBO_VERSION', '3.0.3' );
 define( 'MHBO_IS_PRO', false );
 if ( ! defined( 'MHBO_PRODUCT_TIER' ) ) {
 	define( 'MHBO_PRODUCT_TIER', 'free' );
@@ -190,8 +190,10 @@ function mhbo_run(): void {
 		$plugin = new \MHBO\Core\Plugin();
 		$plugin->run();
 	} catch ( Throwable $e ) {
-		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-		error_log( '[MHBO Boot Error] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString() );
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG && defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( '[MHBO Boot Error] ' . $e->getMessage() . ' in ' . basename( $e->getFile() ) . ':' . $e->getLine() );
+		}
 
 		if ( class_exists( 'MHBO\Core\Capabilities' ) && \MHBO\Core\Capabilities::current_user_can( \MHBO\Core\Capabilities::MANAGE_SETTINGS ) ) {
 			add_action(

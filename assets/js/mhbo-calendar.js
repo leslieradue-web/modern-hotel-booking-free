@@ -175,7 +175,6 @@
 						{
 							method: 'GET',
 							headers: {
-								'X-WP-Nonce': mhbo_calendar.nonce || '',
 								Accept: 'application/json',
 							},
 						}
@@ -392,7 +391,6 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					fetch( mhbo_calendar.rest_url + '?' + params.toString(), {
 						method: 'GET',
 						headers: {
-							'X-WP-Nonce': mhbo_calendar.nonce || '',
 							Accept: 'application/json',
 						},
 					} )
@@ -469,7 +467,6 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					fetch( mhbo_calendar.rest_url + '?' + params.toString(), {
 						method: 'GET',
 						headers: {
-							'X-WP-Nonce': mhbo_calendar.nonce || '',
 							Accept: 'application/json',
 						},
 					} )
@@ -2715,6 +2712,10 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								? mhbo_calendar.booking_url
 								: '' ) ||
 							'' );
+				const autoNonce =
+					( typeof mhbo_calendar !== 'undefined' &&
+						mhbo_calendar.auto_nonce ) ||
+					'';
 				try {
 					const base = window.location.origin;
 					const url =
@@ -2730,10 +2731,6 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					url.searchParams.set( 'total_price', totalPrice );
 					url.searchParams.set( 'mhbo_auto_book', '1' );
 
-					const autoNonce =
-						( typeof mhbo_calendar !== 'undefined' &&
-							mhbo_calendar.auto_nonce ) ||
-						'';
 					if ( autoNonce ) {
 						url.searchParams.set( 'mhbo_nonce', autoNonce );
 					}

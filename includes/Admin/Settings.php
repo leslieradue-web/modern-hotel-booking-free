@@ -30,7 +30,8 @@ class Settings {
      *
      * @param string $hook The current admin page hook.
      */
-    public function enqueue_scripts( string $hook ): void {
+    public function enqueue_scripts( mixed $hook = '' ): void {
+        $hook = is_string( $hook ) ? $hook : '';
         // Only load on settings and pro pages
         if (false === strpos($hook, 'mhbo-settings') && false === strpos($hook, 'mhbo-pro')) {
             return;
@@ -38,9 +39,9 @@ class Settings {
 
         wp_enqueue_script(
             'mhbo-admin-settings',
-            MHBO_PLUGIN_URL . 'assets/js/mhbo-admin-settings.js',
+            \MHBO\Core\Plugin::asset_url('assets/js/mhbo-admin-settings.js'),
             array('wp-api-fetch'),
-            MHBO_VERSION,
+            \MHBO\Core\Plugin::asset_ver('assets/js/mhbo-admin-settings.js'),
             true
         );
 
@@ -155,8 +156,12 @@ class Settings {
             'default'     => 1,
             'description' => __('Open the booking form in a slide-in drawer instead of navigating to a separate booking page.', 'modern-hotel-booking'),
         ));
-
-add_settings_field('mhbo_global_min_stay', I18n::get_label('settings_label_global_min_stay'), array($this, 'render_global_stay_fields'), 'mhbo-settings', 'mhbo_general_section');
+        
+        add_settings_field('mhbo_children_enabled', I18n::get_label('settings_label_children'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
+            'label_for'   => 'mhbo_children_enabled',
+            'description' => I18n::get_label('settings_desc_children'),
+        ));
+        add_settings_field('mhbo_global_min_stay', I18n::get_label('settings_label_global_min_stay'), array($this, 'render_global_stay_fields'), 'mhbo-settings', 'mhbo_general_section');
         
         add_settings_field('mhbo_guest_crm_enabled', __('Enable Guest CRM & Profiles', 'modern-hotel-booking'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
             'label_for'   => 'mhbo_guest_crm_enabled',
@@ -687,6 +692,10 @@ return false;
      * @return void
      */
     public static function render(): void {
+        if ( ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
+            wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ), '', array( 'response' => 403 ) );
+        }
+
         $active_tab   = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab navigation, no state change.
 
         // Restore PRG settings errors from redirect transient if available
@@ -750,7 +759,6 @@ return false;
                     'labels',
                     'amenities',
                     'business',
-                    'webhooks',
                     'general',
                 );
                 $action = in_array($active_tab, $manual_tabs, true) ? '' : 'options.php';
@@ -778,13 +786,24 @@ return false;
 } elseif ('business' === $active_tab) {
                         \MHBO\Business\Info::render_settings_tab();
                     } elseif ('webhooks' === $active_tab) {
-                        self::render_api_tab();
+
+if ( class_exists( Upsell::class ) ) {
+                            Upsell::render_card(
+                                __( 'REST API & Webhooks', 'modern-hotel-booking' ),
+                                __( 'Outgoing webhooks and API automation require Modern Hotel Booking Pro.', 'modern-hotel-booking' )
+                            );
+                        }
+						
                     }
 
                     // Show save button — license tab uses its own dedicated action buttons
                     $show_save = true;
                     
-                    if ($show_save) {
+                    if ('webhooks' === $active_tab) {
+                        $show_save = false;
+                    }
+
+if ($show_save) {
                         echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
                         submit_button();
                     }
@@ -814,6 +833,7 @@ return false;
         $ci_time    = (string) get_option('mhbo_checkin_time', '14:00');
         $co_time    = (string) get_option('mhbo_checkout_time', '11:00');
         
+        $children_en = (int) get_option('mhbo_children_enabled', 0);
         $global_min  = (int) get_option('mhbo_global_min_stay', 0);
         $global_max  = (int) get_option('mhbo_global_max_stay', 0);
 
@@ -1120,7 +1140,20 @@ return false;
                         <p class="mhbo-form-help"><?php echo esc_html(__('Global maximum length of stay across all rooms (0 to disable).', 'modern-hotel-booking')); ?></p>
                     </div>
 
-</div>
+                    <div class="mhbo-form-group mhbo-span-full">
+                        <div class="mhbo-switch-row">
+                            <div class="mhbo-switch-info">
+                                <span class="mhbo-switch-title"><?php echo esc_html(I18n::get_label('settings_label_children')); ?></span>
+                                <p class="mhbo-switch-desc"><?php echo esc_html(I18n::get_label('settings_desc_children')); ?></p>
+                            </div>
+                            <label class="mhbo-toggle-switch">
+                                <input type="hidden" name="mhbo_children_enabled" value="0">
+                                <input type="checkbox" id="mhbo_children_enabled" name="mhbo_children_enabled" value="1" <?php checked(1, $children_en); ?>>
+                                <span class="mhbo-toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
 <!-- Card 4: Booking Flow & Frontend Experience -->
@@ -1624,9 +1657,6 @@ return false;
      *
      * @return void
      */
-    public static function render_license_tab(): void {
-        
-    }
 
 /**
      * Render the Email Delivery Health & Diagnostic Inspector card.
@@ -2582,7 +2612,7 @@ private static function render_labels_tab(): void {
         $nonce_field  = 'mhbo_nonce';
 
 // 2. Security Gatekeeper - Only trigger if this is a plugin-specific save request.
-        if (isset($_POST['mhbo_save_tab']) || isset($_POST['mhbo_save_pro_settings']) || isset($_POST['mhbo_pro_themes_save']) || isset($_POST['submit_save_themes'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified immediately below.
+        if (isset($_POST['mhbo_save_tab']) || isset($_POST['mhbo_save_pro_settings']) || isset($_POST['mhbo_remove_license']) || isset($_POST['mhbo_pro_themes_save']) || isset($_POST['submit_save_themes'])) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified immediately below.
 
             // Find the actual nonce field sent
             $sent_nonce = isset($_POST[ $nonce_field ]) ? sanitize_text_field(wp_unslash($_POST[ $nonce_field ])) : '';
@@ -2729,6 +2759,9 @@ case 'emails':
                     update_option("mhbo_label_{$key}", $encoded);
                 }
             }
+            if ( class_exists( Cache::class ) ) {
+                Cache::bump( Cache::TABLE_SETTINGS );
+            }
         }
 
         add_settings_error('mhbo_settings', 'saved', I18n::get_label('msg_multilingual_saved'), 'success');
@@ -2802,6 +2835,7 @@ if (isset($data['mhbo_trusted_proxies'])) {
             'mhbo_powered_by_link',
             'mhbo_save_data_on_uninstall',
             'mhbo_guest_crm_enabled',
+            'mhbo_children_enabled',
         );
 
 foreach ($bool_fields as $field) {

@@ -513,103 +513,131 @@
 						let fullText = '';
 
 						try {
+							let sseBuffer = '';
+							const processSseLine = ( rawLine ) => {
+								const line = rawLine.trim();
+								if ( ! line.startsWith( 'data: ' ) ) {
+									return false;
+								}
+								const dataStr = line.slice( 6 ).trim();
+								if ( dataStr === '[DONE]' ) {
+									return true;
+								}
+								if ( ! dataStr ) {
+									return false;
+								}
+
+								try {
+									const data = JSON.parse( dataStr );
+
+									// Delta: Typing content.
+									if ( data.delta ) {
+										if ( ! activeBubble ) {
+											activeBubble = this.renderBubble(
+												'assistant',
+												'',
+												true
+											);
+										}
+										fullText += data.delta;
+										this._updateBubble(
+											activeBubble,
+											fullText
+										);
+									}
+
+									// Thought: Progress status.
+									if ( data.type === 'thought' ) {
+										this.showStatusNotification(
+											data.content
+										);
+									}
+
+									// Done: Final metadata.
+									if ( data.done ) {
+										this.hideStatusNotification();
+										if ( this.ttsEnabled && fullText ) {
+											this.speak( fullText );
+										}
+										if ( data.session_id ) {
+											this.sessionId = data.session_id;
+											this.win.sessionStorage.setItem(
+												'mhbo_session_id',
+												this.sessionId
+											);
+										}
+										if (
+											data.suggestions &&
+											data.suggestions.length
+										) {
+											this.addSuggestions(
+												data.suggestions
+											);
+										}
+										if (
+											data.booking_intent &&
+											data.booking_intent.score >= 60
+										) {
+											this._renderBookNowCta(
+												data.booking_intent.score
+											);
+										}
+										if (
+											data.handoff &&
+											Object.keys( data.handoff ).length
+										) {
+											this._storeHandoff( data.handoff );
+											if (
+												/contact|call us|email us|whatsapp|speak with|reach us/.test(
+													fullText.toLowerCase()
+												)
+											) {
+												this._renderHandoffBar();
+											}
+										}
+										if ( data.tool_calls_made ) {
+											data.tool_calls_made.forEach(
+												( tc ) => {
+													if (
+														tc.result &&
+														! tc.result.error
+													) {
+														this._renderToolCard(
+															tc.tool,
+															tc.result
+														);
+													}
+												}
+											);
+										}
+									}
+								} catch ( e ) {
+									console.warn(
+										'Malformed stream chunk:',
+										dataStr
+									);
+								}
+								return false;
+							};
+
 							while ( true ) {
 								const { done, value } = await reader.read();
 								if ( done ) {
+									if ( sseBuffer.trim() ) {
+										processSseLine( sseBuffer );
+									}
 									break;
 								}
 
-								const chunk = decoder.decode( value, {
+								sseBuffer += decoder.decode( value, {
 									stream: true,
 								} );
-								const lines = chunk.split( '\n' );
+								const lines = sseBuffer.split( '\n' );
+								sseBuffer = lines.pop() ?? '';
 
 								for ( const line of lines ) {
-									if ( ! line.startsWith( 'data: ' ) ) {
-										continue;
-									}
-									const dataStr = line
-										.replace( 'data: ', '' )
-										.trim();
-									if ( dataStr === '[DONE]' ) {
+									if ( processSseLine( line ) ) {
 										break;
-									}
-
-									try {
-										const data = JSON.parse( dataStr );
-
-										// Delta: Typing content.
-										if ( data.delta ) {
-											if ( ! activeBubble ) {
-												activeBubble =
-													this.renderBubble(
-														'assistant',
-														'',
-														true
-													);
-											}
-											fullText += data.delta;
-											this._updateBubble(
-												activeBubble,
-												fullText
-											);
-										}
-
-										// Thought: Progress status.
-										if ( data.type === 'thought' ) {
-											this.showStatusNotification(
-												data.content
-											);
-										}
-
-										// Done: Final metadata.
-										if ( data.done ) {
-											this.hideStatusNotification();
-											if ( this.ttsEnabled && fullText ) {
-												this.speak( fullText );
-											}
-											if ( data.session_id ) {
-												this.sessionId =
-													data.session_id;
-												this.win.sessionStorage.setItem(
-													'mhbo_session_id',
-													this.sessionId
-												);
-											}
-											if ( data.suggestions ) {
-												this.addSuggestions(
-													data.suggestions
-												);
-											}
-											if (
-												data.booking_intent &&
-												data.booking_intent.score >= 60
-											) {
-												this.showBookingIntentCta(
-													data.booking_intent
-												);
-											}
-											if ( data.tool_calls_made ) {
-												data.tool_calls_made.forEach(
-													( tc ) => {
-														if (
-															tc.result &&
-															! tc.result.error
-														) {
-															this._renderToolCard(
-																tc.tool,
-																tc.result
-															);
-														}
-													}
-												);
-											}
-										}
-									} catch ( e ) {
-										console.warn(
-											'Malformed stream chunk:',
-											dataStr
-										);
 									}
 								}
 							}
@@ -924,9 +952,17 @@
 			if ( ! url ) {
 				return '';
 			}
-			return String( url )
+			const cleaned = String( url )
 				.replace( /&#038;/g, '&' )
-				.replace( /&amp;/g, '&' );
+				.replace( /&amp;/g, '&' )
+				.trim();
+			if (
+				cleaned.startsWith( '/' ) ||
+				/^https?:\/\//i.test( cleaned )
+			) {
+				return cleaned;
+			}
+			return '';
 		}
 
 		// ── Suggestions ───────────────────────────────────────────────────────
@@ -1259,24 +1295,28 @@
 							: ''
 					}
                     ${
-						data.revolut.revolut_link
+						this._cleanUrl( data.revolut.revolut_link )
 							? `<a href="${ this._esc(
-									data.revolut.revolut_link
-							  ) }" target="_blank" class="mhbo-booking-link-btn" style="margin-top:8px">Pay with Revolut Link</a>`
+									this._cleanUrl( data.revolut.revolut_link )
+							  ) }" target="_blank" rel="noopener noreferrer" class="mhbo-booking-link-btn" style="margin-top:8px">Pay with Revolut Link</a>`
 							: ''
 					}
                 </div>`;
 			}
 
 			// WhatsApp
-			if ( data.whatsapp && data.whatsapp.enabled && data.whatsapp.url ) {
+			if (
+				data.whatsapp &&
+				data.whatsapp.enabled &&
+				this._cleanUrl( data.whatsapp.url )
+			) {
 				html += `
                 <div class="mhbo-biz-section">
                     <div class="mhbo-biz-section-title">💬 WhatsApp</div>
                     <a href="${ this._esc(
-						data.whatsapp.url
-					) }" target="_blank" class="mhbo-handoff-btn mhbo-handoff-btn--whatsapp" style="width:100%; justify-content:center">
-                        ${ s.chatOnWhatsapp || 'Chat on WhatsApp' }
+						this._cleanUrl( data.whatsapp.url )
+					) }" target="_blank" rel="noopener noreferrer" class="mhbo-handoff-btn mhbo-handoff-btn--whatsapp" style="width:100%; justify-content:center">
+                        ${ this._esc( s.chatOnWhatsapp || 'Chat on WhatsApp' ) }
                     </a>
                 </div>`;
 			}
@@ -1286,22 +1326,28 @@
 		}
 
 		_buildBookingSummaryHtml( data ) {
-			const formattedDates = `${ data.check_in } — ${ data.check_out }`;
+			const formattedDates = `${ this._esc(
+				data.check_in || ''
+			) } — ${ this._esc( data.check_out || '' ) }`;
 			const depositMsg =
 				data.deposit && data.deposit.required
-					? `${ s.depositLabel || 'Deposit required' }: ${
-							data.deposit.label
-					  }`
-					: s.noDeposit || 'No immediate deposit required';
+					? `${ this._esc(
+							s.depositLabel || 'Deposit required'
+					  ) }: ${ this._esc( data.deposit.label || '' ) }`
+					: this._esc(
+							s.noDeposit || 'No immediate deposit required'
+					  );
 			const roomLabel = data.room_number
 				? `${ this._esc( data.room_name ) } · Room ${ this._esc(
 						data.room_number
 				  ) }`
 				: this._esc( data.room_name );
 			const guestLine =
-				data.children > 0
-					? `${ data.adults } adults, ${ data.children } children`
-					: `${ data.adults } adults`;
+				parseInt( data.children || 0, 10 ) > 0
+					? `${ this._esc( data.adults || 0 ) } adults, ${ this._esc(
+							data.children || 0
+					  ) } children`
+					: `${ this._esc( data.adults || 0 ) } adults`;
 
 			const multiBadgeHtml = data.multi_room_label
 				? `<div style="font-size:11px; font-weight:600; color:var(--mhbo-color-primary, #005f73); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">🏨 ${ this._esc(
@@ -1309,11 +1355,12 @@
 				  ) }</div>`
 				: '';
 
-			const summaryBookingUrl = this._cleanUrl(
-				data.booking_url ||
-					this.win.mhboChat?.settings?.bookingUrl ||
-					''
-			);
+			const summaryBookingUrl =
+				this._cleanUrl(
+					data.booking_url ||
+						this.win.mhboChat?.settings?.bookingUrl ||
+						''
+				) || '#';
 
 			return `
             <div class="mhbo-booking-summary">
@@ -1326,24 +1373,26 @@
                     <div class="mhbo-chat-avatar" style="font-size:16px">🗓️</div>
                 </div>
                 <div class="mhbo-booking-summary-grid">
-                    <div class="mhbo-summary-item"><label>Stay</label><span>${
-						data.nights
-					} nights</span></div>
+                    <div class="mhbo-summary-item"><label>Stay</label><span>${ this._esc(
+						data.nights || 0
+					) } nights</span></div>
                     <div class="mhbo-summary-item"><label>Guests</label><span>${ guestLine }</span></div>
-                    <div class="mhbo-summary-item"><label>Total</label><span>${
-						data.price_formatted
-					}</span></div>
+                    <div class="mhbo-summary-item"><label>Total</label><span>${ this._esc(
+						data.price_formatted || ''
+					) }</span></div>
                     <div class="mhbo-summary-item"><label>Payment</label><span>${ depositMsg }</span></div>
                 </div>
                 <div class="mhbo-booking-summary-footer">
-                    <a href="${ summaryBookingUrl }"
+                    <a href="${ this._esc( summaryBookingUrl ) }"
                        class="mhbo-booking-link-btn mhbo-complete-booking-btn"
-                       data-room-id="${ data.room_id || '' }"
+                       data-room-id="${ this._esc( data.room_id || '' ) }"
                        data-check-in="${ this._esc( data.check_in || '' ) }"
                        data-check-out="${ this._esc( data.check_out || '' ) }"
-                       data-guests="${ data.adults || 2 }"
-                       data-children="${ data.children || 0 }"
-                       data-total-price="${ data.total_price || '0' }"
+                       data-guests="${ this._esc( data.adults || 2 ) }"
+                       data-children="${ this._esc( data.children || 0 ) }"
+                       data-total-price="${ this._esc(
+							data.total_price || '0'
+						) }"
                        data-guest-name="${ this._esc( data.guest_name || '' ) }"
                        data-guest-email="${ this._esc(
 							data.guest_email || ''
@@ -1353,7 +1402,9 @@
 						) }"
                        target="_blank"
                        rel="noopener noreferrer">
-                        ${ s.completeBooking || 'Complete Booking' }
+                        ${ this._esc(
+							s.completeBooking || 'Complete Booking'
+						) }
                     </a>
                     ${
 						data.payment_methods
@@ -1484,22 +1535,32 @@
                         </div>
                     </div>`;
 				} else {
-					const rawBookingUrl = this._cleanUrl(
-						room.booking_url ||
-							this.win.mhboChat?.settings?.bookingUrl ||
-							''
-					);
+					const rawBookingUrl =
+						this._cleanUrl(
+							room.booking_url ||
+								this.win.mhboChat?.settings?.bookingUrl ||
+								''
+						) || '#';
+					const safeBookingUrl = this._esc( rawBookingUrl );
+					const safeCheckIn = this._esc( checkIn );
+					const safeCheckOut = this._esc( checkOut );
+					const safeRoomId = this._esc( roomId );
+					const safeTotalGuests = this._esc( totalGuests );
+					const safeTotalChildren = this._esc( totalChildren );
+					const safeRoomTotal = this._esc( room.total_price || 0 );
 					const cardThumbHtml = thumbUrl
-						? `<a href="${ rawBookingUrl }" target="_blank" rel="noopener noreferrer" class="mhbo-room-thumb-link mhbo-complete-booking-btn" data-room-id="${ roomId }" data-check-in="${ checkIn }" data-check-out="${ checkOut }" data-guests="${ totalGuests }" data-children="${ totalChildren }" data-total-price="${ room.total_price || 0 }"><div class="mhbo-room-thumb-wrap"><img class="mhbo-room-thumb" src="${ this._esc(
+						? `<a href="${ safeBookingUrl }" target="_blank" rel="noopener noreferrer" class="mhbo-room-thumb-link mhbo-complete-booking-btn" data-room-id="${ safeRoomId }" data-check-in="${ safeCheckIn }" data-check-out="${ safeCheckOut }" data-guests="${ safeTotalGuests }" data-children="${ safeTotalChildren }" data-total-price="${ safeRoomTotal }"><div class="mhbo-room-thumb-wrap"><img class="mhbo-room-thumb" src="${ this._esc(
 								thumbUrl
 						  ) }" alt="${ this._esc(
 								room.room_name
 						  ) }" loading="lazy"></div></a>`
 						: '';
 
-					const btnLabel = isMulti
-						? s.viewOptions || 'View Options'
-						: s.bookNow || 'Book Now';
+					const btnLabel = this._esc(
+						isMulti
+							? s.viewOptions || 'View Options'
+							: s.bookNow || 'Book Now'
+					);
 					html += `
                     <div class="mhbo-room-avail-card${
 						isMulti ? ' mhbo-room-avail-card--multi' : ''
@@ -1507,7 +1568,7 @@
                         ${ cardThumbHtml }
                         <div class="mhbo-room-avail-body">
                             <div class="mhbo-room-avail-name-row">
-                                <a href="${ rawBookingUrl }" target="_blank" rel="noopener noreferrer" class="mhbo-room-avail-name-link mhbo-complete-booking-btn" data-room-id="${ roomId }" data-check-in="${ checkIn }" data-check-out="${ checkOut }" data-guests="${ totalGuests }" data-children="${ totalChildren }" data-total-price="${ room.total_price || 0 }"><span class="mhbo-room-avail-name">${ this._esc(
+                                <a href="${ safeBookingUrl }" target="_blank" rel="noopener noreferrer" class="mhbo-room-avail-name-link mhbo-complete-booking-btn" data-room-id="${ safeRoomId }" data-check-in="${ safeCheckIn }" data-check-out="${ safeCheckOut }" data-guests="${ safeTotalGuests }" data-children="${ safeTotalChildren }" data-total-price="${ safeRoomTotal }"><span class="mhbo-room-avail-name">${ this._esc(
 									room.room_name
 								) }</span></a>
                                 <div class="mhbo-room-badges">${ multiBadge }${ scarcityBadge }</div>
@@ -1515,14 +1576,14 @@
                             ${ capHtml }
                             ${ priceHtml }
                         </div>
-                        <a href="${ rawBookingUrl }"
+                        <a href="${ safeBookingUrl }"
                            class="mhbo-booking-link-btn mhbo-complete-booking-btn"
-                           data-room-id="${ roomId }"
-                           data-check-in="${ checkIn }"
-                           data-check-out="${ checkOut }"
-                           data-guests="${ totalGuests }"
-                           data-children="${ totalChildren }"
-                           data-total-price="${ room.total_price || 0 }"
+                           data-room-id="${ safeRoomId }"
+                           data-check-in="${ safeCheckIn }"
+                           data-check-out="${ safeCheckOut }"
+                           data-guests="${ safeTotalGuests }"
+                           data-children="${ safeTotalChildren }"
+                           data-total-price="${ safeRoomTotal }"
                            target="_blank"
                            rel="noopener noreferrer">
                             ${ btnLabel }
@@ -1540,23 +1601,33 @@
 			card.querySelectorAll( '.mhbo-copyable' ).forEach( ( el ) => {
 				el.addEventListener( 'click', () => {
 					const text = el.textContent;
-					navigator.clipboard.writeText( text ).then( () => {
-						const hint = el.nextElementSibling;
-						if (
-							hint &&
-							hint.classList.contains( 'mhbo-copy-hint' )
-						) {
-							const oldText = hint.textContent;
-							hint.textContent = s.copied || 'Copied!';
-							hint.style.opacity = '1';
-							el.style.background = 'rgba(46, 125, 50, 0.1)';
-							setTimeout( () => {
-								hint.textContent = oldText;
-								hint.style.opacity = '';
-								el.style.background = '';
-							}, 2000 );
-						}
-					} );
+					if (
+						! navigator.clipboard ||
+						typeof navigator.clipboard.writeText !== 'function'
+					) {
+						return;
+					}
+					navigator.clipboard
+						.writeText( text )
+						.then( () => {
+							const hint = el.nextElementSibling;
+							if (
+								hint &&
+								hint.classList.contains( 'mhbo-copy-hint' )
+							) {
+								const oldText = hint.textContent;
+								hint.textContent = s.copied || 'Copied!';
+								hint.style.opacity = '1';
+								el.style.background =
+									'rgba(46, 125, 50, 0.1)';
+								setTimeout( () => {
+									hint.textContent = oldText;
+									hint.style.opacity = '';
+									el.style.background = '';
+								}, 2000 );
+							}
+						} )
+						.catch( () => {} );
 				} );
 			} );
 

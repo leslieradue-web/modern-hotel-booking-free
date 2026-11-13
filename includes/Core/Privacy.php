@@ -329,14 +329,15 @@ class Privacy {
 }
 
 		// Find bookings to anonymize
+		// Always fetch from offset 0 since matched rows are anonymized immediately and drop out of subsequent batches.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom tables, direct lookup
 		$bookings = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT id FROM {$wpdb->prefix}mhbo_bookings 
              WHERE customer_email = %s 
-             LIMIT %d, %d",
+             ORDER BY id ASC
+             LIMIT %d",
 				$email_address,
-				( $page - 1 ) * $number,
 				$number
 			)
 		);

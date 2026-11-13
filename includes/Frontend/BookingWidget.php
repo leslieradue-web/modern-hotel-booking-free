@@ -34,7 +34,11 @@ class BookingWidget extends \WP_Widget {
 	 * to ensure the datepicker works on pages without the main shortcode.
 	 */
 	public function enqueue_widget_assets(): void {
-		// Only load if this widget is active in any sidebar
+		if ( is_admin() || is_feed() || is_trackback() || is_attachment() || is_embed() || is_404() ) {
+			return;
+		}
+
+		// Only load if this widget is active in any sidebar.
 		if ( ! is_active_widget( false, false, self::ID_BASE, true ) ) {
 			return;
 		}
