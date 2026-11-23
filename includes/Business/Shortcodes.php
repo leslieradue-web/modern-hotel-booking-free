@@ -17,14 +17,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 class Shortcodes {
 
 	/** @var self|null */
 	private static ?self $instance = null;
+
+	/**
+	 * Tracks whether a floating WhatsApp button has already been output during the request
+	 * so the wp_footer hook does not duplicate an inline floating shortcode/block.
+	 *
+	 * @var bool
+	 */
+	private static bool $floating_rendered = false;
 
 	/**
 	 * Allowed SVG tags and attributes for wp_kses().
@@ -69,6 +73,7 @@ class Shortcodes {
 
 		if ( function_exists( 'add_action' ) ) {
 			add_action( 'wp_enqueue_scripts', array( $this, 'register_frontend_assets' ) );
+			add_action( 'wp_footer', array( $this, 'maybe_render_floating_whatsapp' ), 20 );
 		}
 	}
 
@@ -93,6 +98,17 @@ class Shortcodes {
 				'in_footer' => true,
 			)
 		);
+
+		// Pre-enqueue when the site-wide WhatsApp floating button is enabled.
+		$wa = Info::get_whatsapp();
+		if (
+			! empty( $wa['enabled'] )
+			&& '' !== trim( (string) ( $wa['phone_number'] ?? '' ) )
+			&& 'link' !== (string) ( $wa['display_style'] ?? 'floating' )
+		) {
+			self::enqueue_frontend_assets();
+			return;
+		}
 
 		// If a singular page explicitly contains any of our shortcodes, pre-enqueue during wp_enqueue_scripts.
 		if ( is_singular() ) {
@@ -173,6 +189,11 @@ class Shortcodes {
 		);
 
 		$data = Info::get_company();
+		if ( class_exists( '\MHBO\Core\I18n' ) ) {
+			foreach ( array( 'company_name', 'address_line_1', 'address_line_2', 'city', 'state', 'country', 'contact_name' ) as $t_key ) {
+				$data[ $t_key ] = (string) ( \MHBO\Core\I18n::decode( (string) ( $data[ $t_key ] ?? '' ) ) ?? '' );
+			}
+		}
 		if ( '' === (string) ( $data['company_name'] ?? '' ) && '' === (string) ( $data['logo_url'] ?? '' ) ) {
 			return '';
 		}
@@ -261,11 +282,23 @@ class Shortcodes {
 
 		$msg_text = is_scalar( $atts['message'] ?? null ) ? (string) $atts['message'] : '';
 		$btn_text = is_scalar( $atts['text'] ?? null ) ? (string) $atts['text'] : '';
-		$style    = is_scalar( $atts['style'] ?? null ) ? sanitize_html_class( (string) $atts['style'], 'button' ) : 'button';
+		if ( class_exists( '\MHBO\Core\I18n' ) ) {
+			$msg_text = (string) ( \MHBO\Core\I18n::decode( $msg_text ) ?? $msg_text );
+			$btn_text = (string) ( \MHBO\Core\I18n::decode( $btn_text ) ?? $btn_text );
+		}
+		if ( '' === trim( $btn_text ) ) {
+			$btn_text = __( 'Chat on WhatsApp', 'modern-hotel-booking' );
+		}
+		$style = is_scalar( $atts['style'] ?? null ) ? sanitize_html_class( (string) $atts['style'], 'button' ) : 'button';
 
-		$wa_url = 'https://wa.me/' . preg_replace( '/[^\d]/', '', (string) ( $data['phone_number'] ?? '' ) );
+		$clean_phone = (string) preg_replace( '/[^\d]/', '', (string) ( $data['phone_number'] ?? '' ) );
+		if ( '' === $clean_phone ) {
+			return '';
+		}
+
+		$wa_url = 'https://wa.me/' . $clean_phone;
 		if ( '' !== $msg_text ) {
-			$wa_url = add_query_arg( 'text', rawurlencode( $msg_text ), $wa_url );
+			$wa_url .= '?text=' . rawurlencode( $msg_text );
 		}
 
 		self::enqueue_frontend_assets();
@@ -273,17 +306,53 @@ class Shortcodes {
 		ob_start();
 		$class = 'mhbo-whatsapp-link mhbo-wa-' . $style;
 		if ( 'floating' === $style ) {
-			$class .= ' mhbo-wa-pos-' . sanitize_html_class( (string) ( $data['position'] ?? 'right' ), 'right' );
+			self::$floating_rendered = true;
+			$raw_pos                 = (string) ( $data['position'] ?? 'bottom-right' );
+			if ( 'left' === $raw_pos ) {
+				$raw_pos = 'bottom-left';
+			} elseif ( 'right' === $raw_pos || ! in_array( $raw_pos, array( 'bottom-right', 'bottom-left', 'top-right', 'top-left' ), true ) ) {
+				$raw_pos = 'bottom-right';
+			}
+			$class .= ' mhbo-wa-pos-' . sanitize_html_class( $raw_pos, 'bottom-right' );
 		}
 
 		$svg = '<svg viewBox="0 0 448 512" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.7 17.8 69.4 27.2 106.2 27.2 122.4 0 222-99.6 222-222 0-59.3-23-115.1-65-157.1zM223.9 446.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54 130.5 0 101.7-82.8 184.5-184.6 184.5zm101.3-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-38.1-3.2-5.6-.3-8.6 2.4-11.3 2.5-2.4 5.5-6.5 8.3-9.7 2.8-3.3 3.7-5.6 5.6-9.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.5 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>';
 		?>
-		<a href="<?php echo esc_url( $wa_url ); ?>" class="<?php echo esc_attr( $class ); ?>" target="_blank" rel="noopener">
+		<a href="<?php echo esc_url( $wa_url ); ?>" class="<?php echo esc_attr( $class ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( $btn_text ); ?>">
 			<?php echo wp_kses( $svg, self::ALLOWED_SVG ); ?>
 			<span><?php echo esc_html( $btn_text ); ?></span>
 		</a>
 		<?php
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Reset floating render guard between unit tests.
+	 */
+	public static function reset_floating_state(): void {
+		self::$floating_rendered = false;
+	}
+
+	/**
+	 * Render the site-wide floating WhatsApp button in wp_footer when enabled in Business Settings.
+	 */
+	public function maybe_render_floating_whatsapp(): void {
+		if ( self::$floating_rendered || is_admin() || is_feed() || is_trackback() || is_embed() ) {
+			return;
+		}
+
+		$data = Info::get_whatsapp();
+		if ( ! (bool) ( $data['enabled'] ?? false ) || '' === trim( (string) ( $data['phone_number'] ?? '' ) ) ) {
+			return;
+		}
+
+		$style = (string) ( $data['display_style'] ?? 'floating' );
+		if ( 'link' === $style ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped inside render_whatsapp().
+		echo $this->render_whatsapp( array( 'style' => 'floating' ) );
 	}
 
 	/**
@@ -294,6 +363,11 @@ class Shortcodes {
 	 */
 	public function render_banking( $atts ): string {
 		$data = Info::get_banking();
+		if ( class_exists( '\MHBO\Core\I18n' ) ) {
+			foreach ( array( 'bank_name', 'account_name', 'branch_address', 'instructions' ) as $t_key ) {
+				$data[ $t_key ] = (string) ( \MHBO\Core\I18n::decode( (string) ( $data[ $t_key ] ?? '' ) ) ?? '' );
+			}
+		}
 		if ( ! (bool) ( $data['enabled'] ?? false ) || '' === (string) ( $data['iban'] ?? '' ) ) {
 			return '';
 		}
@@ -374,6 +448,11 @@ class Shortcodes {
 	 */
 	public function render_revolut( $atts ): string {
 		$data = Info::get_revolut();
+		if ( class_exists( '\MHBO\Core\I18n' ) ) {
+			foreach ( array( 'revolut_name', 'instructions' ) as $t_key ) {
+				$data[ $t_key ] = (string) ( \MHBO\Core\I18n::decode( (string) ( $data[ $t_key ] ?? '' ) ) ?? '' );
+			}
+		}
 		if ( ! (bool) ( $data['enabled'] ?? false ) || ( '' === (string) ( $data['revolut_tag'] ?? '' ) && '' === (string) ( $data['revolut_iban'] ?? '' ) ) ) {
 			return '';
 		}

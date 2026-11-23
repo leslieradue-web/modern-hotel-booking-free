@@ -4,7 +4,7 @@ Donate link: https://modernhotelwp.com/
 Tags: hotel booking, vacation rental, booking engine, bed and breakfast, accommodation
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 3.0.3
+Stable tag: 3.0.4
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -200,23 +200,23 @@ Modern Hotel Booking Free is complete and never expires. For advanced operations
 
 Modern Hotel Booking is self-hosted. By default, **no guest booking data is sent to external servers unless you enable one of these optional integrations**:
 
-1. **Google Fonts (`fonts.googleapis.com` / `fonts.gstatic.com` — Free, Starter, Pro)**: Loads *Inter* and *Outfit* typefaces via standard browser requests (no cookies or form data transmitted). [Google Fonts FAQ](https://developers.google.com/fonts/faq/privacy) | [Google Privacy](https://policies.google.com/privacy).
-2. **WhatsApp Click-to-Chat (Optional — Free, Starter, Pro)**: Opens a pre-filled summary in WhatsApp (`wa.me`) only when clicked by the guest. [WhatsApp Privacy](https://www.whatsapp.com/legal/privacy-policy).
-3. **Revolut Pay (Optional — Free, Starter, Pro)**: Redirects guests to your configured Revolut payment link or QR code at checkout. [Revolut Privacy](https://www.revolut.com/legal/privacy/).
-4. **AI Concierge (Optional — Free, Starter, Pro; Disabled by Default)**: Transmits guest inquiries only when configured by the admin (Google Gemini, OpenAI, Anthropic, OpenRouter, or ElevenLabs in Pro). [Gemini Privacy](https://policies.google.com/privacy) | [OpenAI Privacy](https://openai.com/policies/privacy-policy).
-5. **Online Payments (Optional — Starter & Pro Only)**: Processes card payments via Stripe, PayPal, or Braintree directly tokenized by gateway libraries. [Stripe Privacy](https://stripe.com/privacy) | [PayPal Privacy](https://www.paypal.com/privacy).
-6. **External iCal Feeds (Optional — Pro Only)**: Fetches external `.ics` calendar feeds configured by the admin to sync room availability.
-7. **License Verification (Starter & Pro Only)**: Validates licenses and checks updates via [modernhotelwp.com](https://modernhotelwp.com/) in commercial releases only. [Privacy Policy](https://modernhotelwp.com/privacy-policy/).
+1. **WhatsApp Click-to-Chat (Optional — Free, Starter, Pro)**: Opens a pre-filled summary in WhatsApp (`wa.me`) only when clicked by the guest. [WhatsApp Privacy](https://www.whatsapp.com/legal/privacy-policy).
+2. **Revolut Pay (Optional — Free, Starter, Pro)**: Redirects guests to your configured Revolut payment link or QR code at checkout. [Revolut Privacy](https://www.revolut.com/legal/privacy/).
+3. **AI Concierge (Optional — Free, Starter, Pro; Disabled by Default)**: Transmits guest inquiries only when configured by the admin (Google Gemini, OpenAI, Anthropic, OpenRouter, or ElevenLabs in Pro). [Gemini Privacy](https://policies.google.com/privacy) | [OpenAI Privacy](https://openai.com/policies/privacy-policy).
+4. **Online Payments (Optional — Starter & Pro Only)**: Processes card payments via Stripe, PayPal, or Braintree directly tokenized by gateway libraries. [Stripe Privacy](https://stripe.com/privacy) | [PayPal Privacy](https://www.paypal.com/privacy).
+5. **External iCal Feeds (Optional — Pro Only)**: Fetches external `.ics` calendar feeds configured by the admin to sync room availability.
+6. **License Verification (Starter & Pro Only)**: Validates licenses and checks updates via [modernhotelwp.com](https://modernhotelwp.com/) in commercial releases only. [Privacy Policy](https://modernhotelwp.com/privacy-policy/).
 
 ---
 
-### Third-Party Software Credits
+### Third-Party Software & Typography Credits
 
-The following open-source JavaScript libraries are bundled locally in the plugin:
+The following open-source libraries and self-hosted fonts are bundled locally in the plugin:
 
 * **Flatpickr v4.6.13** — MIT License — [Flatpickr Documentation](https://flatpickr.js.org)
 * **FullCalendar v7.1.5** — MIT License — [FullCalendar Documentation](https://fullcalendar.io)
 * **Chart.js v4.6.1** — MIT License — [Chart.js Documentation](https://www.chartjs.org)
+* **Inter & Outfit Variable Fonts (`assets/fonts/`)** — SIL Open Font License 1.1 (`OFL-1.1`) — Bundled locally with zero external Google Fonts requests.
 
 == Installation ==
 
@@ -390,7 +390,17 @@ All booking and guest data is stored locally in your WordPress database. The plu
 
 == Changelog ==
 
+= 3.0.4 =
+* **Performance**: Rebuilt the Guest CRM DataViews admin interface (`build/admin/dataviews.js`) on native WordPress Core components (`wp-element` and `wp-components`), eliminating bundled duplicate component/UI frameworks (~98% JS bundle reduction) and removing Webpack bundle-size warnings across WordPress 6.6–7.1.
+* **Performance**: Code-split heavy Guest CRM dialogs (Guest Profile Dossier and VIP Coupons, Suggested Merges, and GDPR Erasure modals) into on-demand async chunks with error-boundary recovery and strict Free/Starter/Pro tier isolation.
+* **Architecture**: Decomposed 4 monolithic admin, core, and frontend classes (`Email`, `Shortcode`, `Settings`, `Menu`) into 18 focused PSR-4 services/controllers, pruned 148 unused CSS selectors, and reduced redundant `!important` specificity rules across stylesheets.
+* **Improved**: Removed duplicate `@wordpress/components` CSS from `style-dataviews.css` (~84% smaller stylesheet) and enabled native WordPress RTL stylesheet replacement (`rtl: replace`).
+* **Financial**: Enforced historical booking tax snapshot immutability, per-booking variable tax rate locks (with quick apply/restore controls in the booking editor), multi-room group itinerary/invoice/CRM ledger reconciliation, and USALI revenue parity across WordPress Dashboard widgets, analytics reports, and the AI Concierge.
+* **Security & Roles**: Hardened least-privilege hospitality RBAC boundaries (Administrator-only per-booking tax overrides; Manager-only manual price, discount, deposit, and folio refund controls; strict payment-processing permission enforcement; capability-gated Dashboard widgets) and strict Free/Starter/Pro tier feature gating.
+* **Fix**: Synchronized the Guest CRM pagination footer summary and page counts with active DataViews column/VIP filters.
+
 = 3.0.3 =
+* **AI Concierge**: Added Gemini 4 (`Neon`, `Hydrogen`, `Carbon`, `Argon`), Claude 5.5, and GPT-6.1 presets, Extra High (`XHigh`) reasoning budget support, and multi-turn session history self-healing.
 * **Security**: Hardened SSRF URL and IP validation on external HTTP requests and webhook endpoints.
 * **Privacy**: Bundled self-hosted GDPR-compliant typography assets locally with zero external font requests.
 * **Performance**: Added minified CSS (`cssnano`) and JavaScript (`terser`) asset delivery with dynamic `.min` resolution.
@@ -406,6 +416,9 @@ All booking and guest data is stored locally in your WordPress database. The plu
 * **Improved**: Upgraded FullCalendar engine to v7.1.4 with scoped `mhbo-` asset handles.
 
 == Upgrade Notice ==
+
+= 3.0.4 =
+Major v3.0.4 release: ~98% smaller Guest CRM DataViews assets, modular PSR-4 refactor, USALI folio/analytics/AI pricing parity, per-booking variable tax locks, and least-privilege hospitality role boundaries.
 
 = 3.0.3 =
 GDPR self-hosted fonts, minified asset delivery, third-party jQuery compatibility, and security hardening release. Recommended for all users.

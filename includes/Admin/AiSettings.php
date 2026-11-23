@@ -25,6 +25,7 @@ use MHBO\AI\ModelCatalog;
 use MHBO\Core\Cache;
 use MHBO\Core\License;
 use MHBO\Core\I18n;
+use MHBO\Core\Security;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -35,8 +36,8 @@ class AiSettings {
 	public const SECRET_SENTINEL  = 'REDACTED';
 
 	/**
-	 * Preserve an existing secret option when the masked placeholder sentinel is submitted,
-	 * sanitize new key submissions, or clear the option when empty string is posted.
+	 * Preserve an existing secret option when the masked sentinel is submitted,
+	 * sanitize and encrypt new key submissions, or clear the option when empty string is posted.
 	 *
 	 * @param string $option Option name.
 	 * @param mixed  $value  Submitted value.
@@ -47,7 +48,87 @@ class AiSettings {
 		if ( self::SECRET_SENTINEL === $val ) {
 			return (string) get_option( $option, '' );
 		}
-		return $val;
+		if ( '' === $val ) {
+			return '';
+		}
+		if ( Security::is_encrypted_secret( $val ) ) {
+			return $val;
+		}
+		return Security::encrypt_secret( $val, 'mhbo_ai_salt' );
+	}
+
+	/**
+	 * Sanitize a geographic coordinate (latitude/longitude) bounded by min..max.
+	 */
+	public static function sanitize_coordinate( mixed $value, float $min, float $max ): string {
+		$raw = is_scalar( $value ) ? trim( str_replace( ',', '.', (string) $value ) ) : '';
+		if ( '' === $raw || ! is_numeric( $raw ) ) {
+			return '';
+		}
+		$num = (float) $raw;
+		if ( $num < $min || $num > $max ) {
+			return '';
+		}
+		return (string) round( $num, 6 );
+	}
+
+	/**
+	 * Sanitize AI chat widget position ('bottom-right' or 'bottom-left').
+	 */
+	public static function sanitize_widget_position( mixed $value ): string {
+		$pos = sanitize_key( is_scalar( $value ) ? (string) $value : '' );
+		return 'bottom-left' === $pos ? 'bottom-left' : 'bottom-right';
+	}
+
+	/**
+	 * Sanitize AI reasoning effort level.
+	 */
+	public static function sanitize_reasoning_effort( mixed $value ): string {
+		$effort = sanitize_key( is_scalar( $value ) ? (string) $value : '' );
+		return in_array( $effort, array( 'none', 'low', 'medium', 'high', 'xhigh' ), true ) ? $effort : 'none';
+	}
+
+	/**
+	 * Sanitize RAG context budget (1000..10000 characters).
+	 */
+	public static function sanitize_context_budget( mixed $value ): int {
+		return max( 1000, min( 10000, absint( $value ) ) );
+	}
+
+	/**
+	 * Sanitize Google Hotel Feed lookahead days (30, 60, 90, or 180).
+	 */
+	public static function sanitize_feed_days( mixed $value ): int {
+		$days = absint( $value );
+		return in_array( $days, array( 30, 60, 90, 180 ), true ) ? $days : 90;
+	}
+
+	/**
+	 * Sanitize boolean-like checkbox option as integer 0 or 1.
+	 */
+	public static function sanitize_bool_int( mixed $value ): int {
+		return ! empty( $value ) ? 1 : 0;
+	}
+
+	/**
+	 * Sanitize an outbound URL option for settings registration.
+	 * Loopback URLs are only permitted for Ollama custom endpoint options.
+	 */
+	public static function sanitize_url_option( string $option, mixed $value ): string {
+		$raw       = is_scalar( $value ) ? trim( (string) $value ) : '';
+		$clean_url = '' === $raw ? '' : esc_url_raw( $raw, array( 'http', 'https' ) );
+		if ( '' === $clean_url ) {
+			return '';
+		}
+		if ( 'mhbo_ai_custom_url' === $option || 'mhbo_ai_fallback_custom_url' === $option ) {
+			$provider_opt = ( 'mhbo_ai_fallback_custom_url' === $option ) ? 'mhbo_ai_fallback_provider' : 'mhbo_ai_provider';
+			$provider     = (string) get_option( $provider_opt, '' );
+			if ( Security::is_safe_url( $clean_url ) || ( 'ollama' === $provider && Security::is_loopback_url( $clean_url ) ) ) {
+				return $clean_url;
+			}
+			return (string) get_option( $option, '' );
+		}
+		return Security::is_safe_url( $clean_url ) ? $clean_url : (string) get_option( $option, '' );
 	}
 	// -------------------------------------------------------------------------
 	// Registration
@@ -57,10 +138,43 @@ class AiSettings {
 	 * Register hooks. Called from the AI Loader.
 	 */
 	public static function register(): void {
+		add_action( 'admin_init', array( Security::class, 'maybe_migrate_legacy_secrets' ), 5 );
 		add_action( 'admin_init', array( self::class, 'register_settings' ) );
+		add_action( 'admin_init', array( self::class, 'maybe_handle_save' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue_assets' ) );
 		add_action( 'rest_api_init', array( self::class, 'register_rest_routes' ) );
 		
+	}
+
+	/**
+	 * Handle AI Settings form submissions cleanly before HTTP headers are sent (PRG pattern).
+	 */
+	public static function maybe_handle_save(): void {
+		if ( ! is_admin() || ! isset( $_POST['mhbo_ai_save'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified immediately below via check_admin_referer().
+			return;
+		}
+		if ( ! self::check_rest_permission() ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'modern-hotel-booking' ), '', array( 'response' => 403 ) );
+		}
+		\check_admin_referer( self::NONCE_SAVE, 'mhbo_ai_nonce' );
+		self::handle_save();
+
+		if ( ! defined( 'MHBO_TESTING' ) && ! defined( 'DOING_PHPUNIT' ) ) {
+			$tab = isset( $_POST['active_tab'] ) ? sanitize_key( wp_unslash( $_POST['active_tab'] ) ) : 'general';
+			if ( '' === $tab ) {
+				$tab = 'general';
+			}
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page' => 'mhbo-ai-concierge',
+						'tab'  => $tab,
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
 	}
 
 	/**
@@ -148,6 +262,15 @@ class AiSettings {
 				'permission_callback' => array( self::class, 'check_rest_permission' ),
 			) 
 		);
+		register_rest_route(
+			'mhbo/v1',
+			'/ai/health-status',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( self::class, 'rest_health_status' ),
+				'permission_callback' => array( self::class, 'check_rest_permission' ),
+			) 
+		);
 	}
 
 	/**
@@ -167,45 +290,163 @@ class AiSettings {
 	}
 
 	/**
-	 * REST Callback: Test Connection.
+	 * Build ephemeral option overrides from a diagnostic REST request so admins
+	 * can verify unsaved dropdown/input selections before clicking Save.
+	 *
+	 * @param WP_REST_Request $request      Incoming REST request.
+	 * @param bool            $use_fallback Whether probing the secondary fallback connection.
+	 * @return array<string, string>
 	 */
-	public static function rest_test_connection( WP_REST_Request $request ): WP_REST_Response {
+	private static function extract_probe_overrides( WP_REST_Request $request, bool $use_fallback ): array {
+		$prefix    = $use_fallback ? 'mhbo_ai_fallback_' : 'mhbo_ai_';
+		$overrides = array();
+
+		$provider_param = $request->get_param( 'provider' );
+		$provider       = '';
+		if ( is_string( $provider_param ) ) {
+			$provider                          = sanitize_key( $provider_param );
+			$overrides[ $prefix . 'provider' ] = $provider;
+		}
+
+		$model_param = $request->get_param( 'model' );
+		if ( is_string( $model_param ) ) {
+			$model = sanitize_text_field( trim( $model_param ) );
+			if ( '' !== $model && 'custom' !== $model ) {
+				$overrides[ $prefix . 'model' ] = $model;
+			}
+		}
+
+		$key_param = $request->get_param( 'api_key' );
+		if ( is_string( $key_param ) ) {
+			$raw_key        = sanitize_text_field( trim( $key_param ) );
+			$saved_provider = (string) get_option( $prefix . 'provider', '' );
+			if ( '' === $raw_key || self::SECRET_SENTINEL === $raw_key ) {
+				if ( '' !== $provider && $provider !== $saved_provider ) {
+					$overrides[ $prefix . 'api_key' ] = '';
+				}
+			} else {
+				$overrides[ $prefix . 'api_key' ] = $raw_key;
+			}
+		}
+
+		$url_param = $request->get_param( 'custom_url' );
+		if ( is_string( $url_param ) ) {
+			$clean_url        = '' === trim( $url_param ) ? '' : esc_url_raw( trim( $url_param ), array( 'http', 'https' ) );
+			$active_provider  = '' !== $provider ? $provider : (string) get_option( $prefix . 'provider', '' );
+			$allow_loopback   = ( 'ollama' === $active_provider ) && Security::is_loopback_url( $clean_url );
+			if ( '' === $clean_url || Security::is_safe_url( $clean_url ) || $allow_loopback ) {
+				$overrides[ $prefix . 'custom_url' ] = $clean_url;
+			}
+		}
+
+		if ( ! $use_fallback ) {
+			$effort_param = $request->get_param( 'reasoning_effort' );
+			if ( is_string( $effort_param ) ) {
+				$effort = sanitize_key( $effort_param );
+				if ( in_array( $effort, array( 'none', 'low', 'medium', 'high', 'xhigh' ), true ) ) {
+					$overrides['mhbo_ai_reasoning_effort'] = $effort;
+				}
+			}
+		}
+
+		return $overrides;
+	}
+
+	/**
+	 * Execute a bounded primary or fallback connection diagnostic probe within FastCGI ceilings.
+	 *
+	 * @param bool                  $use_fallback Whether to invoke Client::fallback_prompt() instead of Client::prompt().
+	 * @param string                $prompt_word  Expected sentinel word in the test response.
+	 * @param array<string, string> $overrides    Optional ephemeral option overrides for unsaved form state.
+	 * @return array{response:array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,fallback_model?:string,original_model?:string,model?:string,thought?:string,thought_signature?:string,raw_parts?:array<mixed>,usage?:array<string,mixed>},latency_ms:int}
+	 */
+	private static function run_diagnostic_probe( bool $use_fallback, string $prompt_word, array $overrides = array() ): array {
 		$start        = microtime( true );
-		$diag_timeout = 12;
+		$diag_timeout = 7;
 		$short_http   = static function ( array $args ) use ( &$diag_timeout ): array {
-			$args['timeout'] = $diag_timeout;
+			$rem             = Client::remaining_time();
+			$cap             = min( (float) $diag_timeout, max( 3.0, \PHP_FLOAT_MAX === $rem ? (float) $diag_timeout : $rem - 1.0 ) );
+			$args['timeout'] = isset( $args['timeout'] ) ? min( (float) $args['timeout'], $cap ) : $cap;
 			return $args;
 		};
 		$short_ai     = static function () use ( &$diag_timeout ): float {
-			return (float) $diag_timeout;
+			$rem = Client::remaining_time();
+			return min( (float) $diag_timeout, max( 3.0, \PHP_FLOAT_MAX === $rem ? (float) $diag_timeout : $rem - 1.0 ) );
 		};
+
+		$model_key    = $use_fallback ? 'mhbo_ai_fallback_model' : 'mhbo_ai_model';
+		$tested_model = $overrides[ $model_key ] ?? (string) get_option( $model_key, '' );
+		if ( '' !== $tested_model && ! in_array( $tested_model, array( 'auto', 'custom' ), true ) ) {
+			Client::clear_model_failure( $tested_model );
+		}
+
+		if ( array() !== $overrides ) {
+			Client::set_diagnostic_overrides( $overrides );
+		}
 
 		add_filter( 'http_request_args', $short_http, 9999 );
 		add_filter( 'wp_ai_client_default_request_timeout', $short_ai, 9999 );
+		Client::set_deadline( 20.0 );
 
 		try {
-			$response = Client::prompt(
+			$messages = array(
 				array(
-					array(
-						'role'    => 'user',
-						'content' => 'Reply with only the word: CONNECTED',
-					),
+					'role'    => 'user',
+					'content' => 'Reply with only the word: ' . $prompt_word,
 				),
-				'You are a connection test bot. Reply with exactly one word: CONNECTED.',
-				array()
 			);
+			$system   = 'You are a connection test bot. Reply with exactly one word: ' . $prompt_word . '.';
+			$response = $use_fallback
+				? Client::fallback_prompt( $messages, $system, array() )
+				: Client::prompt( $messages, $system, array(), false );
 		} finally {
+			Client::set_diagnostic_overrides( array() );
+			Client::set_deadline( 0.0 );
 			remove_filter( 'http_request_args', $short_http, 9999 );
 			remove_filter( 'wp_ai_client_default_request_timeout', $short_ai, 9999 );
 		}
 
-		$latency = (int) round( ( microtime( true ) - $start ) * 1000 );
+		return array(
+			'response'   => $response,
+			'latency_ms' => (int) round( ( microtime( true ) - $start ) * 1000 ),
+		);
+	}
+
+	private static function verify_same_origin_probe( WP_REST_Request $request ): bool {
+		$origin = (string) $request->get_header( 'origin' );
+		if ( '' === $origin ) {
+			return true;
+		}
+		$orig_parts = wp_parse_url( $origin );
+		$home_parts = wp_parse_url( home_url() );
+		if ( ! is_array( $orig_parts ) || ! is_array( $home_parts ) ) {
+			return false;
+		}
+		return strtolower( (string) ( $orig_parts['host'] ?? '' ) ) === strtolower( (string) ( $home_parts['host'] ?? '' ) )
+			&& strtolower( (string) ( $orig_parts['scheme'] ?? '' ) ) === strtolower( (string) ( $home_parts['scheme'] ?? '' ) );
+	}
+
+	private static function redact_probe_error( string $error ): string {
+		return (string) preg_replace( '/(AIza[0-9A-Za-z\-_]{10,}|sk-[a-zA-Z0-9\-_]{10,}|Bearer\s+\S+)/i', '[REDACTED]', $error );
+	}
+
+	/**
+	 * REST Callback: Test AI Connection.
+	 */
+	public static function rest_test_connection( WP_REST_Request $request ): WP_REST_Response {
+		if ( ! self::verify_same_origin_probe( $request ) ) {
+			return new WP_REST_Response( array( 'success' => false, 'message' => __( 'Cross-origin diagnostic request rejected.', 'modern-hotel-booking' ) ), 403 );
+		}
+		$overrides = self::extract_probe_overrides( $request, false );
+		$probe     = self::run_diagnostic_probe( false, 'CONNECTED', $overrides );
+		$response  = $probe['response'];
+		$latency   = $probe['latency_ms'];
 
 		if ( $response['error'] ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'message'    => $response['error'],
+					'message'    => self::redact_probe_error( (string) $response['error'] ),
 					'latency_ms' => $latency,
 				),
 				400 
@@ -249,17 +490,21 @@ class AiSettings {
 	 * REST Callback: Discover Live Models from provider.
 	 */
 	public static function rest_discover_models( WP_REST_Request $request ): WP_REST_Response {
-		$provider = sanitize_key( (string) $request->get_param( 'provider' ) );
-		$api_key  = sanitize_text_field( (string) $request->get_param( 'api_key' ) );
+		$provider       = sanitize_key( (string) $request->get_param( 'provider' ) );
+		$api_key        = sanitize_text_field( (string) $request->get_param( 'api_key' ) );
+		$custom_url_raw = (string) ( $request->get_param( 'custom_url' ) ?? '' );
+		$custom_url     = '' === trim( $custom_url_raw ) ? '' : esc_url_raw( trim( $custom_url_raw ), array( 'http', 'https' ) );
+		$saved_provider = (string) get_option( 'mhbo_ai_provider', 'gemini' );
 
 		if ( ! $provider ) {
-			$provider = (string) get_option( 'mhbo_ai_provider', 'gemini' );
+			$provider = $saved_provider;
 		}
 		if ( '' === $api_key || self::SECRET_SENTINEL === $api_key ) {
-			$api_key = (string) get_option( 'mhbo_ai_api_key', '' );
+			$raw_stored = ( $provider === $saved_provider ) ? (string) get_option( 'mhbo_ai_api_key', '' ) : '';
+			$api_key    = '' !== $raw_stored ? Security::decrypt_ai_secret( $raw_stored ) : '';
 		}
 
-		$discovered = ModelCatalog::discover_live_models( $provider, $api_key );
+		$discovered = ModelCatalog::discover_live_models( $provider, $api_key, $custom_url );
 		$presets    = ModelCatalog::get_presets( $provider );
 
 		return new WP_REST_Response(
@@ -344,23 +589,42 @@ class AiSettings {
 	}
 
 /**
+	 * REST Callback: Read AI Resilience & Error Score Health Status.
+	 */
+	public static function rest_health_status( WP_REST_Request $request ): WP_REST_Response {
+		unset( $request );
+		return new WP_REST_Response(
+			array_merge(
+				array( 'success' => true ),
+				Client::get_resilience_status()
+			),
+			200
+		);
+	}
+
+	/**
 	 * REST Callback: Clear Lock.
 	 */
 	public static function rest_clear_lock( WP_REST_Request $request ): WP_REST_Response {
-		\delete_transient( 'mhbo_ai_quota_lock' );
-		\delete_transient( 'mhbo_ai_error_score' );
+		unset( $request );
+		Client::reset_failure_score();
 		Client::flush_native_availability();
 
 		foreach ( ModelCatalog::get_all_seed_model_ids() as $m ) {
 			\delete_transient( "mhbo_ai_model_fail_{$m}" );
 		}
+		Client::clear_model_failure( (string) get_option( 'mhbo_ai_model', '' ) );
+		Client::clear_model_failure( (string) get_option( 'mhbo_ai_fallback_model', '' ) );
 
 		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => \__( 'AI Resilience Engine reset. All failure scores and cooldowns cleared.', 'modern-hotel-booking' ),
+			array_merge(
+				array(
+					'success' => true,
+					'message' => \__( 'AI Resilience Engine reset. All failure scores and cooldowns cleared.', 'modern-hotel-booking' ),
+				),
+				Client::get_resilience_status()
 			),
-			200 
+			200
 		);
 	}
 
@@ -374,7 +638,6 @@ class AiSettings {
 			'mhbo_ai_model',
 			'mhbo_ai_custom_url',
 			'mhbo_ai_persona_name',
-			'mhbo_ai_custom_instructions',
 			'mhbo_ai_welcome_message',
 			'mhbo_ai_enabled',
 			'mhbo_ai_show_globally',
@@ -390,7 +653,6 @@ class AiSettings {
 			'mhbo_ai_elevenlabs_key',
 			'mhbo_ai_proactive_trigger_seconds',
 			
-			'mhbo_ai_discovery_enabled',
 			'mhbo_ai_discovery_auto_sync',
 			'mhbo_ai_sitemap_url',
 			'mhbo_ai_streaming_enabled',
@@ -402,9 +664,21 @@ class AiSettings {
 			'mhbo_ai_fallback_custom_url',
 			'mhbo_ai_sitemap_url',
 		);
-		$int_opts = array(
-			'mhbo_ai_proactive_trigger_seconds',
-			'mhbo_ai_context_budget',
+		$bool_opts = array(
+			'mhbo_ai_enabled',
+			'mhbo_ai_show_globally',
+			'mhbo_ai_widget_enabled',
+			'mhbo_ai_mcp_enabled',
+			'mhbo_ai_mcp_hybrid_bridge',
+			'mhbo_ai_voice_input_enabled',
+			'mhbo_ai_voice_output_enabled',
+			'mhbo_ai_discovery_auto_sync',
+			'mhbo_ai_streaming_enabled',
+		);
+		$key_opts = array(
+			'mhbo_ai_provider',
+			'mhbo_ai_fallback_provider',
+			'mhbo_ai_theme',
 		);
 		$secret_opts = array(
 			'mhbo_ai_api_key',
@@ -412,19 +686,45 @@ class AiSettings {
 			'mhbo_ai_fallback_api_key',
 		);
 		foreach ( $opts as $opt ) {
+			$type = 'string';
 			if ( in_array( $opt, $secret_opts, true ) ) {
 				$callback = static fn( mixed $val ): string => self::sanitize_secret_option( $opt, $val );
 			} elseif ( in_array( $opt, $url_opts, true ) ) {
-				$callback = 'esc_url_raw';
-			} elseif ( in_array( $opt, $int_opts, true ) ) {
+				$callback = static fn( mixed $val ): string => self::sanitize_url_option( $opt, $val );
+			} elseif ( in_array( $opt, $bool_opts, true ) ) {
+				$type     = 'integer';
+				$callback = array( self::class, 'sanitize_bool_int' );
+			} elseif ( 'mhbo_ai_proactive_trigger_seconds' === $opt ) {
+				$type     = 'integer';
 				$callback = 'absint';
+			} elseif ( 'mhbo_ai_context_budget' === $opt ) {
+				$type     = 'integer';
+				$callback = array( self::class, 'sanitize_context_budget' );
+			} elseif ( 'mhbo_ai_accent_color' === $opt ) {
+				$callback = static function ( mixed $val ): string {
+					$hex = sanitize_hex_color( is_scalar( $val ) ? (string) $val : '' );
+					return is_string( $hex ) && '' !== $hex ? $hex : '#2C3E50';
+				};
+			} elseif ( 'mhbo_ai_widget_position' === $opt ) {
+				$callback = array( self::class, 'sanitize_widget_position' );
+			} elseif ( 'mhbo_ai_reasoning_effort' === $opt ) {
+				$callback = array( self::class, 'sanitize_reasoning_effort' );
+			} elseif ( in_array( $opt, $key_opts, true ) ) {
+				$callback = 'sanitize_key';
 			} else {
 				$callback = 'sanitize_text_field';
 			}
-			register_setting( self::OPTION_GROUP, $opt, array( 'sanitize_callback' => $callback ) );
+			register_setting(
+				self::OPTION_GROUP,
+				$opt,
+				array(
+					'type'              => $type,
+					'sanitize_callback' => $callback,
+				)
+			);
 		}
-		register_setting( self::OPTION_GROUP, 'mhbo_ai_custom_instructions', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
-		register_setting( self::OPTION_GROUP, 'mhbo_ai_local_guide', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+		register_setting( self::OPTION_GROUP, 'mhbo_ai_custom_instructions', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ) );
+		register_setting( self::OPTION_GROUP, 'mhbo_ai_local_guide', array( 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field' ) );
 		
 	}
 
@@ -462,14 +762,6 @@ class AiSettings {
 	public static function render_tab(): void {
 		if ( ! self::check_rest_permission() ) {
 			return;
-		}
-
-		// Handle form save.
-		if ( isset( $_POST['mhbo_ai_save'] ) ) {
-			$nonce = isset( $_POST['mhbo_ai_nonce'] ) ? sanitize_key( wp_unslash( $_POST['mhbo_ai_nonce'] ) ) : '';
-			if ( wp_verify_nonce( $nonce, self::NONCE_SAVE ) ) {
-				self::handle_save();
-			}
 		}
 
 		$provider        = (string) get_option( 'mhbo_ai_provider', 'gemini' );
@@ -550,6 +842,21 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 				) 
 			);
 
+			$uid            = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+			$notice_key     = 'mhbo_ai_notices_' . $uid;
+			$stored_notices = get_transient( $notice_key );
+			if ( is_array( $stored_notices ) ) {
+				delete_transient( $notice_key );
+				foreach ( $stored_notices as $notice ) {
+					if ( is_array( $notice ) && ! empty( $notice['message'] ) ) {
+						$n_type = in_array( (string) ( $notice['type'] ?? 'success' ), array( 'success', 'warning', 'error', 'info' ), true )
+							? (string) $notice['type']
+							: 'success';
+						echo '<div class="notice notice-' . esc_attr( $n_type ) . ' is-dismissible"><p>' . esc_html( (string) $notice['message'] ) . '</p></div>';
+					}
+				}
+			}
+
 			$is_effective_pro = false;
 			
 			?>
@@ -600,7 +907,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 									<div class="mhbo-switch-row">
 										<div class="mhbo-switch-info">
 											<span class="mhbo-switch-title"><?php esc_html_e( 'Real-Time Streaming Response', 'modern-hotel-booking' ); ?></span>
-											<p class="mhbo-switch-desc"><?php esc_html_e( 'Stream AI tokens in real-time with live typing animations and thinking indicators via Server-Sent Events (SSE).', 'modern-hotel-booking' ); ?></p>
+											<p class="mhbo-switch-desc"><?php esc_html_e( 'Show live AI thinking and tool-progress indicators via Server-Sent Events (SSE) with smooth real-time typing animations.', 'modern-hotel-booking' ); ?></p>
 										</div>
 										<label class="mhbo-toggle-switch">
 											<input type="hidden" name="mhbo_ai_streaming_enabled" value="0">
@@ -645,11 +952,12 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 
 								<div class="mhbo-form-group" style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
 									<?php
-									$err_score  = (int) \get_transient( 'mhbo_ai_error_score' );
-									$quota_lock = (int) \get_transient( 'mhbo_ai_quota_lock' );
-									$is_cooling = $quota_lock > \time();
-									$remaining  = $is_cooling ? ( $quota_lock - \time() ) : 0;
-									
+									$resilience = Client::get_resilience_status();
+									$err_score  = $resilience['error_score'];
+									$threshold  = $resilience['threshold'];
+									$is_cooling = $resilience['is_cooling'];
+									$remaining  = $resilience['remaining_seconds'];
+
 									$status_label = \__( 'Operational', 'modern-hotel-booking' );
 									$status_color = '#16a34a';
 									$status_icon  = '✅';
@@ -666,19 +974,19 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 									?>
 									<label class="mhbo-form-label" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: #64748b;"><?php esc_html_e( 'Service Health & Quota Resilience', 'modern-hotel-booking' ); ?></label>
 									<div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0 12px;">
-										<span style="font-size: 13.5px; font-weight: 600; color: <?php echo esc_attr( $status_color ); ?>;">
-											<?php echo esc_html( $status_icon ); ?> <?php echo esc_html( $status_label ); ?>
-											<?php if ( $is_cooling ) : ?>
-												<small style="color: #64748b; font-weight: 400; display: block; margin-top: 2px;">
-													<?php
+										<span id="mhbo_ai_health_status_text" style="font-size: 13.5px; font-weight: 600; color: <?php echo esc_attr( $status_color ); ?>;">
+											<?php echo esc_html( $status_icon . ' ' . $status_label ); ?>
+											<small id="mhbo_ai_cooldown_countdown" data-remaining="<?php echo (int) $remaining; ?>" style="color: #64748b; font-weight: 400; display: <?php echo $is_cooling ? 'block' : 'none'; ?>; margin-top: 2px;">
+												<?php
+												if ( $is_cooling ) {
 													// translators: %1$d: seconds remaining before AI concierge resumes
 													printf( esc_html__( 'Resuming in %1$d seconds...', 'modern-hotel-booking' ), (int) $remaining );
-													?>
-												</small>
-											<?php endif; ?>
+												}
+												?>
+											</small>
 										</span>
-										<span class="mhbo-rate-badge" style="font-size: 11.5px; font-weight: 700; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 4px;">
-											<?php esc_html_e( 'Error Score:', 'modern-hotel-booking' ); ?> <?php echo (int) $err_score; ?> / 10
+										<span id="mhbo_ai_error_score_badge" class="mhbo-rate-badge" title="<?php echo esc_attr__( 'Circuit breaker error score: 0 = healthy, 1 = degraded (retry allowed), 2 = 30s cooldown, 3+ = 15m circuit breaker.', 'modern-hotel-booking' ); ?>" style="font-size: 11.5px; font-weight: 700; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 4px;">
+											<?php esc_html_e( 'Error Score:', 'modern-hotel-booking' ); ?> <?php echo (int) $err_score; ?> / <?php echo (int) $threshold; ?>
 										</span>
 									</div>
 									<div style="display: flex; align-items: center; gap: 10px;">
@@ -687,6 +995,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 										</button>
 										<p class="mhbo-form-help" style="margin: 0;"><?php esc_html_e( 'Manually clear demand cooldown.', 'modern-hotel-booking' ); ?></p>
 									</div>
+									<span id="mhbo_ai_clear_lock_result" style="display: block; margin-top: 6px; font-size: 12px;"></span>
 								</div>
 							</div>
 						</div>
@@ -837,7 +1146,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 									<?php endforeach; ?>
 
 									<div id="mhbo_manual_model_wrapper" style="display: <?php echo ( ! $any_preset && '' !== $provider ) ? 'block' : 'none'; ?>;">
-										<input type="text" name="mhbo_ai_model" id="mhbo_ai_model_input" value="<?php echo esc_attr( $model ); ?>" data-saved-provider="<?php echo esc_attr( $provider ); ?>" data-saved-model="<?php echo esc_attr( $model ); ?>" class="mhbo-form-input" placeholder="e.g. gemini-3.8-flash / gemini-4-carbon / gpt-6.1-sol / claude-sonnet-5-5">
+										<input type="text" name="mhbo_ai_model" id="mhbo_ai_model_input" value="<?php echo esc_attr( $model ); ?>" data-saved-provider="<?php echo esc_attr( $provider ); ?>" data-saved-model="<?php echo esc_attr( $model ); ?>" class="mhbo-form-input" placeholder="e.g. gemini-3.8-flash / gemini-4-carbon / gpt-6.2-sol / claude-sonnet-5-5">
 										<p class="mhbo-form-help"><?php esc_html_e( 'Enter a specific model identifier if not listed in the presets above.', 'modern-hotel-booking' ); ?></p>
 									</div>
 								</div>
@@ -1002,7 +1311,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 									<label class="mhbo-form-label" for="mhbo_ai_accent_color"><?php esc_html_e( 'Brand Accent Color', 'modern-hotel-booking' ); ?></label>
 									<div style="display: flex; align-items: center; gap: 12px;">
 										<input type="color" name="mhbo_ai_accent_color" id="mhbo_ai_accent_color" value="<?php echo esc_attr( $accent_color ); ?>" style="width: 44px; height: 40px; padding: 2px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer;">
-										<code style="background: #f1f5f9; color: #334155; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px;"><?php echo esc_html( strtoupper( $accent_color ) ); ?></code>
+										<code id="mhbo_ai_accent_color_hex" style="background: #f1f5f9; color: #334155; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px;"><?php echo esc_html( strtoupper( $accent_color ) ); ?></code>
 									</div>
 									<p class="mhbo-form-help"><?php esc_html_e( 'Used for button gradients, user chat bubbles, and interactive badges.', 'modern-hotel-booking' ); ?></p>
 								</div>
@@ -1040,6 +1349,16 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 										<div class="mhbo-switch-info">
 											<span class="mhbo-switch-title"><?php esc_html_e( 'Speech-to-Text (Voice Dictation Input)', 'modern-hotel-booking' ); ?></span>
 											<p class="mhbo-switch-desc"><?php esc_html_e( 'Allows guests to speak questions into their browser microphone with live speech recognition.', 'modern-hotel-booking' ); ?></p>
+											<p class="mhbo-form-help" style="margin-top: 6px;">
+												<?php
+												printf(
+													/* translators: 1: allowed Permissions-Policy header directive, 2: blocked Permissions-Policy header directive */
+													esc_html__( 'Server Security Header Note: If your web server, CDN, or security plugin sends a Permissions-Policy header, ensure it allows same-origin microphone access (%1$s) rather than blocking it (%2$s).', 'modern-hotel-booking' ),
+													'<code>Permissions-Policy: microphone=(self)</code>',
+													'<code>microphone=()</code>'
+												);
+												?>
+											</p>
 										</div>
 										<label class="mhbo-toggle-switch">
 											<input type="hidden" name="mhbo_ai_voice_input_enabled" value="0">
@@ -1150,6 +1469,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 											<?php endif; ?>
 										</div>
 									</div>
+									<span id="mhbo_ai_discovery_status_msg" style="display: block; margin-top: 6px; font-size: 12.5px; font-weight: 600;"></span>
 								</div>
 
 								<div class="mhbo-form-group">
@@ -1289,7 +1609,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 									<label class="mhbo-form-label"><?php esc_html_e( 'Streamable HTTP MCP Endpoint URL (Claude Desktop / Cursor)', 'modern-hotel-booking' ); ?></label>
 									<div style="display: flex; gap: 10px; align-items: center;">
 										<input type="text" readonly value="<?php echo esc_url( method_exists( '\MHBO\AI\McpServer', 'get_endpoint_url' ) ? McpServer::get_endpoint_url() : '' ); ?>" class="mhbo-form-input" style="font-family: monospace; background: #f8fafc;" id="mhbo_mcp_endpoint_input">
-										<button type="button" class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('mhbo_mcp_endpoint_input').value); alert('<?php echo esc_js( __( 'MCP URL copied to clipboard!', 'modern-hotel-booking' ) ); ?>');">
+										<button type="button" class="button button-secondary" data-mhbo-copy-target="mhbo_mcp_endpoint_input" data-mhbo-copied-label="<?php echo esc_attr__( 'Copied!', 'modern-hotel-booking' ); ?>">
 											<span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
 											<span><?php esc_html_e( 'Copy URL', 'modern-hotel-booking' ); ?></span>
 										</button>
@@ -1302,7 +1622,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 									<label class="mhbo-form-label"><?php esc_html_e( 'OpenAPI 3.1 Specification URL (ChatGPT Custom Actions / Custom GPTs)', 'modern-hotel-booking' ); ?></label>
 									<div style="display: flex; gap: 10px; align-items: center;">
 										<input type="text" readonly value="<?php echo esc_url( method_exists( '\MHBO\AI\McpServer', 'get_openapi_url' ) ? McpServer::get_openapi_url() : '' ); ?>" class="mhbo-form-input" style="font-family: monospace; background: #f8fafc;" id="mhbo_openapi_endpoint_input">
-										<button type="button" class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('mhbo_openapi_endpoint_input').value); alert('<?php echo esc_js( __( 'OpenAPI URL copied to clipboard!', 'modern-hotel-booking' ) ); ?>');">
+										<button type="button" class="button button-secondary" data-mhbo-copy-target="mhbo_openapi_endpoint_input" data-mhbo-copied-label="<?php echo esc_attr__( 'Copied!', 'modern-hotel-booking' ); ?>">
 											<span class="dashicons dashicons-admin-page" aria-hidden="true"></span>
 											<span><?php esc_html_e( 'Copy URL', 'modern-hotel-booking' ); ?></span>
 										</button>
@@ -1325,9 +1645,11 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 
 </div>
 
-				<div class="mhbo-form-actions-dock" style="margin-top: 24px; max-width: 1200px;">
-					<?php submit_button( __( 'Apply AI Configuration', 'modern-hotel-booking' ), 'primary large', 'submit', false, array( 'style' => 'height: 42px; padding: 0 28px; font-weight: 600;' ) ); ?>
-				</div>
+				<?php if ( 'analytics' !== $current_tab ) : ?>
+					<div class="mhbo-form-actions-dock" style="margin-top: 24px; max-width: 1200px;">
+						<?php submit_button( __( 'Apply AI Configuration', 'modern-hotel-booking' ), 'primary large', 'submit', false, array( 'style' => 'height: 42px; padding: 0 28px; font-weight: 600;' ) ); ?>
+					</div>
+				<?php endif; ?>
 			</form>
 		</div>
 		<?php
@@ -1338,10 +1660,13 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 	// -------------------------------------------------------------------------
 
 	private static function handle_save(): void {
-		if ( ! isset( $_POST['mhbo_ai_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['mhbo_ai_nonce'] ) ), self::NONCE_SAVE ) ) {
+		if ( ! self::check_rest_permission() ) {
 			return;
 		}
-		if ( ! self::check_rest_permission() ) {
+		if ( ! isset( $_POST['mhbo_ai_nonce'] ) ) {
+			return;
+		}
+		if ( false === \check_admin_referer( self::NONCE_SAVE, 'mhbo_ai_nonce' ) ) {
 			return;
 		}
 
@@ -1372,7 +1697,6 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 				'mhbo_ai_accent_color',
 				
 				'mhbo_ai_proactive_trigger_seconds',
-				'mhbo_ai_mcp_enabled',
 				'mhbo_ai_voice_input_enabled',
 				'mhbo_ai_voice_output_enabled',
 				
@@ -1402,9 +1726,10 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 		);
 
 		// 0. Extract all relevant POST data once (Gated by Nonce).
-		$post_data = wp_unslash( $_POST );
+		$post_data     = wp_unslash( $_POST );
+		$rejected_urls = array();
 
-		foreach ( $text_opts as $key ) {
+foreach ( $text_opts as $key ) {
 			if ( ! isset( $post_data[ $key ] ) && ! in_array( $key, $checkboxes, true ) ) {
 				continue;
 			}
@@ -1427,15 +1752,50 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 
 			// Standard text/select.
 			if ( null !== $raw_val ) {
-				$val_str = (string) $raw_val;
+				$val_str = is_scalar( $raw_val ) ? (string) $raw_val : '';
 				if ( 'mhbo_ai_proactive_trigger_seconds' === $key ) {
 					update_option( $key, absint( $val_str ) );
 				} elseif ( 'mhbo_ai_context_budget' === $key ) {
-					update_option( $key, max( 1000, min( 10000, absint( $val_str ) ) ) );
-				} elseif ( in_array( $key, array( 'mhbo_ai_sitemap_url', 'mhbo_ai_custom_url', 'mhbo_ai_fallback_custom_url' ), true ) ) {
-					update_option( $key, esc_url_raw( $val_str, array( 'http', 'https' ) ) );
+					update_option( $key, self::sanitize_context_budget( $val_str ) );
+				} elseif ( 'mhbo_ai_accent_color' === $key ) {
+					$clean_hex = sanitize_hex_color( $val_str );
+					update_option( $key, is_string( $clean_hex ) && '' !== $clean_hex ? $clean_hex : '#2C3E50' );
+				} elseif ( 'mhbo_ai_widget_position' === $key ) {
+					update_option( $key, self::sanitize_widget_position( $val_str ) );
+				} elseif ( 'mhbo_ai_reasoning_effort' === $key ) {
+					update_option( $key, self::sanitize_reasoning_effort( $val_str ) );
+				} elseif ( in_array( $key, array( 'mhbo_ai_provider', 'mhbo_ai_fallback_provider', 'mhbo_ai_theme' ), true ) ) {
+					update_option( $key, sanitize_key( $val_str ) );
+				} elseif ( 'mhbo_hotel_latitude' === $key ) {
+					update_option( $key, self::sanitize_coordinate( $val_str, -90.0, 90.0 ) );
+				} elseif ( 'mhbo_hotel_longitude' === $key ) {
+					update_option( $key, self::sanitize_coordinate( $val_str, -180.0, 180.0 ) );
+				} elseif ( 'mhbo_google_hotel_id' === $key ) {
+					update_option( $key, sanitize_title( $val_str ) );
+				} elseif ( 'mhbo_google_hotel_category' === $key ) {
+					update_option( $key, sanitize_key( $val_str ) );
+				} elseif ( 'mhbo_hotel_feed_days' === $key ) {
+					update_option( $key, self::sanitize_feed_days( $val_str ) );
+				} elseif ( 'mhbo_ai_sitemap_url' === $key ) {
+					$clean_url = '' === trim( $val_str ) ? '' : esc_url_raw( $val_str, array( 'http', 'https' ) );
+					if ( '' === $clean_url || Security::is_safe_url( $clean_url ) ) {
+						update_option( $key, $clean_url );
+					} else {
+						$rejected_urls[] = $key;
+					}
+				} elseif ( in_array( $key, array( 'mhbo_ai_custom_url', 'mhbo_ai_fallback_custom_url' ), true ) ) {
+					$clean_url     = '' === trim( $val_str ) ? '' : esc_url_raw( $val_str, array( 'http', 'https' ) );
+					$provider_opt  = ( 'mhbo_ai_fallback_custom_url' === $key ) ? 'mhbo_ai_fallback_provider' : 'mhbo_ai_provider';
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified at top of handle_save().
+					$posted_prov   = isset( $_POST[ $provider_opt ] ) ? sanitize_key( wp_unslash( (string) $_POST[ $provider_opt ] ) ) : (string) get_option( $provider_opt, '' );
+					$allow_loop    = ( 'ollama' === $posted_prov ) && Security::is_loopback_url( $clean_url );
+					if ( '' === $clean_url || Security::is_safe_url( $clean_url ) || $allow_loop ) {
+						update_option( $key, $clean_url );
+					} else {
+						$rejected_urls[] = $key;
+					}
 				} elseif ( in_array( $key, array( 'mhbo_ai_api_key', 'mhbo_ai_fallback_api_key', 'mhbo_ai_elevenlabs_key' ), true ) ) {
-					update_option( $key, self::sanitize_secret_option( $key, $val_str ) );
+					update_option( $key, self::sanitize_secret_option( $key, $val_str ), false );
 				} else {
 					update_option( $key, sanitize_text_field( $val_str ) );
 				}
@@ -1444,14 +1804,27 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 
 		if ( 'general' === $active_tab ) {
 			Client::flush_native_availability();
+			Client::reset_failure_score();
+			Client::clear_model_failure( (string) get_option( 'mhbo_ai_model', '' ) );
+			Client::clear_model_failure( (string) get_option( 'mhbo_ai_fallback_model', '' ) );
 		}
 
-add_action(
-			'admin_notices',
-			static function () {
-				echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'AI Concierge settings saved.', 'modern-hotel-booking' ) . '</p></div>';
-			} 
+$notices = array(
+			array(
+				'type'    => 'success',
+				'message' => __( 'AI Concierge settings saved.', 'modern-hotel-booking' ),
+			),
 		);
+
+		if ( array() !== $rejected_urls ) {
+			$notices[] = array(
+				'type'    => 'warning',
+				'message' => __( 'Some endpoint URLs were not saved because they point to a private, internal, or non-standard-port address. Ollama must use a loopback address (localhost, 127.0.0.1, or ::1); custom and sitemap endpoints must be public HTTP(S) URLs on port 80 or 443. Rejected fields:', 'modern-hotel-booking' ) . ' ' . implode( ', ', $rejected_urls ),
+			);
+		}
+
+$uid = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+		set_transient( 'mhbo_ai_notices_' . $uid, $notices, 30 );
 	}
 
 	// -------------------------------------------------------------------------
@@ -1492,11 +1865,12 @@ add_action(
 		}
 
 		// qTranslate-XT / qTranslate-X.
-		global $q_config;
-		if ( isset( $q_config['language'] ) && '' !== $q_config['language'] ) {
-			$qlang = (string) $q_config['language'];
-			/** @var string $qlocale */
-			$qlocale = $q_config['locale'][ $qlang ] ?? $qlang;
+		$q_config_arr = isset( $GLOBALS['q_config'] ) && is_array( $GLOBALS['q_config'] ) ? $GLOBALS['q_config'] : array();
+		$qlang        = function_exists( 'qtranxf_getLanguage' )
+			? (string) call_user_func( 'qtranxf_getLanguage' )
+			: (string) ( $q_config_arr['language'] ?? '' );
+		if ( '' !== $qlang ) {
+			$qlocale = (string) ( $q_config_arr['locale'][ $qlang ] ?? $qlang );
 			return array(
 				'locale' => str_replace( '_', '-', $qlocale ),
 				'source' => 'qtranslate',
@@ -1540,31 +1914,6 @@ document.addEventListener('DOMContentLoaded', function() {
         el.appendChild(span);
     }
 
-    function bindKbSyncButton(btnId, resultId, defaultLabel) {
-        var btn = document.getElementById(btnId);
-        var result = document.getElementById(resultId);
-        if (!btn || !apiFetch) return;
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            btn.disabled = true;
-            btn.textContent = 'Syncing…';
-            if (result) result.textContent = '';
-            apiFetch({ path: '/mhbo/v1/ai/sync-kb', method: 'POST' })
-                .then(function() {
-                    location.reload();
-                })
-                .catch(function(err) {
-                    btn.disabled = false;
-                    btn.textContent = defaultLabel;
-                    renderAiStatus(result, '#dc2626', '✗ ' + (err.message || 'Sync failed'));
-                });
-        });
-    }
-
-    // 1. Knowledge Base Sync buttons
-    bindKbSyncButton('mhbo_ai_kb_refresh', 'mhbo_ai_kb_result', 'Refresh Knowledge Base');
-    bindKbSyncButton('mhbo_ai_kb_sync', 'mhbo_ai_kb_sync_result', 'Sync Now');
-
     function setButtonLabel(btn, text) {
         if (!btn) return;
         var span = btn.querySelector('span:not(.dashicons)');
@@ -1573,6 +1922,51 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             btn.textContent = text;
         }
+    }
+
+    function bindKbSyncButton(btnId, resultId, defaultLabel) {
+        var btn = document.getElementById(btnId);
+        var result = document.getElementById(resultId);
+        if (!btn || !apiFetch) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            btn.disabled = true;
+            setButtonLabel(btn, 'Syncing…');
+            if (result) result.textContent = '';
+            apiFetch({ path: '/mhbo/v1/ai/sync-kb', method: 'POST' })
+                .then(function() {
+                    location.reload();
+                })
+                .catch(function(err) {
+                    btn.disabled = false;
+                    setButtonLabel(btn, defaultLabel);
+                    renderAiStatus(result, '#dc2626', '✗ ' + (err.message || 'Sync failed'));
+                });
+        });
+    }
+
+    // 1. Knowledge Base Sync buttons
+    bindKbSyncButton('mhbo_ai_kb_refresh', 'mhbo_ai_kb_result', 'Sync KB Now');
+    bindKbSyncButton('mhbo_ai_kb_sync', 'mhbo_ai_kb_sync_result', 'Sync Now');
+
+    function getFieldVal(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+
+    function getSelectedPrimaryPayload() {
+        var provider = getFieldVal('mhbo_ai_provider');
+        var presetSel = provider ? document.getElementById('mhbo_ai_' + provider + '_model_select') : null;
+        var model = (presetSel && presetSel.value && presetSel.value !== 'custom')
+            ? presetSel.value
+            : getFieldVal('mhbo_ai_model_input');
+        return {
+            provider: provider,
+            model: model,
+            api_key: getFieldVal('mhbo_ai_api_key'),
+            custom_url: getFieldVal('mhbo_ai_custom_url'),
+            reasoning_effort: getFieldVal('mhbo_ai_reasoning_effort')
+        };
     }
 
     // 2. Primary Connection Test
@@ -1584,17 +1978,19 @@ document.addEventListener('DOMContentLoaded', function() {
             testBtn.disabled = true;
             setButtonLabel(testBtn, 'Testing…');
             if (testResult) testResult.textContent = '';
-            apiFetch({ path: '/mhbo/v1/ai/test-connection', method: 'POST' })
+            apiFetch({ path: '/mhbo/v1/ai/test-connection', method: 'POST', data: getSelectedPrimaryPayload() })
                 .then(function(res) {
                     testBtn.disabled = false;
                     setButtonLabel(testBtn, 'Test Primary Connection');
                     var timing = res.latency_ms ? ' (' + res.latency_ms + 'ms)' : '';
                     renderAiStatus(testResult, '#16a34a', '✅ ' + (res.message || 'Connected!') + timing);
+                    refreshAiHealthStatus();
                 })
                 .catch(function(err) {
                     testBtn.disabled = false;
                     setButtonLabel(testBtn, 'Test Primary Connection');
                     renderAiStatus(testResult, '#dc2626', '❌ ' + (err.message || 'Connection failed'));
+                    refreshAiHealthStatus();
                 });
         });
     }
@@ -1635,7 +2031,7 @@ document.addEventListener('DOMContentLoaded', function() {
             apiFetch({ path: '/mhbo/v1/ai/mcp-status', method: 'POST' })
             .then(function(res) {
                 mcpBtn.disabled = false;
-                setButtonLabel(mcpBtn, 'Probe MCP Endpoint');
+                setButtonLabel(mcpBtn, 'Probe Live Endpoint');
                 if (res && res.success) {
                     renderAiStatus(mcpResult, '#16a34a', '✅ ' + (res.message || 'Connected!'));
                 } else {
@@ -1644,7 +2040,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(function(err) {
                 mcpBtn.disabled = false;
-                mcpBtn.textContent = 'Probe MCP Endpoint';
+                setButtonLabel(mcpBtn, 'Probe Live Endpoint');
                 renderAiStatus(mcpResult, '#dc2626', '❌ ' + (err.message || 'Probe failed'));
             });
         });
@@ -1652,17 +2048,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 5. Discovery Sync
     var discSyncBtn = document.getElementById('mhbo_ai_discovery_sync');
+    var discStatusEl = document.getElementById('mhbo_ai_discovery_status_msg');
     if (discSyncBtn && apiFetch) {
+        var discSyncSpan = discSyncBtn.querySelector('span:not(.dashicons)');
+        var discSyncOrigLabel = discSyncSpan ? discSyncSpan.textContent : 'Update Manifest Now';
         discSyncBtn.addEventListener('click', function(e) {
             e.preventDefault();
             discSyncBtn.disabled = true;
-            discSyncBtn.textContent = 'Syncing…';
+            setButtonLabel(discSyncBtn, 'Syncing…');
+            if (discStatusEl) discStatusEl.textContent = '';
             apiFetch({ path: '/mhbo/v1/ai/sync-discovery', method: 'POST' })
                 .then(function() { location.reload(); })
                 .catch(function(err) {
                     discSyncBtn.disabled = false;
-                    discSyncBtn.textContent = 'Sync Discovery';
-                    alert((err && err.message) || 'Sync failed');
+                    setButtonLabel(discSyncBtn, discSyncOrigLabel);
+                    renderAiStatus(discStatusEl, '#dc2626', '❌ ' + ((err && err.message) || 'Sync failed'));
                 });
         });
     }
@@ -1675,30 +2075,34 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!confirm('Are you sure you want to remove discovery files?')) return;
             discCleanBtn.disabled = true;
             discCleanBtn.textContent = 'Cleaning…';
+            if (discStatusEl) discStatusEl.textContent = '';
             apiFetch({ path: '/mhbo/v1/ai/cleanup-discovery', method: 'POST' })
                 .then(function() { location.reload(); })
                 .catch(function(err) {
                     discCleanBtn.disabled = false;
-                    discCleanBtn.textContent = 'Remove Files';
+                    discCleanBtn.textContent = 'Takedown Manifest';
+                    renderAiStatus(discStatusEl, '#dc2626', '❌ ' + ((err && err.message) || 'Cleanup failed'));
                 });
         });
     }
 
     // 6b. Hotel Feeds Sync
     var feedsSyncBtn = document.getElementById('mhbo_ai_feeds_sync');
+    var feedsStatusEl = document.getElementById('mhbo_ai_feeds_status_msg');
     if (feedsSyncBtn && apiFetch) {
         feedsSyncBtn.addEventListener('click', function(e) {
             e.preventDefault();
             feedsSyncBtn.disabled = true;
-            feedsSyncBtn.textContent = 'Generating Feeds…';
+            setButtonLabel(feedsSyncBtn, 'Generating Feeds…');
+            if (feedsStatusEl) feedsStatusEl.textContent = '';
             apiFetch({ path: '/mhbo/v1/ai/sync-hotel-feeds', method: 'POST' })
                 .then(function(res) {
                     location.reload();
                 })
                 .catch(function(err) {
                     feedsSyncBtn.disabled = false;
-                    feedsSyncBtn.textContent = 'Regenerate Now';
-                    alert((err && err.message) || 'Feed generation failed');
+                    setButtonLabel(feedsSyncBtn, 'Regenerate Feeds Now');
+                    renderAiStatus(feedsStatusEl, '#dc2626', '❌ ' + ((err && err.message) || 'Feed generation failed'));
                 });
         });
     }
@@ -1711,54 +2115,128 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!confirm('Are you sure you want to remove the Google Hotel feed files from your site root?')) return;
             feedsCleanBtn.disabled = true;
             feedsCleanBtn.textContent = 'Cleaning…';
+            if (feedsStatusEl) feedsStatusEl.textContent = '';
             apiFetch({ path: '/mhbo/v1/ai/cleanup-hotel-feeds', method: 'POST' })
                 .then(function() { location.reload(); })
                 .catch(function(err) {
                     feedsCleanBtn.disabled = false;
                     feedsCleanBtn.textContent = 'Remove Feed Files';
+                    renderAiStatus(feedsStatusEl, '#dc2626', '❌ ' + ((err && err.message) || 'Cleanup failed'));
                 });
         });
     }
 
-    // 7. Clear Quota Lock
+    // 7. Live Service Health, Cooldown Countdown & Clear Quota Lock
+    var healthStatusEl = document.getElementById('mhbo_ai_health_status_text');
+    var cooldownEl = document.getElementById('mhbo_ai_cooldown_countdown');
+    var errorBadgeEl = document.getElementById('mhbo_ai_error_score_badge');
+    var cooldownTimer = null;
+
+    function startCooldownTimer(seconds) {
+        if (cooldownTimer) {
+            clearInterval(cooldownTimer);
+            cooldownTimer = null;
+        }
+        if (!cooldownEl || seconds <= 0) {
+            if (cooldownEl) {
+                cooldownEl.textContent = '';
+                cooldownEl.style.display = 'none';
+                cooldownEl.setAttribute('data-remaining', '0');
+            }
+            return;
+        }
+        var rem = seconds;
+        cooldownEl.style.display = 'block';
+        cooldownEl.setAttribute('data-remaining', String(rem));
+        cooldownEl.textContent = 'Resuming in ' + rem + ' seconds...';
+        cooldownTimer = setInterval(function() {
+            rem -= 1;
+            if (rem <= 0) {
+                clearInterval(cooldownTimer);
+                cooldownTimer = null;
+                refreshAiHealthStatus();
+                return;
+            }
+            cooldownEl.setAttribute('data-remaining', String(rem));
+            cooldownEl.textContent = 'Resuming in ' + rem + ' seconds...';
+        }, 1000);
+    }
+
+    function updateAiHealthCard(data) {
+        if (!data || typeof data.error_score === 'undefined') return;
+        var score = parseInt(data.error_score, 10) || 0;
+        var threshold = parseInt(data.threshold, 10) || 3;
+        var cooling = !!data.is_cooling;
+        var remaining = parseInt(data.remaining_seconds, 10) || 0;
+
+        if (errorBadgeEl) {
+            errorBadgeEl.textContent = 'Error Score: ' + score + ' / ' + threshold;
+        }
+
+        if (healthStatusEl) {
+            var labelText = '✅ Operational';
+            var color = '#16a34a';
+            if (cooling) {
+                labelText = '❄️ Cooling Down (Demand Spike)';
+                color = '#ef4444';
+            } else if (score > 0) {
+                labelText = '⚠️ High Demand (Degraded)';
+                color = '#f59e0b';
+            }
+            healthStatusEl.style.color = color;
+            var firstNode = healthStatusEl.firstChild;
+            if (firstNode && firstNode.nodeType === 3) {
+                firstNode.nodeValue = labelText + ' ';
+            } else {
+                healthStatusEl.insertBefore(document.createTextNode(labelText + ' '), healthStatusEl.firstChild);
+            }
+        }
+
+        startCooldownTimer(cooling ? remaining : 0);
+    }
+
+    function refreshAiHealthStatus() {
+        if (!apiFetch || (!healthStatusEl && !errorBadgeEl)) return;
+        apiFetch({ path: '/mhbo/v1/ai/health-status', method: 'GET' })
+            .then(function(res) {
+                updateAiHealthCard(res);
+            })
+            .catch(function() {});
+    }
+
+    if (cooldownEl) {
+        var initialRemaining = parseInt(cooldownEl.getAttribute('data-remaining') || '0', 10);
+        if (initialRemaining > 0) {
+            startCooldownTimer(initialRemaining);
+        }
+    }
+
     var clearLockBtn = document.getElementById('mhbo_ai_clear_lock');
+    var clearLockResult = document.getElementById('mhbo_ai_clear_lock_result');
     if (clearLockBtn && apiFetch) {
         clearLockBtn.addEventListener('click', function(e) {
             e.preventDefault();
             clearLockBtn.disabled = true;
             clearLockBtn.textContent = 'Clearing…';
+            if (clearLockResult) clearLockResult.textContent = '';
             apiFetch({ path: '/mhbo/v1/ai/clear-lock', method: 'POST' })
-                .then(function() {
+                .then(function(res) {
                     clearLockBtn.disabled = false;
                     clearLockBtn.textContent = 'Engine Reset ✅';
-                    setTimeout(function() { location.reload(); }, 1200);
+                    updateAiHealthCard(res);
+                    setTimeout(function() {
+                        clearLockBtn.textContent = 'Reset Engine Lock';
+                    }, 2000);
                 })
                 .catch(function(err) {
                     clearLockBtn.disabled = false;
                     clearLockBtn.textContent = 'Reset Engine Lock';
-                    alert((err && err.message) || 'Failed to clear lock');
+                    renderAiStatus(clearLockResult, '#dc2626', '❌ ' + ((err && err.message) || 'Failed to clear lock'));
                 });
         });
     }
 
-    // 8. Create Analytics Table
-    var createTableBtn = document.getElementById('mhbo_ai_create_table_btn');
-    if (createTableBtn && apiFetch) {
-        createTableBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            createTableBtn.disabled = true;
-            createTableBtn.textContent = 'Creating…';
-            apiFetch({ path: '/mhbo/v1/ai/create-analytics-table', method: 'POST' })
-                .then(function() { location.reload(); })
-                .catch(function(err) {
-                    createTableBtn.disabled = false;
-                    createTableBtn.textContent = 'Create Table';
-                    alert((err && err.message) || 'Table creation failed');
-                });
-        });
-    }
-
-    // 9. Provider Row Toggles & Model Preset Sync
+    // 8. Provider Row Toggles & Model Preset Sync
     var providerSelect = document.getElementById('mhbo_ai_provider');
     var apiKeyWrapper = document.getElementById('mhbo_ai_api_key_wrapper');
     var apiKeyInput = document.getElementById('mhbo_ai_api_key');
@@ -1856,6 +2334,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function populateModelPresetSelect(selectEl, presets, targetVal, autoSelectFirst) {
+        if (!selectEl) return;
+        while (selectEl.firstChild) {
+            selectEl.removeChild(selectEl.firstChild);
+        }
+        var matched = false;
+        if (presets && Object.keys(presets).length > 0) {
+            Object.keys(presets).forEach(function(mId) {
+                var opt = document.createElement('option');
+                opt.value = mId;
+                opt.textContent = presets[mId];
+                if (targetVal && mId === targetVal) {
+                    opt.selected = true;
+                    matched = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+        var customOpt = document.createElement('option');
+        customOpt.value = 'custom';
+        customOpt.textContent = '— Manual Override / Custom —';
+        if (!matched && targetVal && targetVal !== 'auto') {
+            customOpt.selected = true;
+        }
+        selectEl.appendChild(customOpt);
+        if (autoSelectFirst && !targetVal && selectEl.options.length > 0) {
+            selectEl.options[0].selected = true;
+        }
+    }
+
     var discoverBtn = document.getElementById('mhbo_ai_discover_models_btn');
     var discoverResult = document.getElementById('mhbo_ai_discover_models_result');
     if (discoverBtn && apiFetch) {
@@ -1871,7 +2379,7 @@ document.addEventListener('DOMContentLoaded', function() {
             apiFetch({
                 path: '/mhbo/v1/ai/discover-models',
                 method: 'POST',
-                data: { provider: p, api_key: k }
+                data: { provider: p, api_key: k, custom_url: getFieldVal('mhbo_ai_custom_url') }
             })
             .then(function(res) {
                 discoverBtn.disabled = false;
@@ -1883,29 +2391,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 var activeSel = getActiveModelSelect(p);
                 if (activeSel && res && res.presets) {
                     var currentVal = modelInput ? modelInput.value : activeSel.value;
-                    while (activeSel.firstChild) {
-                        activeSel.removeChild(activeSel.firstChild);
-                    }
-                    var matched = false;
-                    Object.keys(res.presets).forEach(function(mId) {
-                        var opt = document.createElement('option');
-                        opt.value = mId;
-                        opt.textContent = res.presets[mId];
-                        if (mId === currentVal) {
-                            opt.selected = true;
-                            matched = true;
-                        }
-                        activeSel.appendChild(opt);
-                    });
-                    var customOpt = document.createElement('option');
-                    customOpt.value = 'custom';
-                    customOpt.textContent = '— Manual Override / Custom —';
-                    if (!matched && currentVal && currentVal !== 'auto') {
-                        customOpt.selected = true;
-                    }
-                    activeSel.appendChild(customOpt);
+                    populateModelPresetSelect(activeSel, res.presets, currentVal, false);
                     syncProviderModels();
                 }
+                
             })
             .catch(function(err) {
                 discoverBtn.disabled = false;
@@ -1917,6 +2406,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+// 11. Live Brand Accent Color Hex Preview
+    var colorInput = document.getElementById('mhbo_ai_accent_color');
+    var colorHexEl = document.getElementById('mhbo_ai_accent_color_hex');
+    if (colorInput && colorHexEl) {
+        colorInput.addEventListener('input', function() {
+            colorHexEl.textContent = String(colorInput.value || '').toUpperCase();
+        });
+    }
+
+    // 12. Accessible Non-Blocking Clipboard Copy Buttons
+    function copyTextToClipboard(text, onDone) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(text).then(onDone).catch(function() {
+                fallbackCopyText(text, onDone);
+            });
+            return;
+        }
+        fallbackCopyText(text, onDone);
+    }
+
+    function fallbackCopyText(text, onDone) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            onDone();
+        } catch (err) {}
+        document.body.removeChild(ta);
+    }
+
+    document.querySelectorAll('[data-mhbo-copy-target], [data-mhbo-copy-value]').forEach(function(copyBtn) {
+        copyBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetId = copyBtn.getAttribute('data-mhbo-copy-target');
+            var textToCopy = targetId
+                ? getFieldVal(targetId)
+                : (copyBtn.getAttribute('data-mhbo-copy-value') || '');
+            if (!textToCopy) return;
+            var span = copyBtn.querySelector('span:not(.dashicons)');
+            var origLabel = copyBtn.getAttribute('data-mhbo-orig-label') || (span ? span.textContent : 'Copy URL');
+            copyBtn.setAttribute('data-mhbo-orig-label', origLabel);
+            var copiedLabel = copyBtn.getAttribute('data-mhbo-copied-label') || 'Copied!';
+            copyTextToClipboard(textToCopy, function() {
+                setButtonLabel(copyBtn, copiedLabel);
+                setTimeout(function() {
+                    setButtonLabel(copyBtn, origLabel);
+                }, 2000);
+            });
+        });
+    });
 });
 ";
 	}

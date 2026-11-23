@@ -9,7 +9,7 @@
  *
  * @package ModernHotelBooking
  * @since 2.0.1
- * @version 3.0.3
+ * @version 3.0.4
  */
 
 ( function () {
@@ -29,6 +29,43 @@
 
 	// Configuration is injected via wp_add_inline_script()
 	const config = window.mhboAdminBookingsConfig || {};
+
+	/**
+	 * Display a non-blocking admin toast notification across all editions.
+	 *
+	 * @param {string}                     message Notice message text.
+	 * @param {'warning'|'error'|'success'} type    Notification style.
+	 */
+	function showAdminNotice( message, type = 'warning' ) {
+		if ( window.MHBO && typeof window.MHBO.toast === 'function' ) {
+			window.MHBO.toast( message, type, 4000 );
+			return;
+		}
+		let container = document.getElementById( 'mhbo-admin-toast-container' );
+		if ( ! container ) {
+			container = document.createElement( 'div' );
+			container.id = 'mhbo-admin-toast-container';
+			container.className = 'mhbo-admin-toast-container';
+			document.body.appendChild( container );
+		}
+		const toast = document.createElement( 'div' );
+		toast.className = 'mhbo-admin-toast mhbo-admin-toast--' + type;
+		toast.setAttribute( 'role', 'alert' );
+		toast.setAttribute( 'aria-live', 'polite' );
+		toast.textContent = message;
+		container.appendChild( toast );
+		requestAnimationFrame( function () {
+			toast.classList.add( 'mhbo-admin-toast--visible' );
+		} );
+		setTimeout( function () {
+			toast.classList.remove( 'mhbo-admin-toast--visible' );
+			setTimeout( function () {
+				if ( toast.parentNode ) {
+					toast.parentNode.removeChild( toast );
+				}
+			}, 300 );
+		}, 4000 );
+	}
 
 	/**
 	 * Safe HTML escaping helper
@@ -147,7 +184,13 @@
 					form.querySelectorAll(
 						'input[name="child_ages[]"]'
 					).forEach( function ( inp ) {
-						childrenAges.push( parseInt( inp.value ) || 0 );
+						const trimmedAge = inp.value.trim();
+						if ( trimmedAge !== '' ) {
+							const parsedAge = parseInt( trimmedAge, 10 );
+							if ( ! isNaN( parsedAge ) ) {
+								childrenAges.push( parsedAge );
+							}
+						}
 					} );
 				}
 
@@ -210,7 +253,19 @@
 				const taxModeSelect = document.getElementById(
 					prefix + '_tax_mode'
 				);
-				const taxMode = taxModeSelect ? taxModeSelect.value : '';
+				const taxAccInput = document.getElementById(
+					prefix + '_tax_rate_accommodation'
+				);
+				const taxExtInput = document.getElementById(
+					prefix + '_tax_rate_extras'
+				);
+				const bookingIdInput =
+					prefix === 'mhbo_edit' && form
+						? form.querySelector( 'input[name="booking_id"]' )
+						: null;
+				const bookingIdVal = bookingIdInput
+					? parseInt( bookingIdInput.value, 10 ) || 0
+					: 0;
 
 			// Visual feedback
 			totalPriceInput.style.opacity = '0.5';
@@ -226,9 +281,24 @@
 					children_ages: childrenAges,
 					extras,
 					coupon_code: couponCode,
-					tax_mode: taxMode,
 					source: 'admin',
 				};
+				if ( bookingIdVal > 0 ) {
+					calcPayload.booking_id = bookingIdVal;
+					calcPayload.exclude_id = bookingIdVal;
+				}
+				if ( taxModeSelect ) {
+					const taxMode = taxModeSelect.value;
+					calcPayload.tax_mode = taxMode;
+					if ( taxMode !== 'disabled' ) {
+						if ( taxAccInput && taxAccInput.value !== '' && ! isNaN( parseFloat( taxAccInput.value ) ) ) {
+							calcPayload.tax_rate_accommodation = parseFloat( taxAccInput.value );
+						}
+						if ( taxExtInput && taxExtInput.value !== '' && ! isNaN( parseFloat( taxExtInput.value ) ) ) {
+							calcPayload.tax_rate_extras = parseFloat( taxExtInput.value );
+						}
+					}
+				}
 				const calcPromise = ( window.wp && window.wp.apiFetch )
 					? window.wp.apiFetch( {
 						path: '/mhbo/v1/recalculate-price',
@@ -300,6 +370,42 @@
 
 							// Render Live Folio & Charges Breakdown table for Add and Edit modes
 							renderFolioBreakdown( prefix, data, total, checkIn, checkOut, guests, children );
+
+							// Update live stay timing fees & turnover hints for front-desk staff
+							if ( data.stay_timing && typeof data.stay_timing === 'object' && form ) {
+								const st = data.stay_timing;
+								const syncWsExt = function ( extId, roleKey, info, shiftTxt ) {
+									const cb = form.querySelector( '.mhbo-extra-input[data-extra-id="' + extId + '"]' );
+									if ( cb ) {
+										if ( info && typeof info.fee !== 'undefined' ) {
+											cb.dataset.price = String( info.fee );
+										}
+										const labelEl = cb.parentElement ? cb.parentElement.querySelector( '.mhbo-ws-ext-label' ) : null;
+										if ( labelEl && info ) {
+											labelEl.textContent = info.is_free
+												? 'Yes (Complimentary)'
+												: 'Yes (+' + ( info.fee_formatted || info.fee || '0.00' ) + ' / stay)';
+										}
+									}
+									const hintEl = form.querySelector( '.mhbo-ws-timing-hint[data-timing-role="' + roleKey + '"]' );
+									if ( hintEl && info ) {
+										if ( ! info.available && info.message ) {
+											hintEl.textContent = info.message;
+											hintEl.style.color = '#b45309';
+										} else if ( shiftTxt ) {
+											hintEl.textContent = shiftTxt;
+											hintEl.style.color = '#64748b';
+										} else {
+											hintEl.textContent = '';
+										}
+									}
+								};
+								const shiftText = st.checkin_shifted && st.effective_checkin
+									? 'Arrival shifted to ' + st.effective_checkin + ' (standard ' + ( st.standard_checkin || '' ) + ') for room turnaround.'
+									: '';
+								syncWsExt( '_early_checkin', 'early_checkin', st.early_checkin, shiftText );
+								syncWsExt( '_late_checkout', 'late_checkout', st.late_checkout, '' );
+							}
 
 							calculateOutstanding();
 						}
@@ -628,6 +734,118 @@
 		const guestsInput = document.getElementById( prefix + '_guests' );
 		const childrenInput = document.getElementById( prefix + '_children' );
 		const taxModeSelect = document.getElementById( prefix + '_tax_mode' );
+		const taxRatesWrap = document.getElementById( prefix + '_tax_rates_wrap' );
+		const taxAccRateInput = document.getElementById( prefix + '_tax_rate_accommodation' );
+		const taxExtRateInput = document.getElementById( prefix + '_tax_rate_extras' );
+		const applyGlobalRatesBtn = document.getElementById( prefix + '_apply_global_tax_rates' );
+		const restoreOrigRatesBtn = document.getElementById( prefix + '_restore_orig_tax_rates' );
+
+		function syncTaxRatesVisibility( mode ) {
+			if ( taxRatesWrap ) {
+				taxRatesWrap.style.display = mode === 'disabled' ? 'none' : 'flex';
+			}
+		}
+
+		function syncRestoreOrigTaxBtnVisibility() {
+			if ( ! restoreOrigRatesBtn || ! taxModeSelect ) {
+				return;
+			}
+			const origMode = taxModeSelect.dataset.originalMode || '';
+			const accOrig = taxAccRateInput ? taxAccRateInput.dataset.originalRate : '';
+			const extOrig = taxExtRateInput ? taxExtRateInput.dataset.originalRate : '';
+			const changedMode = origMode !== '' && taxModeSelect.value !== origMode;
+			const changedAcc = Boolean( taxAccRateInput && accOrig !== '' && Math.abs( ( parseFloat( taxAccRateInput.value ) || 0 ) - ( parseFloat( accOrig ) || 0 ) ) > 0.001 );
+			const changedExt = Boolean( taxExtRateInput && extOrig !== '' && Math.abs( ( parseFloat( taxExtRateInput.value ) || 0 ) - ( parseFloat( extOrig ) || 0 ) ) > 0.001 );
+			restoreOrigRatesBtn.style.display = ( changedMode || changedAcc || changedExt ) ? 'inline-block' : 'none';
+		}
+
+		if ( taxModeSelect ) {
+			taxModeSelect.addEventListener( 'change', function () {
+				const mode = taxModeSelect.value;
+				syncTaxRatesVisibility( mode );
+				if ( mode !== 'disabled' ) {
+					if ( prefix === 'mhbo_edit' ) {
+						const origMode = taxModeSelect.dataset.originalMode || '';
+						if ( origMode !== '' && mode !== origMode ) {
+							if ( taxAccRateInput && taxAccRateInput.dataset.globalRate !== undefined ) {
+								taxAccRateInput.value = taxAccRateInput.dataset.globalRate;
+							}
+							if ( taxExtRateInput && taxExtRateInput.dataset.globalRate !== undefined ) {
+								taxExtRateInput.value = taxExtRateInput.dataset.globalRate;
+							}
+						} else if ( origMode !== '' && mode === origMode ) {
+							if ( taxAccRateInput && taxAccRateInput.dataset.originalRate !== undefined ) {
+								taxAccRateInput.value = taxAccRateInput.dataset.originalRate;
+							}
+							if ( taxExtRateInput && taxExtRateInput.dataset.originalRate !== undefined ) {
+								taxExtRateInput.value = taxExtRateInput.dataset.originalRate;
+							}
+						}
+					} else if ( prefix === 'mhbo_add' ) {
+						const accEmpty = ! taxAccRateInput || taxAccRateInput.value === '' || parseFloat( taxAccRateInput.value ) === 0;
+						const extEmpty = ! taxExtRateInput || taxExtRateInput.value === '' || parseFloat( taxExtRateInput.value ) === 0;
+						if ( accEmpty && extEmpty ) {
+							if ( taxAccRateInput && taxAccRateInput.dataset.globalRate !== undefined ) {
+								taxAccRateInput.value = taxAccRateInput.dataset.globalRate;
+							}
+							if ( taxExtRateInput && taxExtRateInput.dataset.globalRate !== undefined ) {
+								taxExtRateInput.value = taxExtRateInput.dataset.globalRate;
+							}
+						}
+					}
+				}
+				syncRestoreOrigTaxBtnVisibility();
+				updatePrices();
+			} );
+		}
+
+		if ( applyGlobalRatesBtn ) {
+			applyGlobalRatesBtn.addEventListener( 'click', function ( e ) {
+				e.preventDefault();
+				if ( taxAccRateInput && taxAccRateInput.dataset.globalRate !== undefined ) {
+					taxAccRateInput.value = taxAccRateInput.dataset.globalRate;
+				}
+				if ( taxExtRateInput && taxExtRateInput.dataset.globalRate !== undefined ) {
+					taxExtRateInput.value = taxExtRateInput.dataset.globalRate;
+				}
+				syncRestoreOrigTaxBtnVisibility();
+				updatePrices();
+			} );
+		}
+
+		if ( restoreOrigRatesBtn && taxModeSelect ) {
+			restoreOrigRatesBtn.addEventListener( 'click', function ( e ) {
+				e.preventDefault();
+				const origMode = taxModeSelect.dataset.originalMode;
+				if ( origMode ) {
+					taxModeSelect.value = origMode;
+				}
+				syncTaxRatesVisibility( taxModeSelect.value );
+				if ( taxAccRateInput && taxAccRateInput.dataset.originalRate !== undefined ) {
+					taxAccRateInput.value = taxAccRateInput.dataset.originalRate;
+				}
+				if ( taxExtRateInput && taxExtRateInput.dataset.originalRate !== undefined ) {
+					taxExtRateInput.value = taxExtRateInput.dataset.originalRate;
+				}
+				syncRestoreOrigTaxBtnVisibility();
+				updatePrices();
+			} );
+		}
+
+		[ taxAccRateInput, taxExtRateInput ].forEach( function ( el ) {
+			if ( el ) {
+				el.addEventListener( 'change', function () {
+					syncRestoreOrigTaxBtnVisibility();
+					updatePrices();
+				} );
+				el.addEventListener( 'input', function () {
+					syncRestoreOrigTaxBtnVisibility();
+					clearTimeout( window.mhboPriceTimer );
+					window.mhboPriceTimer = setTimeout( updatePrices, 300 );
+				} );
+			}
+		} );
+
 		const rateListeners = [
 			roomSelect,
 			checkInInput,
@@ -635,7 +853,6 @@
 			guestsInput,
 			childrenInput,
 			discountInput,
-			taxModeSelect,
 		];
 		rateListeners.forEach( function ( el ) {
 			if ( el ) {
@@ -679,10 +896,11 @@
 				const remaining = Math.max( 0, MAX_WAIT_MS - elapsed );
 
 				if ( elapsed >= MAX_WAIT_MS ) {
-					alert(
+					showAdminNotice(
 						'Price calculation is taking longer than expected. ' +
 						'Please check your network connection and try again. ' +
-						'If the problem persists, you can submit the form and the server will recalculate the total.'
+						'If the problem persists, you can submit the form and the server will recalculate the total.',
+						'warning'
 					);
 					form.submit();
 					return;
@@ -694,9 +912,10 @@
 					} else if ( submitAttempts < Math.ceil( MAX_WAIT_MS / RETRY_INTERVAL_MS ) ) {
 						form.dispatchEvent( new Event( 'submit', { cancelable: true } ) );
 					} else {
-						alert(
+						showAdminNotice(
 							'Price calculation is taking longer than expected. ' +
-							'Submitting with current values. The server will validate the total on save.'
+							'Submitting with current values. The server will validate the total on save.',
+							'warning'
 						);
 						form.submit();
 					}
@@ -748,9 +967,10 @@
 			const roomTotalNum = parseFloat( data.room_total ) || 0;
 			const baseRate = ( roomOpt && roomOpt.dataset.price ) ? parseFloat( roomOpt.dataset.price ) : ( nightsCount > 0 ? ( roomTotalNum / nightsCount ) : 0 );
 			const avgRate = nightsCount > 0 ? ( roomTotalNum / nightsCount ) : baseRate;
-			let rateDisplay = currSymbol + baseRate.toFixed( 2 );
+			const safeCurrSymbol = escapeHtml( currSymbol );
+			let rateDisplay = safeCurrSymbol + baseRate.toFixed( 2 );
 			if ( nightsCount > 1 && Math.abs( avgRate - baseRate ) > 0.01 ) {
-				rateDisplay = currSymbol + avgRate.toFixed( 2 ) + ' <span style="font-size:10px; color:#64748b; font-weight:500;">(avg)</span>';
+				rateDisplay = safeCurrSymbol + avgRate.toFixed( 2 ) + ' <span style="font-size:10px; color:#64748b; font-weight:500;">(avg)</span>';
 			}
 
 			let lodgingTaxDisplay = '—';
@@ -765,7 +985,7 @@
 			rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">' + rateDisplay + '</td>';
 			rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">' + nightsCount + '</td>';
 			rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + lodgingTaxDisplay + '</td>';
-			rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + roomTotalFormatted + '</td>';
+			rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + escapeHtml( roomTotalFormatted ) + '</td>';
 			rowsHtml += '</tr>';
 
 			// 2. Child supplements
@@ -776,7 +996,7 @@
 				}
 				rowsHtml += '<tr>';
 				rowsHtml += '<td><span class="mhbo-charge-category-badge mhbo-cat-children">CHILDREN</span></td>';
-				rowsHtml += '<td><strong>' + ( ( config.i18n && config.i18n.childSupplement ) ? config.i18n.childSupplement : 'Child Supplements' ) + '</strong></td>';
+				rowsHtml += '<td><strong>' + escapeHtml( ( config.i18n && config.i18n.childSupplement ) ? config.i18n.childSupplement : 'Child Supplements' ) + '</strong></td>';
 				rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">—</td>';
 				rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">' + children + '</td>';
 				rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + childTaxDisplay + '</td>';
@@ -789,10 +1009,11 @@
 				Object.keys( data.extras_breakdown ).forEach( function ( k ) {
 					const ex = data.extras_breakdown[ k ];
 					const isStayExtension = ( k === '_early_checkin' || k === '_late_checkout' );
-					const itemTaxRate = isStayExtension ? accRate : extRate;
+					const isComplimentary = Boolean( ex.complimentary || ( isStayExtension && parseFloat( ex.value || 0 ) <= 0 ) );
+					const itemTaxRate = isComplimentary ? 0 : ( isStayExtension ? accRate : extRate );
 					let extraTaxDisplay = '—';
 					if ( taxEnabled && itemTaxRate > 0 ) {
-						extraTaxDisplay = itemTaxRate + '%' + ( isVat ? ' <span style="font-size:10px; color:#0284c7; font-weight:600;">(Incl.)</span>' : '' );
+						extraTaxDisplay = escapeHtml( String( itemTaxRate ) ) + '%' + ( isVat ? ' <span style="font-size:10px; color:#0284c7; font-weight:600;">(Incl.)</span>' : '' );
 					}
 					const catBadgeClass = isStayExtension ? 'mhbo-cat-room' : 'mhbo-cat-extra';
 					const catBadgeLabel = isStayExtension ? 'EXTENSION' : 'ENHANCEMENT';
@@ -805,10 +1026,31 @@
 					rowsHtml += '<td><strong>' + escapeHtml( ex.name ) + '</strong>' + ( ex.compulsory ? ' <span style="font-size:10px; color:#5b72b8; font-weight:600;">(Compulsory)</span>' : '' ) + detailsHtml + '</td>';
 					rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">' + escapeHtml( ex.unit_price_formatted || ( currSymbol + parseFloat( ex.unit_price_value || 0 ).toFixed( 2 ) ) ) + '</td>';
 					rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">' + escapeHtml( String( ex.quantity || 1 ) ) + '</td>';
-					rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + escapeHtml( extraTaxDisplay ) + '</td>';
+					rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + extraTaxDisplay + '</td>';
 					rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + escapeHtml( ex.formatted || ( currSymbol + parseFloat( ex.value || 0 ).toFixed( 2 ) ) ) + '</td>';
 					rowsHtml += '</tr>';
 				} );
+			}
+
+			// 3b. Service Fee
+			const serviceFeeNum = parseFloat( data.service_fee ) || 0;
+			if ( serviceFeeNum > 0 ) {
+				const sfTaxDisplay =
+					taxEnabled && extRate > 0
+						? extRate + '%' + ( isVat ? ' <span style="font-size:10px; color:#0284c7; font-weight:600;">(Incl.)</span>' : '' )
+						: '—';
+				const sfLabelText = data.service_fee_label || 'Service Fee';
+				const sfFormatted =
+					data.service_fee_formatted ||
+					( safeCurrSymbol + serviceFeeNum.toFixed( 2 ) );
+				rowsHtml += '<tr>';
+				rowsHtml += '<td><span class="mhbo-charge-category-badge mhbo-cat-extra">FEE</span></td>';
+				rowsHtml += '<td><strong>' + escapeHtml( sfLabelText ) + '</strong></td>';
+				rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">' + escapeHtml( sfFormatted ) + '</td>';
+				rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">1</td>';
+				rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">' + sfTaxDisplay + '</td>';
+				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums;">' + escapeHtml( sfFormatted ) + '</td>';
+				rowsHtml += '</tr>';
 			}
 
 			// 4. Promo coupon
@@ -832,7 +1074,7 @@
 				rowsHtml += '<td style="text-align:right; font-variant-numeric:tabular-nums;">—</td>';
 				rowsHtml += '<td style="text-align:center; font-variant-numeric:tabular-nums;">1</td>';
 				rowsHtml += '<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;">—</td>';
-				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#92400e;">−' + currSymbol + manualDisc.toFixed( 2 ) + '</td>';
+				rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#92400e;">−' + safeCurrSymbol + manualDisc.toFixed( 2 ) + '</td>';
 				rowsHtml += '</tr>';
 			}
 
@@ -846,7 +1088,7 @@
 					rowsHtml += '<td><span class="mhbo-charge-category-badge mhbo-cat-adjustment">TAXES</span></td>';
 					rowsHtml += '<td><strong>' + escapeHtml( modeDescription ) + '</strong></td>';
 					rowsHtml += '<td colspan="3" style="text-align:right; color:#64748b; font-size:11px;">' + ( isVat ? 'Included in Lodging' : 'Added to Total' ) + '</td>';
-					rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#475569;">' + currSymbol + taxVal.toFixed( 2 ) + '</td>';
+					rowsHtml += '<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:#475569;">' + safeCurrSymbol + taxVal.toFixed( 2 ) + '</td>';
 					rowsHtml += '</tr>';
 				}
 			}
@@ -1050,8 +1292,8 @@
 				availBanner.style.display = 'block';
 				if ( hasConflict ) {
 					availBanner.className = 'mhbo-avail-banner-conflict';
-					const reasonSuffix = conflictReason ? ` (${ conflictReason })` : '';
-					availBanner.innerHTML = '⚠️ <strong>' + escapeHtml( roomName ) + '</strong> is unavailable on <strong>' + conflictDate + '</strong>' + reasonSuffix + '. Please select different stay dates or pick another available room below.';
+					const reasonSuffix = conflictReason ? ` (${ escapeHtml( conflictReason ) })` : '';
+					availBanner.innerHTML = '⚠️ <strong>' + escapeHtml( roomName ) + '</strong> is unavailable on <strong>' + escapeHtml( conflictDate ) + '</strong>' + reasonSuffix + '. Please select different stay dates or pick another available room below.';
 				} else {
 					const nights = Math.max( 1, Math.round( ( d2 - d1 ) / ( 1000 * 60 * 60 * 24 ) ) );
 					const fmt1 = d1Str;
@@ -1070,13 +1312,13 @@
 					const effMax = ( d1Info && d1Info.max_stay > 0 ) ? d1Info.max_stay : cfgMax;
 
 					if ( effMin > 0 && nights < effMin ) {
-						advisories.push( '📋 Min stay: <strong>' + effMin + ' nights</strong> (you selected ' + nights + '). Admin override applied.' );
+						advisories.push( '📋 Min stay: <strong>' + effMin + ' ' + ( effMin === 1 ? 'night' : 'nights' ) + '</strong> (you selected ' + nights + '). Admin override applied.' );
 					}
 					if ( effMax > 0 && nights > effMax ) {
-						advisories.push( '📋 Max stay: <strong>' + effMax + ' nights</strong> (you selected ' + nights + '). Admin override applied.' );
+						advisories.push( '📋 Max stay: <strong>' + effMax + ' ' + ( effMax === 1 ? 'night' : 'nights' ) + '</strong> (you selected ' + nights + '). Admin override applied.' );
 					}
 					if ( config.gapAutocorrect && config.gapMinNights > 0 && nights <= config.gapMinNights ) {
-						advisories.push( '🔧 Gap auto-correction is active (min gap: <strong>' + config.gapMinNights + ' nights</strong>). This booking fills an orphan gap — verify no overlap.' );
+						advisories.push( '🔧 Gap auto-correction is active (min gap: <strong>' + config.gapMinNights + ' ' + ( config.gapMinNights === 1 ? 'night' : 'nights' ) + '</strong>). This booking fills an orphan gap — verify no overlap.' );
 					}
 
 					if ( advisories.length > 0 ) {
@@ -1968,7 +2210,10 @@
 					}
 				} )
 				.catch( function ( err ) {
-					alert( ( err && err.message ) || 'Error updating balance.' );
+					showAdminNotice(
+						( err && err.message ) || 'Error updating balance.',
+						'error'
+					);
 					btn.disabled = false;
 					btn.textContent = 'Mark Balance as Collected';
 				} );
@@ -2651,11 +2896,7 @@ function initPaginationHandlers() {
 					if ( count === 0 ) {
 						e.preventDefault();
 						const noSelMsg = window.mhboAdminBookingsConfig?.i18n?.noBookingsSelected || 'Please select at least one booking to delete.';
-						if ( window.MHBO && window.MHBO.toast ) {
-							window.MHBO.toast( noSelMsg, 'warning', 3500 );
-						} else {
-							alert( noSelMsg );
-						}
+						showAdminNotice( noSelMsg, 'warning' );
 						return false;
 					}
 

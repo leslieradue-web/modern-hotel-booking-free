@@ -13,7 +13,6 @@ use MHBO\AI\SiteScanner;
 use MHBO\AI\Abilities;
 use WP_REST_Request;
 use WP_REST_Response;
-use WP_Error;
 use Throwable;
 
 /**
@@ -27,7 +26,7 @@ use Throwable;
  *
  * @package MHBO\AI
  * @since   2.3.8
- * @version 3.0.3 (Streamable HTTP 2026 Edition)
+ * @version 3.0.4 (Streamable HTTP 2026 Edition)
  */
 class McpServer {
 
@@ -93,18 +92,23 @@ class McpServer {
 	 * Register the REST API routes for MCP Streamable HTTP and OpenAPI.
 	 */
 	public static function register_rest_routes(): void {
-		// 1. Canonical MCP Streamable HTTP endpoint.
-		register_rest_route(
-			self::SERVER_NS,
-			'/' . self::SERVER_ROUTE,
-			array(
+		$hybrid_enabled = (bool) get_option( 'mhbo_ai_mcp_hybrid_bridge', 0 );
+		$adapter_active = $hybrid_enabled && class_exists( '\WP\MCP\Core\McpAdapter' );
+
+		// 1. Canonical MCP Streamable HTTP endpoint (avoid collision when WP/mcp-adapter claims it).
+		if ( ! $adapter_active ) {
+			register_rest_route(
+				self::SERVER_NS,
+				'/' . self::SERVER_ROUTE,
 				array(
-					'methods'             => array( 'GET', 'POST', 'OPTIONS' ),
-					'callback'            => array( self::class, 'handle_request' ),
-					'permission_callback' => '__return_true', // Public access with internal method-level capability enforcement.
-				),
-			)
-		);
+					array(
+						'methods'             => array( 'GET', 'POST', 'OPTIONS' ),
+						'callback'            => array( self::class, 'handle_request' ),
+						'permission_callback' => '__return_true', // Public access with internal method-level capability enforcement.
+					),
+				)
+			);
+		}
 
 		// 2. OpenAPI 3.1.0 specification for ChatGPT Actions & Custom GPTs.
 		register_rest_route(
@@ -196,7 +200,7 @@ class McpServer {
 				array(
 					'name'                => 'Modern Hotel Booking MCP Server',
 					'server_id'           => self::SERVER_ID,
-					'version'             => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
+					'version'             => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4',
 					'status'              => 'active',
 					'transport'           => 'Streamable HTTP (JSON-RPC 2.0 over POST)',
 					'supported_protocols' => self::SUPPORTED_VERSIONS,
@@ -224,14 +228,15 @@ class McpServer {
 		 *
 		 * @var array<string, mixed>|null $body
 		 */
-		$body = json_decode( $raw_body, true );
+		$body = json_decode( $raw_body, true, 32 );
 		if ( ! is_array( $body ) || array() === $body ) {
 			return self::json_rpc_error( null, -32700, __( 'Parse error: invalid JSON payload.', 'modern-hotel-booking' ), 400 );
 		}
 
 		$jsonrpc_ver = (string) ( $body['jsonrpc'] ?? '' );
 		$rpc_method  = (string) ( $body['method'] ?? '' );
-		$rpc_id      = $body['id'] ?? null;
+		$raw_id      = $body['id'] ?? null;
+		$rpc_id      = ( is_string( $raw_id ) || is_int( $raw_id ) || null === $raw_id ) ? $raw_id : null;
 		$params      = is_array( $body['params'] ?? null ) ? $body['params'] : array();
 
 		// Validate JSON-RPC 2.0 structure.
@@ -314,7 +319,7 @@ class McpServer {
 					),
 					'serverInfo'      => array(
 						'name'    => 'Modern Hotel Booking MCP Server',
-						'version' => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
+						'version' => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4',
 					),
 					'instructions'    => __( 'Official Model Context Protocol server for Modern Hotel Booking. Query real-time room availability, policies, rates, and direct booking links.', 'modern-hotel-booking' ),
 				),
@@ -350,42 +355,107 @@ class McpServer {
 	 * @param array<string, mixed> $params
 	 * @return WP_REST_Response
 	 */
+	/**
+	 * Enforce fixed-window per-IP rate limiting for MCP and OpenAPI calls.
+	 */
+	private static function check_ip_rate_limit(): ?WP_REST_Response {
+		$ip       = Security::get_client_ip();
+		$ip_key   = 'mhbo_mcp_rl_' . md5( $ip );
+		$is_pro   = self::is_pro_active();
+		$max_rate = $is_pro ? 200 : ( ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::is_starter() ) ? 60 : 30 );
+		$now      = time();
+		$data     = get_transient( $ip_key );
+		if ( is_array( $data ) && isset( $data['count'], $data['reset'] ) ) {
+			$count = (int) $data['count'];
+			$reset = (int) $data['reset'];
+			$ttl   = max( 1, $reset - $now );
+		} else {
+			$count = is_numeric( $data ) ? (int) $data : 0;
+			$reset = $now + HOUR_IN_SECONDS;
+			$ttl   = HOUR_IN_SECONDS;
+		}
+		if ( $count >= $max_rate ) {
+			return new WP_REST_Response(
+				array(
+					'error'   => 'rate_limited',
+					'message' => __( 'Rate limit exceeded. Please wait before executing more calls.', 'modern-hotel-booking' ),
+				),
+				429,
+				array( 'Retry-After' => '3600' )
+			);
+		}
+		set_transient(
+			$ip_key,
+			array(
+				'count' => $count + 1,
+				'reset' => $reset,
+			),
+			$ttl
+		);
+		return null;
+	}
+
+	/**
+	 * Enforce strict 10/hr anti-oracle sub-limit for promo code checks across MCP and OpenAPI.
+	 */
+	private static function check_promo_rate_limit(): ?WP_REST_Response {
+		$ip        = Security::get_client_ip();
+		$promo_key = 'mhbo_mcp_promo_' . md5( $ip );
+		$now       = time();
+		$data      = get_transient( $promo_key );
+		if ( is_array( $data ) && isset( $data['count'], $data['reset'] ) ) {
+			$count = (int) $data['count'];
+			$reset = (int) $data['reset'];
+			$ttl   = max( 1, $reset - $now );
+		} else {
+			$count = is_numeric( $data ) ? (int) $data : 0;
+			$reset = $now + HOUR_IN_SECONDS;
+			$ttl   = HOUR_IN_SECONDS;
+		}
+		if ( $count >= 10 ) {
+			return new WP_REST_Response(
+				array(
+					'error'   => 'promo_rate_limited',
+					'message' => __( 'Promotional code rate limit exceeded. Try again in one hour.', 'modern-hotel-booking' ),
+				),
+				429,
+				array( 'Retry-After' => '3600' )
+			);
+		}
+		set_transient(
+			$promo_key,
+			array(
+				'count' => $count + 1,
+				'reset' => $reset,
+			),
+			$ttl
+		);
+		return null;
+	}
+
+	/**
+	 * Execute an MCP tool call.
+	 *
+	 * @param mixed                $rpc_id JSON-RPC request ID.
+	 * @param array<string, mixed> $params JSON-RPC params payload.
+	 * @return WP_REST_Response
+	 */
 	private static function handle_tools_call( mixed $rpc_id, array $params ): WP_REST_Response {
 		$tool_name = (string) ( $params['name'] ?? '' );
 		$arguments = is_array( $params['arguments'] ?? null ) ? $params['arguments'] : array();
 
 		// 1. Rate Limiting Check (only tools/call counts towards quota).
-		$ip       = Security::get_client_ip();
-		$ip_key   = 'mhbo_mcp_rl_' . md5( $ip );
-		$is_pro   = self::is_pro_active();
-		$max_rate = $is_pro ? 200 : ( ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::is_starter() ) ? 60 : 30 );
-
-		$count = (int) get_transient( $ip_key );
-		if ( $count >= $max_rate ) {
-			return self::json_rpc_error(
-				$rpc_id,
-				-32000,
-				__( 'Rate limit exceeded. Please wait before executing more tool calls.', 'modern-hotel-booking' ),
-				429,
-				array( 'Retry-After' => '3600' )
-			);
+		$rl_resp = self::check_ip_rate_limit();
+		if ( null !== $rl_resp ) {
+			return self::json_rpc_error( $rpc_id, -32000, __( 'Rate limit exceeded. Please wait before executing more tool calls.', 'modern-hotel-booking' ), 429, array( 'Retry-After' => '3600' ) );
 		}
-		set_transient( $ip_key, $count + 1, HOUR_IN_SECONDS );
 
 		// 2. Oracle Attack Protection: extra sub-limit on coupon guessing.
-		if ( in_array( $tool_name, array( 'apply_promo_code', 'mhbo_apply_promo_code', 'mhbo/apply-promo-code' ), true ) ) {
-			$promo_key   = 'mhbo_mcp_promo_' . md5( $ip );
-			$promo_count = (int) get_transient( $promo_key );
-			if ( $promo_count >= 10 ) {
-				return self::json_rpc_error(
-					$rpc_id,
-					-32000,
-					__( 'Promotional code rate limit exceeded. Try again in one hour.', 'modern-hotel-booking' ),
-					429,
-					array( 'Retry-After' => '3600' )
-				);
+		$has_promo_arg = ! empty( $arguments['promo_code'] ) || ! empty( $arguments['coupon_code'] );
+		if ( $has_promo_arg || in_array( $tool_name, array( 'apply_promo_code', 'mhbo_apply_promo_code', 'mhbo/apply-promo-code' ), true ) ) {
+			if ( null !== self::check_promo_rate_limit() ) {
+				return self::json_rpc_error( $rpc_id, -32000, __( 'Promotional code rate limit exceeded. Try again in one hour.', 'modern-hotel-booking' ), 429, array( 'Retry-After' => '3600' ) );
 			}
-			set_transient( $promo_key, $promo_count + 1, HOUR_IN_SECONDS );
 		}
 
 		// 3. Resolve tool implementation class.
@@ -482,6 +552,9 @@ class McpServer {
 				200
 			);
 		} catch ( Throwable $e ) {
+			$err_text = ( defined( 'WP_DEBUG' ) && WP_DEBUG )
+				? 'Execution error: ' . $e->getMessage()
+				: __( 'Tool execution failed.', 'modern-hotel-booking' );
 			return new WP_REST_Response(
 				array(
 					'jsonrpc' => '2.0',
@@ -490,7 +563,7 @@ class McpServer {
 						'content' => array(
 							array(
 								'type' => 'text',
-								'text' => 'Execution error: ' . $e->getMessage(),
+								'text' => $err_text,
 							),
 						),
 						'isError' => true,
@@ -530,6 +603,9 @@ return new WP_REST_Response(
 	 * @return WP_REST_Response
 	 */
 	private static function handle_resources_read( mixed $rpc_id, array $params ): WP_REST_Response {
+		if ( null !== self::check_ip_rate_limit() ) {
+			return self::json_rpc_error( $rpc_id, -32000, __( 'Rate limit exceeded. Please wait before reading more resources.', 'modern-hotel-booking' ), 429, array( 'Retry-After' => '3600' ) );
+		}
 		$uri = (string) ( $params['uri'] ?? '' );
 
 return self::json_rpc_error(
@@ -586,9 +662,9 @@ $all_tools = array_merge( $guest_tools, $operator_tools );
 					'description' => (string) ( $def['description'] ?? '' ),
 					'inputSchema' => $def['input_schema'] ?? (object) array(),
 					'annotations' => array(
-						'readOnlyHint'    => ! in_array( $slug, array( 'create_booking_draft', 'modify_booking', 'cancel_booking' ), true ),
+						'readOnlyHint'    => ! in_array( $slug, array( 'create_booking_draft', 'modify_booking', 'cancel_booking', 'apply_promo_code' ), true ),
 						'destructiveHint' => in_array( $slug, array( 'cancel_booking', 'modify_booking' ), true ),
-						'idempotentHint'  => ! in_array( $slug, array( 'create_booking_draft', 'cancel_booking' ), true ),
+						'idempotentHint'  => ! in_array( $slug, array( 'create_booking_draft', 'cancel_booking', 'apply_promo_code' ), true ),
 					),
 				);
 			}
@@ -683,7 +759,7 @@ return $map;
 			'info'    => array(
 				'title'       => __( 'Modern Hotel Booking AI Assistant API', 'modern-hotel-booking' ),
 				'description' => __( 'Public machine-readable API for room availability, rates, policies, and direct booking links.', 'modern-hotel-booking' ),
-				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
+				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4',
 			),
 			'servers' => array(
 				array(
@@ -798,6 +874,9 @@ return $map;
 	 */
 	public static function rest_availability( WP_REST_Request $request ): WP_REST_Response {
 		self::set_cors_headers();
+		if ( null !== ( $rl = self::check_ip_rate_limit() ) ) {
+			return $rl;
+		}
 		$args   = $request->get_json_params() ?: $request->get_params();
 		$output = Abilities\CheckAvailability::execute( is_array( $args ) ? $args : array() );
 		return new WP_REST_Response( $output, 200 );
@@ -811,6 +890,9 @@ return $map;
 	 */
 	public static function rest_hotel_info( WP_REST_Request $request ): WP_REST_Response {
 		self::set_cors_headers();
+		if ( null !== ( $rl = self::check_ip_rate_limit() ) ) {
+			return $rl;
+		}
 		$args   = $request->get_json_params() ?: $request->get_params();
 		$output = Abilities\HotelInfo::execute( is_array( $args ) ? $args : array() );
 		return new WP_REST_Response( $output, 200 );
@@ -824,6 +906,9 @@ return $map;
 	 */
 	public static function rest_rooms( WP_REST_Request $request ): WP_REST_Response {
 		self::set_cors_headers();
+		if ( null !== ( $rl = self::check_ip_rate_limit() ) ) {
+			return $rl;
+		}
 		$args   = $request->get_json_params() ?: $request->get_params();
 		$output = Abilities\RoomDetails::execute( is_array( $args ) ? $args : array() );
 		return new WP_REST_Response( $output, 200 );
@@ -837,6 +922,9 @@ return $map;
 	 */
 	public static function rest_policies( WP_REST_Request $request ): WP_REST_Response {
 		self::set_cors_headers();
+		if ( null !== ( $rl = self::check_ip_rate_limit() ) ) {
+			return $rl;
+		}
 		$args   = $request->get_json_params() ?: $request->get_params();
 		$output = Abilities\Policies::execute( is_array( $args ) ? $args : array() );
 		return new WP_REST_Response( $output, 200 );
@@ -850,8 +938,17 @@ return $map;
 	 */
 	public static function rest_quote( WP_REST_Request $request ): WP_REST_Response {
 		self::set_cors_headers();
-		$args   = $request->get_json_params() ?: $request->get_params();
-		$output = Abilities\GetPriceBreakdown::execute( is_array( $args ) ? $args : array() );
+		if ( null !== ( $rl = self::check_ip_rate_limit() ) ) {
+			return $rl;
+		}
+		$args       = $request->get_json_params() ?: $request->get_params();
+		$clean_args = is_array( $args ) ? $args : array();
+		if ( ! empty( $clean_args['promo_code'] ) || ! empty( $clean_args['coupon_code'] ) ) {
+			if ( null !== ( $prl = self::check_promo_rate_limit() ) ) {
+				return $prl;
+			}
+		}
+		$output = Abilities\GetPriceBreakdown::execute( $clean_args );
 		return new WP_REST_Response( $output, 200 );
 	}
 
@@ -863,8 +960,16 @@ return $map;
 	 */
 	public static function rest_booking_link( WP_REST_Request $request ): WP_REST_Response {
 		self::set_cors_headers();
+		if ( null !== ( $rl = self::check_ip_rate_limit() ) ) {
+			return $rl;
+		}
 		$args                       = $request->get_json_params() ?: $request->get_params();
 		$clean_args                 = is_array( $args ) ? $args : array();
+		if ( ! empty( $clean_args['promo_code'] ) || ! empty( $clean_args['coupon_code'] ) ) {
+			if ( null !== ( $prl = self::check_promo_rate_limit() ) ) {
+				return $prl;
+			}
+		}
 		$clean_args['utm_source']   = 'chatgpt_action';
 		$clean_args['utm_medium']   = 'ai_concierge';
 		$clean_args['utm_campaign'] = 'openai';
@@ -888,7 +993,7 @@ return $map;
 				'id'          => self::SERVER_ID,
 				'name'        => I18n::get_label( 'ai_mcp_name' ),
 				'description' => I18n::get_label( 'ai_mcp_description' ),
-				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
+				'version'     => defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4',
 				'abilities'   => self::get_registered_ability_names(),
 				'resources'   => array( self::SERVER_ID . '/site-knowledge-base' ),
 			)
@@ -912,7 +1017,7 @@ return $map;
 				self::SERVER_ROUTE,
 				I18n::get_label( 'ai_mcp_name' ),
 				I18n::get_label( 'ai_mcp_description' ),
-				defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3',
+				defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4',
 				array( 'WP\\MCP\\Transport\\Http\\RestTransport' ),
 				null,
 				null,
@@ -939,8 +1044,7 @@ return $map;
 		}
 
 		return current_user_can( 'manage_options' )
-			|| current_user_can( 'mhbo_manage_bookings' )
-			|| current_user_can( 'mhbo_view_bookings' );
+			|| current_user_can( 'mhbo_manage_bookings' );
 	}
 
 	/**

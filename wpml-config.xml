@@ -1,36 +1,25 @@
 <wpml-config>
-    <!-- Custom Post Types for WPML / Polylang / Bogo / qTranslate -->
+    <!-- Custom Post Types for WPML / Polylang / Bogo / qTranslate-XT -->
     <custom-types>
-        <custom-type translate="1">mhbo_room</custom-type>
         <custom-type translate="1">mhbo_email_template</custom-type>
     </custom-types>
 
-    <!-- Taxonomies for WPML / Polylang -->
-    <taxonomies>
-        <taxonomy translate="1">mhbo_room_type</taxonomy>
-    </taxonomies>
-
-    <!-- Custom Fields (Postmeta) Configuration -->
-    <custom-fields>
-        <custom-field action="copy">mhbo_base_price</custom-field>
-        <custom-field action="copy">mhbo_max_guests</custom-field>
-        <custom-field action="copy">mhbo_max_children</custom-field>
-        <custom-field action="translate">mhbo_amenities</custom-field>
-        <custom-field action="translate">mhbo_room_description</custom-field>
-        <custom-field action="copy">_mhbo_ical_sequence</custom-field>
-    </custom-fields>
-
-    <!-- Gutenberg Blocks Configuration (WP 6.5+ / WP 7.1+) -->
+    <!-- Gutenberg Blocks Configuration (WP 6.6+ / WP 7.1+) -->
     <gutenberg-blocks>
-        <gutenberg-block type="modern-hotel-booking/booking-form" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/room-calendar" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/company-info" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/whatsapp-button" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/banking-details" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/revolut-details" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/business-card" translate="1" />
-        <gutenberg-block type="modern-hotel-booking/ai-chat-widget" translate="1" />
+        <gutenberg-block type="modern-hotel-booking/booking-form" translate="0" />
+        <gutenberg-block type="modern-hotel-booking/room-calendar" translate="0" />
+        <gutenberg-block type="modern-hotel-booking/company-info" translate="0" />
+        <gutenberg-block type="modern-hotel-booking/whatsapp-button" translate="1">
+            <key name="text" />
+            <key name="message" />
+        </gutenberg-block>
+        <gutenberg-block type="modern-hotel-booking/banking-details" translate="0" />
+        <gutenberg-block type="modern-hotel-booking/revolut-details" translate="0" />
+        <gutenberg-block type="modern-hotel-booking/business-card" translate="0" />
         <gutenberg-block type="modern-hotel-booking/ai-concierge" translate="1">
+            <key name="welcomeMessage" />
+        </gutenberg-block>
+        <gutenberg-block type="modern-hotel-booking/ai-chat-widget" translate="1">
             <key name="welcomeMessage" />
         </gutenberg-block>
     </gutenberg-blocks>
@@ -45,38 +34,24 @@
         </shortcode>
         <shortcode>
             <tag>mhbo_room_calendar</tag>
-            <attributes>
-                <attribute>room_id</attribute>
-                <attribute>id</attribute>
-            </attributes>
         </shortcode>
         <shortcode>
             <tag>mhbo_rooms</tag>
-            <attributes>
-                <attribute>type_id</attribute>
-            </attributes>
         </shortcode>
         <shortcode>
             <tag>mhbo_guest_portal</tag>
-            <attributes>
-                <attribute>token</attribute>
-                <attribute>booking_id</attribute>
-                <attribute>email</attribute>
-            </attributes>
         </shortcode>
         <shortcode>
             <tag>mhbo_balance_payment</tag>
         </shortcode>
         <shortcode>
             <tag>mhbo_company_info</tag>
-            <attributes>
-                <attribute>field</attribute>
-            </attributes>
         </shortcode>
         <shortcode>
             <tag>mhbo_whatsapp</tag>
             <attributes>
                 <attribute>text</attribute>
+                <attribute>message</attribute>
             </attributes>
         </shortcode>
         <shortcode>
@@ -94,8 +69,6 @@
         <shortcode>
             <tag>mhbo_ai_concierge</tag>
             <attributes>
-                <attribute>variant</attribute>
-                <attribute>position</attribute>
                 <attribute>welcome_message</attribute>
             </attributes>
         </shortcode>
@@ -103,45 +76,36 @@
 
     <!-- Elementor Integration Widgets -->
     <elementor-widgets>
-        <widget name="mhbo_booking_form" />
-        <widget name="mhbo_room_grid" />
-        <widget name="mhbo_calendar" />
+        <widget name="mhbo_booking_form">
+            <fields>
+                <field type="Title" editor_type="LINE">title</field>
+            </fields>
+        </widget>
     </elementor-widgets>
 
-    <!-- Admin Texts / Settings Table Options -->
+    <!-- Admin Texts / Translatable Settings Table Options (Safe User-Facing Text Only) -->
     <admin-texts>
-        <!-- General Hotel & Operations Options -->
+        <!-- General & Guest Experience -->
         <key name="mhbo_hotel_name" />
-        <key name="mhbo_hotel_wifi_ssid" />
-        <key name="mhbo_hotel_wifi_password" />
         <key name="mhbo_hotel_guest_instructions" />
-        <key name="mhbo_checkin_time" />
-        <key name="mhbo_checkout_time" />
-        <key name="mhbo_hotel_timezone" />
-        <key name="mhbo_notification_email" />
-        <key name="mhbo_additional_notification_email" />
-        <key name="mhbo_housekeeping_email" />
         <key name="mhbo_booking_page_url" />
+        <key name="mhbo_guest_portal_url" />
         <key name="mhbo_confirmation_btn_text" />
         <key name="mhbo_confirmation_btn_url" />
         <key name="mhbo_onsite_instructions" />
-        <key name="mhbo_label_gdpr_checkbox_text" />
 
-        <!-- Financial, Tax & Currency Options -->
+        <!-- Financial Labels -->
         <key name="mhbo_tax_label" />
         <key name="mhbo_service_fee_label" />
-        <key name="mhbo_service_fee_amount" />
-        <key name="mhbo_deposit_value" />
-        <key name="mhbo_deposit_refund_deadline_days" />
         <key name="mhbo_currency_symbol" />
-        <key name="mhbo_currency_code" />
-        <key name="mhbo_currency_position" />
-        <key name="mhbo_early_checkin_time" />
-        <key name="mhbo_early_checkin_fee" />
-        <key name="mhbo_late_checkout_time" />
-        <key name="mhbo_late_checkout_fee" />
 
-        <!-- Business & Property Structured Profiles (Nested Arrays) -->
+        <!-- AI Concierge Persona & Knowledge Text -->
+        <key name="mhbo_ai_persona_name" />
+        <key name="mhbo_ai_welcome_message" />
+        <key name="mhbo_ai_custom_instructions" />
+        <key name="mhbo_ai_local_guide" />
+
+        <!-- Business & Property Structured Profiles (Translatable Sub-Keys Only) -->
         <key name="mhbo_company_info">
             <key name="company_name" />
             <key name="address_line_1" />
@@ -150,16 +114,10 @@
             <key name="state" />
             <key name="postcode" />
             <key name="country" />
-            <key name="telephone" />
-            <key name="email" />
             <key name="contact_name" />
-            <key name="tax_id" />
-            <key name="registration_no" />
-            <key name="website" />
         </key>
 
         <key name="mhbo_whatsapp_info">
-            <key name="phone_number" />
             <key name="default_msg" />
             <key name="button_text" />
         </key>
@@ -167,20 +125,12 @@
         <key name="mhbo_banking_info">
             <key name="bank_name" />
             <key name="account_name" />
-            <key name="account_number" />
-            <key name="iban" />
-            <key name="swift_bic" />
-            <key name="sort_code" />
             <key name="branch_address" />
-            <key name="reference_prefix" />
             <key name="instructions" />
         </key>
 
         <key name="mhbo_revolut_info">
             <key name="revolut_name" />
-            <key name="revolut_tag" />
-            <key name="revolut_iban" />
-            <key name="revolut_link" />
             <key name="instructions" />
         </key>
 
@@ -189,11 +139,21 @@
         </key>
 
         <key name="mhbo_custom_fields">
-            <key name="*" />
+            <key name="*">
+                <key name="label">
+                    <key name="*" />
+                </key>
+            </key>
+        </key>
+
+        <key name="mhbo_pro_extras">
+            <key name="*">
+                <key name="name" />
+                <key name="description" />
+            </key>
         </key>
 
         <!-- Transactional Email Templates (18 Canonical Touchpoints) -->
-        <key name="mhbo_email_header_image" />
         <key name="mhbo_email_footer_text" />
         <key name="mhbo_email_pending_subject" />
         <key name="mhbo_email_pending_message" />
@@ -233,17 +193,20 @@
         <key name="mhbo_email_review_request_message" />
 
         <!-- Invoice & Review Automation Settings (Pro) -->
-        <key name="mhbo_invoice_template_enabled" />
         <key name="mhbo_invoice_template_subject" />
         <key name="mhbo_invoice_template_body" />
         <key name="mhbo_invoice_number_prefix" />
-        <key name="mhbo_invoice_footer_notes" />
-        <key name="mhbo_invoice_payment_instructions" />
         <key name="mhbo_review_email_settings">
-            <key name="*" />
+            <key name="email_subject" />
+            <key name="email_message" />
+            <key name="custom_review_links">
+                <key name="*">
+                    <key name="label" />
+                </key>
+            </key>
         </key>
 
-        <!-- All Multilingual Frontend & Admin UI Labels (2,512 Certified Keys) -->
+        <!-- All Multilingual Frontend & Admin UI Labels (2296 Certified Keys) -->
         <key name="mhbo_label_ac" />
         <key name="mhbo_label_action_configure_payments" />
         <key name="mhbo_label_action_manage_ical" />
@@ -385,6 +348,8 @@
         <key name="mhbo_label_api_btn_generate" />
         <key name="mhbo_label_api_desc_logs" />
         <key name="mhbo_label_api_err_calendar_gen" />
+        <key name="mhbo_label_api_err_cta" />
+        <key name="mhbo_label_api_err_ctd" />
         <key name="mhbo_label_api_err_generic" />
         <key name="mhbo_label_api_err_idempotency_conflict" />
         <key name="mhbo_label_api_err_invalid_webhook" />
@@ -547,8 +512,11 @@
         <key name="mhbo_label_business_label_wa_style" />
         <key name="mhbo_label_business_label_website" />
         <key name="mhbo_label_calendar_reason_booked" />
+        <key name="mhbo_label_calendar_reason_cta" />
+        <key name="mhbo_label_calendar_reason_ctd" />
         <key name="mhbo_label_calendar_reason_maintenance" />
         <key name="mhbo_label_calendar_reason_manual" />
+        <key name="mhbo_label_calendar_reason_turnover" />
         <key name="mhbo_label_cancel" />
         <key name="mhbo_label_cat_booking" />
         <key name="mhbo_label_cat_compliance" />
@@ -999,8 +967,10 @@
         <key name="mhbo_label_label_balance_link" />
         <key name="mhbo_label_label_balance_link_expiry" />
         <key name="mhbo_label_label_balance_link_expiry_desc" />
+        <key name="mhbo_label_label_balance_payment_badge" />
         <key name="mhbo_label_label_balance_payment_page" />
         <key name="mhbo_label_label_balance_payment_page_desc" />
+        <key name="mhbo_label_label_balance_payment_title" />
         <key name="mhbo_label_label_balance_schedule" />
         <key name="mhbo_label_label_balance_schedule_desc" />
         <key name="mhbo_label_label_bank" />
@@ -1026,6 +996,8 @@
         <key name="mhbo_label_label_booking_lang" />
         <key name="mhbo_label_label_booking_management" />
         <key name="mhbo_label_label_booking_number_date" />
+        <key name="mhbo_label_label_booking_page_badge" />
+        <key name="mhbo_label_label_booking_page_title" />
         <key name="mhbo_label_label_booking_res" />
         <key name="mhbo_label_label_booking_stats" />
         <key name="mhbo_label_label_booking_stats_desc" />
@@ -1040,11 +1012,13 @@
         <key name="mhbo_label_label_braintree_config" />
         <key name="mhbo_label_label_braintree_creds_valid_env" />
         <key name="mhbo_label_label_braintree_enable_desc" />
+        <key name="mhbo_label_label_braintree_live_merchant_account_id" />
         <key name="mhbo_label_label_braintree_live_merchant_id" />
         <key name="mhbo_label_label_braintree_live_private_key" />
         <key name="mhbo_label_label_braintree_live_public_key" />
         <key name="mhbo_label_label_braintree_merchant_account_id" />
         <key name="mhbo_label_label_braintree_merchant_account_id_desc" />
+        <key name="mhbo_label_label_braintree_sandbox_merchant_account_id" />
         <key name="mhbo_label_label_braintree_sandbox_merchant_id" />
         <key name="mhbo_label_label_braintree_sandbox_private_key" />
         <key name="mhbo_label_label_braintree_sandbox_public_key" />
@@ -1191,222 +1165,7 @@
         <key name="mhbo_label_label_deposit_value" />
         <key name="mhbo_label_label_deposits_desc" />
         <key name="mhbo_label_label_deposits_title" />
-        <key name="mhbo_label_label_desc_accommodation" />
-        <key name="mhbo_label_label_desc_adults" />
-        <key name="mhbo_label_label_desc_ai_cta_book_now" />
-        <key name="mhbo_label_label_desc_ai_handoff_email" />
-        <key name="mhbo_label_label_desc_ai_handoff_intro" />
-        <key name="mhbo_label_label_desc_ai_handoff_phone" />
-        <key name="mhbo_label_label_desc_ai_handoff_whatsapp" />
-        <key name="mhbo_label_label_desc_ai_persona_default" />
-        <key name="mhbo_label_label_desc_ai_widget_input_placeholder" />
-        <key name="mhbo_label_label_desc_ai_widget_sugg_check_avail" />
-        <key name="mhbo_label_label_desc_ai_widget_sugg_policies" />
-        <key name="mhbo_label_label_desc_ai_widget_sugg_room_types" />
-        <key name="mhbo_label_label_desc_ai_widget_typing" />
-        <key name="mhbo_label_label_desc_ai_widget_welcome_message" />
-        <key name="mhbo_label_label_desc_already_booked" />
-        <key name="mhbo_label_label_desc_amenities" />
-        <key name="mhbo_label_label_desc_amount" />
-        <key name="mhbo_label_label_desc_amount_due" />
-        <key name="mhbo_label_label_desc_amount_paid" />
-        <key name="mhbo_label_label_desc_api_not_configured" />
-        <key name="mhbo_label_label_desc_api_rate_limit" />
-        <key name="mhbo_label_label_desc_arrival_msg" />
-        <key name="mhbo_label_label_desc_auth_failed_env" />
-        <key name="mhbo_label_label_desc_available_rooms" />
-        <key name="mhbo_label_label_desc_back_to_rooms" />
-        <key name="mhbo_label_label_desc_bal_sprintf" />
-        <key name="mhbo_label_label_desc_balance_due" />
-        <key name="mhbo_label_label_desc_bank_acc_name" />
-        <key name="mhbo_label_label_desc_bank_iban" />
-        <key name="mhbo_label_label_desc_bank_swift" />
-        <key name="mhbo_label_label_desc_block_no_room" />
-        <key name="mhbo_label_label_desc_book_now" />
-        <key name="mhbo_label_label_desc_booking_arrival_email" />
-        <key name="mhbo_label_label_desc_booking_confirmed" />
-        <key name="mhbo_label_label_desc_booking_failed" />
-        <key name="mhbo_label_label_desc_booking_id" />
-        <key name="mhbo_label_label_desc_booking_received" />
-        <key name="mhbo_label_label_desc_booking_received_detail" />
-        <key name="mhbo_label_label_desc_booking_received_pending" />
-        <key name="mhbo_label_label_desc_booking_summary" />
-        <key name="mhbo_label_label_desc_braintree" />
-        <key name="mhbo_label_label_desc_btn_select_room" />
-        <key name="mhbo_label_label_desc_btn_view_room" />
-        <key name="mhbo_label_label_desc_check_in_future" />
-        <key name="mhbo_label_label_desc_check_in_past" />
-        <key name="mhbo_label_label_desc_check_in_time" />
-        <key name="mhbo_label_label_desc_check_out_after" />
-        <key name="mhbo_label_label_desc_check_out_future" />
-        <key name="mhbo_label_label_desc_check_out_time" />
-        <key name="mhbo_label_label_desc_checkin_only" />
-        <key name="mhbo_label_label_desc_checkout_only" />
-        <key name="mhbo_label_label_desc_child" />
-        <key name="mhbo_label_label_desc_child_n_age" />
-        <key name="mhbo_label_label_desc_children_count" />
-        <key name="mhbo_label_label_desc_common_causes" />
-        <key name="mhbo_label_label_desc_complete_booking" />
-        <key name="mhbo_label_label_desc_confirm_booking" />
-        <key name="mhbo_label_label_desc_confirm_request" />
-        <key name="mhbo_label_label_desc_confirmation_sent" />
-        <key name="mhbo_label_label_desc_connection_failed" />
-        <key name="mhbo_label_label_desc_credentials_expired" />
-        <key name="mhbo_label_label_desc_credentials_spaces" />
-        <key name="mhbo_label_label_desc_credit_card" />
-        <key name="mhbo_label_label_desc_creds_valid_env" />
-        <key name="mhbo_label_label_desc_dates_no_longer_available" />
-        <key name="mhbo_label_label_desc_deposit_paid" />
-        <key name="mhbo_label_label_desc_deposit_required" />
-        <key name="mhbo_label_label_desc_deposit_to_pay_now" />
-        <key name="mhbo_label_label_desc_early_checkin" />
-        <key name="mhbo_label_label_desc_email" />
-        <key name="mhbo_label_label_desc_enhance_stay" />
-        <key name="mhbo_label_label_desc_extras" />
-        <key name="mhbo_label_label_desc_extras_item" />
-        <key name="mhbo_label_label_desc_failed" />
-        <key name="mhbo_label_label_desc_field_required" />
-        <key name="mhbo_label_label_desc_fill_all_fields" />
-        <key name="mhbo_label_label_desc_first_night_rate" />
-        <key name="mhbo_label_label_desc_gdpr_required" />
-        <key name="mhbo_label_label_desc_guest_details" />
-        <key name="mhbo_label_label_desc_guests_count" />
-        <key name="mhbo_label_label_desc_includes_tax" />
-        <key name="mhbo_label_label_desc_invalid_api_key" />
-        <key name="mhbo_label_label_desc_invalid_booking_calc" />
-        <key name="mhbo_label_label_desc_invalid_customer" />
-        <key name="mhbo_label_label_desc_invalid_dates" />
-        <key name="mhbo_label_label_desc_invalid_email" />
-        <key name="mhbo_label_label_desc_invalid_nonce" />
-        <key name="mhbo_label_label_desc_invalid_stripe_pk_format" />
-        <key name="mhbo_label_label_desc_invalid_stripe_sig" />
-        <key name="mhbo_label_label_desc_invalid_stripe_sig_format" />
-        <key name="mhbo_label_label_desc_item" />
-        <key name="mhbo_label_label_desc_label_check_in_from" />
-        <key name="mhbo_label_label_desc_label_check_out_by" />
-        <key name="mhbo_label_label_desc_label_nights_count" />
-        <key name="mhbo_label_label_desc_label_nights_count_single" />
-        <key name="mhbo_label_label_desc_label_room_number" />
-        <key name="mhbo_label_label_desc_late_checkout" />
-        <key name="mhbo_label_label_desc_legend_available" />
-        <key name="mhbo_label_label_desc_legend_confirmed" />
-        <key name="mhbo_label_label_desc_legend_pending" />
-        <key name="mhbo_label_label_desc_loading" />
-        <key name="mhbo_label_label_desc_max_adults_error" />
-        <key name="mhbo_label_label_desc_max_children_error" />
-        <key name="mhbo_label_label_desc_max_guests" />
-        <key name="mhbo_label_label_desc_missing_order_id" />
-        <key name="mhbo_label_label_desc_missing_paypal_headers" />
-        <key name="mhbo_label_label_desc_mode_mismatch" />
-        <key name="mhbo_label_label_desc_msg_booking_confirmed_received" />
-        <key name="mhbo_label_label_desc_msg_confirmation_sent_to" />
-        <key name="mhbo_label_label_desc_msg_deposit_non_refundable" />
-        <key name="mhbo_label_label_desc_msg_pending_sent_to" />
-        <key name="mhbo_label_label_desc_name" />
-        <key name="mhbo_label_label_desc_name_too_long" />
-        <key name="mhbo_label_label_desc_night" />
-        <key name="mhbo_label_label_desc_nights" />
-        <key name="mhbo_label_label_desc_no_rooms" />
-        <key name="mhbo_label_label_desc_paid" />
-        <key name="mhbo_label_label_desc_paid_full_short" />
-        <key name="mhbo_label_label_desc_pay_arrival" />
-        <key name="mhbo_label_label_desc_pay_confirm" />
-        <key name="mhbo_label_label_desc_pay_deposit" />
-        <key name="mhbo_label_label_desc_pay_deposit_desc" />
-        <key name="mhbo_label_label_desc_pay_full" />
-        <key name="mhbo_label_label_desc_pay_full_desc" />
-        <key name="mhbo_label_label_desc_pay_on_arrival_email" />
-        <key name="mhbo_label_label_desc_payment_already_processed" />
-        <key name="mhbo_label_label_desc_payment_confirmation" />
-        <key name="mhbo_label_label_desc_payment_date" />
-        <key name="mhbo_label_label_desc_payment_declined_paypal" />
-        <key name="mhbo_label_label_desc_payment_details" />
-        <key name="mhbo_label_label_desc_payment_failed" />
-        <key name="mhbo_label_label_desc_payment_failed_detail" />
-        <key name="mhbo_label_label_desc_payment_info" />
-        <key name="mhbo_label_label_desc_payment_method" />
-        <key name="mhbo_label_label_desc_payment_options" />
-        <key name="mhbo_label_label_desc_payment_required" />
-        <key name="mhbo_label_label_desc_payment_status" />
-        <key name="mhbo_label_label_desc_payment_success_email" />
-        <key name="mhbo_label_label_desc_paypal" />
-        <key name="mhbo_label_label_desc_paypal_auth_failed" />
-        <key name="mhbo_label_label_desc_paypal_capture_error" />
-        <key name="mhbo_label_label_desc_paypal_client_id_missing" />
-        <key name="mhbo_label_label_desc_paypal_connection_error" />
-        <key name="mhbo_label_label_desc_paypal_currency_unsupported" />
-        <key name="mhbo_label_label_desc_paypal_generic_error" />
-        <key name="mhbo_label_label_desc_paypal_id_missing" />
-        <key name="mhbo_label_label_desc_paypal_not_configured" />
-        <key name="mhbo_label_label_desc_paypal_order_create_error" />
-        <key name="mhbo_label_label_desc_paypal_order_failed" />
-        <key name="mhbo_label_label_desc_paypal_required" />
-        <key name="mhbo_label_label_desc_paypal_secret_missing" />
-        <key name="mhbo_label_label_desc_pending_sprintf" />
-        <key name="mhbo_label_label_desc_per_adult" />
-        <key name="mhbo_label_label_desc_per_adult_per_night" />
-        <key name="mhbo_label_label_desc_per_child" />
-        <key name="mhbo_label_label_desc_per_child_per_night" />
-        <key name="mhbo_label_label_desc_per_night" />
-        <key name="mhbo_label_label_desc_per_person" />
-        <key name="mhbo_label_label_desc_per_person_per_night" />
-        <key name="mhbo_label_label_desc_permission_denied" />
-        <key name="mhbo_label_label_desc_phone" />
-        <key name="mhbo_label_label_desc_phone_too_long" />
         <key name="mhbo_label_label_desc_placeholder" />
-        <key name="mhbo_label_label_desc_price_calc_error" />
-        <key name="mhbo_label_label_desc_price_includes_tax" />
-        <key name="mhbo_label_label_desc_privacy_policy" />
-        <key name="mhbo_label_label_desc_processing" />
-        <key name="mhbo_label_label_desc_rate_limit_error" />
-        <key name="mhbo_label_label_desc_reference" />
-        <key name="mhbo_label_label_desc_reference_number" />
-        <key name="mhbo_label_label_desc_remaining_balance" />
-        <key name="mhbo_label_label_desc_reservation" />
-        <key name="mhbo_label_label_desc_rest_pro_error" />
-        <key name="mhbo_label_label_desc_revolut_tag" />
-        <key name="mhbo_label_label_desc_room" />
-        <key name="mhbo_label_label_desc_room_alt_text" />
-        <key name="mhbo_label_label_desc_room_details" />
-        <key name="mhbo_label_label_desc_room_not_found" />
-        <key name="mhbo_label_label_desc_secure_payment" />
-        <key name="mhbo_label_label_desc_security_error" />
-        <key name="mhbo_label_label_desc_security_verification_failed" />
-        <key name="mhbo_label_label_desc_select_dates_error" />
-        <key name="mhbo_label_label_desc_spam_detected" />
-        <key name="mhbo_label_label_desc_spam_honeypot" />
-        <key name="mhbo_label_label_desc_special_requests" />
-        <key name="mhbo_label_label_desc_stay_details" />
-        <key name="mhbo_label_label_desc_stripe_creds_valid" />
-        <key name="mhbo_label_label_desc_stripe_generic_error" />
-        <key name="mhbo_label_label_desc_stripe_intent_missing" />
-        <key name="mhbo_label_label_desc_stripe_invalid_pk_format" />
-        <key name="mhbo_label_label_desc_stripe_not_configured" />
-        <key name="mhbo_label_label_desc_stripe_pk_missing" />
-        <key name="mhbo_label_label_desc_stripe_sk_missing" />
-        <key name="mhbo_label_label_desc_stripe_webhook_secret_missing" />
-        <key name="mhbo_label_label_desc_subtotal" />
-        <key name="mhbo_label_label_desc_tab_labels" />
-        <key name="mhbo_label_label_desc_tax_accommodation" />
-        <key name="mhbo_label_label_desc_tax_added_at_checkout" />
-        <key name="mhbo_label_label_desc_tax_breakdown" />
-        <key name="mhbo_label_label_desc_tax_extras" />
-        <key name="mhbo_label_label_desc_tax_note_includes" />
-        <key name="mhbo_label_label_desc_tax_note_includes_multi" />
-        <key name="mhbo_label_label_desc_tax_note_plus" />
-        <key name="mhbo_label_label_desc_tax_note_plus_multi" />
-        <key name="mhbo_label_label_desc_tax_rate" />
-        <key name="mhbo_label_label_desc_tax_registration" />
-        <key name="mhbo_label_label_desc_tax_total" />
-        <key name="mhbo_label_label_desc_terms_conditions" />
-        <key name="mhbo_label_label_desc_to" />
-        <key name="mhbo_label_label_desc_total" />
-        <key name="mhbo_label_label_desc_total_nights" />
-        <key name="mhbo_label_label_desc_total_starting_from" />
-        <key name="mhbo_label_label_desc_total_with_tax" />
-        <key name="mhbo_label_label_desc_transaction_id" />
-        <key name="mhbo_label_label_desc_webhook_expired" />
-        <key name="mhbo_label_label_desc_webhook_sig_required" />
         <key name="mhbo_label_label_description" />
         <key name="mhbo_label_label_digital_compendium" />
         <key name="mhbo_label_label_disabled" />
@@ -1521,6 +1280,9 @@
         <key name="mhbo_label_label_guest_choice_desc" />
         <key name="mhbo_label_label_guest_details" />
         <key name="mhbo_label_label_guest_fallback" />
+        <key name="mhbo_label_label_guest_portal_badge" />
+        <key name="mhbo_label_label_guest_portal_desc" />
+        <key name="mhbo_label_label_guest_portal_title" />
         <key name="mhbo_label_label_guests" />
         <key name="mhbo_label_label_guests_count" />
         <key name="mhbo_label_label_guests_count_value" />
@@ -1671,25 +1433,6 @@
         <key name="mhbo_label_label_operational_status" />
         <key name="mhbo_label_label_out_of_service" />
         <key name="mhbo_label_label_outstanding_balance" />
-        <key name="mhbo_label_label_override_avail_error" />
-        <key name="mhbo_label_label_override_cal_config" />
-        <key name="mhbo_label_label_override_cal_no_id" />
-        <key name="mhbo_label_label_override_check_in" />
-        <key name="mhbo_label_label_override_check_out" />
-        <key name="mhbo_label_label_override_child_ages" />
-        <key name="mhbo_label_label_override_child_n_age" />
-        <key name="mhbo_label_label_override_children" />
-        <key name="mhbo_label_label_override_continue" />
-        <key name="mhbo_label_label_override_dates_selected" />
-        <key name="mhbo_label_label_override_guests" />
-        <key name="mhbo_label_label_override_guide_checkin" />
-        <key name="mhbo_label_label_override_guide_checkout" />
-        <key name="mhbo_label_label_override_rate" />
-        <key name="mhbo_label_label_override_rate_desc" />
-        <key name="mhbo_label_label_override_search_rooms" />
-        <key name="mhbo_label_label_override_select_dates" />
-        <key name="mhbo_label_label_override_stay_dates" />
-        <key name="mhbo_label_label_override_your_selection" />
         <key name="mhbo_label_label_paid" />
         <key name="mhbo_label_label_paid_full" />
         <key name="mhbo_label_label_paid_full_pill" />
@@ -1851,6 +1594,8 @@
         <key name="mhbo_label_label_room_types_config" />
         <key name="mhbo_label_label_room_types_desc" />
         <key name="mhbo_label_label_rooms" />
+        <key name="mhbo_label_label_rooms_grid_badge" />
+        <key name="mhbo_label_label_rooms_grid_title" />
         <key name="mhbo_label_label_rounding_desc" />
         <key name="mhbo_label_label_rounding_mode" />
         <key name="mhbo_label_label_rounding_per_line" />
@@ -2033,6 +1778,7 @@
         <key name="mhbo_label_label_total_bookings" />
         <key name="mhbo_label_label_total_cancelled" />
         <key name="mhbo_label_label_total_charges_vat" />
+        <key name="mhbo_label_label_total_night_single" />
         <key name="mhbo_label_label_total_nights" />
         <key name="mhbo_label_label_total_price" />
         <key name="mhbo_label_label_total_revenue" />

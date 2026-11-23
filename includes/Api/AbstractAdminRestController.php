@@ -160,6 +160,8 @@ abstract class AbstractAdminRestController extends WP_REST_Controller {
 	/**
 	 * Requirement 1g: Cashier Payment & Desk Balance Link Operations Capability Check.
 	 *
+	 * Strictly requires `mhbo_process_payments` or Administrator (`mhbo_manage_settings`).
+	 *
 	 * @param WP_REST_Request|null $request Request object (optional).
 	 * @return bool|WP_Error True if permitted, WP_Error with 403 status otherwise.
 	 */
@@ -167,7 +169,6 @@ abstract class AbstractAdminRestController extends WP_REST_Controller {
 		return $this->require_any_capability(
 			array(
 				Capabilities::PROCESS_PAYMENTS,
-				Capabilities::MANAGE_LHBO,
 				Capabilities::MANAGE_SETTINGS,
 			)
 		);

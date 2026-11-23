@@ -104,6 +104,6 @@ class LocalTips {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/get-local-tips', self::get_definition() );
+		\wp_register_ability( 'mhbo/get-local-tips', self::get_definition() );
 	}
 }

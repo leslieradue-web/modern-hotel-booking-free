@@ -46,9 +46,34 @@ class I18n {
 	/**
 	 * Stack of previous language contexts for nesting.
 	 *
-	 * @var array<int, array{override: ?string, locale: string, switched_wp: bool}>
+	 * @var array<int, array{
+	 *     override: ?string,
+	 *     locale: string,
+	 *     switched_wp: bool,
+	 *     pll_curlang: mixed,
+	 *     wpml_lang: ?string,
+	 *     qtx_lang: ?string
+	 * }>
 	 */
 	private static array $context_stack = array();
+
+	/**
+	 * Normalize and validate a language or locale code (e.g. 'nl-nl' -> 'nl_NL', 'en' -> 'en').
+	 *
+	 * @param string $raw Raw language or locale string.
+	 * @return string Normalized code, or empty string if invalid.
+	 */
+	private static function normalize_locale_code( string $raw ): string {
+		$trimmed = trim( $raw );
+		if ( '' === $trimmed || 1 !== preg_match( '/^([a-zA-Z]{2,3})(?:[_-]([a-zA-Z]{2}))?$/', $trimmed, $m ) ) {
+			return '';
+		}
+		$lang = strtolower( $m[1] );
+		if ( isset( $m[2] ) ) {
+			return $lang . '_' . strtoupper( $m[2] );
+		}
+		return $lang;
+	}
 
 	/**
 	 * Force all subsequent get_current_language() calls to return the given code.
@@ -79,8 +104,8 @@ class I18n {
 	 * @return void
 	 */
 	public static function switch_language_context( string $lang_or_locale ): void {
-		$lang_clean = sanitize_key( trim( $lang_or_locale ) );
-		if ( '' === $lang_clean ) {
+		$normalized = self::normalize_locale_code( $lang_or_locale );
+		if ( '' === $normalized ) {
 			return;
 		}
 
@@ -107,13 +132,37 @@ class I18n {
 			'sv' => 'sv_SE',
 		);
 
-		$short_code  = substr( $lang_clean, 0, 2 );
-		$full_locale = str_contains( $lang_clean, '_' ) ? $lang_clean : ( $map_to_full[ $short_code ] ?? $lang_clean );
+		$short_code  = strtolower( substr( $normalized, 0, 2 ) );
+		$full_locale = str_contains( $normalized, '_' ) ? $normalized : ( $map_to_full[ $short_code ] ?? $short_code );
+
+		$prev_pll_curlang = null;
+		if ( function_exists( 'PLL' ) ) {
+			/** @phpstan-ignore argument.type */
+			$pll = call_user_func( 'PLL' );
+			if ( is_object( $pll ) && property_exists( $pll, 'curlang' ) ) {
+				$prev_pll_curlang = $pll->curlang;
+			}
+		}
+
+		$prev_wpml_lang = null;
+		if ( 'wpml' === self::detect_plugin() ) {
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Third-party WPML hook
+			$wpml_cur       = apply_filters( 'wpml_current_language', null );
+			$prev_wpml_lang = is_string( $wpml_cur ) && '' !== $wpml_cur ? $wpml_cur : null;
+		}
+
+		$prev_qtx_lang = null;
+		if ( isset( $GLOBALS['q_config'] ) && is_array( $GLOBALS['q_config'] ) && isset( $GLOBALS['q_config']['language'] ) ) {
+			$prev_qtx_lang = (string) $GLOBALS['q_config']['language'];
+		}
 
 		self::$context_stack[] = array(
 			'override'    => $current_override,
 			'locale'      => $current_locale,
 			'switched_wp' => function_exists( 'switch_to_locale' ),
+			'pll_curlang' => $prev_pll_curlang,
+			'wpml_lang'   => $prev_wpml_lang,
+			'qtx_lang'    => $prev_qtx_lang,
 		);
 
 		self::set_language_override( $short_code );
@@ -135,6 +184,9 @@ class I18n {
 		do_action( 'wpml_switch_language', $short_code );
 
 		// 3. qTranslate / qTranslate-XT support
+		if ( isset( $GLOBALS['q_config'] ) && is_array( $GLOBALS['q_config'] ) ) {
+			$GLOBALS['q_config']['language'] = $short_code; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Third-party qTranslate-XT runtime global
+		}
 		if ( function_exists( 'qtranxf_useLanguage' ) ) {
 			call_user_func( 'qtranxf_useLanguage', $short_code );
 		}
@@ -167,19 +219,28 @@ class I18n {
 		if ( function_exists( 'PLL' ) ) {
 			/** @phpstan-ignore argument.type */
 			$pll = call_user_func( 'PLL' );
-			if ( is_object( $pll ) && isset( $pll->model ) && is_object( $pll->model ) && method_exists( $pll->model, 'get_language' ) ) {
-				$desired = $pll->model->get_language( $prev_short );
-				if ( false !== $desired ) {
-					$pll->curlang = $desired;
+			if ( is_object( $pll ) ) {
+				if ( null !== $prev['pll_curlang'] ) {
+					$pll->curlang = $prev['pll_curlang'];
+				} elseif ( isset( $pll->model ) && is_object( $pll->model ) && method_exists( $pll->model, 'get_language' ) ) {
+					$desired = $pll->model->get_language( $prev_short );
+					if ( false !== $desired ) {
+						$pll->curlang = $desired;
+					}
 				}
 			}
 		}
 
+		$restore_wpml = $prev['wpml_lang'] ?? $prev_short;
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores, WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-		do_action( 'wpml_switch_language', $prev_short );
+		do_action( 'wpml_switch_language', $restore_wpml );
 
+		$restore_qtx = $prev['qtx_lang'] ?? $prev_short;
+		if ( isset( $GLOBALS['q_config'] ) && is_array( $GLOBALS['q_config'] ) ) {
+			$GLOBALS['q_config']['language'] = $restore_qtx; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Third-party qTranslate-XT runtime global
+		}
 		if ( function_exists( 'qtranxf_useLanguage' ) ) {
-			call_user_func( 'qtranxf_useLanguage', $prev_short );
+			call_user_func( 'qtranxf_useLanguage', $restore_qtx );
 		}
 	}
 
@@ -192,11 +253,12 @@ class I18n {
 		// WordPress 4.6+ auto-loads translations for plugins hosted on WP.org.
 		add_filter( 'gettext_modern-hotel-booking', array( self::class, 'filter_gettext' ), 10, 3 );
 
-		// 1. Dynamic REST API override passed from JS (e.g. Polylang/WPML modal requests).
+// 1. Dynamic REST API override passed from JS (e.g. Polylang/WPML modal requests).
 		// Hooked at init to switch the global locale before REST callbacks fire.
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$mhbo_locale = isset( $_REQUEST['mhbo_locale'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['mhbo_locale'] ) ) : '';
-		if ( '' !== $mhbo_locale && preg_match( '/^[a-zA-Z_]{2,10}$/', $mhbo_locale ) && self::is_frontend_request() ) {
+		$raw_locale  = isset( $_REQUEST['mhbo_locale'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['mhbo_locale'] ) ) : '';
+		$mhbo_locale = self::normalize_locale_code( $raw_locale );
+		if ( '' !== $mhbo_locale && self::is_frontend_request() ) {
 			$lang_slug = substr( $mhbo_locale, 0, 2 );
 			self::set_language_override( $lang_slug );
 
@@ -231,6 +293,9 @@ class I18n {
 			do_action( 'wpml_switch_language', $lang_slug );
 
 			// Force qTranslate-X/XT to switch its active language.
+			if ( isset( $GLOBALS['q_config'] ) && is_array( $GLOBALS['q_config'] ) ) {
+				$GLOBALS['q_config']['language'] = $lang_slug; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Third-party qTranslate-XT runtime global
+			}
 			if ( function_exists( 'qtranxf_useLanguage' ) ) {
 				call_user_func( 'qtranxf_useLanguage', $lang_slug );
 			}
@@ -263,6 +328,20 @@ class I18n {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Register MHBO custom post types as localizable with Bogo.
+	 *
+	 * @param mixed $post_types Existing localizable post types.
+	 * @return array<int, string>
+	 */
+	public static function filter_bogo_localizable_post_types( mixed $post_types ): array {
+		$types = is_array( $post_types ) ? array_values( array_map( 'strval', $post_types ) ) : array( 'post', 'page' );
+		if ( ! in_array( 'mhbo_email_template', $types, true ) ) {
+			$types[] = 'mhbo_email_template';
+		}
+		return $types;
 	}
 
 	/**
@@ -344,7 +423,8 @@ class I18n {
 
 		// 1. Dynamic REST API override passed from JS (e.g. Polylang/WPML modal requests)
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$mhbo_locale = isset( $_REQUEST['mhbo_locale'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['mhbo_locale'] ) ) : '';
+		$raw_mhbo_locale = isset( $_REQUEST['mhbo_locale'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['mhbo_locale'] ) ) : '';
+		$mhbo_locale     = self::normalize_locale_code( $raw_mhbo_locale );
 		if ( '' !== $mhbo_locale && self::is_frontend_request() ) {
 			return $mhbo_locale;
 		}
@@ -395,7 +475,7 @@ class I18n {
 	/**
 	 * Detect which multilingual plugin is active.
 	 *
-	 * @return string 'qtranslate'|'wpml'|'polylang'|'none'
+	 * @return string 'qtranslate'|'wpml'|'polylang'|'bogo'|'none'
 	 */
 	public static function detect_plugin(): string {
 		if ( defined( 'QTX_VERSION' ) || function_exists( 'qtranxf_getLanguage' ) ) {
@@ -522,13 +602,22 @@ class I18n {
 				if ( function_exists( 'bogo_available_languages' ) ) {
 					$bogo_langs = (array) call_user_func( 'bogo_available_languages' );
 					$slugs      = array();
-					foreach ( $bogo_langs as $loc ) {
-						$slug = function_exists( 'bogo_language_slug' ) ? (string) call_user_func( 'bogo_language_slug', $loc ) : substr( (string) $loc, 0, 2 );
-						if ( '' !== $slug ) {
-							$slugs[] = strtolower( $slug );
+					foreach ( $bogo_langs as $key => $val ) {
+						// Bogo returns [ 'en_US' => 'English (United States)', ... ] (locale is the array key),
+						// while custom filters may return a flat list of locale strings.
+						$loc  = ( is_string( $key ) && 1 === preg_match( '/^[a-z]{2,3}(?:_[A-Z]{2})?$/', $key ) )
+							? $key
+							: ( is_scalar( $val ) ? (string) $val : '' );
+						$slug = '';
+						if ( '' !== $loc ) {
+							$slug = function_exists( 'bogo_language_slug' ) ? (string) call_user_func( 'bogo_language_slug', $loc ) : substr( $loc, 0, 2 );
+						}
+						$slug = strtolower( trim( $slug ) );
+						if ( '' !== $slug && 1 === preg_match( '/^[a-z]{2,3}$/', $slug ) ) {
+							$slugs[] = $slug;
 						}
 					}
-					return ! empty( $slugs ) ? array_values( array_unique( $slugs ) ) : array( self::locale_code() );
+					return array() !== $slugs ? array_values( array_unique( $slugs ) ) : array( self::locale_code() );
 				}
 				return array( self::locale_code() );
 
@@ -598,25 +687,26 @@ class I18n {
 			$lang = self::get_current_language();
 		}
 
-		// qTranslate style parsing - leverage native function if available (only if fallback is enabled)
+		// qTranslate style parsing - leverage native function if available (only if fallback is enabled).
+		// Pass $show_available = false so missing translations never inject HTML notice banners.
 		if ( $fallback ) {
 			if ( function_exists( 'qtranxf_use' ) ) {
-				return (string) \call_user_func( 'qtranxf_use', $lang, $text );
+				return (string) \call_user_func( 'qtranxf_use', $lang, $text, false );
 			}
 			if ( function_exists( 'qtrans_use' ) ) {
-				return (string) \call_user_func( 'qtrans_use', $lang, $text );
+				return (string) \call_user_func( 'qtrans_use', $lang, $text, false );
 			}
 		}
 
 		// Normalize qTranslate HTML comments syntax <!--:en-->...<!--:--> into standard [:en]...[:]
 		if ( false !== strpos( $text, '<!--:' ) ) {
-			$text = preg_replace( '/<!--:([a-z]{2}(?:_[a-z]{2})?)-->/i', '[:$1]', $text );
+			$text = preg_replace( '/<!--:([a-z]{2}(?:[_-][a-z]{2})?)-->/i', '[:$1]', $text );
 			$text = str_replace( '<!--:-->', '[:]', (string) $text );
 		}
 
 		// Normalize qTranslate curly braces syntax {:en}...{:} into standard [:en]...[:]
 		if ( false !== strpos( $text, '{:' ) ) {
-			$text = preg_replace( '/\{:([a-z]{2}(?:_[a-z]{2})?)\}/i', '[:$1]', $text );
+			$text = preg_replace( '/\{:([a-z]{2}(?:[_-][a-z]{2})?)\}/i', '[:$1]', $text );
 			$text = str_replace( '{:}', '[:]', (string) $text );
 		}
 
@@ -634,7 +724,7 @@ class I18n {
 		}
 
 		// qTranslate style parsing
-		$blocks = preg_split( '/\[:([a-z]{2}(?:_[a-z]{2})?)\]/i', $text, -1, PREG_SPLIT_DELIM_CAPTURE );
+		$blocks = preg_split( '/\[:([a-z]{2}(?:[_-][a-z]{2})?)\]/i', $text, -1, PREG_SPLIT_DELIM_CAPTURE );
 
 		$block_count = is_array( $blocks ) ? count( $blocks ) : 0;
 		if ( $block_count < 3 ) {
@@ -648,9 +738,7 @@ class I18n {
 				$lang_key = strtolower( $blocks[ $i ] );
 				$content  = $blocks[ $i + 1 ];
 
-				if ( substr( $content, -3 ) === '[:]' ) {
-					$content = substr( $content, 0, -3 );
-				}
+				$content = preg_replace( '/\[:\]\s*$/', '', $content ) ?? $content;
 
 				$map[ $lang_key ] = $content;
 			}
@@ -711,12 +799,13 @@ class I18n {
 	 */
 	public static function encode( mixed $values ): string {
 		if ( ! is_array( $values ) ) {
-			return (string) $values;
+			return is_scalar( $values ) ? (string) $values : '';
 		}
 		$out = '';
 		foreach ( $values as $lang => $text ) {
-			if ( '' !== $text ) {
-				$out .= "[:{$lang}]{$text}";
+			$lang_key = sanitize_key( (string) $lang );
+			if ( '' !== $lang_key && is_scalar( $text ) && '' !== (string) $text ) {
+				$out .= "[:{$lang_key}]{$text}";
 			}
 		}
 		if ( '' !== $out ) {
@@ -1028,9 +1117,28 @@ class I18n {
 	 * Should be called on plugin activation or admin init
 	 */
 	public static function register_plugin_strings(): void {
+		if ( ! in_array( self::detect_plugin(), array( 'wpml', 'polylang' ), true ) ) {
+			return;
+		}
+
 		// Register tax-related strings
 		$tax_label = get_option( 'mhbo_tax_label', 'VAT' );
-		self::register_string( 'Tax Label', $tax_label, 'MHBO Tax Settings' );
+		self::register_string( 'Tax Label', (string) $tax_label, 'MHBO Tax Settings' );
+
+		// Register core translatable property & AI strings when non-empty.
+		$text_options = array(
+			'Hotel Name'               => array( 'option' => 'mhbo_hotel_name', 'context' => 'Modern Hotel Booking' ),
+			'Guest Check-in Guide'     => array( 'option' => 'mhbo_hotel_guest_instructions', 'context' => 'Modern Hotel Booking' ),
+			'AI Persona Name'          => array( 'option' => 'mhbo_ai_persona_name', 'context' => 'MHBO AI Concierge' ),
+			'AI Welcome Message'       => array( 'option' => 'mhbo_ai_welcome_message', 'context' => 'MHBO AI Concierge' ),
+
+);
+		foreach ( $text_options as $str_name => $meta ) {
+			$opt_val = get_option( $meta['option'], '' );
+			if ( is_string( $opt_val ) && '' !== $opt_val ) {
+				self::register_string( $str_name, $opt_val, $meta['context'] );
+			}
+		}
 
 		// Register email template subjects and messages (All standard, admin, balance & VIP coupon statuses)
 		$statuses = array(
@@ -1224,13 +1332,15 @@ class I18n {
 		if ( function_exists( 'bogo_get_post_translations' ) ) {
 			$translations = call_user_func( 'bogo_get_post_translations', $object_id );
 			if ( is_array( $translations ) ) {
-				/** @var array<string, \WP_Post> $translations */
-				$current_locale = get_locale();
-				if ( isset( $translations[ $current_locale ] ) ) {
-					return (int) $translations[ $current_locale ]->ID;
+				$target_short = strtolower( substr( $lang, 0, 2 ) );
+				if ( isset( $translations[ $lang ] ) ) {
+					return (int) $translations[ $lang ]->ID;
 				}
 				foreach ( $translations as $locale_key => $trans_post ) {
-					if ( substr( $locale_key, 0, 2 ) === $lang ) {
+					$key_slug = function_exists( 'bogo_language_slug' )
+						? strtolower( (string) call_user_func( 'bogo_language_slug', (string) $locale_key ) )
+						: strtolower( substr( (string) $locale_key, 0, 2 ) );
+					if ( $key_slug === $target_short ) {
 						return (int) $trans_post->ID;
 					}
 				}

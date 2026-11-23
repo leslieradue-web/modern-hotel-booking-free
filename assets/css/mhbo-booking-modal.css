@@ -209,9 +209,11 @@ div.mhbo-tax-breakdown-container[style] {
     margin-bottom: 8px !important;
 }
 
-/* Chat bubble collision prevention while modal is active */
-body.mhbo-modal-open .mhbo-chat-widget,
-.mhbo-modal-overlay.is-open ~ .mhbo-chat-widget {
+/* Floating widget (AI Concierge + WhatsApp) collision prevention while modal is active */
+body.mhbo-modal-open .mhbo-chat-widget:not(.mhbo-chat-widget--inline),
+.mhbo-modal-overlay.is-open ~ .mhbo-chat-widget:not(.mhbo-chat-widget--inline),
+body.mhbo-modal-open .mhbo-wa-floating,
+.mhbo-modal-overlay.is-open ~ .mhbo-wa-floating {
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;

@@ -30,6 +30,7 @@ use MHBO\Core\License;
 use MHBO\Core\Security;
 use MHBO\Core\Money;
 use MHBO\Core\Tax;
+use MHBO\Core\Tier;
 
 /**
  * REST API endpoints for Modern Hotel Booking.
@@ -139,7 +140,7 @@ register_rest_route(
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_booking' ),
-				'permission_callback' => '__return_true', // Authorization handled inside get_booking via verify_booking_access
+				'permission_callback' => array( $this, 'check_public_read_access' ),
 			)
 		);
 
@@ -429,19 +430,14 @@ register_rest_route(
 		$identifier    = $is_valid_key ? 'key_' . md5( $api_key ) : 'ip_' . md5( $ip );
 		
 		$transient_key = 'mhbo_api_rate_' . $identifier;
-		$request_count = get_transient( $transient_key );
-		
+
 		// Higher limit for authentic API Key holders (300), 180 req/min default for public read requests
 		$default_limit = $is_valid_key ? 300 : 180;
-		$limit         = apply_filters( 'mhbo_api_rate_limit', $default_limit, $api_key ); 
-		$window        = apply_filters( 'mhbo_api_rate_window', 60 ); 
+		$limit         = (int) apply_filters( 'mhbo_api_rate_limit', $default_limit, $api_key );
+		$window        = (int) apply_filters( 'mhbo_api_rate_window', 60 );
 
-		if ( false === $request_count ) {
-			set_transient( $transient_key, 1, $window );
-			return true;
-		}
-
-		if ( $request_count >= $limit ) {
+		$rl = Security::consume_fixed_window_rate_limit( $transient_key, $limit, $window );
+		if ( ! $rl['allowed'] ) {
 			return new \WP_Error(
 				'mhbo_rate_limit_exceeded',
 				esc_html( I18n::get_label( 'label_api_rate_limit' ) ),
@@ -449,7 +445,6 @@ register_rest_route(
 			);
 		}
 
-		set_transient( $transient_key, (int) $request_count + 1, $window );
 		return true;
 	}
 
@@ -537,24 +532,12 @@ return $is_valid;
 		global $wpdb;
 
 		// Rule 11: Extract and sanitize all inputs at start
-		$check_in  = sanitize_text_field( $request->get_param( 'check_in' ) );
-		$check_out = sanitize_text_field( $request->get_param( 'check_out' ) );
+		$check_in  = sanitize_text_field( (string) $request->get_param( 'check_in' ) );
+		$check_out = sanitize_text_field( (string) $request->get_param( 'check_out' ) );
 
-if ( $check_in >= $check_out ) {
-			return new \WP_Error(
-				'mhbo_invalid_dates',
-				esc_html( I18n::get_label( 'label_check_out_after' ) ),
-				array( 'status' => 400 )
-			);
-		}
-
-		if ( ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
-			$max_window_human = HotelTime::format_advance_window_human( HotelTime::get_max_advance_booking_days() );
-			return new \WP_Error(
-				'mhbo_advance_limit_exceeded',
-				sprintf( I18n::get_label( 'label_advance_limit_exceeded' ), $max_window_human ),
-				array( 'status' => 400 )
-			);
+		$date_validation = HotelTime::validate_date_range( $check_in, $check_out, true );
+		if ( is_wp_error( $date_validation ) ) {
+			return $date_validation;
 		}
 
 		// Get all rooms - cache this as room configuration rarely changes
@@ -621,7 +604,7 @@ $available = array();
 					$total_money = $total_money->add( Pricing::calculate_daily_price_money( $rid, $date->format( 'Y-m-d' ) ) );
 				}
 
-				$available[] = array(
+				$entry = array(
 					'room_id'         => $rid,
 					'room_number'     => $room->room_number,
 					'type_id'         => (int) $room->type_id,
@@ -631,10 +614,12 @@ $available = array();
 					'total_price'     => (float) $total_money->toDecimal(),
 					'price_formatted' => $total_money->format(),
 				);
+				
+				$available[] = $entry;
 			}
 		}
 
-		return rest_ensure_response(
+return rest_ensure_response(
 			array(
 				'check_in'  => $check_in,
 				'check_out' => $check_out,
@@ -657,10 +642,12 @@ $available = array();
 			(string) Cache::get_version( Cache::TABLE_ROOMS ),
 			(string) Cache::get_version( Cache::TABLE_PRICING_RULES ),
 			(string) Cache::get_version( Cache::TABLE_SETTINGS ),
-			(string) ( ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) ? (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) : 0 ),
+			(string) ( ( class_exists( Tier::class ) && Tier::has_feature( 'prevent_same_day_turnover' ) ) ? (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) : 0 ),
 			(string) (int) get_option( 'mhbo_global_min_stay', 0 ),
 			(string) (int) get_option( 'mhbo_global_max_stay', 0 ),
 			(string) (int) get_option( 'mhbo_calendar_show_decimals', 0 ),
+			HotelTime::get_checkin_time(),
+			HotelTime::get_checkout_time(),
 		);
 
 return implode( '_', $parts );
@@ -893,20 +880,22 @@ $data = self::generate_calendar_payload( $room_id, $year, $month, $days_limit, $
 		}
 
 		// Hoist options that are loop-invariant out of the per-date iteration.
-		$prevent_turnover = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$prevent_turnover = ( class_exists( Tier::class ) && Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 		$show_decimals    = (int) get_option( 'mhbo_calendar_show_decimals', 0 ) === 1;
 		$global_min_stay  = (int) get_option( 'mhbo_global_min_stay', 0 );
 		$global_max_stay  = (int) get_option( 'mhbo_global_max_stay', 0 );
 
 // Seed prior-night bookability for exact AM checkout eligibility on $ext_start.
-		$seed_date_str       = ( clone $ext_start )->modify( '-1 day' )->format( 'Y-m-d' );
-		$seed_next_str       = $ext_start->format( 'Y-m-d' );
-		$seed_manual_block   = false;
+		$seed_date_str         = ( clone $ext_start )->modify( '-1 day' )->format( 'Y-m-d' );
+		$seed_next_str         = $ext_start->format( 'Y-m-d' );
+		$seed_manual_block     = false;
+		$seed_turnover_blocked = false;
 		
 		$seed_price          = (float) Pricing::calculate_daily_price_money( $room_id, $seed_date_str )->toDecimal();
 		$prev_night_bookable = ( 'available' === $room_status )
 			&& ! isset( $booked_dates[ $seed_date_str ] )
 			&& ! $seed_manual_block
+			&& ! $seed_turnover_blocked
 			&& ! ( $prevent_turnover && isset( $check_outs[ $seed_date_str ] ) )
 			&& ! ( $prevent_turnover && isset( $check_ins[ $seed_next_str ] ) )
 			&& ( $seed_price > 0 );
@@ -925,16 +914,21 @@ $data = self::generate_calendar_payload( $room_id, $year, $month, $days_limit, $
 				$is_cta           = false;
 				$is_ctd           = false;
 
-$is_occupied_night    = $has_real_booking || $is_manual_block;
-				$is_check_in_day      = isset( $check_ins[ $date_str ] );
-				$is_check_out_day     = isset( $check_outs[ $date_str ] );
-				$is_turnover_co_block = $prevent_turnover && $is_check_out_day;
-				$is_turnover_ci_block = $prevent_turnover && isset( $check_ins[ $next_day_str ] );
+$is_occupied_night         = $has_real_booking || $is_manual_block;
+				$is_check_in_day           = isset( $check_ins[ $date_str ] );
+				$is_check_out_day          = isset( $check_outs[ $date_str ] );
+				$is_late_co_arrival_block  = false;
+				$is_early_ci_prev_block    = false;
+				$is_early_ci_dep_block     = false;
+				$shifted_checkin_val       = '';
+				
+				$is_turnover_co_block = ( $prevent_turnover && $is_check_out_day ) || $is_late_co_arrival_block;
+				$is_turnover_ci_block = ( $prevent_turnover && isset( $check_ins[ $next_day_str ] ) ) || $is_early_ci_prev_block;
 				$is_unbookable        = ( 'available' !== $room_status ) || ( ! $is_occupied_night && $price <= 0 );
 				$night_stayable       = ! $is_occupied_night && ! $is_turnover_co_block && ! $is_turnover_ci_block && ! $is_unbookable;
 
 				$can_check_in  = $night_stayable && ! $is_cta;
-				$can_check_out = $prev_night_bookable && ! $is_ctd;
+				$can_check_out = $prev_night_bookable && ! $is_ctd && ! $is_early_ci_dep_block;
 
 				$final_status = 'available';
 				if ( $is_occupied_night || $is_turnover_co_block || $is_turnover_ci_block ) {
@@ -976,7 +970,10 @@ $is_occupied_night    = $has_real_booking || $is_manual_block;
 					}
 				} else {
 					$vis_is_checkin  = $is_check_in_day && ( $can_check_out || $is_check_out_day );
-					$vis_is_checkout = $is_check_out_day && ( ! $is_occupied_night || $is_check_in_day );
+					$vis_is_checkout = $is_check_out_day && ! $is_turnover_co_block && ( ! $is_occupied_night || $is_check_in_day );
+					if ( $is_turnover_ci_block && ! $is_occupied_night && ! $is_turnover_co_block && $can_check_out ) {
+						$vis_is_checkin = true;
+					}
 				}
 
 				$min_stay_resolved = $global_min_stay > 0 ? $global_min_stay : null;
@@ -995,7 +992,7 @@ $reason = null;
 					$reason = 'cta';
 				}
 
-				$ext_data[] = array(
+				$ext_entry = array(
 					'date'                    => $date_str,
 					'status'                  => $final_status,
 					'booking_status'          => $norm_b_status,
@@ -1013,6 +1010,8 @@ $reason = null;
 					'min_stay'                => $min_stay_resolved,
 					'max_stay'                => $max_stay_resolved,
 				);
+				
+				$ext_data[] = $ext_entry;
 
 				$prev_night_bookable = $night_stayable && ( ! $is_cta || $prev_night_bookable );
 			}
@@ -1059,7 +1058,7 @@ $data = array();
 		Pricing::prime_room_cache( $room_ids );
 
 		// Same-day Turnover & Core Stay Settings (turnover is Starter+, min/max global stay across all tiers)
-		$prevent_turnover = ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
+		$prevent_turnover = ( class_exists( Tier::class ) && Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1;
 		$show_decimals    = (int) get_option( 'mhbo_calendar_show_decimals', 0 ) === 1;
 		$global_min_stay  = (int) get_option( 'mhbo_global_min_stay', 0 );
 		$global_max_stay  = (int) get_option( 'mhbo_global_max_stay', 0 );
@@ -1071,52 +1070,8 @@ $data = array();
 		$query_start   = ( clone $ext_start )->modify( '-1 day' )->format( 'Y-m-d' );
 		$query_end     = ( clone $ext_end )->modify( '+1 day' )->format( 'Y-m-d' );
 
-		$pending_cutoff = Pricing::get_pending_payment_cutoff();
-		$cache_key      = 'mhbo_avail_agg_v4_' . md5( implode( ',', $room_ids ) . $ext_start_str . $ext_end_str . (int) $prevent_turnover . substr( $pending_cutoff, 0, 16 ) );
-		$bookings       = Cache::get_query( $cache_key, Cache::TABLE_BOOKINGS );
-
-		if ( false === $bookings ) {
-			$room_in_clause = implode( ',', array_fill( 0, count( $room_ids ), '%d' ) );
-			$params         = array_merge( $room_ids, array( $pending_cutoff, $query_end, $query_start ) );
-
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			if ( $prevent_turnover ) {
-				$bookings = $wpdb->get_results(
-					$wpdb->prepare(
-						'SELECT room_id, check_in, check_out, status FROM ' . $wpdb->prefix . 'mhbo_bookings WHERE room_id IN (' . $room_in_clause . ") AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND (check_in <= DATE(%s) AND check_out >= DATE(%s))",
-						...$params
-					)
-				);
-			} else {
-				$bookings = $wpdb->get_results(
-					$wpdb->prepare(
-						'SELECT room_id, check_in, check_out, status FROM ' . $wpdb->prefix . 'mhbo_bookings WHERE room_id IN (' . $room_in_clause . ") AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND (check_in < DATE(%s) AND check_out > DATE(%s))",
-						...$params
-					)
-				);
-			}
-			// phpcs:enable
-
-			Cache::set_query( $cache_key, $bookings, Cache::TABLE_BOOKINGS, 300 );
-		}
-
-		// Organize bookings by room
-		$room_bookings = array();
-		foreach ( $room_ids as $rid ) {
-			$room_bookings[ $rid ] = array();
-		}
-		if ( is_array( $bookings ) ) {
-			foreach ( $bookings as $b ) {
-				$rid = (int) $b->room_id;
-				if ( isset( $room_bookings[ $rid ] ) ) {
-					$room_bookings[ $rid ][] = array(
-						'check_in'  => (string) $b->check_in,
-						'check_out' => (string) $b->check_out,
-						'status'    => (string) $b->status,
-					);
-				}
-			}
-		}
+		$room_bookings = $this->load_aggregated_room_bookings( $room_ids, $ext_start_str, $ext_end_str, $query_start, $query_end, $prevent_turnover );
+		$pro_ctx       = array();
 
 $per_room_data = array();
 		foreach ( $room_ids as $rid ) {
@@ -1161,248 +1116,20 @@ foreach ( $room_bookings[ $rid ] as $b ) {
 		$period   = new \DatePeriod( $ext_start, new \DateInterval( 'P1D' ), $ext_end );
 
 		foreach ( $period as $dt ) {
-			$date_str     = $dt->format( 'Y-m-d' );
-			$next_day_str = ( clone $dt )->modify( '+1 day' )->format( 'Y-m-d' );
-
-			$total_rooms            = count( $room_ids );
-			$rooms_free_pm          = 0;
-			$rooms_can_checkin_pm   = 0;
-			$rooms_can_checkout_am  = 0;
-			$rooms_occupied_am_vis  = 0;
-			$min_price              = null;
-			$has_pending_pm         = false;
-			$has_pending_am         = false;
-			$has_unlimited_max_room = false;
-
-			$daily_min_stays    = array();
-			$daily_max_stays    = array();
-			$free_rooms_pm_list = array();
-			$room_statuses_map  = array();
-			$room_min_stays_map = array();
-			$room_max_stays_map = array();
-			$room_cta_map       = array();
-			$room_ctd_map       = array();
-
-			foreach ( $room_ids as $rid ) {
-				$is_occupied_pm   = false;
-				$is_blocked_pm    = false;
-				$is_manual_block  = false;
-				$room_is_checkin  = false;
-				$room_is_checkout = false;
-				$room_b_status    = null;
-				$room_co_status   = null;
-
-				$r_min = null;
-				$r_max = null;
-				$r_cta = false;
-				$r_ctd = false;
-
-foreach ( $room_bookings[ $rid ] as $b ) {
-					$b_norm = self::normalize_booking_status( $b['status'] );
-					if ( null === $b_norm ) {
-						continue;
-					}
-
-					// Night Stay Occupancy
-					if ( $date_str >= $b['check_in'] && $date_str < $b['check_out'] ) {
-						$is_occupied_pm = true;
-						if ( null === $room_b_status || 'confirmed' === $b_norm ) {
-							$room_b_status = $b_norm;
-						}
-					}
-
-					// Prevent same-day turnover block (Afternoon of checkout)
-					if ( $prevent_turnover && $date_str === $b['check_out'] ) {
-						$is_blocked_pm = true;
-						if ( null === $room_b_status || 'confirmed' === $b_norm ) {
-							$room_b_status = $b_norm;
-						}
-					}
-
-					// Prevent same-day turnover block (Day before Check-In)
-					if ( $prevent_turnover && $next_day_str === $b['check_in'] ) {
-						$is_blocked_pm = true;
-						if ( null === $room_b_status || 'confirmed' === $b_norm ) {
-							$room_b_status = $b_norm;
-						}
-					}
-
-					if ( $date_str > $b['check_in'] && $date_str <= $b['check_out'] ) {
-						if ( null === $room_co_status || 'confirmed' === $b_norm ) {
-							$room_co_status = $b_norm;
-						}
-					}
-
-					if ( $date_str === $b['check_in'] ) {
-						$room_is_checkin = true;
-					}
-
-					if ( $date_str === $b['check_out'] ) {
-						$room_is_checkout = true;
-					}
-				}
-
-				$room_bookable_pm = ! $is_occupied_pm && ! $is_blocked_pm && ! $is_manual_block;
-				$eff_r_min        = null !== $r_min ? max( 1, $r_min ) : ( $global_min_stay > 0 ? $global_min_stay : null );
-				$eff_r_max        = null !== $r_max ? $r_max : ( $global_max_stay > 0 ? $global_max_stay : null );
-
-				if ( $room_bookable_pm ) {
-					$price_money = Pricing::calculate_daily_price_money( $rid, $date_str );
-					$price       = (float) $price_money->toDecimal();
-					if ( $price > 0 ) {
-						++$rooms_free_pm;
-						$free_rooms_pm_list[] = $rid;
-						if ( null === $min_price || $price < $min_price ) {
-							$min_price = $price;
-						}
-						if ( $r_cta ) {
-							$room_cta_map[ $rid ] = true;
-						} else {
-							++$rooms_can_checkin_pm;
-							$eff_r_min_val     = null !== $eff_r_min ? $eff_r_min : 1;
-							$daily_min_stays[] = $eff_r_min_val;
-							if ( $eff_r_min_val > 1 ) {
-								$room_min_stays_map[ $rid ] = $eff_r_min_val;
-							}
-						}
-						if ( null !== $eff_r_max ) {
-							$daily_max_stays[]          = $eff_r_max;
-							$room_max_stays_map[ $rid ] = $eff_r_max;
-						} else {
-							$has_unlimited_max_room = true;
-						}
-					} else {
-						$room_bookable_pm = false;
-					}
-				} else {
-					$pm_eff_status = $is_manual_block ? 'confirmed' : ( $room_b_status ?: 'confirmed' );
-					if ( 'pending' === $pm_eff_status ) {
-						$has_pending_pm = true;
-					}
-				}
-
-				if ( $r_ctd ) {
-					$room_ctd_map[ $rid ] = true;
-				}
-				$room_can_co_am = ! empty( $prev_room_bookable_pm[ $rid ] ) && ! $r_ctd;
-				if ( $room_can_co_am ) {
-					++$rooms_can_checkout_am;
-				}
-				if ( ! empty( $prev_room_occupied_visual[ $rid ] ) ) {
-					++$rooms_occupied_am_vis;
-					if ( 'pending' === ( $prev_room_occupied_status[ $rid ] ?? null ) ) {
-						$has_pending_am = true;
-					}
-				}
-
-				$r_resolved_status = 'available';
-				if ( $is_occupied_pm || $is_manual_block ) {
-					$r_resolved_status = $is_manual_block ? 'confirmed' : ( $room_b_status ?: 'confirmed' );
-				} elseif ( $is_blocked_pm ) {
-					$r_resolved_status = 'turnover';
-				} elseif ( ! $room_bookable_pm ) {
-					$r_resolved_status = 'unbookable';
-				}
-
-				if ( 'available' !== $r_resolved_status || $room_is_checkin || $room_is_checkout ) {
-					$r_entry = array(
-						'status' => $r_resolved_status,
-					);
-					if ( null !== $room_b_status ) {
-						$r_entry['b_status'] = $room_b_status;
-					}
-					if ( null !== $room_co_status ) {
-						$r_entry['co_status'] = $room_co_status;
-					}
-					if ( $room_is_checkin && ! $prevent_turnover ) {
-						$r_entry['is_checkin'] = true;
-					}
-					if ( $room_is_checkout && ! $prevent_turnover ) {
-						$r_entry['is_checkout'] = true;
-					}
-					$room_statuses_map[ $rid ] = $r_entry;
-				}
-
-				$room_boundary_status = 'none';
-				if ( ! $room_bookable_pm ) {
-					$room_boundary_status = ( ! $is_manual_block && 'pending' === $room_b_status ) ? 'pending' : 'confirmed';
-				}
-				$per_room_data[ $rid ][] = array(
-					'night_stayable' => $room_bookable_pm,
-					'can_checkin'    => $room_bookable_pm && ! $r_cta,
-					'can_checkout'   => $room_can_co_am,
-					'booking_status' => $room_boundary_status,
-					'min_stay'       => null !== $eff_r_min ? $eff_r_min : 1,
-					'max_stay'       => $eff_r_max,
-				);
-
-				// Advance prior-night state for next day's AM evaluation (accounting for CTA reachability)
-				$prev_room_bookable_pm[ $rid ]     = $room_bookable_pm && ( ! $r_cta || ! empty( $prev_room_bookable_pm[ $rid ] ) );
-				$prev_room_occupied_visual[ $rid ] = $is_occupied_pm || $is_manual_block;
-				$prev_room_occupied_status[ $rid ] = $is_occupied_pm ? ( $room_b_status ?: 'confirmed' ) : ( $is_manual_block ? 'confirmed' : null );
-			}
-
-			// Aggregated Status & Changeover Triangles
-			$status         = 'available';
-			$is_checkin     = false; // White AM (checkout allowed) / Colored PM (hotel full PM)
-			$is_checkout    = false; // Colored AM (all rooms departing) / White PM (bookable PM)
-			$booking_status = null;
-			$agg_reason     = null;
-
-			if ( 0 === $rooms_free_pm ) {
-				$status         = 'booked';
-				$booking_status = $has_pending_pm ? 'pending' : 'confirmed';
-				if ( $rooms_can_checkout_am > 0 ) {
-					$is_checkin = true;
-				}
-			} elseif ( ! $prevent_turnover && $rooms_occupied_am_vis === $total_rooms ) {
-				$is_checkout    = true;
-				$booking_status = $has_pending_am ? 'pending' : 'confirmed';
-			}
-
-			if ( $rooms_free_pm > 0 && 0 === $rooms_can_checkin_pm ) {
-				$agg_reason = 'cta';
-			}
-
-			$resolved_agg_min = count( $daily_min_stays ) > 0 ? min( $daily_min_stays ) : null;
-			if ( 1 === $resolved_agg_min && 0 === $global_min_stay ) {
-				$resolved_agg_min = null;
-			}
-			$resolved_agg_max = ( ! $has_unlimited_max_room && count( $daily_max_stays ) > 0 ) ? max( $daily_max_stays ) : null;
-
-			$day_entry = array(
-				'date'                    => $date_str,
-				'status'                  => $status,
-				'booking_status'          => $booking_status,
-				'raw_booking_status'      => $booking_status,
-				'checkout_booking_status' => $is_checkout ? ( $has_pending_am ? 'pending' : 'confirmed' ) : null,
-				'price'                   => null !== $min_price ? $min_price : 0,
-				'price_formatted'         => null !== $min_price ? I18n::format_currency( $min_price, $show_decimals ? null : 0 ) : '-',
-				'is_checkin'              => $is_checkin,
-				'is_checkout'             => $is_checkout,
-				'can_checkin'             => $rooms_can_checkin_pm > 0,
-				'can_checkout'            => $rooms_can_checkout_am > 0,
-				'free_rooms'              => $free_rooms_pm_list,
-				'reason'                  => $agg_reason,
-				'min_stay'                => $resolved_agg_min,
-				'max_stay'                => $resolved_agg_max,
+			$ext_data[] = $this->evaluate_aggregated_calendar_day(
+				$dt,
+				$room_ids,
+				$room_bookings,
+				$pro_ctx,
+				$prevent_turnover,
+				$show_decimals,
+				$global_min_stay,
+				$global_max_stay,
+				$per_room_data,
+				$prev_room_bookable_pm,
+				$prev_room_occupied_visual,
+				$prev_room_occupied_status
 			);
-			if ( array() !== $room_statuses_map ) {
-				$day_entry['room_statuses'] = $room_statuses_map;
-			}
-			if ( array() !== $room_min_stays_map ) {
-				$day_entry['room_min_stays'] = $room_min_stays_map;
-			}
-			if ( array() !== $room_max_stays_map ) {
-				$day_entry['room_max_stays'] = $room_max_stays_map;
-			}
-			if ( array() !== $room_cta_map ) {
-				$day_entry['room_cta'] = $room_cta_map;
-			}
-			if ( array() !== $room_ctd_map ) {
-				$day_entry['room_ctd'] = $room_ctd_map;
-			}
-			$ext_data[] = $day_entry;
 		}
 
 $data = array();
@@ -1413,6 +1140,351 @@ $data = array();
 		}
 
 		return rest_ensure_response( $data );
+	}
+
+	/**
+	 * Load and index bookings by room for aggregated calendar generation.
+	 *
+	 * @param array<int, int> $room_ids         Active room IDs.
+	 * @param string          $ext_start_str    Extended range start (Y-m-d).
+	 * @param string          $ext_end_str      Extended range end (Y-m-d).
+	 * @param string          $query_start      Query lower bound (Y-m-d).
+	 * @param string          $query_end        Query upper bound (Y-m-d).
+	 * @param bool            $prevent_turnover Whether same-day turnover is blocked.
+	 * @return array<int, array<int, array{check_in: string, check_out: string, status: string}>>
+	 */
+	private function load_aggregated_room_bookings(
+		array $room_ids,
+		string $ext_start_str,
+		string $ext_end_str,
+		string $query_start,
+		string $query_end,
+		bool $prevent_turnover
+	): array {
+		global $wpdb;
+
+		$pending_cutoff = Pricing::get_pending_payment_cutoff();
+		$cache_key      = 'mhbo_avail_agg_v4_' . md5( implode( ',', $room_ids ) . $ext_start_str . $ext_end_str . (int) $prevent_turnover . substr( $pending_cutoff, 0, 16 ) );
+		$bookings       = Cache::get_query( $cache_key, Cache::TABLE_BOOKINGS );
+
+		if ( false === $bookings ) {
+			$room_in_clause = implode( ',', array_fill( 0, count( $room_ids ), '%d' ) );
+			$params         = array_merge( $room_ids, array( $pending_cutoff, $query_end, $query_start ) );
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			if ( $prevent_turnover ) {
+				$bookings = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT room_id, check_in, check_out, status FROM ' . $wpdb->prefix . 'mhbo_bookings WHERE room_id IN (' . $room_in_clause . ") AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND (check_in <= DATE(%s) AND check_out >= DATE(%s))",
+						...$params
+					)
+				);
+			} else {
+				$bookings = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT room_id, check_in, check_out, status FROM ' . $wpdb->prefix . 'mhbo_bookings WHERE room_id IN (' . $room_in_clause . ") AND status NOT IN ('cancelled', 'refunded', 'failed') AND (status != 'pending_payment' OR COALESCE(payment_status, 'pending') != 'pending' OR COALESCE(deposit_received, 0) = 1 OR COALESCE(payment_received, 0) = 1 OR COALESCE(payment_amount, 0) > 0 OR created_at >= %s) AND (check_in < DATE(%s) AND check_out > DATE(%s))",
+						...$params
+					)
+				);
+			}
+			// phpcs:enable
+
+			Cache::set_query( $cache_key, $bookings, Cache::TABLE_BOOKINGS, 300 );
+		}
+
+		$room_bookings = array();
+		foreach ( $room_ids as $rid ) {
+			$room_bookings[ $rid ] = array();
+		}
+		if ( is_array( $bookings ) ) {
+			foreach ( $bookings as $b ) {
+				$rid = (int) $b->room_id;
+				if ( isset( $room_bookings[ $rid ] ) ) {
+					$room_bookings[ $rid ][] = array(
+						'check_in'  => (string) $b->check_in,
+						'check_out' => (string) $b->check_out,
+						'status'    => (string) $b->status,
+					);
+				}
+			}
+		}
+
+		return $room_bookings;
+	}
+
+/**
+	 * Evaluate a single day entry across all rooms for the aggregated calendar.
+	 *
+	 * @param \DateTimeInterface                                                                $dt                        Current date object.
+	 * @param array<int, int>                                                                   $room_ids                  Active room IDs.
+	 * @param array<int, array<int, array{check_in: string, check_out: string, status: string}>> $room_bookings             Indexed room bookings.
+	 * @param array<string, mixed>                                                              $pro_ctx                   Optional Pro overrides/turnover context.
+	 * @param bool                                                                              $prevent_turnover          Whether same-day turnover is blocked.
+	 * @param bool                                                                              $show_decimals             Whether to format prices with decimals.
+	 * @param int                                                                               $global_min_stay           Global minimum stay (0 = none).
+	 * @param int                                                                               $global_max_stay           Global maximum stay (0 = none).
+	 * @param array<int, array<int, array<string, mixed>>>                                      $per_room_data             Per-room daily state collector (by ref).
+	 * @param array<int, bool>                                                                  $prev_room_bookable_pm     Prior-night PM bookability state (by ref).
+	 * @param array<int, bool>                                                                  $prev_room_occupied_visual Prior-night visual occupancy state (by ref).
+	 * @param array<int, string|null>                                                           $prev_room_occupied_status Prior-night booking status (by ref).
+	 * @return array<string, mixed>
+	 */
+	private function evaluate_aggregated_calendar_day(
+		\DateTimeInterface $dt,
+		array $room_ids,
+		array $room_bookings,
+		array $pro_ctx,
+		bool $prevent_turnover,
+		bool $show_decimals,
+		int $global_min_stay,
+		int $global_max_stay,
+		array &$per_room_data,
+		array &$prev_room_bookable_pm,
+		array &$prev_room_occupied_visual,
+		array &$prev_room_occupied_status
+	): array {
+		$date_str     = $dt->format( 'Y-m-d' );
+		$next_day_str = \DateTimeImmutable::createFromInterface( $dt )->modify( '+1 day' )->format( 'Y-m-d' );
+
+		$total_rooms            = count( $room_ids );
+		$rooms_free_pm          = 0;
+		$rooms_can_checkin_pm   = 0;
+		$rooms_can_checkout_am  = 0;
+		$rooms_occupied_am_vis  = 0;
+		$min_price              = null;
+		$has_pending_pm         = false;
+		$has_pending_am         = false;
+		$has_unlimited_max_room = false;
+
+		$daily_min_stays    = array();
+		$daily_max_stays    = array();
+		$free_rooms_pm_list = array();
+		$room_statuses_map  = array();
+		$room_min_stays_map = array();
+		$room_max_stays_map = array();
+		$room_cta_map       = array();
+		$room_ctd_map       = array();
+
+		foreach ( $room_ids as $rid ) {
+			$is_occupied_pm   = false;
+			$is_blocked_pm    = false;
+			$is_manual_block  = false;
+			$room_is_checkin  = false;
+			$room_is_checkout = false;
+			$room_b_status    = null;
+			$room_co_status   = null;
+
+			$r_min = null;
+			$r_max = null;
+			$r_cta = false;
+			$r_ctd = false;
+
+foreach ( $room_bookings[ $rid ] as $b ) {
+				$b_norm = self::normalize_booking_status( $b['status'] );
+				if ( null === $b_norm ) {
+					continue;
+				}
+
+				if ( $date_str >= $b['check_in'] && $date_str < $b['check_out'] ) {
+					$is_occupied_pm = true;
+					if ( null === $room_b_status || 'confirmed' === $b_norm ) {
+						$room_b_status = $b_norm;
+					}
+				}
+
+				if ( $prevent_turnover && $date_str === $b['check_out'] ) {
+					$is_blocked_pm = true;
+					if ( null === $room_b_status || 'confirmed' === $b_norm ) {
+						$room_b_status = $b_norm;
+					}
+				}
+
+				if ( $prevent_turnover && $next_day_str === $b['check_in'] ) {
+					$is_blocked_pm = true;
+					if ( null === $room_b_status || 'confirmed' === $b_norm ) {
+						$room_b_status = $b_norm;
+					}
+				}
+
+				if ( $date_str > $b['check_in'] && $date_str <= $b['check_out'] ) {
+					if ( null === $room_co_status || 'confirmed' === $b_norm ) {
+						$room_co_status = $b_norm;
+					}
+				}
+
+				if ( $date_str === $b['check_in'] ) {
+					$room_is_checkin = true;
+				}
+
+				if ( $date_str === $b['check_out'] ) {
+					$room_is_checkout = true;
+				}
+			}
+
+			$r_dep_turnover_block = false;
+
+$room_bookable_pm = ! $is_occupied_pm && ! $is_blocked_pm && ! $is_manual_block;
+			$eff_r_min        = null !== $r_min ? max( 1, $r_min ) : ( $global_min_stay > 0 ? $global_min_stay : null );
+			$eff_r_max        = null !== $r_max ? $r_max : ( $global_max_stay > 0 ? $global_max_stay : null );
+
+			if ( $room_bookable_pm ) {
+				$price_money = Pricing::calculate_daily_price_money( $rid, $date_str );
+				$price       = (float) $price_money->toDecimal();
+				if ( $price > 0 ) {
+					++$rooms_free_pm;
+					$free_rooms_pm_list[] = $rid;
+					if ( null === $min_price || $price < $min_price ) {
+						$min_price = $price;
+					}
+					if ( $r_cta ) {
+						$room_cta_map[ $rid ] = true;
+					} else {
+						++$rooms_can_checkin_pm;
+						$eff_r_min_val     = null !== $eff_r_min ? $eff_r_min : 1;
+						$daily_min_stays[] = $eff_r_min_val;
+						if ( $eff_r_min_val > 1 ) {
+							$room_min_stays_map[ $rid ] = $eff_r_min_val;
+						}
+					}
+					if ( null !== $eff_r_max ) {
+						$daily_max_stays[]          = $eff_r_max;
+						$room_max_stays_map[ $rid ] = $eff_r_max;
+					} else {
+						$has_unlimited_max_room = true;
+					}
+				} else {
+					$room_bookable_pm = false;
+				}
+			} else {
+				$pm_eff_status = $is_manual_block ? 'confirmed' : ( $room_b_status ?: 'confirmed' );
+				if ( 'pending' === $pm_eff_status ) {
+					$has_pending_pm = true;
+				}
+			}
+
+			if ( $r_ctd ) {
+				$room_ctd_map[ $rid ] = true;
+			}
+			$room_can_co_am = ! empty( $prev_room_bookable_pm[ $rid ] ) && ! $r_ctd && ! $r_dep_turnover_block;
+			if ( $room_can_co_am ) {
+				++$rooms_can_checkout_am;
+			}
+			if ( ! empty( $prev_room_occupied_visual[ $rid ] ) ) {
+				++$rooms_occupied_am_vis;
+				if ( 'pending' === ( $prev_room_occupied_status[ $rid ] ?? null ) ) {
+					$has_pending_am = true;
+				}
+			}
+
+			$r_resolved_status = 'available';
+			if ( $is_occupied_pm || $is_manual_block ) {
+				$r_resolved_status = $is_manual_block ? 'confirmed' : ( $room_b_status ?: 'confirmed' );
+			} elseif ( $is_blocked_pm ) {
+				$r_resolved_status = 'turnover';
+			} elseif ( ! $room_bookable_pm ) {
+				$r_resolved_status = 'unbookable';
+			}
+
+			if ( 'available' !== $r_resolved_status || $room_is_checkin || $room_is_checkout ) {
+				$r_entry = array(
+					'status' => $r_resolved_status,
+				);
+				if ( null !== $room_b_status ) {
+					$r_entry['b_status'] = $room_b_status;
+				}
+				if ( null !== $room_co_status ) {
+					$r_entry['co_status'] = $room_co_status;
+				}
+				if ( $room_is_checkin && ! $prevent_turnover ) {
+					$r_entry['is_checkin'] = true;
+				}
+				if ( $room_is_checkout && ! $prevent_turnover ) {
+					$r_entry['is_checkout'] = true;
+				}
+				$room_statuses_map[ $rid ] = $r_entry;
+			}
+
+			$room_boundary_status = 'none';
+			if ( ! $room_bookable_pm ) {
+				$room_boundary_status = ( ! $is_manual_block && 'pending' === $room_b_status ) ? 'pending' : 'confirmed';
+			}
+			$per_room_data[ $rid ][] = array(
+				'night_stayable' => $room_bookable_pm,
+				'can_checkin'    => $room_bookable_pm && ! $r_cta,
+				'can_checkout'   => $room_can_co_am,
+				'booking_status' => $room_boundary_status,
+				'min_stay'       => null !== $eff_r_min ? $eff_r_min : 1,
+				'max_stay'       => $eff_r_max,
+			);
+
+			// Advance prior-night state for next day's AM evaluation (accounting for CTA reachability)
+			$prev_room_bookable_pm[ $rid ]     = $room_bookable_pm && ( ! $r_cta || ! empty( $prev_room_bookable_pm[ $rid ] ) );
+			$prev_room_occupied_visual[ $rid ] = $is_occupied_pm || $is_manual_block;
+			$prev_room_occupied_status[ $rid ] = $is_occupied_pm ? ( $room_b_status ?: 'confirmed' ) : ( $is_manual_block ? 'confirmed' : null );
+		}
+
+		// Aggregated Status & Changeover Triangles
+		$status         = 'available';
+		$is_checkin     = false;
+		$is_checkout    = false;
+		$booking_status = null;
+		$agg_reason     = null;
+
+		if ( 0 === $rooms_free_pm ) {
+			$status         = 'booked';
+			$booking_status = $has_pending_pm ? 'pending' : 'confirmed';
+			if ( $rooms_can_checkout_am > 0 ) {
+				$is_checkin = true;
+			}
+		} elseif ( ! $prevent_turnover && $rooms_occupied_am_vis === $total_rooms ) {
+			$is_checkout    = true;
+			$booking_status = $has_pending_am ? 'pending' : 'confirmed';
+		}
+
+		if ( $rooms_free_pm > 0 && 0 === $rooms_can_checkin_pm ) {
+			$agg_reason = 'cta';
+		}
+
+		$resolved_agg_min = count( $daily_min_stays ) > 0 ? min( $daily_min_stays ) : null;
+		if ( 1 === $resolved_agg_min && 0 === $global_min_stay ) {
+			$resolved_agg_min = null;
+		}
+		$resolved_agg_max = ( ! $has_unlimited_max_room && count( $daily_max_stays ) > 0 ) ? max( $daily_max_stays ) : null;
+
+		$day_entry = array(
+			'date'                    => $date_str,
+			'status'                  => $status,
+			'booking_status'          => $booking_status,
+			'raw_booking_status'      => $booking_status,
+			'checkout_booking_status' => $is_checkout ? ( $has_pending_am ? 'pending' : 'confirmed' ) : null,
+			'price'                   => null !== $min_price ? $min_price : 0,
+			'price_formatted'         => null !== $min_price ? I18n::format_currency( $min_price, $show_decimals ? null : 0 ) : '-',
+			'is_checkin'              => $is_checkin,
+			'is_checkout'             => $is_checkout,
+			'can_checkin'             => $rooms_can_checkin_pm > 0,
+			'can_checkout'            => $rooms_can_checkout_am > 0,
+			'free_rooms'              => $free_rooms_pm_list,
+			'reason'                  => $agg_reason,
+			'min_stay'                => $resolved_agg_min,
+			'max_stay'                => $resolved_agg_max,
+		);
+		if ( array() !== $room_statuses_map ) {
+			$day_entry['room_statuses'] = $room_statuses_map;
+		}
+		if ( array() !== $room_min_stays_map ) {
+			$day_entry['room_min_stays'] = $room_min_stays_map;
+		}
+		if ( array() !== $room_max_stays_map ) {
+			$day_entry['room_max_stays'] = $room_max_stays_map;
+		}
+		if ( array() !== $room_cta_map ) {
+			$day_entry['room_cta'] = $room_cta_map;
+		}
+		if ( array() !== $room_ctd_map ) {
+			$day_entry['room_ctd'] = $room_ctd_map;
+		}
+
+		return $day_entry;
 	}
 
 	/**
@@ -1434,27 +1506,21 @@ $data = array();
 		$extras         = Pricing::normalize_extras( $raw_extras );
 		$payment_type   = sanitize_text_field( $request->get_param( 'mhbo_payment_type' ) ?: 'full' );
 		$payment_method = sanitize_text_field( $request->get_param( 'mhbo_payment_method' ) ?: '' );
-		$tax_mode       = Capabilities::current_user_can( Capabilities::MANAGE_LHBO )
-			? sanitize_key( (string) ( $request->get_param( 'tax_mode' ) ?: '' ) )
-			: '';
+		$tax_mode       = '';
+		$tax_rates      = null;
 
-		// Terminology Normalization: Map 'onsite' (Pro) to 'arrival' (Core)
+		$calc_source       = sanitize_key( (string) ( $request->get_param( 'source' ) ?: '' ) );
+		$is_admin_override = ( 'admin' === $calc_source ) && Capabilities::current_user_can( Capabilities::MANAGE_LHBO );
+
+// Terminology Normalization: Map 'onsite' (Pro) to 'arrival' (Core)
 		if ( 'onsite' === $payment_method ) {
 			$payment_method = 'arrival';
 		}
 
-if ( ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
-			$max_window_human = HotelTime::format_advance_window_human( HotelTime::get_max_advance_booking_days() );
-			return new \WP_Error(
-				'mhbo_advance_limit_exceeded',
-				sprintf( I18n::get_label( 'label_advance_limit_exceeded' ), $max_window_human ),
-				array( 'status' => 400 )
-			);
+$date_validation = HotelTime::validate_date_range( $check_in, $check_out, ! $is_admin_override );
+		if ( is_wp_error( $date_validation ) ) {
+			return $date_validation;
 		}
-
-		// Validation: Stay Restrictions (Global in Free/Starter; Date-specific + Orphan Gap in Pro)
-		$calc_source       = sanitize_key( (string) ( $request->get_param( 'source' ) ?: '' ) );
-		$is_admin_override = ( 'admin' === $calc_source ) && Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS );
 
 		if ( ! $is_admin_override && $room_id > 0 && '' !== $check_in && '' !== $check_out ) {
 			$exclude_id  = $this->resolve_authorized_recalculate_exclude_id( $request );
@@ -1520,11 +1586,14 @@ if ( ! HotelTime::is_within_advance_booking_window( $check_in ) ) {
 			}
 		}
 
-		$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages, '' !== $tax_mode ? $tax_mode : null );
+		$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, (int) $guests, $extras, (int) $children, $child_ages, '' !== $tax_mode ? $tax_mode : null, $tax_rates, $is_admin_override );
 
 		$coupon_applied            = '';
 		$coupon_discount_value     = '0.00';
 		$coupon_discount_formatted = '';
+		$coupon_valid_state        = null;
+		$coupon_success_msg        = '';
+		$coupon_error_msg          = '';
 		$first_night_money         = null;
 
 if ( ! $calc ) {
@@ -1563,66 +1632,71 @@ if ( ! $calc ) {
 		}
 
 		$children_money = $calc['children_total'] ?? Money::fromCents( 0, Pricing::get_currency_code() );
-		$response       = rest_ensure_response(
-			array(
-				'success'                     => true,
-				'total'                       => $calc['total']->toDecimal(),
-				'total_formatted'             => $calc['total']->format(),
-				'payable_now'                 => $payable_now->toDecimal(),
-				'payable_now_formatted'       => $payable_now->format(),
-				'room_total'                  => $calc['room_total']->toDecimal(),
-				'room_total_formatted'        => $calc['room_total']->format(),
-				'children_total'              => $children_money->toDecimal(),
-				'children_total_formatted'    => $children_money->isPositive() ? $children_money->format() : '',
-				'extras_total'                => $calc['extras_total']->toDecimal(),
-				'service_fee'                 => ( isset( $calc['service_fee'] ) && $calc['service_fee'] instanceof Money ) ? $calc['service_fee']->toDecimal() : '0.00',
-				'service_fee_formatted'       => ( isset( $calc['service_fee'] ) && $calc['service_fee'] instanceof Money && $calc['service_fee']->isPositive() ) ? $calc['service_fee']->format() : '',
-				'service_fee_label'           => (string) ( $calc['service_fee_label'] ?? get_option( 'mhbo_service_fee_label', __( 'Service Fee', 'modern-hotel-booking' ) ) ),
-				'deposit_amount'              => null !== $deposit_money_obj ? $deposit_money_obj->toDecimal() : '0.00',
-				'deposit_amount_formatted'    => null !== $deposit_money_obj ? $deposit_money_obj->format() : '',
-				'remaining_balance'           => null !== $remaining_money_obj ? $remaining_money_obj->toDecimal() : '0.00',
-				'remaining_balance_formatted' => null !== $remaining_money_obj ? $remaining_money_obj->format() : '',
-				'first_night_total'           => ( $first_night_money instanceof Money ) ? $first_night_money->toDecimal() : '0.00',
-				'extras_breakdown'            => array_reduce(
-					$calc['extras_breakdown'] ?? array(),
-					function ( $carry, $item ) {
-						$carry[ (string) $item['id'] ] = array(
-							'value'                => $item['total']->toDecimal(),
-							'formatted'            => $item['total']->format(),
-							'unit_price_value'     => $item['price']->toDecimal(),
-							'unit_price_formatted' => $item['price']->format(),
-							'multiplier'           => (int) ( $item['multiplier'] ?? 1 ),
-							'pricing_type'         => $item['pricing_type'] ?? 'fixed',
-							'name'                 => $item['name'],
-							'quantity'             => $item['quantity'],
-							'compulsory'           => ( $item['compulsory'] ?? false ) ? 1 : 0,
-						);
-						return $carry;
-					},
-					array()
-				),
-				'breakdown'                   => $calc,
-				'tax'                         => $tax_data,
-				'tax_breakdown_html'          => get_option( 'mhbo_tax_display_frontend', false )
-					? Tax::render_breakdown_html(
-						$tax_data,
-						null,
-						false,
-						array(
-							'guests'          => (int) $guests,
-							'children'        => (int) $children,
-							'payment_type'    => $payment_type,
-							'coupon_code'     => $coupon_applied,
-							'coupon_discount' => $coupon_discount_value,
-						),
-						false
-					)
-					: '',
-				'coupon_applied'              => $coupon_applied,
-				'coupon_discount'             => $coupon_discount_value,
-				'coupon_discount_formatted'   => $coupon_discount_formatted,
-			)
+		$response_data  = array(
+			'success'                     => true,
+			'total'                       => $calc['total']->toDecimal(),
+			'total_formatted'             => $calc['total']->format(),
+			'payable_now'                 => $payable_now->toDecimal(),
+			'payable_now_formatted'       => $payable_now->format(),
+			'room_total'                  => $calc['room_total']->toDecimal(),
+			'room_total_formatted'        => $calc['room_total']->format(),
+			'children_total'              => $children_money->toDecimal(),
+			'children_total_formatted'    => $children_money->isPositive() ? $children_money->format() : '',
+			'extras_total'                => $calc['extras_total']->toDecimal(),
+			'service_fee'                 => ( isset( $calc['service_fee'] ) && $calc['service_fee'] instanceof Money ) ? $calc['service_fee']->toDecimal() : '0.00',
+			'service_fee_formatted'       => ( isset( $calc['service_fee'] ) && $calc['service_fee'] instanceof Money && $calc['service_fee']->isPositive() ) ? $calc['service_fee']->format() : '',
+			'service_fee_label'           => (string) ( $calc['service_fee_label'] ?? get_option( 'mhbo_service_fee_label', __( 'Service Fee', 'modern-hotel-booking' ) ) ),
+			'deposit_amount'              => null !== $deposit_money_obj ? $deposit_money_obj->toDecimal() : '0.00',
+			'deposit_amount_formatted'    => null !== $deposit_money_obj ? $deposit_money_obj->format() : '',
+			'remaining_balance'           => null !== $remaining_money_obj ? $remaining_money_obj->toDecimal() : '0.00',
+			'remaining_balance_formatted' => null !== $remaining_money_obj ? $remaining_money_obj->format() : '',
+			'first_night_total'           => ( $first_night_money instanceof Money ) ? $first_night_money->toDecimal() : '0.00',
+			'extras_breakdown'            => array_reduce(
+				$calc['extras_breakdown'] ?? array(),
+				function ( $carry, $item ) {
+					$is_comp                       = ! empty( $item['complimentary'] );
+					$carry[ (string) $item['id'] ] = array(
+						'value'                => $item['total']->toDecimal(),
+						'formatted'            => $is_comp ? __( 'Complimentary', 'modern-hotel-booking' ) : $item['total']->format(),
+						'unit_price_value'     => $item['price']->toDecimal(),
+						'unit_price_formatted' => $is_comp ? __( 'Complimentary', 'modern-hotel-booking' ) : $item['price']->format(),
+						'multiplier'           => (int) ( $item['multiplier'] ?? 1 ),
+						'pricing_type'         => $item['pricing_type'] ?? 'fixed',
+						'name'                 => $item['name'],
+						'quantity'             => $item['quantity'],
+						'compulsory'           => ( $item['compulsory'] ?? false ) ? 1 : 0,
+						'complimentary'        => $is_comp ? 1 : 0,
+					);
+					return $carry;
+				},
+				array()
+			),
+			'breakdown'                   => $calc,
+			'tax'                         => $tax_data,
+			'tax_breakdown_html'          => get_option( 'mhbo_tax_display_frontend', false )
+				? Tax::render_breakdown_html(
+					$tax_data,
+					null,
+					false,
+					array(
+						'guests'          => (int) $guests,
+						'children'        => (int) $children,
+						'payment_type'    => $payment_type,
+						'coupon_code'     => $coupon_applied,
+						'coupon_discount' => $coupon_discount_value,
+					),
+					false
+				)
+				: '',
+			'coupon_applied'              => $coupon_applied,
+			'coupon_discount'             => $coupon_discount_value,
+			'coupon_discount_formatted'   => $coupon_discount_formatted,
+			'coupon_valid'                => $coupon_valid_state,
+			'coupon_message'              => $coupon_success_msg,
+			'coupon_error'                => $coupon_error_msg,
 		);
+		
+		$response = rest_ensure_response( $response_data );
 
 return $response;
 	}
@@ -1650,7 +1724,8 @@ return $response;
 			}
 		}
 
-		if ( $requested_id > 0 && Capabilities::current_user_can( Capabilities::VIEW_BOOKINGS ) ) {
+		$calc_source = sanitize_key( (string) ( $request->get_param( 'source' ) ?: '' ) );
+		if ( $requested_id > 0 && 'admin' === $calc_source && Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) ) {
 			return $requested_id;
 		}
 
@@ -1698,7 +1773,7 @@ return $response;
 					$token_session_id = absint( $raw_token_meta );
 				}
 				if ( ! $token_cookie_ok ) {
-					$token_session_id = 0;
+					return 0;
 				}
 				if ( $token_session_id === $requested_id ) {
 					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1714,15 +1789,15 @@ return $response;
 				}
 
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$verified_id = (int) $wpdb->get_var(
+				$verified_row = $wpdb->get_row(
 					$wpdb->prepare(
-						"SELECT id FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d AND booking_token = %s AND status = 'pending_payment' LIMIT 1",
+						"SELECT id, booking_token FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d AND booking_token = %s AND status = 'pending_payment' LIMIT 1",
 						$requested_id,
 						$booking_token
 					)
 				);
-				if ( $verified_id > 0 ) {
-					return $verified_id;
+				if ( $verified_row && is_string( $verified_row->booking_token ) && '' !== $verified_row->booking_token && hash_equals( $verified_row->booking_token, $booking_token ) ) {
+					return (int) $verified_row->id;
 				}
 			}
 
@@ -1850,18 +1925,17 @@ return $response;
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function handle_public_booking_submission( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
-		// SECURITY: Rate limiting for public booking submissions (5 per minute per IP)
+		// SECURITY: Fixed-window rate limiting for public booking submissions (5 per minute per IP)
 		$ip       = Security::get_client_ip();
 		$rate_key = 'mhbo_booking_rate_' . md5( (string) $ip );
-		$count    = get_transient( $rate_key );
-		if ( false !== $count && (int) $count >= 5 ) {
+		$rl       = Security::consume_fixed_window_rate_limit( $rate_key, 5, MINUTE_IN_SECONDS );
+		if ( ! $rl['allowed'] ) {
 			return new \WP_Error(
 				'mhbo_rate_limit',
 				esc_html( I18n::get_label( 'label_rate_limit_error' ) ),
 				array( 'status' => 429 )
 			);
 		}
-		set_transient( $rate_key, (int) $count + 1, 60 );
 
 		// 1. Prepare data for processor and scrub privileged internal keys (Law 3 Anti-Tamper).
 		// Preserve guest special requests submitted via legacy `admin_notes` textarea before scrubbing.
@@ -1877,8 +1951,17 @@ return $response;
 			$params['total_price'],
 			$params['tax_mode'],
 			$params['admin_notes'],
-			$params['external_id']
+			$params['external_id'],
+			$params['parent_token'],
+			$params['is_multi_room']
 		);
+		// Internal override flags (e.g. `_skip_coupon_validation`, `_group_coupon_discount_cents`) are
+		// reserved for trusted server-side callers and must never be accepted from public HTTP input.
+		foreach ( array_keys( $params ) as $param_key ) {
+			if ( is_string( $param_key ) && str_starts_with( $param_key, '_' ) ) {
+				unset( $params[ $param_key ] );
+			}
+		}
 		$params['source']      = 'public';
 		$params['bypass_past'] = false;
 

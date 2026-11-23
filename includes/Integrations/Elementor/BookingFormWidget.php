@@ -83,7 +83,7 @@ class BookingFormWidget extends BaseWidget {
 				'label'     => 'Primary Color',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-primary-color: {{VALUE}};',
+					'{{WRAPPER}}' => '--mhbo-primary: {{VALUE}};',
 				),
 			)
 		);
@@ -94,11 +94,11 @@ class BookingFormWidget extends BaseWidget {
 				'label'     => 'Button Text Color',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-button-text-color: {{VALUE}};',
+					'{{WRAPPER}} .mhbo-btn, {{WRAPPER}} .mhbo-btn-primary, {{WRAPPER}} .mhbo-booking-btn-submit' => 'color: {{VALUE}};',
 				),
 			)
 		);
-		
+
 		$this->add_control(
 			'border_radius',
 			array(
@@ -106,7 +106,7 @@ class BookingFormWidget extends BaseWidget {
 				'type'       => Controls_Manager::SLIDER,
 				'size_units' => array( 'px', 'em', '%' ),
 				'selectors'  => array(
-					'{{WRAPPER}}' => '--mhbo-border-radius: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}}' => '--mhbo-radius: {{SIZE}}{{UNIT}};',
 				),
 			)
 		);

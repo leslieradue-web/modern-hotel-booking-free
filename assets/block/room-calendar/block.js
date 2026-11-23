@@ -2,8 +2,10 @@
 	const registerBlockType = wp.blocks.registerBlockType;
 	const el = wp.element.createElement;
 	const InspectorControls = wp.blockEditor.InspectorControls;
+	const useBlockProps = wp.blockEditor.useBlockProps;
 	const PanelBody = wp.components.PanelBody;
 	const TextControl = wp.components.TextControl;
+	const ToggleControl = wp.components.ToggleControl;
 	const __ = wp.i18n.__;
 
 	registerBlockType( 'modern-hotel-booking/room-calendar', {
@@ -33,9 +35,20 @@
 				type: 'number',
 				default: 0,
 			},
+			showTitle: {
+				type: 'boolean',
+				default: true,
+			},
+			showBadge: {
+				type: 'boolean',
+				default: true,
+			},
 		},
 		edit( props ) {
 			const attributes = props.attributes;
+			const blockProps = useBlockProps( {
+				className: 'mhbo-block-calendar-preview',
+			} );
 
 			function onChangeRoomId( newId ) {
 				props.setAttributes( { roomId: parseInt( newId ) || 0 } );
@@ -62,16 +75,32 @@
 								'Enter the ID of the room to display the calendar for.',
 								'modern-hotel-booking'
 							),
+						} ),
+						el( ToggleControl, {
+							label: __(
+								'Show Room Title',
+								'modern-hotel-booking'
+							),
+							checked: attributes.showTitle !== false,
+							onChange( val ) {
+								props.setAttributes( { showTitle: val } );
+							},
+						} ),
+						el( ToggleControl, {
+							label: __(
+								'Show Room Badge',
+								'modern-hotel-booking'
+							),
+							checked: attributes.showBadge !== false,
+							onChange( val ) {
+								props.setAttributes( { showBadge: val } );
+							},
 						} )
 					)
 				),
 				el(
 					'div',
-					{
-						key: 'preview',
-						className:
-							'wp-block-modern-hotel-booking-room-calendar mhbo-block-calendar-preview',
-					},
+					Object.assign( { key: 'preview' }, blockProps ),
 					el(
 						'div',
 						{ className: 'mhbo-preview-header' },

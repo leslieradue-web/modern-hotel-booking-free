@@ -138,10 +138,15 @@ class Money implements \JsonSerializable {
 		$currency  = $currency ?? Pricing::get_currency_code();
 		$precision = self::get_precision( $currency );
 		
-		// Locale-safe normalization: Ensure '.' is the decimal separator
-		$decimal = str_replace( ',', '.', $decimal );
+		// Locale-safe normalization: Ensure '.' is the decimal separator and expand scientific notation.
+		$decimal = trim( str_replace( ',', '.', $decimal ) );
 		if ( ! is_numeric( $decimal ) ) {
 			$decimal = '0';
+		} elseif ( false !== stripos( $decimal, 'e' ) ) {
+			$decimal = rtrim( rtrim( sprintf( '%.12F', (float) $decimal ), '0' ), '.' );
+			if ( '' === $decimal || '-' === $decimal ) {
+				$decimal = '0';
+			}
 		}
 		/** @var numeric-string $decimal */
 		
@@ -383,7 +388,8 @@ class Money implements \JsonSerializable {
 		} else {
 			$rounded = bcadd( $abs, $half, $decimals );
 		}
-		return ( $is_negative && '0' !== $rounded ) ? '-' . $rounded : $rounded;
+		$is_zero = 1 !== preg_match( '/[1-9]/', $rounded );
+		return ( $is_negative && ! $is_zero ) ? '-' . $rounded : $rounded;
 	}
 	
 	/**

@@ -88,22 +88,9 @@ class Loader {
 		add_action( 'init', array( self::class, 'register_block' ), 10 );
 		add_action( 'init', array( self::class, 'register_shortcode' ), 10 );
 
-		$widget_enabled = (int) get_option( 'mhbo_ai_widget_enabled', 0 );
-
-		if ( ! $enabled ) {
-			return;
-		}
-
-		// Flush native AI availability cache when AI options change.
-		add_action( 'updated_option', array( Client::class, 'maybe_flush_on_option_change' ) );
-		add_action( 'added_option', array( Client::class, 'maybe_flush_on_option_change' ) );
-
-		// Flush knowledge base cache when rooms or pricing change.
-		add_action( 'mhbo_rooms_invalidated', array( SiteScanner::class, 'clear_cache' ) );
-		add_action( 'mhbo_pricing_invalidated', array( SiteScanner::class, 'clear_cache' ) );
-
-		// Hooks that must fire early.
-		// WP 7.0+ Abilities API fallback guard.
+		// WP 7.0+ Abilities API: Register local hospitality abilities unconditionally
+		// on the lazy wp_abilities_api_* hooks so WP 7.1 Abilities Explorer, Command Palette,
+		// Playground previews, and WP.org directory scanners always discover them.
 		if ( function_exists( 'wp_register_ability' ) ) {
 			add_action( 'wp_abilities_api_categories_init', array( self::class, 'register_ability_categories' ) );
 			add_action( 'wp_abilities_api_init', array( self::class, 'register_abilities' ) );
@@ -117,6 +104,20 @@ class Loader {
 			// WP 7.1: Output validation guard.
 			add_filter( 'wp_ability_validate_output', array( self::class, 'validate_ability_output' ), 10, 3 );
 		}
+
+		$widget_enabled = (int) get_option( 'mhbo_ai_widget_enabled', 0 );
+
+		if ( ! $enabled ) {
+			return;
+		}
+
+		// Flush native AI availability cache when AI options change.
+		add_action( 'updated_option', array( Client::class, 'maybe_flush_on_option_change' ) );
+		add_action( 'added_option', array( Client::class, 'maybe_flush_on_option_change' ) );
+
+		// Flush knowledge base cache when rooms or pricing change.
+		add_action( 'mhbo_rooms_invalidated', array( SiteScanner::class, 'clear_cache' ) );
+		add_action( 'mhbo_pricing_invalidated', array( SiteScanner::class, 'clear_cache' ) );
 
 		add_action( 'rest_api_init', array( ChatRest::class, 'register' ) );
 
@@ -186,6 +187,7 @@ class Loader {
 		if ( class_exists( '\MHBO\AI\LlmFile' ) ) {
 			LlmFile::sync();
 		}
+		
 	}
 
 // -------------------------------------------------------------------------
@@ -217,29 +219,26 @@ class Loader {
 	public static function register_ability_categories(): void {
 		if ( function_exists( 'wp_register_ability_category' ) ) {
 			$has_init = function_exists( 'did_action' ) && \did_action( 'init' );
-			call_user_func(
-				'wp_register_ability_category',
+			\wp_register_ability_category(
 				'hotel-information',
 				array(
 					'label'       => $has_init ? __( 'Hotel Information', 'modern-hotel-booking' ) : 'Hotel Information',
 					'description' => $has_init ? __( 'Governs queries regarding hotel properties, room details, local tips, policies, and contact information.', 'modern-hotel-booking' ) : 'Governs queries regarding hotel properties, room details, local tips, policies, and contact information.',
-				) 
+				)
 			);
-			call_user_func(
-				'wp_register_ability_category',
+			\wp_register_ability_category(
 				'booking-management',
 				array(
 					'label'       => $has_init ? __( 'Booking Management', 'modern-hotel-booking' ) : 'Booking Management',
 					'description' => $has_init ? __( 'Allows looking up availability, creating and modifying bookings, and cancellation.', 'modern-hotel-booking' ) : 'Allows looking up availability, creating and modifying bookings, and cancellation.',
-				) 
+				)
 			);
-			call_user_func(
-				'wp_register_ability_category',
+			\wp_register_ability_category(
 				'guest-services',
 				array(
 					'label'       => $has_init ? __( 'Guest Services', 'modern-hotel-booking' ) : 'Guest Services',
 					'description' => $has_init ? __( 'Handles applying promotional codes and looking up guest history details.', 'modern-hotel-booking' ) : 'Handles applying promotional codes and looking up guest history details.',
-				) 
+				)
 			);
 		}
 	}
@@ -310,6 +309,9 @@ class Loader {
 			if ( $portal_id <= 0 ) {
 				$portal_id = (int) get_transient( 'mhbo_detected_guest_portal_page' );
 			}
+			if ( $portal_id > 0 && class_exists( '\\MHBO\\Core\\I18n' ) ) {
+				$portal_id = \MHBO\Core\I18n::get_translated_object_id( $portal_id, 'page' );
+			}
 			if ( ( $portal_id > 0 && is_page( $portal_id ) ) || ( is_singular() && $post instanceof \WP_Post && has_shortcode( (string) $post->post_content, 'mhbo_guest_portal' ) ) ) {
 				$is_portal = true;
 			}
@@ -373,7 +375,6 @@ class Loader {
 			array(
 				'restUrl'   => untrailingslashit( rest_url() ),
 				'nonce'     => wp_create_nonce( 'mhbo_chat_nonce' ),
-				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'isPro'     => class_exists( '\MHBO\Core\License' ) && false,
 				'settings'  => array(
 					'hotelName'               => $company['company_name'] ?: get_bloginfo( 'name' ),
@@ -459,6 +460,9 @@ class Loader {
 			if ( $portal_id <= 0 ) {
 				$portal_id = (int) get_transient( 'mhbo_detected_guest_portal_page' );
 			}
+			if ( $portal_id > 0 && class_exists( '\\MHBO\\Core\\I18n' ) ) {
+				$portal_id = \MHBO\Core\I18n::get_translated_object_id( $portal_id, 'page' );
+			}
 			$post = get_post();
 			if ( ( $portal_id > 0 && is_page( $portal_id ) ) || ( is_singular() && $post instanceof \WP_Post && has_shortcode( (string) $post->post_content, 'mhbo_guest_portal' ) ) ) {
 				$is_portal = true;
@@ -474,17 +478,30 @@ class Loader {
 	/**
 	 * Check whether the AI Concierge subsystem and widget are actively enabled and functional.
 	 *
-	 * Returns true only when:
-	 * 1. Pro tier is active (mhbo_is_pro()).
-	 * 2. Master AI toggle (mhbo_ai_enabled on tab=general) is ON.
-	 * 3. Chat widget toggle (mhbo_ai_widget_enabled on tab=appearance) is ON.
-	 * 4. At least one functional AI provider/key or native connector is available.
+	 * Returns true when:
+	 * 1. Master AI toggle (mhbo_ai_enabled on tab=general) is ON.
+	 * 2. Chat widget toggle (mhbo_ai_widget_enabled on tab=appearance) is ON.
+	 * 3. At least one functional AI provider/key, native connector, or Pro fallback is available.
 	 *
 	 * @return bool
 	 */
 	public static function is_concierge_active(): bool {
-		$active = false;
-		
+		$active         = false;
+		$ai_enabled     = (int) get_option( 'mhbo_ai_enabled', 0 );
+		$widget_enabled = (int) get_option( 'mhbo_ai_widget_enabled', 0 );
+
+		if ( 1 === $ai_enabled && 1 === $widget_enabled ) {
+			$provider     = (string) get_option( 'mhbo_ai_provider', 'gemini' );
+			$api_key      = (string) get_option( 'mhbo_ai_api_key', '' );
+			$has_native   = Client::is_native_provider_configured( $provider ?: Client::PROVIDER_WP_CONNECTOR );
+			$has_fallback = false;
+
+// Active if direct key present, a native WP connector is configured, local Ollama, or Pro fallback is ready.
+			if ( '' !== $api_key || $has_native || Client::PROVIDER_OLLAMA === $provider || $has_fallback ) {
+				$active = true;
+			}
+		}
+
 		return $active;
 	}
 
@@ -533,7 +550,7 @@ class Loader {
 
 		self::enqueue_frontend( true );
 
-		return self::render_widget_div( $attrs );
+		return self::render_widget_div( $attrs, true );
 	}
 
 	// -------------------------------------------------------------------------
@@ -584,10 +601,11 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 	/**
 	 * Build the widget container HTML.
 	 *
-	 * @param array<mixed> $attrs
+	 * @param array<mixed> $attrs    Block or shortcode attributes.
+	 * @param bool         $is_block Whether invoked from a Gutenberg block render callback.
 	 * @return string
 	 */
-	private static function render_widget_div( array $attrs ): string {
+	private static function render_widget_div( array $attrs, bool $is_block = false ): string {
 		$allowed_variants  = array( 'floating', 'inline' );
 		$allowed_positions = array( 'bottom-right', 'bottom-left' );
 
@@ -607,6 +625,17 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 		$data .= ' data-position="' . $position . '"';
 		if ( $welcome ) {
 			$data .= ' data-welcome-message="' . $welcome . '"';
+		}
+
+		if ( $is_block && function_exists( 'get_block_wrapper_attributes' ) ) {
+			$wrapper_attrs = get_block_wrapper_attributes(
+				array(
+					'class' => trim( 'mhbo-chat-widget' . $theme_class ),
+				)
+			);
+			if ( '' !== $wrapper_attrs ) {
+				return '<div ' . $wrapper_attrs . ' ' . $data . '></div>';
+			}
 		}
 
 		return '<div class="mhbo-chat-widget' . $theme_class . '" ' . $data . '></div>';
@@ -649,11 +678,12 @@ $enabled = (int) get_option( 'mhbo_ai_enabled', 0 );
 		}
 
 		// qTranslate-XT / qTranslate-X.
-		global $q_config;
-		if ( '' !== (string) ( $q_config['language'] ?? '' ) ) {
-			// $q_config['language'] is a 2-char code; try to expand via $q_config['locale'].
-			$qlang   = $q_config['language'];
-			$qlocale = $q_config['locale'][ $qlang ] ?? $qlang;
+		$q_config_arr = isset( $GLOBALS['q_config'] ) && is_array( $GLOBALS['q_config'] ) ? $GLOBALS['q_config'] : array();
+		$qlang        = function_exists( 'qtranxf_getLanguage' )
+			? (string) \call_user_func( 'qtranxf_getLanguage' )
+			: (string) ( $q_config_arr['language'] ?? '' );
+		if ( '' !== $qlang ) {
+			$qlocale = (string) ( $q_config_arr['locale'][ $qlang ] ?? $qlang );
 			return str_replace( '_', '-', $qlocale );
 		}
 

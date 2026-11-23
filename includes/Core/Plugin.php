@@ -2,7 +2,6 @@
 
 namespace MHBO\Core;
 
-use MHBO\Core\License;
 use MHBO\Core\Pricing;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,7 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use MHBO\Admin\Menu;
-use MHBO\Admin\Settings;
 use MHBO\Frontend\Shortcode;
 use MHBO\Frontend\Calendar;
 use MHBO\Frontend\BookingWidget;
@@ -44,9 +42,7 @@ public function __construct() {
 			Cli::register();
 		}
 
-		/* ---- iCal Export (public endpoint) ---- */
-
-// Note: The specialized Pro scheduler handles intervals (5m, 15m, hourly, etc.)
+		// Note: The specialized Pro scheduler handles intervals (5m, 15m, hourly, etc.)
 		// in ICalManager::maybe_schedule_sync().
 
 /* ---- REST API ---- */
@@ -73,13 +69,13 @@ if ( class_exists( 'MHBO\Api\PaymentsController' ) ) {
 				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\AdminWebhooksController' ) ) {
 					( new \MHBO\Api\AdminWebhooksController() )->register_routes();
 				}
-				if ( class_exists( 'MHBO\Api\AdminIcalController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\AdminIcalController' ) ) {
 					( new \MHBO\Api\AdminIcalController() )->register_routes();
 				}
-				if ( class_exists( 'MHBO\Api\AdminCalendarController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) && class_exists( 'MHBO\Api\AdminCalendarController' ) ) {
 					( new \MHBO\Api\AdminCalendarController() )->register_routes();
 				}
-				if ( class_exists( 'MHBO\Api\AdminGatewaysController' ) ) {
+				if ( \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_STARTER ) && class_exists( 'MHBO\Api\AdminGatewaysController' ) ) {
 					( new \MHBO\Api\AdminGatewaysController() )->register_routes();
 				}
 				if ( GuestManager::is_enabled() && class_exists( 'MHBO\Api\AdminGuestsController' ) ) {
@@ -240,7 +236,7 @@ if ( is_admin() ) {
 			return;
 		}
 
-		$target_version = defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3';
+		$target_version = defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4';
 		if (
 			get_option( 'mhbo_cron_version', '' ) !== $target_version
 			|| false === get_transient( 'mhbo_cron_verified' )
@@ -262,7 +258,7 @@ if ( is_admin() ) {
 			wp_schedule_event( time(), 'hourly', 'mhbo_hourly_maintenance' );
 		}
 
-		update_option( 'mhbo_cron_version', defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3', false );
+		update_option( 'mhbo_cron_version', defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4', false );
 		set_transient( 'mhbo_cron_verified', '1', 12 * HOUR_IN_SECONDS );
 	}
 
@@ -377,7 +373,7 @@ if ( is_admin() ) {
 			}
 		}
 
-		return defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.3';
+		return defined( 'MHBO_VERSION' ) ? MHBO_VERSION : '3.0.4';
 	}
 
 	/**

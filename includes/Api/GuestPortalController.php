@@ -15,6 +15,7 @@ use MHBO\Core\Money;
 use MHBO\Core\Pricing;
 use MHBO\Core\Security;
 use MHBO\Core\Tax;
+
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -118,6 +119,11 @@ class GuestPortalController extends WP_REST_Controller {
 						'type'              => 'string',
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_textarea_field',
+					),
+					'phone'      => array(
+						'type'              => 'string',
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
 			)
@@ -291,7 +297,8 @@ class GuestPortalController extends WP_REST_Controller {
 				),
 			)
 		);
-	}
+
+}
 
 	/**
 	 * Check if the Guest Self-Service Portal is active and published on the site.
@@ -315,7 +322,7 @@ class GuestPortalController extends WP_REST_Controller {
 	 * @return string|null Absolute portal URL, or null if portal is not active.
 	 */
 	public static function get_portal_url( ?string $token = null, int $booking_id = 0, string $email = '' ): ?string {
-		$override_url = (string) get_option( 'mhbo_guest_portal_url', '' );
+		$override_url = (string) I18n::decode( (string) get_option( 'mhbo_guest_portal_url', '' ), null, false );
 		$portal_url   = '';
 
 		if ( '' !== trim( $override_url ) ) {
@@ -355,7 +362,8 @@ class GuestPortalController extends WP_REST_Controller {
 			}
 
 			if ( $page_id > 0 ) {
-				$status = get_post_status( $page_id );
+				$page_id = I18n::get_translated_object_id( $page_id, 'page' );
+				$status  = get_post_status( $page_id );
 				if ( 'publish' === $status ) {
 					$permalink = get_permalink( $page_id );
 					if ( is_string( $permalink ) && '' !== $permalink ) {
@@ -388,6 +396,42 @@ class GuestPortalController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Determine whether a booking row uses a synthetic placeholder email or non-guest origin
+	 * that must never authenticate via predictable (booking_id, email) lookup.
+	 *
+	 * @param object $row Booking database row.
+	 * @return bool True if disallowed for (booking_id, email) portal login.
+	 */
+	private function is_placeholder_or_non_guest_booking( object $row ): bool {
+		$status = strtolower( trim( (string) ( $row->status ?? '' ) ) );
+		if ( 'pending_payment' === $status ) {
+			return true;
+		}
+
+		$source = strtolower( trim( (string) ( $row->source ?? '' ) ) );
+		if ( in_array( $source, array( 'ical', 'ical_import' ), true ) ) {
+			return true;
+		}
+
+		$email = strtolower( trim( (string) ( $row->customer_email ?? '' ) ) );
+		if ( '' === $email ) {
+			return true;
+		}
+
+		if ( in_array( $email, array( 'guest@pending.local', 'ical@external.local', 'deleted@site.invalid' ), true ) ) {
+			return true;
+		}
+
+		foreach ( array( '.local', '.import', '.invalid' ) as $synthetic_tld ) {
+			if ( str_ends_with( $email, $synthetic_tld ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Authenticate and fetch a booking from request parameters.
 	 *
 	 * Supports lookup by cryptographically secure booking_token OR
@@ -399,9 +443,10 @@ class GuestPortalController extends WP_REST_Controller {
 	private function authenticate_booking( WP_REST_Request $request ): \stdClass|WP_Error {
 		global $wpdb;
 
-		$ip       = Security::get_client_ip();
-		$fail_key = 'mhbo_portal_fails_' . md5( $ip );
-		$fails    = (int) get_transient( $fail_key );
+		$ip              = Security::get_client_ip();
+		$fail_key        = 'mhbo_portal_fails_' . md5( $ip );
+		$lookup_fail_key = 'mhbo_portal_lookup_fails_' . md5( $ip );
+		$fails           = (int) get_transient( $fail_key );
 		if ( $fails >= 10 ) {
 			return new WP_Error(
 				'mhbo_portal_rate_limit',
@@ -433,8 +478,27 @@ class GuestPortalController extends WP_REST_Controller {
 			}
 		}
 
-		// 2. ID + Email authentication
+		// 2. ID + Email authentication (never cleared by valid token requests)
+		$lookup_fails = (int) get_transient( $lookup_fail_key );
 		if ( $booking_id > 0 && '' !== $email ) {
+			if ( $lookup_fails >= 10 ) {
+				return new WP_Error(
+					'mhbo_portal_rate_limit',
+					__( 'Too many failed lookup attempts. Please wait 15 minutes before trying again.', 'modern-hotel-booking' ),
+					array( 'status' => 429 )
+				);
+			}
+
+			$bk_fail_key = 'mhbo_portal_bk_fails_' . $booking_id;
+			$bk_fails    = (int) get_transient( $bk_fail_key );
+			if ( $bk_fails >= 5 ) {
+				return new WP_Error(
+					'mhbo_portal_rate_limit',
+					__( 'Too many failed lookup attempts. Please wait 15 minutes before trying again.', 'modern-hotel-booking' ),
+					array( 'status' => 429 )
+				);
+			}
+
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$row = $wpdb->get_row(
 				$wpdb->prepare(
@@ -444,10 +508,16 @@ class GuestPortalController extends WP_REST_Controller {
 				)
 			);
 
-			if ( $row && strtolower( trim( (string) $row->customer_email ) ) === strtolower( trim( $email ) ) ) {
-				delete_transient( $fail_key );
-				return $row;
+			if ( $row && ! $this->is_placeholder_or_non_guest_booking( $row ) ) {
+				$stored_email   = strtolower( trim( (string) $row->customer_email ) );
+				$supplied_email = strtolower( trim( $email ) );
+				if ( '' !== $stored_email && hash_equals( $stored_email, $supplied_email ) ) {
+					return $row;
+				}
 			}
+
+			set_transient( $bk_fail_key, $bk_fails + 1, 15 * MINUTE_IN_SECONDS );
+			set_transient( $lookup_fail_key, $lookup_fails + 1, 15 * MINUTE_IN_SECONDS );
 		}
 
 		set_transient( $fail_key, $fails + 1, 15 * MINUTE_IN_SECONDS );
@@ -515,15 +585,19 @@ class GuestPortalController extends WP_REST_Controller {
 		$out_ts = HotelTime::midnight( (string) $booking->check_out );
 		$nights = max( 1, (int) round( ( $out_ts - $in_ts ) / DAY_IN_SECONDS ) );
 
-		$check_in_time  = (string) get_option( 'mhbo_checkin_time', '14:00' );
-		$check_out_time = (string) get_option( 'mhbo_checkout_time', '11:00' );
+		$check_in_time      = HotelTime::get_checkin_time();
+		$check_out_time     = HotelTime::get_checkout_time();
+		$is_early_checkin   = false;
+		$is_late_checkout   = false;
+		$is_checkin_shifted = false;
+		$is_request_only    = false;
 
 // Currency & amounts
 		$currency    = Pricing::get_currency_code();
 		$total_money = Money::fromDecimal( (string) ( $booking->total_price ?? 0 ), $currency );
 		$paid_money  = Money::fromDecimal( (string) ( $booking->payment_amount ?? 0 ), $currency );
 
-		if ( class_exists( '\\MHBO\\Core\\Pricing' ) && method_exists( '\\MHBO\\Core\\Pricing', 'get_booking_payment_amounts' ) ) {
+		if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'get_booking_payment_amounts' ) ) {
 			$payment_data    = Pricing::get_booking_payment_amounts( $booking );
 			$total_money     = $payment_data['total'];
 			$paid_money      = $payment_data['received'];
@@ -604,7 +678,10 @@ class GuestPortalController extends WP_REST_Controller {
 			);
 		}
 
-		// Balance link URL if balance due (Commercial Pro feature: online balance settlements require Pro gateways)
+		$req_token     = sanitize_text_field( (string) $request->get_param( 'token' ) );
+		$is_token_auth = ( '' !== $req_token && '' !== (string) ( $booking->booking_token ?? '' ) && hash_equals( (string) $booking->booking_token, $req_token ) );
+
+		// Balance link URL if balance due (read-only lookup on GET; new tokens are minted via POST /portal/balance-link)
 		$balance_payment_url = '';
 
 // Extras breakdown
@@ -633,9 +710,9 @@ class GuestPortalController extends WP_REST_Controller {
 		// Available active promotional coupons & vouchers for this guest (Pro)
 		$available_coupons = array();
 		
-		$ai_enabled = false;
+		$ai_enabled = class_exists( '\\MHBO\\AI\\Loader' ) && \MHBO\AI\Loader::is_concierge_active();
 
-$modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled', 'checked_out', 'refunded' ), true );
+		$modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled', 'checked_out', 'refunded' ), true );
 
 		// 1. Guest Name & First Name Personalization
 		$clean_full_name = trim( (string) $booking->customer_name );
@@ -829,10 +906,11 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			}
 		}
 
-		// 6. Property Amenities: Wi-Fi & Guest Compendium (Conditional to hotel configuration)
-		$wifi_ssid     = sanitize_text_field( (string) get_option( 'mhbo_hotel_wifi_ssid', '' ) );
-		$wifi_password = sanitize_text_field( (string) get_option( 'mhbo_hotel_wifi_password', '' ) );
-		$guest_guide   = wp_kses_post( (string) get_option( 'mhbo_hotel_guest_instructions', '' ) );
+		// 6. Property Amenities: Wi-Fi & Guest Compendium (Only disclosed for active confirmed/checked-in stays)
+		$is_wifi_eligible = in_array( (string) $booking->status, array( 'confirmed', 'checked_in' ), true );
+		$wifi_ssid        = $is_wifi_eligible ? sanitize_text_field( (string) get_option( 'mhbo_hotel_wifi_ssid', '' ) ) : '';
+		$wifi_password    = $is_wifi_eligible ? sanitize_text_field( (string) get_option( 'mhbo_hotel_wifi_password', '' ) ) : '';
+		$guest_guide      = $is_wifi_eligible ? wp_kses_post( (string) get_option( 'mhbo_hotel_guest_instructions', '' ) ) : '';
 
 		// 7. Formal Tax Invoice Download URL (Starter & Pro)
 		$invoice_url = '';
@@ -863,6 +941,18 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			$tax_amount    = (float) $booking->total_tax;
 			$tax_formatted = Pricing::format_price( $tax_amount );
 		}
+		$portal_tb        = ! empty( $booking->tax_breakdown )
+			? ( is_string( $booking->tax_breakdown ) ? json_decode( $booking->tax_breakdown, true ) : (array) $booking->tax_breakdown )
+			: array();
+		$portal_tb        = is_array( $portal_tb ) ? $portal_tb : array();
+		$portal_tb_totals = is_array( $portal_tb['totals'] ?? null ) ? $portal_tb['totals'] : array();
+		$portal_tb_rates  = is_array( $portal_tb['rates'] ?? null ) ? $portal_tb['rates'] : array();
+		$is_vat_portal    = in_array( $tax_mode, array( 'vat', 'inclusive' ), true );
+		$subtotal_net_val = (float) ( $booking->subtotal_net ?? ( $portal_tb_totals['subtotal_net'] ?? 0 ) );
+		$accom_tax_val    = (float) ( $portal_tb_totals['accommodation_tax'] ?? ( (float) ( $booking->room_tax ?? 0 ) + (float) ( $booking->children_tax ?? 0 ) ) );
+		$extras_tax_val   = (float) ( (float) ( $portal_tb_totals['extras_tax'] ?? ( $booking->extras_tax ?? 0 ) ) + (float) ( $portal_tb_totals['service_fee_tax'] ?? ( $booking->service_fee_tax ?? 0 ) ) );
+		$acc_rate_val     = (float) ( $booking->tax_rate_accommodation ?? ( $portal_tb_rates['accommodation'] ?? 0 ) );
+		$ext_rate_val     = (float) ( $booking->tax_rate_extras ?? ( $portal_tb_rates['extras'] ?? 0 ) );
 
 		// Group Reservation Metadata (Law 52 & Law 59)
 		$is_group_booking      = ! empty( $booking->is_multi_room ) || ! empty( $booking->multi_room_parent );
@@ -878,26 +968,38 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 		if ( $is_group_booking ) {
 			$group_parent_numeric = ctype_digit( $group_parent_ref ) ? (int) $group_parent_ref : 0;
 			// Query all sibling rooms in this group reservation with USALI ledger fields.
+			// Legacy numeric parent refs may only match the parent row itself when it is a genuine group row.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$sibling_rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT b.id, b.booking_token, b.room_id, b.customer_name, b.check_in, b.check_out, b.status, b.payment_status, b.payment_type, b.balance_status, b.total_price, b.deposit_amount, b.payment_amount, b.payment_ledger, b.payment_received, b.deposit_received, b.payment_transaction_id, b.remaining_balance, b.balance_link_token, r.room_number, t.name as type_name
+					"SELECT b.id, b.room_id, b.customer_name, b.customer_email, b.check_in, b.check_out, b.status, b.payment_status, b.payment_type, b.balance_status, b.total_price, b.deposit_amount, b.payment_amount, b.payment_ledger, b.payment_received, b.deposit_received, b.payment_transaction_id, b.remaining_balance, b.balance_link_token, r.room_number, t.name as type_name
 					 FROM {$wpdb->prefix}mhbo_bookings b
 					 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
 					 LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
-					 WHERE (b.multi_room_parent = %s OR (b.id > 0 AND b.id = %d))
-					   AND b.status != 'cancelled'
+					 WHERE (b.multi_room_parent = %s OR (b.id > 0 AND b.id = %d AND b.is_multi_room = 1))
+					   AND b.status NOT IN ('cancelled', 'refunded', 'deleted')
 					 ORDER BY b.id ASC",
 					$group_parent_ref,
 					$group_parent_numeric
 				)
 			);
 
+			// Object-level authorization: only expose sibling rooms owned by the same guest identity.
+			// (The portal sibling switcher authenticates with this booking's email, so other rows are unreachable anyway.)
+			$owner_email  = strtolower( trim( (string) $booking->customer_email ) );
+			$sibling_rows = array_values(
+				array_filter(
+					(array) $sibling_rows,
+					static fn( $s_row ): bool => is_object( $s_row ) && strtolower( trim( (string) ( $s_row->customer_email ?? '' ) ) ) === $owner_email
+				)
+			);
+
 			if ( ! empty( $sibling_rows ) ) {
 				$group_rooms_count   = count( $sibling_rows );
-				$group_total_sum     = 0.0;
-				$group_paid_sum      = 0.0;
-				$group_remaining_sum = 0.0;
+				$portal_currency     = Pricing::get_currency_code();
+				$group_total_m       = Money::fromCents( 0, $portal_currency );
+				$group_paid_m        = Money::fromCents( 0, $portal_currency );
+				$group_remaining_m   = Money::fromCents( 0, $portal_currency );
 
 				foreach ( $sibling_rows as $s_row ) {
 					$s_amts = Pricing::get_booking_payment_amounts( $s_row );
@@ -905,11 +1007,11 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 					$s_paid = (float) $s_amts['received']->toDecimal();
 					$s_rem  = (float) $s_amts['remaining']->toDecimal();
 
-					$group_total_sum     += $s_tot;
-					$group_paid_sum      += $s_paid;
-					$group_remaining_sum += $s_rem;
+					$group_total_m     = $group_total_m->add( $s_amts['total'] );
+					$group_paid_m      = $group_paid_m->add( $s_amts['received'] );
+					$group_remaining_m = $group_remaining_m->add( $s_amts['remaining'] );
 
-					if ( null === $first_unpaid_sibling && $s_rem > 0.001 ) {
+					if ( null === $first_unpaid_sibling && $s_amts['remaining']->isPositive() ) {
 						$first_unpaid_sibling = $s_row;
 					}
 
@@ -918,7 +1020,6 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 
 					$group_siblings[] = array(
 						'booking_id'        => (int) $s_row->id,
-						'booking_token'     => (string) $s_row->booking_token,
 						'room_label'        => $s_lbl,
 						'room_name'         => $s_lbl,
 						'guest_name'        => (string) $s_row->customer_name,
@@ -929,7 +1030,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 						'total_formatted'   => Pricing::format_price( $s_tot ),
 						'paid_formatted'    => Pricing::format_price( $s_paid ),
 						'balance_formatted' => Pricing::format_price( $s_rem ),
-						'is_paid'           => $s_rem <= 0.001,
+						'is_paid'           => ! $s_amts['remaining']->isPositive(),
 						'is_current'        => ( (int) $s_row->id === (int) $booking->id ),
 					);
 				}
@@ -942,10 +1043,10 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 					$group_remaining_val = (float) $group_amounts['remaining']->toDecimal();
 					$group_is_paid       = (bool) $group_amounts['is_paid'];
 				} else {
-					$group_total_val     = $group_total_sum;
-					$group_paid_val      = $group_paid_sum;
-					$group_remaining_val = $group_remaining_sum;
-					$group_is_paid       = $group_remaining_sum <= 0.001;
+					$group_total_val     = (float) $group_total_m->toDecimal();
+					$group_paid_val      = (float) $group_paid_m->toDecimal();
+					$group_remaining_val = (float) $group_remaining_m->toDecimal();
+					$group_is_paid       = ! $group_remaining_m->isPositive();
 				}
 			}
 		}
@@ -961,14 +1062,18 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			
 		}
 
-		$attractions = array();
+		$can_pay_balance       = false;
+		$group_can_pay_balance = false;
+
+$attractions = array();
 
 // Strip internal staff/administrative notes and audit entries from guest-facing special requests.
 		$guest_special_requests = BookingProcessor::extract_guest_special_requests( $booking );
 
 		$response_data = array(
 			'booking_id'                   => (int) $booking->id,
-			'booking_token'                => (string) $booking->booking_token,
+			'auth_method'                  => $is_token_auth ? 'token' : 'credentials',
+			'booking_token'                => $is_token_auth ? (string) $booking->booking_token : '',
 			'customer_name'                => (string) $booking->customer_name,
 			'first_name'                   => $first_name,
 			'greeting'                     => $time_greeting,
@@ -996,6 +1101,10 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			'check_out_formatted'          => HotelTime::date( get_option( 'date_format', 'F j, Y' ), $out_ts ),
 			'check_in_time'                => $check_in_time,
 			'check_out_time'               => $check_out_time,
+			'is_early_checkin'             => $is_early_checkin,
+			'is_late_checkout'             => $is_late_checkout,
+			'is_checkin_shifted'           => $is_checkin_shifted,
+			'is_request_only'              => $is_request_only,
 			'nights'                       => $nights,
 			'guests'                       => (int) ( $booking->guests ?? 1 ),
 			'children'                     => (int) ( $booking->children ?? 0 ),
@@ -1042,6 +1151,15 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			'tax_formatted'                => $tax_formatted,
 			'tax_mode'                     => $tax_mode,
 			'tax_label'                    => $tax_label,
+			'is_vat'                       => $is_vat_portal,
+			'subtotal_net'                 => $subtotal_net_val,
+			'subtotal_net_formatted'       => Pricing::format_price( $subtotal_net_val ),
+			'accommodation_tax'            => $accom_tax_val,
+			'accommodation_tax_formatted'  => Pricing::format_price( $accom_tax_val ),
+			'extras_tax'                   => $extras_tax_val,
+			'extras_tax_formatted'         => Pricing::format_price( $extras_tax_val ),
+			'tax_rate_accommodation'       => class_exists( Tax::class ) ? Tax::format_rate( $acc_rate_val ) : (string) $acc_rate_val,
+			'tax_rate_extras'              => class_exists( Tax::class ) ? Tax::format_rate( $ext_rate_val ) : (string) $ext_rate_val,
 			'is_group_booking'             => $is_group_booking,
 			'group_id'                     => $group_parent_ref,
 			'group_parent_ref'             => $group_parent_ref,
@@ -1054,6 +1172,8 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			'group_siblings'               => $group_siblings,
 			'group_balance_payment_url'    => $group_balance_payment_url,
 			'room_balance_payment_url'     => $room_balance_payment_url,
+			'can_pay_balance'              => $can_pay_balance,
+			'group_can_pay_balance'        => $group_can_pay_balance,
 			'attractions'                  => $attractions,
 		);
 
@@ -1096,13 +1216,13 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 
 		// Calculate live financial amount paid
 		$paid_val = (float) ( $booking->payment_amount ?? 0 );
-		if ( class_exists( '\\MHBO\\Core\\Pricing' ) && method_exists( '\\MHBO\\Core\\Pricing', 'get_booking_payment_amounts' ) ) {
+		if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'get_booking_payment_amounts' ) ) {
 			$payment_data = Pricing::get_booking_payment_amounts( $booking );
 			$paid_val     = (float) $payment_data['received']->toDecimal();
 		}
 
-		$reason = (string) $request->get_param( 'reason' );
-		$phone  = (string) $request->get_param( 'phone' );
+		$reason = sanitize_textarea_field( (string) $request->get_param( 'reason' ) );
+		$phone  = sanitize_text_field( (string) $request->get_param( 'phone' ) );
 
 		global $wpdb;
 
@@ -1134,7 +1254,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			Cache::invalidate_booking( $booking_id );
 
 			// Send high-priority alert email to Admin & CC, and acknowledgement to guest
-			if ( class_exists( '\\MHBO\\Core\\Email' ) ) {
+			if ( class_exists( Email::class ) ) {
 				Email::send_admin_cancellation_request_notification( $booking_id, $paid_val, $reason );
 				Email::send_guest_cancellation_request_email( $booking_id, $paid_val, $reason );
 			}
@@ -1206,7 +1326,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 
 		// Fire booking cancellation actions & send notifications
 		do_action( 'mhbo_booking_cancelled', $booking_id );
-		if ( class_exists( '\\MHBO\\Core\\Email' ) ) {
+		if ( class_exists( Email::class ) ) {
 			Email::send_admin_cancellation_notification( $booking_id, $reason );
 		}
 
@@ -1354,6 +1474,17 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 		$old_email     = (string) $booking->customer_email;
 		$email_changed = strtolower( trim( $old_email ) ) !== strtolower( trim( $customer_email ) );
 
+		if ( $email_changed ) {
+			$req_token = sanitize_text_field( (string) $request->get_param( 'token' ) );
+			if ( '' === $req_token || '' === (string) ( $booking->booking_token ?? '' ) || ! hash_equals( (string) $booking->booking_token, $req_token ) ) {
+				return new WP_Error(
+					'mhbo_email_change_requires_token',
+					__( 'Changing the reservation email address requires opening the portal via your secure booking link.', 'modern-hotel-booking' ),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
 		$timestamp = current_time( 'mysql' );
 		$audit_msg = sprintf(
 			"[%s Guest Portal Profile Update]\nName: %s | Phone: %s | Email: %s%s%s",
@@ -1402,15 +1533,15 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				$name_parts = explode( ' ', trim( $customer_name ), 2 );
 				$fname      = $name_parts[0];
 				$lname      = $name_parts[1] ?? '';
-				\MHBO\Core\GuestManager::update_guest(
-					$gid,
-					array(
-						'first_name' => $fname,
-						'last_name'  => $lname,
-						'phone'      => $customer_phone,
-						'email'      => $customer_email,
-					)
+				$crm_update = array(
+					'first_name' => $fname,
+					'last_name'  => $lname,
+					'phone'      => $customer_phone,
 				);
+				if ( ! $email_changed ) {
+					$crm_update['email'] = $customer_email;
+				}
+				\MHBO\Core\GuestManager::update_guest( $gid, $crm_update );
 			}
 		}
 
@@ -1456,7 +1587,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 		}
 
 		$paid_val = (float) ( $booking->payment_amount ?? 0 );
-		if ( class_exists( '\\MHBO\\Core\\Pricing' ) && method_exists( '\\MHBO\\Core\\Pricing', 'get_booking_payment_amounts' ) ) {
+		if ( class_exists( Pricing::class ) && method_exists( Pricing::class, 'get_booking_payment_amounts' ) ) {
 			$payment_data = Pricing::get_booking_payment_amounts( $booking );
 			$paid_val     = (float) $payment_data['received']->toDecimal();
 		}
@@ -1491,14 +1622,10 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 			);
 		}
 
-		// Advance booking window check
-		if ( ! HotelTime::is_within_advance_booking_window( $new_check_in ) ) {
-			$max_window_human = HotelTime::format_advance_window_human( HotelTime::get_max_advance_booking_days() );
-			return new WP_Error(
-				'mhbo_advance_limit_exceeded',
-				sprintf( I18n::get_label( 'label_advance_limit_exceeded' ), $max_window_human ),
-				array( 'status' => 400 )
-			);
+		// Enforce hard max stay nights and advance booking window.
+		$date_validation = HotelTime::validate_date_range( $new_check_in, $new_check_out, true );
+		if ( is_wp_error( $date_validation ) ) {
+			return $date_validation;
 		}
 
 		// Guest occupancy strictly remains the same as confirmed reservation
@@ -1546,6 +1673,15 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				sprintf( I18n::get_label( 'api_err_max_stay' ), $max_stay ),
 				array( 'status' => 400 )
 			);
+		}
+
+		// Closed-to-Arrival / Closed-to-Departure (parity with BookingProcessor). Only enforced on the
+		// dates the guest is actually changing, so an unchanged leg booked before a CTA/CTD rule stays valid.
+		if ( $new_check_in !== (string) $booking->check_in && Pricing::is_closed_to_arrival( $room_id, $new_check_in ) ) {
+			return new WP_Error( 'mhbo_cta_restricted', I18n::get_label( 'api_err_cta' ), array( 'status' => 400 ) );
+		}
+		if ( $new_check_out !== (string) $booking->check_out && Pricing::is_closed_to_departure( $room_id, $new_check_out ) ) {
+			return new WP_Error( 'mhbo_ctd_restricted', I18n::get_label( 'api_err_ctd' ), array( 'status' => 400 ) );
 		}
 
 		// Financial Integrity Check: If payments have been collected, route to staff review
@@ -1596,8 +1732,16 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				);
 			}
 
-			// Recalculate full stay financials (child ages, extras, coupon discount, taxes, remaining balance).
-			$recalc_fin = Pricing::recalculate_booking_financials( $booking, $room_id, $new_check_in, $new_check_out, $new_guests, $new_children );
+			$portal_custom = array();
+			if ( ! empty( $booking->custom_fields ) ) {
+				$decoded_pc = json_decode( (string) $booking->custom_fields, true );
+				if ( is_array( $decoded_pc ) ) {
+					$portal_custom = $decoded_pc;
+				}
+			}
+
+// Recalculate full stay financials (child ages, extras, coupon discount, taxes, remaining balance).
+			$recalc_fin = Pricing::recalculate_booking_financials( $booking, $room_id, $new_check_in, $new_check_out, $new_guests, $new_children, $portal_custom );
 
 			if ( null === $recalc_fin ) {
 				return new WP_Error(
@@ -1629,10 +1773,11 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 
 			$update_cols = array_merge(
 				array(
-					'check_in'  => $new_check_in,
-					'check_out' => $new_check_out,
-					'guests'    => $new_guests,
-					'children'  => $new_children,
+					'check_in'      => $new_check_in,
+					'check_out'     => $new_check_out,
+					'guests'        => $new_guests,
+					'children'      => $new_children,
+					'custom_fields' => (string) wp_json_encode( $portal_custom ),
 				),
 				$recalc_fin['db_fields'],
 				array(
@@ -1641,7 +1786,7 @@ $modification_allowed = ! in_array( (string) $booking->status, array( 'cancelled
 				)
 			);
 			$update_fmts = array_merge(
-				array( '%s', '%s', '%d', '%d' ),
+				array( '%s', '%s', '%d', '%d', '%s' ),
 				array_fill( 0, count( $recalc_fin['db_fields'] ), '%s' ),
 				array( '%s', '%s' )
 			);

@@ -13,6 +13,7 @@
 	const el = element.createElement;
 	const registerBlockType = blocks.registerBlockType;
 	const InspectorControls = blockEditor.InspectorControls;
+	const useBlockProps = blockEditor.useBlockProps;
 	const PanelBody = wp.components.PanelBody;
 	const TextControl = wp.components.TextControl;
 	const __ = wp.i18n.__;
@@ -29,7 +30,9 @@
 			},
 		},
 		edit( props ) {
-			return [
+			return el(
+				'div',
+				useBlockProps(),
 				el(
 					InspectorControls,
 					{ key: 'inspector' },
@@ -62,8 +65,8 @@
 					block: 'modern-hotel-booking/business-card',
 					attributes: props.attributes,
 					key: 'preview',
-				} ),
-			];
+				} )
+			);
 		},
 		save() {
 			return null;

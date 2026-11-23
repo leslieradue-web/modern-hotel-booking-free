@@ -28,11 +28,13 @@
 			this.container = container;
 			this.doc = container.ownerDocument || document;
 			this.win = this.doc.defaultView || window;
+			this.isInline = container.dataset.variant === 'inline';
 			this.isOpen = false;
 			this.isSending = false;
 			this.sessionId =
 				this.win.sessionStorage.getItem( 'mhbo_session_id' ) || null;
 			this.evtSource = null;
+			this._chatAbortController = null;
 			this.panel = null;
 			this.fab = null;
 			this.messagesEl = null;
@@ -44,7 +46,9 @@
 		// ── Initialise ────────────────────────────────────────────────────────
 
 		init() {
-			this._buildFab();
+			if ( ! this.isInline ) {
+				this._buildFab();
+			}
 			this._buildPanel();
 			this._attachEvents();
 			this._injectIntoContainer();
@@ -64,8 +68,8 @@
 				}
 			} );
 
-			// Default: closed unless autoopen is explicitly true.
-			if ( this.container.dataset.autoopen === 'true' ) {
+			// Inline variant is open by default; floating is closed unless autoopen is true.
+			if ( this.isInline || this.container.dataset.autoopen === 'true' ) {
 				this.open();
 			} else {
 				this.close();
@@ -96,8 +100,10 @@
 		_buildPanel() {
 			const panel = this.doc.createElement( 'div' );
 			panel.className = 'mhbo-chat-panel';
-			panel.setAttribute( 'role', 'dialog' );
-			panel.setAttribute( 'aria-modal', 'true' );
+			panel.setAttribute( 'role', this.isInline ? 'region' : 'dialog' );
+			if ( ! this.isInline ) {
+				panel.setAttribute( 'aria-modal', 'true' );
+			}
 			panel.setAttribute(
 				'aria-label',
 				s.chatDialogLabel || 'Hotel AI Concierge Chat'
@@ -108,6 +114,9 @@
 				cfg.settings?.hotelName || s.hotelName || 'Hotel Concierge';
 			const personaName =
 				cfg.settings?.personaName || s.personaName || 'AI Concierge';
+			const speechSupported = Boolean(
+				this.win.SpeechRecognition || this.win.webkitSpeechRecognition
+			);
 
 			panel.innerHTML = `
                 <div class="mhbo-chat-header">
@@ -119,47 +128,54 @@
 						) }</span>
                     </div>
                     <div class="mhbo-chat-header-actions">
-                        <button type="button" class="mhbo-chat-tts-toggle" aria-label="${
+                        <button type="button" class="mhbo-chat-tts-toggle" aria-label="${ this._esc(
 							s.toggleVoice || 'Toggle voice'
-						}" aria-pressed="false" title="${
+						) }" aria-pressed="false" title="${ this._esc(
 							s.toggleVoice || 'Toggle voice output'
-						}">
+						) }">
                             <svg class="mhbo-chat-tts-icon-on" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                             <svg class="mhbo-chat-tts-icon-off" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
                         </button>
-                        <button type="button" class="mhbo-chat-minimize" aria-label="${
-							s.minimize || 'Minimize chat'
-						}" title="${
-							s.minimize || 'Minimize'
-						}">
+                        ${
+							this.isInline
+								? ''
+								: `<button type="button" class="mhbo-chat-minimize" aria-label="${ this._esc(
+										s.minimize || 'Minimize chat'
+								  ) }" title="${ this._esc(
+										s.minimize || 'Minimize'
+								  ) }">
                             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         </button>
-                        <button type="button" class="mhbo-chat-close" aria-label="${
+                        <button type="button" class="mhbo-chat-close" aria-label="${ this._esc(
 							s.close || 'Close chat'
-						}" title="${
-							s.close || 'Close'
-						}">
+						) }" title="${ this._esc(
+								s.close || 'Close'
+						  ) }">
                             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
+                        </button>`
+						}
                     </div>
                 </div>
-                <div class="mhbo-chat-messages" role="log" aria-live="polite" aria-label="${
+                <div class="mhbo-chat-messages" role="log" aria-live="polite" aria-label="${ this._esc(
 					s.messageHistory || 'Chat messages'
-				}"></div>
-                <div class="mhbo-chat-suggestions" role="list" aria-label="${
+				) }"></div>
+                <div class="mhbo-chat-suggestions" role="list" aria-label="${ this._esc(
 					s.suggestions || 'Quick replies'
-				}"></div>
+				) }"></div>
                 <form class="mhbo-chat-input-row" novalidate>
-                    <input type="text" class="mhbo-chat-input" placeholder="${
+                    <input type="text" class="mhbo-chat-input" placeholder="${ this._esc(
 						s.inputPlaceholder || 'Ask me anything…'
-					}" aria-label="${
+					) }" aria-label="${ this._esc(
 						s.inputLabel || 'Chat message'
-					}" maxlength="1000" autocomplete="off">
+					) }" maxlength="1000" autocomplete="off">
                     ${
-						this.win.mhboChat?.settings?.voiceEnabled
-							? `<button type="button" class="mhbo-chat-voice-btn" aria-label="${
+						this.win.mhboChat?.settings?.voiceEnabled &&
+						speechSupported
+							? `<button type="button" class="mhbo-chat-voice-btn" aria-label="${ this._esc(
 									s.startVoice || 'Start voice input'
-							  }" title="${ s.startVoice || 'Voice input' }">
+							  ) }" title="${ this._esc(
+									s.startVoice || 'Voice input'
+							  ) }">
                         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                     </button>`
 							: ''
@@ -180,22 +196,31 @@
 		}
 
 		_injectIntoContainer() {
-			this.container.appendChild( this.fab );
+			if ( this.fab ) {
+				this.container.appendChild( this.fab );
+			}
 			this.container.appendChild( this.panel );
 
-			// Apply position from settings.
-			const pos =
-				cfg.settings?.position ||
-				this.container.dataset.position ||
-				'bottom-right';
-			this.container.classList.add(
-				'mhbo-chat-widget--' + pos.replace( '-', '-' )
-			);
+			if ( this.isInline ) {
+				this.container.classList.add( 'mhbo-chat-widget--inline' );
+			} else {
+				// Apply position from settings.
+				const pos =
+					cfg.settings?.position ||
+					this.container.dataset.position ||
+					'bottom-right';
+				this.container.classList.add(
+					'mhbo-chat-widget--' + pos.replace( '-', '-' )
+				);
+			}
 		}
 
 		// ── Toggle Visibility ────────────────────────────────────────────────
 
 		toggle() {
+			if ( this.isInline ) {
+				return;
+			}
 			if ( this.isOpen ) {
 				this.close();
 			} else {
@@ -210,11 +235,13 @@
 			this.isOpen = true;
 			this.panel.hidden = false;
 			this.container.classList.add( 'mhbo-chat-widget--open' );
-			this.fab.setAttribute( 'aria-expanded', 'true' );
-			this.fab.classList.add( 'mhbo-chat-fab--active' );
+			if ( this.fab ) {
+				this.fab.setAttribute( 'aria-expanded', 'true' );
+				this.fab.classList.add( 'mhbo-chat-fab--active' );
+			}
 
-			// Focus input on open.
-			if ( this.inputEl ) {
+			// Focus input on open (floating mode only to avoid stealing focus mid-page on inline load).
+			if ( this.inputEl && ! this.isInline ) {
 				setTimeout( () => this.inputEl.focus(), 300 );
 			}
 
@@ -252,8 +279,10 @@
 			this.isOpen = false;
 			this.panel.hidden = true;
 			this.container.classList.remove( 'mhbo-chat-widget--open' );
-			this.fab.setAttribute( 'aria-expanded', 'false' );
-			this.fab.classList.remove( 'mhbo-chat-fab--active' );
+			if ( this.fab ) {
+				this.fab.setAttribute( 'aria-expanded', 'false' );
+				this.fab.classList.remove( 'mhbo-chat-fab--active' );
+			}
 
 			if ( this.win.MhboVoiceInput ) {
 				this.win.MhboVoiceInput.stop();
@@ -272,13 +301,19 @@
 				this.evtSource.close();
 				this.evtSource = null;
 			}
+			if ( this._chatAbortController ) {
+				this._chatAbortController.abort();
+				this._chatAbortController = null;
+			}
 		}
 
 		// ── Events ────────────────────────────────────────────────────────────
 
 		_attachEvents() {
 			// FAB toggle.
-			this.fab.addEventListener( 'click', () => this.toggle() );
+			if ( this.fab ) {
+				this.fab.addEventListener( 'click', () => this.toggle() );
+			}
 
 			// Minimize.
 			const minBtn = this.panel.querySelector( '.mhbo-chat-minimize' );
@@ -346,10 +381,24 @@
 						}
 						return;
 					}
-					this.close();
-					this.fab.focus();
+					if ( ! this.isInline ) {
+						this.close();
+						if ( this.fab ) {
+							this.fab.focus();
+						}
+					}
 				}
 			} );
+
+			if ( ! this.isInline ) {
+				const closeIfOpen = () => {
+					if ( this.isOpen ) {
+						this.close();
+					}
+				};
+				this.doc.addEventListener( 'mhboBookNow', closeIfOpen );
+				this.doc.addEventListener( 'mhboModalOpened', closeIfOpen );
+			}
 
 			// TTS toggle.
 			if ( this.ttsToggle ) {
@@ -449,8 +498,9 @@
 		 * Speak text via TTS (MhboVoiceInput or native browser SpeechSynthesis).
 		 *
 		 * @param {string} text
+		 * @param {string} [ttsToken='']
 		 */
-		speak( text ) {
+		speak( text, ttsToken = '' ) {
 			if ( ! text ) {
 				return;
 			}
@@ -458,7 +508,7 @@
 				this.win.MhboVoiceInput &&
 				typeof this.win.MhboVoiceInput.speak === 'function'
 			) {
-				this.win.MhboVoiceInput.speak( text );
+				this.win.MhboVoiceInput.speak( text, ttsToken );
 				return;
 			}
 			if ( 'speechSynthesis' in this.win ) {
@@ -503,14 +553,17 @@
 
 			this._postMessage( text )
 				.then( async ( response ) => {
-					this.hideTypingIndicator();
-
 					// 1. Handle Streaming Response (SSE).
 					if ( response instanceof ReadableStream ) {
 						const reader = response.getReader();
 						const decoder = new TextDecoder();
+						const streamSignal = this._chatAbortController?.signal;
 						let activeBubble = null;
 						let fullText = '';
+						let streamDone = false;
+						let receivedDone = false;
+						let hasToolCards = false;
+						let pendingDoneData = null;
 
 						try {
 							let sseBuffer = '';
@@ -521,6 +574,7 @@
 								}
 								const dataStr = line.slice( 6 ).trim();
 								if ( dataStr === '[DONE]' ) {
+									streamDone = true;
 									return true;
 								}
 								if ( ! dataStr ) {
@@ -530,8 +584,18 @@
 								try {
 									const data = JSON.parse( dataStr );
 
-									// Delta: Typing content.
+									// Thought: Progress status.
+									if ( data.type === 'thought' ) {
+										this.hideTypingIndicator();
+										this.showStatusNotification(
+											data.content
+										);
+									}
+
+									// Delta: Accumulate content and remove status bar cleanly before bubble appears.
 									if ( data.delta ) {
+										this.hideTypingIndicator();
+										this.hideStatusNotification( true );
 										if ( ! activeBubble ) {
 											activeBubble = this.renderBubble(
 												'assistant',
@@ -540,76 +604,13 @@
 											);
 										}
 										fullText += data.delta;
-										this._updateBubble(
-											activeBubble,
-											fullText
-										);
 									}
 
-									// Thought: Progress status.
-									if ( data.type === 'thought' ) {
-										this.showStatusNotification(
-											data.content
-										);
-									}
-
-									// Done: Final metadata.
+									// Done: Capture final metadata to apply after typing animation finishes.
 									if ( data.done ) {
-										this.hideStatusNotification();
-										if ( this.ttsEnabled && fullText ) {
-											this.speak( fullText );
-										}
-										if ( data.session_id ) {
-											this.sessionId = data.session_id;
-											this.win.sessionStorage.setItem(
-												'mhbo_session_id',
-												this.sessionId
-											);
-										}
-										if (
-											data.suggestions &&
-											data.suggestions.length
-										) {
-											this.addSuggestions(
-												data.suggestions
-											);
-										}
-										if (
-											data.booking_intent &&
-											data.booking_intent.score >= 60
-										) {
-											this._renderBookNowCta(
-												data.booking_intent.score
-											);
-										}
-										if (
-											data.handoff &&
-											Object.keys( data.handoff ).length
-										) {
-											this._storeHandoff( data.handoff );
-											if (
-												/contact|call us|email us|whatsapp|speak with|reach us/.test(
-													fullText.toLowerCase()
-												)
-											) {
-												this._renderHandoffBar();
-											}
-										}
-										if ( data.tool_calls_made ) {
-											data.tool_calls_made.forEach(
-												( tc ) => {
-													if (
-														tc.result &&
-														! tc.result.error
-													) {
-														this._renderToolCard(
-															tc.tool,
-															tc.result
-														);
-													}
-												}
-											);
-										}
+										this.hideTypingIndicator();
+										receivedDone = true;
+										pendingDoneData = data;
 									}
 								} catch ( e ) {
 									console.warn(
@@ -620,7 +621,7 @@
 								return false;
 							};
 
-							while ( true ) {
+							while ( ! streamDone ) {
 								const { done, value } = await reader.read();
 								if ( done ) {
 									if ( sseBuffer.trim() ) {
@@ -641,20 +642,112 @@
 									}
 								}
 							}
+
+							this.hideTypingIndicator();
+							this.hideStatusNotification( true );
+
+							if ( activeBubble && fullText ) {
+								await this._animateStreamText(
+									activeBubble,
+									fullText,
+									streamSignal
+								);
+							}
+
+							if ( pendingDoneData ) {
+								const data = pendingDoneData;
+								if ( this.ttsEnabled && fullText ) {
+									this.speak(
+										fullText,
+										data.tts_token || ''
+									);
+								}
+								if ( data.session_id ) {
+									this.sessionId = data.session_id;
+									this.win.sessionStorage.setItem(
+										'mhbo_session_id',
+										this.sessionId
+									);
+								}
+								if (
+									data.suggestions &&
+									data.suggestions.length
+								) {
+									this.addSuggestions( data.suggestions );
+								}
+								if (
+									data.booking_intent &&
+									data.booking_intent.score >= 60
+								) {
+									this._renderBookNowCta(
+										data.booking_intent.score
+									);
+								}
+								if (
+									data.handoff &&
+									Object.keys( data.handoff ).length
+								) {
+									this._storeHandoff( data.handoff );
+									if (
+										/contact|call us|email us|whatsapp|speak with|reach us/.test(
+											fullText.toLowerCase()
+										)
+									) {
+										this._renderHandoffBar();
+									}
+								}
+								if (
+									data.tool_calls_made &&
+									data.tool_calls_made.length
+								) {
+									data.tool_calls_made.forEach( ( tc ) => {
+										if (
+											tc.result &&
+											! tc.result.error
+										) {
+											hasToolCards = true;
+											this._renderToolCard(
+												tc.tool,
+												tc.result
+											);
+										}
+									} );
+								}
+							}
+
+							if (
+								! fullText &&
+								! hasToolCards &&
+								( ! streamSignal || ! streamSignal.aborted )
+							) {
+								const msg =
+									( receivedDone && pendingDoneData?.message ) ||
+									s.errorMessage ||
+									'Sorry, something went wrong.';
+								this.renderBubble( 'error', msg );
+							}
 						} catch ( err ) {
-							this.renderBubble(
-								'error',
-								err.message || s.errorMessage
-							);
+							if ( ! err || err.name !== 'AbortError' ) {
+								this.renderBubble(
+									'error',
+									err?.message || s.errorMessage
+								);
+							}
 						} finally {
+							this.hideTypingIndicator();
+							this.hideStatusNotification( true );
+							this._chatAbortController = null;
 							this.isSending = false;
 							this.sendBtn.disabled = false;
-							this.inputEl.focus();
+							if ( this.isOpen ) {
+								this.inputEl.focus();
+							}
 						}
 						return;
 					}
 
 					// 2. Handle Standard JSON Response.
+					this.hideTypingIndicator();
 					const data = response;
 
 					// Always update session ID unconditionally.
@@ -673,7 +766,7 @@
 					) {
 						this.receiveMessage( data.response );
 						if ( this.ttsEnabled ) {
-							this.speak( data.response );
+							this.speak( data.response, data.tts_token || '' );
 						}
 						if ( data.suggestions && data.suggestions.length ) {
 							this.addSuggestions( data.suggestions );
@@ -726,15 +819,21 @@
 				} )
 				.catch( ( err ) => {
 					this.hideTypingIndicator();
+					if ( err && err.name === 'AbortError' ) {
+						return;
+					}
 					this.renderBubble(
 						'error',
 						err?.message || s.errorMessage
 					);
 				} )
 				.finally( () => {
+					this._chatAbortController = null;
 					this.isSending = false;
 					this.sendBtn.disabled = false;
-					this.inputEl.focus();
+					if ( this.isOpen ) {
+						this.inputEl.focus();
+					}
 				} );
 		}
 
@@ -770,24 +869,45 @@
 				body.append( 'portal_token', portalToken );
 			}
 
-			const headers = { 'X-WP-Nonce': cfg.restNonce || '' };
+			const headers = {};
 			if ( cfg.settings?.streamingEnabled ) {
 				headers.Accept = 'text/event-stream';
 			}
 
-			const res = await fetch( cfg.restUrl + '/mhbo/v1/chat', {
+			if ( this._chatAbortController ) {
+				this._chatAbortController.abort();
+			}
+			this._chatAbortController =
+				typeof AbortController !== 'undefined'
+					? new AbortController()
+					: null;
+			const reqController = this._chatAbortController;
+
+			const fetchOpts = {
 				method: 'POST',
 				credentials: 'same-origin',
 				headers,
 				body,
-			} );
+			};
+			if ( reqController ) {
+				fetchOpts.signal = reqController.signal;
+			}
+
+			const res = await fetch( cfg.restUrl + '/mhbo/v1/chat', fetchOpts );
 
 			if ( ! res.ok ) {
 				// 403 = stale nonce (page cache, Cloudflare HTML cache, etc.).
 				// Refresh both nonces from the server and retry exactly once.
 				if ( res.status === 403 && ! this._nonceRetried ) {
 					this._nonceRetried = true;
-					await this._refreshNonce();
+					await this._refreshNonce(
+						reqController ? reqController.signal : undefined
+					);
+					if ( reqController && reqController.signal.aborted ) {
+						const abortErr = new Error( 'Request aborted' );
+						abortErr.name = 'AbortError';
+						throw abortErr;
+					}
 					return this._postMessage( text );
 				}
 				this._nonceRetried = false;
@@ -812,12 +932,16 @@
 		// Fetch fresh nonces from the server — called automatically when a 403 is received.
 		// This recovers from stale nonces baked into cached pages (Cloudflare, WP Rocket, etc.)
 		// without requiring the guest to reload the page.
-		async _refreshNonce() {
+		async _refreshNonce( signal ) {
 			try {
-				const r = await fetch( cfg.restUrl + '/mhbo/v1/nonce', {
+				const fetchOpts = {
 					credentials: 'same-origin',
 					cache: 'no-store',
-				} );
+				};
+				if ( signal ) {
+					fetchOpts.signal = signal;
+				}
+				const r = await fetch( cfg.restUrl + '/mhbo/v1/nonce', fetchOpts );
 				if ( ! r.ok ) {
 					return;
 				}
@@ -825,9 +949,6 @@
 				const data = d.data ?? d;
 				if ( data.nonce ) {
 					cfg.nonce = data.nonce;
-				}
-				if ( data.rest_nonce ) {
-					cfg.restNonce = data.rest_nonce;
 				}
 			} catch ( _ ) {
 				// Silently ignore — the subsequent request will surface its own error.
@@ -884,7 +1005,64 @@
 			this.scrollToBottom();
 		}
 
+		_animateStreamText( bubble, fullText, signal ) {
+			const reducedMotion =
+				this.win.matchMedia &&
+				this.win.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+			if ( reducedMotion || fullText.length < 24 ) {
+				this._updateBubble( bubble, fullText );
+				return Promise.resolve();
+			}
+
+			const tokens = fullText.split( /(\s+)/ );
+			const totalTokens = tokens.length;
+			if ( totalTokens <= 2 ) {
+				this._updateBubble( bubble, fullText );
+				return Promise.resolve();
+			}
+
+			const targetMs = Math.min( 900, Math.max( 180, totalTokens * 14 ) );
+			const startTime =
+				typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+			return new Promise( ( resolve ) => {
+				let lastRendered = 0;
+				const step = ( now ) => {
+					if ( signal && signal.aborted ) {
+						this._updateBubble( bubble, fullText );
+						resolve();
+						return;
+					}
+					const elapsed =
+						( typeof now === 'number' ? now : Date.now() ) - startTime;
+					const progress = Math.min( 1, elapsed / targetMs );
+					const count = Math.max(
+						1,
+						Math.round( progress * totalTokens )
+					);
+					if ( count !== lastRendered ) {
+						lastRendered = count;
+						this._updateBubble(
+							bubble,
+							tokens.slice( 0, count ).join( '' )
+						);
+					}
+					if ( progress >= 1 ) {
+						this._updateBubble( bubble, fullText );
+						resolve();
+						return;
+					}
+					requestAnimationFrame( step );
+				};
+				requestAnimationFrame( step );
+			} );
+		}
+
 		showStatusNotification( text ) {
+			if ( this._statusHideTimer ) {
+				clearTimeout( this._statusHideTimer );
+				this._statusHideTimer = null;
+			}
 			let statusEl = this.container.querySelector(
 				'.mhbo-chat-status-bar'
 			);
@@ -898,19 +1076,31 @@
 			this.scrollToBottom();
 		}
 
-		hideStatusNotification() {
+		hideStatusNotification( immediate = false ) {
+			if ( this._statusHideTimer ) {
+				clearTimeout( this._statusHideTimer );
+				this._statusHideTimer = null;
+			}
 			const statusEl = this.container.querySelector(
 				'.mhbo-chat-status-bar'
 			);
 			if ( statusEl ) {
 				statusEl.classList.remove( 'mhbo-chat-status-bar--active' );
-				setTimeout( () => statusEl.remove(), 500 );
+				if ( immediate ) {
+					statusEl.remove();
+				} else {
+					this._statusHideTimer = setTimeout( () => {
+						this._statusHideTimer = null;
+						statusEl.remove();
+					}, 500 );
+				}
 			}
 		}
 
 		_renderMarkdownLite( text ) {
-			// Escape HTML first.
+			// Escape HTML first, then format bold before auto-linking so wrapped URLs stay clean.
 			let html = this._esc( text );
+			html = html.replace( /\*\*(.+?)\*\*/g, '<strong>$1</strong>' );
 
 			// 1. Process isolated URLs (on their own line) as Buttons for high-visibility CTAs (Pay Now, Resume).
 			const lines = html.split( '\n' );
@@ -931,16 +1121,13 @@
 			} );
 
 			html = processedLines.join( '\n' );
-
-			// Bold: **text**
-			html = html.replace( /\*\*(.+?)\*\*/g, '<strong>$1</strong>' );
 			// Newlines to br.
 			html = html.replace( /\n/g, '<br>' );
 			return html;
 		}
 
 		_esc( str ) {
-			return String( str )
+			return String( str == null ? '' : str )
 				.replace( /&/g, '&amp;' )
 				.replace( /</g, '&lt;' )
 				.replace( />/g, '&gt;' )
@@ -1050,7 +1237,9 @@
 				.querySelectorAll( '.mhbo-book-now-cta' )
 				.forEach( ( el ) => el.remove() );
 
-			const bookingUrl = cfg.settings?.bookingUrl || cfg.bookingUrl || '';
+			const bookingUrl = this._cleanUrl(
+				cfg.settings?.bookingUrl || cfg.bookingUrl || ''
+			);
 			if ( ! bookingUrl ) {
 				return;
 			}
@@ -1245,9 +1434,9 @@
 			) {
 				html += `
                 <div class="mhbo-biz-section">
-                    <div class="mhbo-biz-section-title">🏦 ${
+                    <div class="mhbo-biz-section-title">🏦 ${ this._esc(
 						s.bankingHeader || 'Bank Transfer'
-					}</div>
+					) }</div>
                     <div class="mhbo-biz-row"><span>Bank</span><strong>${ this._esc(
 						data.banking.bank_name
 					) }</strong></div>
@@ -1288,9 +1477,9 @@
 						data.revolut.revolut_tag.replace( '@', '' )
 					) }</code><div class="mhbo-copy-hint">Copy</div></div>
                     ${
-						data.revolut.qr_code_url
+						this._cleanUrl( data.revolut.qr_code_url )
 							? `<div class="mhbo-biz-row"><span>QR Code</span><img src="${ this._esc(
-									data.revolut.qr_code_url
+									this._cleanUrl( data.revolut.qr_code_url )
 							  ) }" class="mhbo-qr-thumb" alt="QR Code"></div>`
 							: ''
 					}
@@ -1329,14 +1518,37 @@
 			const formattedDates = `${ this._esc(
 				data.check_in || ''
 			) } — ${ this._esc( data.check_out || '' ) }`;
-			const depositMsg =
-				data.deposit && data.deposit.required
-					? `${ this._esc(
-							s.depositLabel || 'Deposit required'
-					  ) }: ${ this._esc( data.deposit.label || '' ) }`
-					: this._esc(
-							s.noDeposit || 'No immediate deposit required'
-					  );
+			let depositMsg = this._esc(
+				s.noDeposit || 'No immediate deposit required'
+			);
+			if ( data.deposit && data.deposit.required ) {
+				const depAmt =
+					data.deposit.amount_formatted ||
+					( data.deposit.amount !== undefined
+						? String( data.deposit.amount )
+						: '' );
+				const depLabel = data.deposit.label || s.depositLabel || 'Deposit required';
+				depositMsg = depAmt
+					? `${ this._esc( depAmt ) } (${ this._esc( depLabel ) })`
+					: `${ this._esc( depLabel ) }`;
+				if ( data.deposit.balance_due_formatted ) {
+					depositMsg += ` · ${ this._esc(
+						s.balanceDue || 'Balance'
+					) }: ${ this._esc( data.deposit.balance_due_formatted ) }`;
+				}
+			}
+			const hasDiscount =
+				data.coupon_code && parseFloat( data.discount_amount || 0 ) > 0;
+			const discountHtml = hasDiscount
+				? `<div class="mhbo-summary-item"><label>${ this._esc(
+						s.promoLabel || 'Promo'
+				  ) } (${ this._esc( data.coupon_code ) })</label><span>-${ this._esc(
+						String( data.discount_amount )
+				  ) } ${ this._esc( data.currency || '' ) }</span></div>`
+				: '';
+			const childAgesJson = JSON.stringify(
+				Array.isArray( data.child_ages ) ? data.child_ages : []
+			);
 			const roomLabel = data.room_number
 				? `${ this._esc( data.room_name ) } · Room ${ this._esc(
 						data.room_number
@@ -1377,6 +1589,7 @@
 						data.nights || 0
 					) } nights</span></div>
                     <div class="mhbo-summary-item"><label>Guests</label><span>${ guestLine }</span></div>
+                    ${ discountHtml }
                     <div class="mhbo-summary-item"><label>Total</label><span>${ this._esc(
 						data.price_formatted || ''
 					) }</span></div>
@@ -1390,6 +1603,10 @@
                        data-check-out="${ this._esc( data.check_out || '' ) }"
                        data-guests="${ this._esc( data.adults || 2 ) }"
                        data-children="${ this._esc( data.children || 0 ) }"
+                       data-child-ages="${ this._esc( childAgesJson ) }"
+                       data-coupon-code="${ this._esc(
+							data.coupon_code || ''
+						) }"
                        data-total-price="${ this._esc(
 							data.total_price || '0'
 						) }"
@@ -1427,13 +1644,15 @@
 
 			let html = `<div class="mhbo-availability-results">`;
 			html += `<div class="mhbo-avail-header">
-                <span class="mhbo-avail-label">${ rooms.length } ${
-					rooms.length === 1
-						? s.roomAvail || 'option'
-						: s.roomsAvail || 'options'
-				} &middot; ${ nights } ${
-					nights === 1 ? s.night || 'night' : s.nights || 'nights'
-				}</span>
+                <span class="mhbo-avail-label">${ this._esc(
+					rooms.length
+				) } ${ this._esc(
+				rooms.length === 1
+					? s.roomAvail || 'option'
+					: s.roomsAvail || 'options'
+			) } &middot; ${ this._esc( nights ) } ${ this._esc(
+				nights === 1 ? s.night || 'night' : s.nights || 'nights'
+			) }</span>
             </div>`;
 
 			rooms.forEach( ( room ) => {
@@ -1442,26 +1661,27 @@
 				const unitsLeft = parseInt( room.units_remaining || 0, 10 );
 				const priceFmt = room.price_formatted || '';
 				const perNight = room.price_per_night;
-				const thumbUrl = room.thumbnail_url || '';
-				const maxAdults = room.max_adults || 0;
-				const maxChildren = room.max_children || 0;
+				const thumbUrl = this._cleanUrl( room.thumbnail_url || '' );
+				const maxAdults = parseInt( room.max_adults || 0, 10 ) || 0;
+				const maxChildren =
+					parseInt( room.max_children || 0, 10 ) || 0;
 				const roomId = isMulti ? 0 : room.room_id || 0;
 
 				const scarcityBadge =
 					unitsLeft <= 1
-						? `<span class="mhbo-room-badge mhbo-room-badge--hot">${
+						? `<span class="mhbo-room-badge mhbo-room-badge--hot">${ this._esc(
 								s.lastRoom || 'Last room!'
-						  }</span>`
+						  ) }</span>`
 						: unitsLeft <= 3
-						? `<span class="mhbo-room-badge mhbo-room-badge--low">${ unitsLeft } ${
-								s.left || 'left'
-						  }</span>`
+						? `<span class="mhbo-room-badge mhbo-room-badge--low">${ this._esc(
+								unitsLeft
+						  ) } ${ this._esc( s.left || 'left' ) }</span>`
 						: '';
 
 				const multiBadge = isMulti
-					? `<span class="mhbo-room-badge mhbo-room-badge--multi">${ numRooms }× ${
-							s.rooms || 'rooms'
-					  }</span>`
+					? `<span class="mhbo-room-badge mhbo-room-badge--multi">${ this._esc(
+							numRooms
+					  ) }× ${ this._esc( s.rooms || 'rooms' ) }</span>`
 					: '';
 
 				const thumbHtml = thumbUrl
@@ -1474,12 +1694,14 @@
 
 				const capHtml =
 					maxAdults || maxChildren
-						? `<div class="mhbo-room-capacity">👤 ${ maxAdults }${
+						? `<div class="mhbo-room-capacity">👤 ${ this._esc(
+								maxAdults
+						  ) }${
 								maxChildren
 									? ' + ' +
-									  maxChildren +
+									  this._esc( maxChildren ) +
 									  ' ' +
-									  ( s.childrenShort || 'ch' )
+									  this._esc( s.childrenShort || 'ch' )
 									: ''
 						  }</div>`
 						: '';
@@ -1491,7 +1713,9 @@
 							perNight && nights > 1
 								? `<small>${ this._esc(
 										String( perNight )
-								  ) } ${ s.perNightShort || '/ night' }</small>`
+								  ) } ${ this._esc(
+										s.perNightShort || '/ night'
+								  ) }</small>`
 								: ''
 					  }</div>`
 					: '';
@@ -1510,10 +1734,18 @@
 										String( slot.room_number )
 								  ) }`
 								: `Room ${ i + 1 }`;
+							const slotAdults =
+								parseInt( slot.adults || 0, 10 ) || 0;
+							const slotChildren =
+								parseInt( slot.children || 0, 10 ) || 0;
 							const guests =
-								slot.children > 0
-									? `${ slot.adults } adults, ${ slot.children } children`
-									: `${ slot.adults } adults`;
+								slotChildren > 0
+									? `${ this._esc(
+											slotAdults
+									  ) } adults, ${ this._esc(
+											slotChildren
+									  ) } children`
+									: `${ this._esc( slotAdults ) } adults`;
 							return `<div class="mhbo-dist-row"><span class="mhbo-dist-label">${ label }</span><span class="mhbo-dist-guests">${ guests }</span></div>`;
 						} )
 						.join( '' );
@@ -1531,7 +1763,9 @@
                             ${ capHtml }
                             ${ priceHtml }
                             <div class="mhbo-dist-breakdown">${ distRows }</div>
-                            <p class="mhbo-multi-notice">${ numRooms } separate bookings required — provide your Full Name, Email, and Phone so individual booking cards can be prepared for you.</p>
+                            <p class="mhbo-multi-notice">${ this._esc(
+								numRooms
+							) } separate bookings required — provide your Full Name, Email, and Phone so individual booking cards can be prepared for you.</p>
                         </div>
                     </div>`;
 				} else {
@@ -1634,7 +1868,10 @@
 			// Zoom QR code
 			card.querySelectorAll( '.mhbo-qr-thumb' ).forEach( ( img ) => {
 				img.addEventListener( 'click', () => {
-					this.win.open( img.src, '_blank' );
+					const safeQr = this._cleanUrl( img.src );
+					if ( safeQr ) {
+						this.win.open( safeQr, '_blank', 'noopener,noreferrer' );
+					}
 				} );
 			} );
 
@@ -1654,6 +1891,21 @@
 							typeof this.win.MhboModal.open === 'function';
 						if ( roomId > 0 && isModalActive ) {
 							ev.preventDefault();
+							let parsedChildAges = [];
+							if ( btn.dataset.childAges ) {
+								try {
+									const rawAges = JSON.parse(
+										btn.dataset.childAges
+									);
+									if ( Array.isArray( rawAges ) ) {
+										parsedChildAges = rawAges
+											.map( ( a ) => parseInt( a, 10 ) )
+											.filter(
+												( n ) => ! Number.isNaN( n ) && n >= 0
+											);
+									}
+								} catch ( _e ) {}
+							}
 							this.doc.dispatchEvent(
 								new CustomEvent( 'mhboBookNow', {
 									detail: {
@@ -1668,6 +1920,9 @@
 											btn.dataset.children || '0',
 											10
 										),
+										child_ages: parsedChildAges,
+										coupon_code:
+											btn.dataset.couponCode || '',
 										total_price: parseFloat(
 											btn.dataset.totalPrice || '0'
 										),
@@ -1722,9 +1977,17 @@
 			);
 
 			if ( targetWidget && ! targetWidget.isOpen ) {
+				const isCheckoutOrModalActive = () =>
+					document.body.classList.contains( 'mhbo-modal-open' ) ||
+					Boolean(
+						document.querySelector(
+							'form.mhbo-booking-form, #mhbo-balance-payment-form, .mhbo-modal-overlay.is-open, .mhbo-portal-modal[style*="flex"]'
+						)
+					);
+
 				// Detect page context to choose the right greeting.
 				const pageHasBookingForm = !! document.querySelector(
-					'.mhbo-booking-form, [data-mhbo-booking]'
+					'.mhbo-booking-form-wrapper, .mhbo-booking-form, [data-mhbo-booking]'
 				);
 				const pageHasRooms = !! document.querySelector(
 					'.mhbo-rooms, .mhbo-room-card'
@@ -1744,7 +2007,10 @@
 				}
 
 				setTimeout( () => {
-					if ( ! targetWidget.isOpen ) {
+					if (
+						! targetWidget.isOpen &&
+						( targetWidget.isInline || ! isCheckoutOrModalActive() )
+					) {
 						sessionStorage.setItem( 'mhbo_proactive_done', '1' );
 						targetWidget.open();
 						// Small delay so the panel animation completes before the greeting appears.

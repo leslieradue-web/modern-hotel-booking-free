@@ -19,7 +19,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use MHBO\Core\Pricing;
-use MHBO\Core\HotelTime;
 
 use function __;
 use function absint;
@@ -296,6 +295,6 @@ return array(
 			return;
 		}
 
-		call_user_func( 'wp_register_ability', 'mhbo/recommend-rooms', self::get_definition() );
+		\wp_register_ability( 'mhbo/recommend-rooms', self::get_definition() );
 	}
 }

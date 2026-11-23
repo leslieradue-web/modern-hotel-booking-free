@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace MHBO\AI;
 
 use MHBO\Business\Info;
-use MHBO\Core\Pricing;
 use MHBO\Core\License;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -99,6 +98,21 @@ class LlmFile {
 	}
 
 	/**
+	 * Verify a site-root file path is non-symlinked and directly contained inside ABSPATH.
+	 *
+	 * @param string $path Absolute file path.
+	 * @return bool
+	 */
+	private static function is_safe_root_path( string $path ): bool {
+		if ( is_link( $path ) ) {
+			return false;
+		}
+		$real_base = realpath( ABSPATH );
+		$real_dir  = realpath( dirname( $path ) );
+		return false !== $real_base && false !== $real_dir && $real_dir === $real_base;
+	}
+
+	/**
 	 * Return true if the file contains an active MHBO marked block.
 	 *
 	 * @param string $filename
@@ -106,7 +120,7 @@ class LlmFile {
 	 */
 	private static function file_has_mhbo_content( string $filename ): bool {
 		$path = ABSPATH . $filename;
-		if ( ! file_exists( $path ) ) {
+		if ( ! self::is_safe_root_path( $path ) || ! file_exists( $path ) ) {
 			return false;
 		}
 		$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
@@ -219,6 +233,9 @@ $markdown = implode( "\n", array_filter( $summary, fn( $line ) => $line !== '' )
 	 */
 	private static function write_file( string $filename, string $content ): bool {
 		$path = ABSPATH . $filename;
+		if ( ! self::is_safe_root_path( $path ) ) {
+			return false;
+		}
 
 		if ( ! function_exists( 'WP_Filesystem' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -229,7 +246,9 @@ $markdown = implode( "\n", array_filter( $summary, fn( $line ) => $line !== '' )
 
 		global $wp_filesystem;
 
-		$marked_block = self::MARKER_START . "\n" . $content . "\n" . self::MARKER_END;
+		// Strip marker boundary tokens from untrusted content so cleanup() boundaries cannot be corrupted.
+		$safe_content = str_replace( array( self::MARKER_START, self::MARKER_END ), '', $content );
+		$marked_block = self::MARKER_START . "\n" . $safe_content . "\n" . self::MARKER_END;
 
 		if ( ! $wp_filesystem->exists( $path ) ) {
 			return (bool) $wp_filesystem->put_contents( $path, $marked_block . "\n", FS_CHMOD_FILE );
@@ -270,6 +289,9 @@ $markdown = implode( "\n", array_filter( $summary, fn( $line ) => $line !== '' )
 		$path = ABSPATH . $filename;
 		if ( ! file_exists( $path ) ) {
 			return true;
+		}
+		if ( ! self::is_safe_root_path( $path ) ) {
+			return false;
 		}
 
 		if ( ! function_exists( 'WP_Filesystem' ) ) {

@@ -290,20 +290,64 @@ class HotelTime {
 	}
 
 	/**
-	 * Get configured early check-in time (e.g. "10:00").
+	 * Validate and normalize a 24-hour HH:MM time string.
+	 *
+	 * @param string $raw      Raw time string.
+	 * @param string $fallback Fallback HH:MM if invalid.
+	 * @return string Normalized HH:MM string.
 	 */
-	public static function get_early_checkin_time(): string {
-		return (string) get_option( 'mhbo_early_checkin_time', '10:00' );
+	public static function sanitize_hhmm( string $raw, string $fallback = '14:00' ): string {
+		$trimmed = trim( $raw );
+		if ( 1 === preg_match( '/^([01]?\d|2[0-3]):([0-5]\d)$/', $trimmed, $m ) ) {
+			return sprintf( '%02d:%02d', (int) $m[1], (int) $m[2] );
+		}
+		return $fallback;
 	}
 
 	/**
-	 * Get configured late check-out time (e.g. "14:00").
+	 * Convert a 24-hour HH:MM string into integer minutes since midnight (0-1439).
+	 *
+	 * @param string $hhmm     Time string.
+	 * @param int    $fallback Fallback minutes if invalid.
+	 * @return int Minutes since midnight.
 	 */
-	public static function get_late_checkout_time(): string {
-		return (string) get_option( 'mhbo_late_checkout_time', '14:00' );
+	public static function parse_hhmm_minutes( string $hhmm, int $fallback = 840 ): int {
+		$norm = self::sanitize_hhmm( $hhmm, '' );
+		if ( '' === $norm ) {
+			return max( 0, min( 1439, $fallback ) );
+		}
+		$parts = explode( ':', $norm );
+		return ( (int) $parts[0] * 60 ) + (int) $parts[1];
 	}
 
 	/**
+	 * Format integer minutes since midnight (0-1439) as zero-padded HH:MM.
+	 *
+	 * @param int $minutes Minutes since midnight.
+	 * @return string Formatted HH:MM string.
+	 */
+	public static function format_minutes_hhmm( int $minutes ): string {
+		$clamped = max( 0, min( 1439, $minutes ) );
+		$hours   = intdiv( $clamped, 60 );
+		$mins    = $clamped % 60;
+		return sprintf( '%02d:%02d', $hours, $mins );
+	}
+
+	/**
+	 * Get configured standard check-in time (e.g. "14:00").
+	 */
+	public static function get_checkin_time(): string {
+		return self::sanitize_hhmm( (string) get_option( 'mhbo_checkin_time', '14:00' ), '14:00' );
+	}
+
+	/**
+	 * Get configured standard check-out time (e.g. "11:00").
+	 */
+	public static function get_checkout_time(): string {
+		return self::sanitize_hhmm( (string) get_option( 'mhbo_checkout_time', '11:00' ), '11:00' );
+	}
+
+/**
 	 * Get the configured maximum advance booking window in days.
 	 *
 	 * Clamped between 14 days and 730 days (2 years). Default is 365 (1 year).
@@ -354,6 +398,59 @@ class HotelTime {
 		}
 		$max_date = self::get_max_advance_booking_date()->format( 'Y-m-d' );
 		return $check_in <= $max_date;
+	}
+
+	/**
+	 * Strictly validate a booking check-in / check-out date range against calendar format,
+	 * chronological ordering, hard maximum stay nights (DoS guard), and advance booking window.
+	 *
+	 * @param string $check_in               Check-in date (Y-m-d).
+	 * @param string $check_out              Check-out date (Y-m-d).
+	 * @param bool   $enforce_advance_window Whether to enforce the property advance booking window.
+	 * @return int|\WP_Error Positive night count on success, WP_Error on invalid or unbounded range.
+	 */
+	public static function validate_date_range( string $check_in, string $check_out, bool $enforce_advance_window = true ): int|\WP_Error {
+		if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}$/', $check_in ) || 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}$/', $check_out ) ) {
+			return new \WP_Error( 'mhbo_invalid_dates', __( 'Please provide valid check-in and check-out dates in YYYY-MM-DD format.', 'modern-hotel-booking' ), array( 'status' => 400 ) );
+		}
+
+		$utc    = new \DateTimeZone( 'UTC' );
+		$dt_in  = \DateTimeImmutable::createFromFormat( '!Y-m-d', $check_in, $utc );
+		$dt_out = \DateTimeImmutable::createFromFormat( '!Y-m-d', $check_out, $utc );
+
+		if ( ! $dt_in instanceof \DateTimeImmutable || ! $dt_out instanceof \DateTimeImmutable
+			|| $dt_in->format( 'Y-m-d' ) !== $check_in || $dt_out->format( 'Y-m-d' ) !== $check_out ) {
+			return new \WP_Error( 'mhbo_invalid_dates', __( 'Invalid calendar date supplied.', 'modern-hotel-booking' ), array( 'status' => 400 ) );
+		}
+
+		if ( $dt_out <= $dt_in ) {
+			return new \WP_Error( 'mhbo_invalid_range', __( 'Check-out date must be after check-in date.', 'modern-hotel-booking' ), array( 'status' => 400 ) );
+		}
+
+		$nights    = (int) $dt_in->diff( $dt_out )->days;
+		$max_stays = Pricing::get_max_stay_nights();
+		if ( $nights <= 0 || $nights > $max_stays ) {
+			return new \WP_Error(
+				'mhbo_stay_too_long',
+				sprintf(
+					/* translators: %d: maximum stay nights */
+					__( 'Stays cannot exceed %d nights per reservation.', 'modern-hotel-booking' ),
+					$max_stays
+				),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( $enforce_advance_window && ! self::is_within_advance_booking_window( $check_in ) ) {
+			$max_window_human = self::format_advance_window_human( self::get_max_advance_booking_days() );
+			return new \WP_Error(
+				'mhbo_advance_limit_exceeded',
+				sprintf( I18n::get_label( 'label_advance_limit_exceeded' ), $max_window_human ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return $nights;
 	}
 
 	/**

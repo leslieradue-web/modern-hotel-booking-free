@@ -1,8 +1,11 @@
 ( function ( blocks, element, blockEditor ) {
 	const el = element.createElement;
+	const Fragment = element.Fragment;
 	const registerBlockType = blocks.registerBlockType;
 	const InspectorControls = blockEditor.InspectorControls;
+	const useBlockProps = blockEditor.useBlockProps;
 	const TextControl = wp.components.TextControl;
+	const ToggleControl = wp.components.ToggleControl;
 	const PanelBody = wp.components.PanelBody;
 
 	registerBlockType( 'modern-hotel-booking/booking-form', {
@@ -32,9 +35,20 @@
 				type: 'number',
 				default: 0,
 			},
+			showTitle: {
+				type: 'boolean',
+				default: true,
+			},
+			showBadge: {
+				type: 'boolean',
+				default: true,
+			},
 		},
 		edit( props ) {
 			const attributes = props.attributes;
+			const blockProps = useBlockProps( {
+				className: 'mhbo-booking-bar-preview',
+			} );
 
 			function onChangeRoomId( newRoomId ) {
 				props.setAttributes( {
@@ -42,13 +56,12 @@
 				} );
 			}
 
-			return [
+			return el(
+				Fragment,
+				{},
 				el(
 					'div',
-					{
-						className:
-							props.className + ' mhbo-booking-bar-preview',
-					},
+					Object.assign( { key: 'preview' }, blockProps ),
 					el(
 						'div',
 						{ className: 'mhbo-bar-item' },
@@ -114,7 +127,7 @@
 				),
 				el(
 					InspectorControls,
-					{},
+					{ key: 'controls' },
 					el(
 						PanelBody,
 						{
@@ -135,10 +148,30 @@
 								'Leave as 0 to show the general search form.',
 								'modern-hotel-booking'
 							),
+						} ),
+						el( ToggleControl, {
+							label: wp.i18n.__(
+								'Show Booking Title',
+								'modern-hotel-booking'
+							),
+							checked: attributes.showTitle !== false,
+							onChange( val ) {
+								props.setAttributes( { showTitle: val } );
+							},
+						} ),
+						el( ToggleControl, {
+							label: wp.i18n.__(
+								'Show Booking Badge',
+								'modern-hotel-booking'
+							),
+							checked: attributes.showBadge !== false,
+							onChange( val ) {
+								props.setAttributes( { showBadge: val } );
+							},
 						} )
 					)
-				),
-			];
+				)
+			);
 		},
 		save() {
 			return null; // Rendered via PHP

@@ -132,6 +132,6 @@ class GetKnowledgeBase {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/get-knowledge-base', self::get_definition() );
+		\wp_register_ability( 'mhbo/get-knowledge-base', self::get_definition() );
 	}
 }

@@ -58,7 +58,6 @@ class Elementor {
 		$widgets_manager->register( new BookingFormWidget() );
 		$widgets_manager->register( new RoomGridWidget() );
 		$widgets_manager->register( new CalendarWidget() );
-		// $widgets_manager->register(new AiConciergeWidget()); // Removed per user request
 
 		// Pro Widgets will be injected here during build if enabled.
 	}

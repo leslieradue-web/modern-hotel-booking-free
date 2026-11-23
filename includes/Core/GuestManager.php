@@ -344,7 +344,7 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT b.id, b.check_in, b.check_out, b.total_price, b.payment_amount, b.deposit_amount, b.deposit_received, b.payment_received, b.status, b.payment_status, b.payment_method, b.balance_link_token, b.balance_link_expires_at, b.balance_status, b.remaining_balance, b.created_at, b.room_id, b.multi_room_parent, b.is_multi_room, b.coupon_code, b.coupon_discount, r.room_number, COALESCE(NULLIF(rt.name, ''), NULLIF(rt_direct.name, ''), '') as room_type_name
+					"SELECT b.id, b.check_in, b.check_out, b.total_price, b.payment_amount, b.deposit_amount, b.deposit_received, b.payment_received, b.payment_ledger, b.payment_type, b.status, b.payment_status, b.payment_method, b.balance_link_token, b.balance_link_expires_at, b.balance_status, b.remaining_balance, b.created_at, b.room_id, b.multi_room_parent, b.is_multi_room, b.coupon_code, b.coupon_discount, r.room_number, COALESCE(NULLIF(rt.name, ''), NULLIF(rt_direct.name, ''), '') as room_type_name
                      FROM {$wpdb->prefix}mhbo_bookings b
                      LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
                      LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
@@ -376,7 +376,7 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT b.id, b.check_in, b.check_out, b.total_price, b.payment_amount, b.deposit_amount, b.deposit_received, b.payment_received, b.status, b.payment_status, b.payment_method, b.balance_link_token, b.balance_link_expires_at, b.balance_status, b.remaining_balance, b.created_at, b.room_id, b.multi_room_parent, b.is_multi_room, b.coupon_code, b.coupon_discount, r.room_number, COALESCE(NULLIF(rt.name, ''), NULLIF(rt_direct.name, ''), '') as room_type_name
+					"SELECT b.id, b.check_in, b.check_out, b.total_price, b.payment_amount, b.deposit_amount, b.deposit_received, b.payment_received, b.payment_ledger, b.payment_type, b.status, b.payment_status, b.payment_method, b.balance_link_token, b.balance_link_expires_at, b.balance_status, b.remaining_balance, b.created_at, b.room_id, b.multi_room_parent, b.is_multi_room, b.coupon_code, b.coupon_discount, r.room_number, COALESCE(NULLIF(rt.name, ''), NULLIF(rt_direct.name, ''), '') as room_type_name
                      FROM {$wpdb->prefix}mhbo_bookings b
                      LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
                      LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
@@ -412,7 +412,7 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT b.id, b.check_in, b.check_out, b.total_price, b.payment_amount, b.deposit_amount, b.deposit_received, b.payment_received, b.status, b.payment_status, b.payment_method, b.balance_link_token, b.balance_link_expires_at, b.balance_status, b.remaining_balance, b.created_at, b.room_id, b.multi_room_parent, b.is_multi_room, b.coupon_code, b.coupon_discount, r.room_number, COALESCE(NULLIF(rt.name, ''), NULLIF(rt_direct.name, ''), '') as room_type_name
+					"SELECT b.id, b.check_in, b.check_out, b.total_price, b.payment_amount, b.deposit_amount, b.deposit_received, b.payment_received, b.payment_ledger, b.payment_type, b.status, b.payment_status, b.payment_method, b.balance_link_token, b.balance_link_expires_at, b.balance_status, b.remaining_balance, b.created_at, b.room_id, b.multi_room_parent, b.is_multi_room, b.coupon_code, b.coupon_discount, r.room_number, COALESCE(NULLIF(rt.name, ''), NULLIF(rt_direct.name, ''), '') as room_type_name
                      FROM {$wpdb->prefix}mhbo_bookings b
                      LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
                      LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
@@ -450,7 +450,7 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic %s placeholders generated via array_fill().
 			$all_group_siblings = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT b.id, b.multi_room_parent, b.check_in, b.check_out, b.total_price, b.payment_amount, b.remaining_balance, b.status, b.payment_status, b.payment_received, b.room_id, r.room_number, COALESCE(NULLIF(rt.name, ''), '') as room_type_name
+					"SELECT b.id, b.multi_room_parent, b.check_in, b.check_out, b.total_price, b.deposit_amount, b.payment_amount, b.remaining_balance, b.status, b.payment_status, b.payment_received, b.deposit_received, b.payment_ledger, b.payment_type, b.room_id, r.room_number, COALESCE(NULLIF(rt.name, ''), '') as room_type_name
                  FROM {$wpdb->prefix}mhbo_bookings b
                  LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
                  LEFT JOIN {$wpdb->prefix}mhbo_room_types rt ON r.type_id = rt.id
@@ -462,31 +462,43 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 			);
 			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
+			$gm_currency = class_exists( Pricing::class ) ? Pricing::get_currency_code() : strtoupper( (string) get_option( 'mhbo_currency_code', 'USD' ) );
 			if ( ! empty( $all_group_siblings ) ) {
 				foreach ( $all_group_siblings as $gsib ) {
 					$gtok = (string) ( $gsib->multi_room_parent ?? '' );
 					if ( ! isset( $groups_map[ $gtok ] ) ) {
 						$groups_map[ $gtok ] = array(
 							'token'       => $gtok,
-							'total'       => 0.0,
-							'paid'        => 0.0,
-							'remaining'   => 0.0,
+							'total_m'     => Money::fromCents( 0, $gm_currency ),
+							'paid_m'      => Money::fromCents( 0, $gm_currency ),
+							'remaining_m' => Money::fromCents( 0, $gm_currency ),
 							'is_paid'     => true,
 							'rooms_count' => 0,
 							'siblings'    => array(),
 						);
 					}
-					$s_total = (float) ( $gsib->total_price ?? 0 );
-					$s_paid  = (float) ( $gsib->payment_amount ?? 0 );
-					$s_rem   = max( 0.0, (float) ( $gsib->remaining_balance ?? ( $s_total - $s_paid ) ) );
-					if ( (bool) ( $gsib->payment_received ?? false ) || 'completed' === ( $gsib->payment_status ?? '' ) ) {
-						$s_rem = 0.0;
+					$s_amts = class_exists( Pricing::class ) ? Pricing::get_booking_payment_amounts( $gsib ) : null;
+					if ( $s_amts ) {
+						$s_tot_m = $s_amts['total'];
+						$s_pay_m = $s_amts['received'];
+						$s_rem_m = $s_amts['remaining'];
+						$s_paid_b = (bool) $s_amts['is_paid'];
+					} else {
+						$s_tot_m  = Money::fromDecimal( (string) ( $gsib->total_price ?? 0 ), $gm_currency );
+						$s_pay_m  = Money::fromDecimal( (string) ( $gsib->payment_amount ?? 0 ), $gm_currency );
+						$s_rem_m  = ( (bool) ( $gsib->payment_received ?? false ) || 'completed' === ( $gsib->payment_status ?? '' ) )
+							? Money::fromCents( 0, $gm_currency )
+							: $s_tot_m->subtract( $s_pay_m );
+						if ( $s_rem_m->isNegative() ) {
+							$s_rem_m = Money::fromCents( 0, $gm_currency );
+						}
+						$s_paid_b = ! $s_rem_m->isPositive();
 					}
 
-					$groups_map[ $gtok ]['total']     += $s_total;
-					$groups_map[ $gtok ]['paid']      += $s_paid;
-					$groups_map[ $gtok ]['remaining'] += $s_rem;
-					if ( $s_rem > 0.005 ) {
+					$groups_map[ $gtok ]['total_m']     = $groups_map[ $gtok ]['total_m']->add( $s_tot_m );
+					$groups_map[ $gtok ]['paid_m']      = $groups_map[ $gtok ]['paid_m']->add( $s_pay_m );
+					$groups_map[ $gtok ]['remaining_m'] = $groups_map[ $gtok ]['remaining_m']->add( $s_rem_m );
+					if ( ! $s_paid_b ) {
 						$groups_map[ $gtok ]['is_paid'] = false;
 					}
 					$groups_map[ $gtok ]['rooms_count'] += 1;
@@ -496,9 +508,9 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 						'room_type_name' => class_exists( I18n::class ) ? I18n::decode( (string) ( $gsib->room_type_name ?? '' ) ) : (string) ( $gsib->room_type_name ?? '' ),
 						'check_in'       => HotelTime::format_date( (string) $gsib->check_in ),
 						'check_out'      => HotelTime::format_date( (string) $gsib->check_out ),
-						'total_price'    => $s_total,
-						'payment_amount' => $s_paid,
-						'remaining'      => $s_rem,
+						'total_price'    => (float) $s_tot_m->toDecimal(),
+						'payment_amount' => (float) $s_pay_m->toDecimal(),
+						'remaining'      => (float) $s_rem_m->toDecimal(),
 						'status'         => (string) ( $gsib->status ?? 'pending' ),
 						'edit_url'       => add_query_arg( '_wpnonce', wp_create_nonce( 'mhbo_edit_booking_' . (int) $gsib->id ), admin_url( 'admin.php?page=mhbo-bookings&action=edit&id=' . (int) $gsib->id ) ),
 					);
@@ -526,14 +538,16 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 			);
 			$comm_table  = $wpdb->prefix . 'mhbo_communication_logs';
 			if ( ! empty( $booking_ids ) && Cache::table_exists( $comm_table ) ) {
-				$ids_string = implode( ',', array_map( 'intval', $booking_ids ) );
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$clean_ids    = array_values( array_map( 'intval', $booking_ids ) );
+				$placeholders = implode( ',', array_fill( 0, count( $clean_ids ), '%d' ) );
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$review_logs = $wpdb->get_results(
 					$wpdb->prepare(
-                        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $ids_string is strictly sanitized via array_map('intval').
-						"SELECT booking_id, MAX(sent_at) as last_sent FROM {$wpdb->prefix}mhbo_communication_logs WHERE booking_id IN ({$ids_string}) AND type = %s AND status = %s GROUP BY booking_id",
+						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Dynamic %d placeholder list built from array_fill.
+						"SELECT booking_id, MAX(sent_at) as last_sent FROM %i WHERE type = %s AND status = %s AND booking_id IN ({$placeholders}) GROUP BY booking_id",
+						$comm_table,
 						'review_request',
-						'sent'
+						...array_merge( array( 'sent' ), $clean_ids )
 					)
 				);
 				if ( ! empty( $review_logs ) ) {
@@ -559,30 +573,7 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 				
 				$row->balance_email_url = add_query_arg( '_wpnonce', wp_create_nonce( 'mhbo_balance_' . (int) $row->id ), admin_url( 'admin.php?page=mhbo-bookings&action=email_balance_link&id=' . (int) $row->id ) );
 				
-				// Group reservation enrichment.
-				$m_parent = trim( (string) ( $row->multi_room_parent ?? '' ) );
-				if ( '' !== $m_parent && isset( $groups_map[ $m_parent ] ) && $groups_map[ $m_parent ]['rooms_count'] > 1 ) {
-					$grp                    = $groups_map[ $m_parent ];
-					$row->is_group_booking  = true;
-					$row->group_parent      = $m_parent;
-					$row->group_rooms_count = $grp['rooms_count'];
-					$row->group_total       = number_format( $grp['total'], 2, '.', '' );
-					$row->group_paid        = number_format( $grp['paid'], 2, '.', '' );
-					$row->group_remaining   = number_format( $grp['remaining'], 2, '.', '' );
-					$row->group_is_paid     = $grp['is_paid'];
-					$row->group_siblings    = $grp['siblings'];
-				} else {
-					$row->is_group_booking  = false;
-					$row->group_parent      = '';
-					$row->group_rooms_count = 1;
-					$row->group_total       = number_format( $row->total_price, 2, '.', '' );
-					$row->group_paid        = number_format( $row->payment_amount, 2, '.', '' );
-					$row->group_remaining   = '0.00';
-					$row->group_is_paid     = true;
-					$row->group_siblings    = array();
-				}
-
-				// Determine unpaid balance status.
+				// Determine authoritative ledger/payment amounts before formatting fields.
 				$amts       = class_exists( Pricing::class ) ? Pricing::get_booking_payment_amounts( $row ) : null;
 				$has_unpaid = false;
 				$remaining  = 0.0;
@@ -607,7 +598,30 @@ wp_cache_delete( 'mhbo_guest_' . $id, 'mhbo_guests' );
 						$remaining  = max( $remaining, (float) ( $row->total_price ?? 0 ) - (float) $row->payment_amount );
 					}
 				}
-				
+
+				// Group reservation enrichment.
+				$m_parent = trim( (string) ( $row->multi_room_parent ?? '' ) );
+				if ( '' !== $m_parent && isset( $groups_map[ $m_parent ] ) && $groups_map[ $m_parent ]['rooms_count'] > 1 ) {
+					$grp                    = $groups_map[ $m_parent ];
+					$row->is_group_booking  = true;
+					$row->group_parent      = $m_parent;
+					$row->group_rooms_count = $grp['rooms_count'];
+					$row->group_total       = $grp['total_m']->toDecimal();
+					$row->group_paid        = $grp['paid_m']->toDecimal();
+					$row->group_remaining   = $grp['remaining_m']->toDecimal();
+					$row->group_is_paid     = $grp['is_paid'];
+					$row->group_siblings    = $grp['siblings'];
+				} else {
+					$row->is_group_booking  = false;
+					$row->group_parent      = '';
+					$row->group_rooms_count = 1;
+					$row->group_total       = number_format( (float) $row->total_price, 2, '.', '' );
+					$row->group_paid        = number_format( (float) $row->payment_amount, 2, '.', '' );
+					$row->group_remaining   = number_format( (float) $remaining, 2, '.', '' );
+					$row->group_is_paid     = ! $has_unpaid;
+					$row->group_siblings    = array();
+				}
+
 				$row->has_unpaid_balance             = $has_unpaid;
 				$row->remaining_amount               = number_format( (float) $remaining, 2, '.', '' );
 				$row->is_balance_link_expired        = ! empty( $row->balance_link_expires_at ) && strtotime( (string) $row->balance_link_expires_at ) < time();

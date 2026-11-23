@@ -179,11 +179,12 @@ div.mhbo-card-premium:hover {
 /* WhatsApp Floating Logic - FIX (Aggressive Baseline) */
 .mhbo-wa-floating {
     position: fixed !important;
-    z-index: 99999 !important;
+    z-index: 99980 !important;
     width: auto !important; 
     max-width: fit-content !important;
     height: auto !important;
-    display: block !important;
+    display: inline-flex !important;
+    align-items: center !important;
 }
 
 .mhbo-wa-floating .mhbo-whatsapp-link {
@@ -192,10 +193,38 @@ div.mhbo-card-premium:hover {
     margin: 0 !important;
 }
 
-.mhbo-wa-pos-bottom-right { bottom: 30px !important; right: 30px !important; left: auto !important; top: auto !important; }
-.mhbo-wa-pos-bottom-left { bottom: 30px !important; left: 30px !important; right: auto !important; top: auto !important; }
+.mhbo-wa-pos-bottom-right { bottom: 24px !important; right: 24px !important; left: auto !important; top: auto !important; }
+.mhbo-wa-pos-bottom-left { bottom: 24px !important; left: 24px !important; right: auto !important; top: auto !important; }
 .mhbo-wa-pos-top-right { top: 30px !important; right: 30px !important; bottom: auto !important; left: auto !important; }
 .mhbo-wa-pos-top-left { top: 30px !important; left: 30px !important; bottom: auto !important; right: auto !important; }
+
+/* Stack WhatsApp button neatly above the AI Concierge FAB when docked to the same corner */
+body:has(.mhbo-chat-widget--bottom-right) .mhbo-wa-floating.mhbo-wa-pos-bottom-right {
+    bottom: 92px !important;
+}
+
+body:has(.mhbo-chat-widget--bottom-left) .mhbo-wa-floating.mhbo-wa-pos-bottom-left {
+    bottom: 92px !important;
+}
+
+/* Hide floating WhatsApp launcher while booking/portal modals or active checkout/payment forms are on screen */
+body.mhbo-modal-open .mhbo-wa-floating,
+body:has(.mhbo-modal-overlay.is-open) .mhbo-wa-floating,
+body:has(.mhbo-portal-modal[style*="flex"]) .mhbo-wa-floating,
+body:has(form.mhbo-booking-form) .mhbo-wa-floating,
+body:has(#mhbo-balance-payment-form) .mhbo-wa-floating {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transform: translateY(16px) scale(0.9) !important;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s !important;
+}
+
+@media print {
+    .mhbo-wa-floating {
+        display: none !important;
+    }
+}
 
 @keyframes mhbo-pulse-soft {
     0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
@@ -287,4 +316,6 @@ div.mhbo-card-premium:hover {
     .mhbo-rev-qr img { max-width: 120px; }
     .mhbo-wa-pos-bottom-right { bottom: 20px !important; right: 20px !important; }
     .mhbo-wa-pos-bottom-left { bottom: 20px !important; left: 20px !important; }
+    body:has(.mhbo-chat-widget--bottom-right) .mhbo-wa-floating.mhbo-wa-pos-bottom-right { bottom: 86px !important; }
+    body:has(.mhbo-chat-widget--bottom-left) .mhbo-wa-floating.mhbo-wa-pos-bottom-left { bottom: 86px !important; }
 }

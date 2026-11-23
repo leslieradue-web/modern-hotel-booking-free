@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace MHBO\AI\Abilities;
 
+use MHBO\Core\Tier;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -125,7 +127,8 @@ class Policies {
 	 * Synthesize payment and deposit terms from active options if no explicit policy is configured.
 	 */
 	private static function synthesize_payment_policy(): string {
-		$deposit_enabled = (bool) get_option( 'mhbo_deposits_enabled', 0 );
+		$deposit_enabled = false;
+		
 		if ( ! $deposit_enabled ) {
 			return __( 'Full payment is due at the time of booking or upon check-in.', 'modern-hotel-booking' );
 		}
@@ -148,7 +151,8 @@ class Policies {
 	 * Synthesize cancellation rules from deposit settings if no explicit policy is configured.
 	 */
 	private static function synthesize_cancellation_policy(): string {
-		$deposit_enabled = (bool) get_option( 'mhbo_deposits_enabled', 0 );
+		$deposit_enabled = false;
+		
 		if ( ! $deposit_enabled ) {
 			return __( 'Standard hotel cancellation terms apply. Please contact the hotel directly for cancellations.', 'modern-hotel-booking' );
 		}
@@ -171,6 +175,6 @@ class Policies {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/get-policies', self::get_definition() );
+		\wp_register_ability( 'mhbo/get-policies', self::get_definition() );
 	}
 }

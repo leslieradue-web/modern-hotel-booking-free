@@ -97,6 +97,8 @@
 			if ( ! message ) {
 				return;
 			}
+			message.setAttribute( 'role', 'alert' );
+			message.setAttribute( 'aria-live', 'polite' );
 			message.textContent = '';
 			const span = document.createElement( 'span' );
 			span.style.color = color;
@@ -163,10 +165,14 @@
 				const keyInput = document.getElementById( 'mhbo_license_key' );
 				const key = keyInput ? keyInput.value.trim() : '';
 				if ( ! key ) {
-					alert(
+					renderLicenseFeedback(
 						( config.i18n && config.i18n.enter_license_key ) ||
-							'Please enter a license key.'
+							'Please enter a license key.',
+						'#dc2626'
 					);
+					if ( keyInput ) {
+						keyInput.focus();
+					}
 					return;
 				}
 				if ( spinner ) {
@@ -233,9 +239,10 @@
 						if ( spinner ) {
 							spinner.classList.remove( 'is-active' );
 						}
-						alert(
+						renderLicenseFeedback(
 							( err && err.message ) ||
-								'Error deactivating license.'
+								'Error deactivating license.',
+							'#dc2626'
 						);
 					} );
 			} );
@@ -517,6 +524,24 @@
 	 * Payment Gateway Test Credentials
 	 */
 	function initPaymentGatewayTests() {
+		function renderGatewayStatus( container, ok, text ) {
+			container.textContent = '';
+			const iconSpan = document.createElement( 'span' );
+			iconSpan.setAttribute(
+				'style',
+				'color: ' + ( ok ? '#16a34a' : '#dc2626' ) + '; font-weight: bold;'
+			);
+			iconSpan.textContent = ok ? '✓ ' : '✗ ';
+			const msgSpan = document.createElement( 'span' );
+			msgSpan.setAttribute(
+				'style',
+				'color: ' + ( ok ? '#16a34a' : '#dc2626' ) + '; font-weight: 600;'
+			);
+			msgSpan.textContent = String( text == null ? '' : text );
+			container.appendChild( iconSpan );
+			container.appendChild( msgSpan );
+		}
+
 		// Stripe Test
 		const stripeTestBtn = document.getElementById( 'mhbo-test-stripe-btn' );
 		const stripeResult = document.getElementById(
@@ -563,23 +588,34 @@
 								? response.data
 								: response;
 						if ( data && data.currency_mismatch ) {
-							stripeResult.innerHTML =
-								'<div style="margin-top: 10px; padding: 10px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; border-radius:4px;">' +
-								'<span style="color: #dc2626; font-weight: bold; display: block; margin-bottom: 5px;">⚠️ ' +
+							stripeResult.textContent = '';
+							const box = document.createElement( 'div' );
+							box.setAttribute(
+								'style',
+								'margin-top: 10px; padding: 10px; border-left: 4px solid #f59e0b; background: #fffbeb; color: #92400e; border-radius:4px;'
+							);
+							const titleSpan = document.createElement( 'span' );
+							titleSpan.setAttribute(
+								'style',
+								'color: #dc2626; font-weight: bold; display: block; margin-bottom: 5px;'
+							);
+							titleSpan.textContent =
+								'⚠️ ' +
 								( ( config.i18n &&
 									config.i18n.currency_mismatch_title ) ||
-									'Currency Mismatch Detected' ) +
-								'</span>' +
-								'<span>' +
-								( data.message || '' ) +
-								'</span></div>';
+									'Currency Mismatch Detected' );
+							const msgSpan = document.createElement( 'span' );
+							msgSpan.textContent = String( data.message || '' );
+							box.appendChild( titleSpan );
+							box.appendChild( msgSpan );
+							stripeResult.appendChild( box );
 						} else {
-							stripeResult.innerHTML =
-								'<span style="color: #16a34a; font-weight: bold;">✓ </span>' +
-								'<span style="color: #16a34a; font-weight: 600;">' +
-								( data.message ||
-									'Stripe connection verified.' ) +
-								'</span>';
+							renderGatewayStatus(
+								stripeResult,
+								true,
+								( data && data.message ) ||
+									'Stripe connection verified.'
+							);
 						}
 					} )
 					.catch( function ( err ) {
@@ -588,11 +624,7 @@
 							( err && err.message ) ||
 							( config.i18n && config.i18n.connection_error ) ||
 							'Connection error. Please try again.';
-						stripeResult.innerHTML =
-							'<span style="color: #dc2626; font-weight: bold;">✗ </span>' +
-							'<span style="color: #dc2626; font-weight: 600;">' +
-							errorMsg +
-							'</span>';
+						renderGatewayStatus( stripeResult, false, errorMsg );
 					} );
 			} );
 		}
@@ -650,11 +682,12 @@
 							response && response.data !== undefined
 								? response.data
 								: response;
-						paypalResult.innerHTML =
-							'<span style="color: #16a34a; font-weight: bold;">✓ </span>' +
-							'<span style="color: #16a34a; font-weight: 600;">' +
-							( data.message || 'PayPal credentials verified.' ) +
-							'</span>';
+						renderGatewayStatus(
+							paypalResult,
+							true,
+							( data && data.message ) ||
+								'PayPal credentials verified.'
+						);
 					} )
 					.catch( function ( err ) {
 						if ( paypalSpinner ) {
@@ -665,11 +698,7 @@
 							( err && err.message ) ||
 							( config.i18n && config.i18n.connection_error ) ||
 							'Connection error. Please try again.';
-						paypalResult.innerHTML =
-							'<span style="color: #dc2626; font-weight: bold;">✗ </span>' +
-							'<span style="color: #dc2626; font-weight: 600;">' +
-							errorMsg +
-							'</span>';
+						renderGatewayStatus( paypalResult, false, errorMsg );
 					} );
 			} );
 		}
@@ -739,12 +768,12 @@
 							response && response.data !== undefined
 								? response.data
 								: response;
-						braintreeResult.innerHTML =
-							'<span style="color: #16a34a; font-weight: bold;">✓ </span>' +
-							'<span style="color: #16a34a; font-weight: 600;">' +
-							( data.message ||
-								'Braintree credentials verified.' ) +
-							'</span>';
+						renderGatewayStatus(
+							braintreeResult,
+							true,
+							( data && data.message ) ||
+								'Braintree credentials verified.'
+						);
 					} )
 					.catch( function ( err ) {
 						braintreeTestBtn.disabled = false;
@@ -752,11 +781,7 @@
 							( err && err.message ) ||
 							( config.i18n && config.i18n.connection_error ) ||
 							'Connection error. Please try again.';
-						braintreeResult.innerHTML =
-							'<span style="color: #dc2626; font-weight: bold;">✗ </span>' +
-							'<span style="color: #dc2626; font-weight: 600;">' +
-							errorMsg +
-							'</span>';
+						renderGatewayStatus( braintreeResult, false, errorMsg );
 					} );
 			} );
 		}
@@ -1104,6 +1129,253 @@
 		} );
 	}
 
+	/**
+	 * Turnover & Conflict Mode Conditional Controls (Pro)
+	 */
+	function initConflictModeControls() {
+		const modeSelect = document.getElementById(
+			'mhbo_early_late_conflict_mode'
+		);
+		const ecEnableCheckbox = document.getElementById(
+			'mhbo_early_checkin_enabled'
+		);
+		const lcEnableCheckbox = document.getElementById(
+			'mhbo_late_checkout_enabled'
+		);
+		const turnoverSubsections = document.querySelectorAll(
+			'.mhbo-turnover-subsection'
+		);
+		const turnoverCheckbox = document.getElementById(
+			'mhbo_prevent_same_day_turnover'
+		);
+		const ciInput = document.getElementById( 'mhbo_checkin_time' );
+		const coInput = document.getElementById( 'mhbo_checkout_time' );
+		const ecInput = document.getElementById( 'mhbo_early_checkin_time' );
+		const lcInput = document.getElementById( 'mhbo_late_checkout_time' );
+		const bufInput = document.getElementById( 'mhbo_turnaround_buffer_minutes' );
+		const latestInput = document.getElementById( 'mhbo_latest_shifted_checkin_time' );
+		const previewEl = document.getElementById( 'mhbo_turnaround_preview' );
+		const bufferRows = document.querySelectorAll( '.mhbo-conflict-buffer-only' );
+		const smartRows = document.querySelectorAll( '.mhbo-conflict-smart-only' );
+		const nonRequestRows = document.querySelectorAll(
+			'.mhbo-conflict-non-request'
+		);
+		const turnoverNotes = document.querySelectorAll(
+			'.mhbo-turnover-active-note'
+		);
+
+		const previewWraps = document.querySelectorAll(
+			'.mhbo-conflict-preview-wrap'
+		);
+
+		function parseHhmm( val, fallback ) {
+			const m = String( val || '' ).trim().match( /^(\d{1,2}):(\d{2})$/ );
+			if ( ! m ) {
+				return fallback;
+			}
+			const h = parseInt( m[ 1 ], 10 );
+			const mins = parseInt( m[ 2 ], 10 );
+			if ( h < 0 || h > 23 || mins < 0 || mins > 59 ) {
+				return fallback;
+			}
+			return h * 60 + mins;
+		}
+
+		function fmtHhmm( totalMins ) {
+			const clamped = Math.max( 0, Math.min( 1439, totalMins ) );
+			const h = String( Math.floor( clamped / 60 ) ).padStart( 2, '0' );
+			const m = String( clamped % 60 ).padStart( 2, '0' );
+			return h + ':' + m;
+		}
+
+		function appendPreviewRow( pillClass, pillText, descText ) {
+			if ( ! previewEl ) {
+				return;
+			}
+			const row = document.createElement( 'div' );
+			row.className = 'mhbo-turnover-preview-row';
+			const pill = document.createElement( 'span' );
+			pill.className = 'mhbo-turnover-pill ' + pillClass;
+			pill.textContent = pillText;
+			const span = document.createElement( 'span' );
+			span.textContent = descText;
+			row.appendChild( pill );
+			row.appendChild( span );
+			previewEl.appendChild( row );
+		}
+
+		function updateTurnaroundPreview() {
+			if ( ! previewEl ) {
+				return;
+			}
+			previewEl.replaceChildren();
+			const mode = modeSelect ? modeSelect.value : 'standard';
+			if ( mode === 'standard' ) {
+				return;
+			}
+			if ( turnoverCheckbox && turnoverCheckbox.checked ) {
+				appendPreviewRow(
+					'is-info',
+					'Same-Day Blocked',
+					'Prevent Same-Day Turnover is ON: departing rooms remain vacant until the next day.'
+				);
+				return;
+			}
+			if ( mode === 'request_only' ) {
+				appendPreviewRow(
+					'is-info',
+					'Request Only',
+					'Guests see early/late options as subject to confirmation; rooms never auto-shift or block.'
+				);
+				return;
+			}
+			const ciMin = parseHhmm( ciInput ? ciInput.value : '14:00', 840 );
+			const coMin = parseHhmm( coInput ? coInput.value : '11:00', 660 );
+			const ecMin = parseHhmm( ecInput ? ecInput.value : '10:00', 600 );
+			const lcMin = parseHhmm( lcInput ? lcInput.value : '14:00', 840 );
+			const bufMin = Math.max(
+				0,
+				Math.min( 480, parseInt( bufInput ? bufInput.value : '120', 10 ) || 0 )
+			);
+			const latestMin = parseHhmm( latestInput ? latestInput.value : '21:00', 1260 );
+			const stdGap = ciMin - coMin;
+
+			if ( stdGap >= bufMin ) {
+				appendPreviewRow(
+					'is-ok',
+					'Standard Window: ' + stdGap + ' min',
+					'Standard departure (' +
+						fmtHhmm( coMin ) +
+						') + ' +
+						bufMin +
+						' min buffer = ready ' +
+						fmtHhmm( coMin + bufMin ) +
+						' (before ' +
+						fmtHhmm( ciMin ) +
+						'; Early ' +
+						fmtHhmm( ecMin ) +
+						' disabled on turnover days).'
+				);
+			} else {
+				appendPreviewRow(
+					'is-warn',
+					'Tight Standard Window: ' + stdGap + ' min',
+					'Warning: standard window (' +
+						fmtHhmm( coMin ) +
+						' to ' +
+						fmtHhmm( ciMin ) +
+						') is shorter than your ' +
+						bufMin +
+						' min buffer.'
+				);
+			}
+
+			const lateReady = lcMin + bufMin;
+			if ( lateReady <= ciMin ) {
+				appendPreviewRow(
+					'is-ok',
+					'Late CO Fits Standard CI',
+					'Late check-out (' +
+						fmtHhmm( lcMin ) +
+						') + ' +
+						bufMin +
+						' min buffer finishes by ' +
+						fmtHhmm( lateReady ) +
+						' (within ' +
+						fmtHhmm( ciMin ) +
+						' arrival).'
+				);
+			} else if ( mode === 'strict' ) {
+				appendPreviewRow(
+					'is-block',
+					'Strict Block',
+					'Confirmed Late Check-out (' +
+						fmtHhmm( lcMin ) +
+						' + ' +
+						bufMin +
+						' min) blocks same-day arrivals on that room.'
+				);
+			} else if ( lateReady > latestMin || lateReady > 1439 ) {
+				appendPreviewRow(
+					'is-block',
+					'Exceeds Cutoff (' + fmtHhmm( latestMin ) + ')',
+					'Late check-out (' +
+						fmtHhmm( lcMin ) +
+						') + ' +
+						bufMin +
+						' min buffer reaches ' +
+						fmtHhmm( Math.min( 1439, lateReady ) ) +
+						' — same-day arrival will be blocked.'
+				);
+			} else {
+				appendPreviewRow(
+					'is-warn',
+					'Smart Shift -> ' + fmtHhmm( lateReady ),
+					'Confirmed Late Check-out (' +
+						fmtHhmm( lcMin ) +
+						') shifts next guest check-in from ' +
+						fmtHhmm( ciMin ) +
+						' to ' +
+						fmtHhmm( lateReady ) +
+						'.'
+				);
+			}
+		}
+
+		function syncConflictFields() {
+			const anyAddonEnabled = Boolean(
+				( ecEnableCheckbox && ecEnableCheckbox.checked ) ||
+					( lcEnableCheckbox && lcEnableCheckbox.checked )
+			);
+			turnoverSubsections.forEach( function ( el ) {
+				el.style.display = anyAddonEnabled ? '' : 'none';
+			} );
+			if ( modeSelect ) {
+				const mode = modeSelect.value;
+				const usesBuffer = mode === 'smart' || mode === 'strict';
+				previewWraps.forEach( function ( el ) {
+					el.style.display = mode !== 'standard' ? '' : 'none';
+				} );
+				bufferRows.forEach( function ( el ) {
+					el.style.display = usesBuffer ? '' : 'none';
+				} );
+				smartRows.forEach( function ( el ) {
+					el.style.display = mode === 'smart' ? '' : 'none';
+				} );
+				nonRequestRows.forEach( function ( el ) {
+					el.style.display = usesBuffer ? '' : 'none';
+				} );
+			}
+			if ( turnoverCheckbox ) {
+				turnoverNotes.forEach( function ( el ) {
+					el.style.display = turnoverCheckbox.checked
+						? 'flex'
+						: 'none';
+				} );
+			}
+			updateTurnaroundPreview();
+		}
+
+		[
+			ecEnableCheckbox,
+			lcEnableCheckbox,
+			modeSelect,
+			turnoverCheckbox,
+			ciInput,
+			coInput,
+			ecInput,
+			lcInput,
+			bufInput,
+			latestInput,
+		].forEach( function ( el ) {
+			if ( el ) {
+				el.addEventListener( 'change', syncConflictFields );
+				el.addEventListener( 'input', updateTurnaroundPreview );
+			}
+		} );
+		syncConflictFields();
+	}
+
 	// Initialize on DOM ready (Vanilla JS native)
 	function initAll() {
 		initLicenseManagement();
@@ -1119,6 +1391,7 @@
 		initGuestCrmToggle();
 		initConfirmationButtonToggle();
 		initTaxModeToggle();
+		initConflictModeControls();
 	}
 
 	if ( document.readyState === 'loading' ) {

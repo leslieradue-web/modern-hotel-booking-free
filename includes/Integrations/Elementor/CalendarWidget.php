@@ -64,16 +64,14 @@ class CalendarWidget extends BaseWidget {
 		$this->add_control(
 			'calendar_theme',
 			array(
-				'label'     => 'Theme',
-				'type'      => Controls_Manager::SELECT,
-				'default'   => 'light',
-				'options'   => array(
+				'label'        => 'Theme',
+				'type'         => Controls_Manager::SELECT,
+				'default'      => 'light',
+				'options'      => array(
 					'light' => 'Light',
 					'dark'  => 'Dark',
 				),
-				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-calendar-theme: {{VALUE}};',
-				),
+				'prefix_class' => 'mhbo-theme-',
 			)
 		);
 
@@ -83,7 +81,7 @@ class CalendarWidget extends BaseWidget {
 				'label'     => 'Available Color',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-cal-available: {{VALUE}};',
+					'{{WRAPPER}} .mhbo-calendar-wrapper .flatpickr-day:not(.flatpickr-disabled)' => 'background-color: {{VALUE}};',
 				),
 			)
 		);
@@ -94,7 +92,7 @@ class CalendarWidget extends BaseWidget {
 				'label'     => 'Unavailable Color',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-cal-unavailable: {{VALUE}};',
+					'{{WRAPPER}} .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed, {{WRAPPER}} .mhbo-legend-confirmed' => 'background-color: {{VALUE}};',
 				),
 			)
 		);
@@ -110,7 +108,9 @@ class CalendarWidget extends BaseWidget {
 		if ( $room_id > 0 ) {
 			echo do_shortcode( sprintf( '[mhbo_room_calendar room_id="%d"]', $room_id ) );
 		} else {
-			echo do_shortcode( '[mhbo_room_calendar]' );
+			\MHBO\Frontend\Calendar::enqueue_assets();
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Calendar::render_unified_view() returns pre-escaped calendar markup.
+			echo \MHBO\Frontend\Calendar::render_unified_view( 0 );
 		}
 		echo '</div>';
 	}

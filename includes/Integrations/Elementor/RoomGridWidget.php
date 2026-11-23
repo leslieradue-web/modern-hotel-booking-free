@@ -7,7 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Elementor\Controls_Manager;
-use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Box_Shadow;
 use MHBO\Core\I18n;
 
@@ -82,7 +81,7 @@ class RoomGridWidget extends BaseWidget {
 				'type'       => Controls_Manager::SLIDER,
 				'size_units' => array( 'px', 'em', '%' ),
 				'selectors'  => array(
-					'{{WRAPPER}}' => '--mhbo-grid-gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .mhbo-rooms-grid' => 'gap: {{SIZE}}{{UNIT}};',
 				),
 			)
 		);
@@ -93,18 +92,19 @@ class RoomGridWidget extends BaseWidget {
 				'label'     => 'Card Background',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-card-bg: {{VALUE}};',
+					'{{WRAPPER}}'                  => '--mhbo-card-bg: {{VALUE}};',
+					'{{WRAPPER}} .mhbo-room-card'  => 'background-color: {{VALUE}};',
 				),
 			)
 		);
-		
+
 		$this->add_control(
 			'badge_color',
 			array(
 				'label'     => 'Badge Color',
 				'type'      => Controls_Manager::COLOR,
 				'selectors' => array(
-					'{{WRAPPER}}' => '--mhbo-badge-color: {{VALUE}};',
+					'{{WRAPPER}} .mhbo-amenities span' => 'background-color: {{VALUE}};',
 				),
 			)
 		);

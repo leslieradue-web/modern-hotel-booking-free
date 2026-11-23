@@ -8,15 +8,14 @@ use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
-use MHBO\Database\Queries\Booking_Query;
 use MHBO\Core\Pricing;
 use MHBO\Core\Capabilities;
+use MHBO\Core\HotelTime;
 use MHBO\Core\Money;
 use MHBO\Core\I18n;
 use MHBO\Core\Cache;
 use MHBO\Core\Privacy;
 use MHBO\Core\Security;
-use MHBO\Core\BookingProcessor;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -147,20 +146,22 @@ class PaymentsController extends WP_REST_Controller {
 		}
 
 		static $incremented = false;
-		
-		$client_ip  = Security::get_client_ip();
-		$rate_key   = 'mhbo_intent_rate_' . md5( sanitize_text_field( $client_ip ) );
-		$rate_count = (int) get_transient( $rate_key );
-		
-		if ( $rate_count >= 10 ) {
+
+		$client_ip = Security::get_client_ip();
+		$rate_key  = 'mhbo_intent_rate_' . md5( sanitize_text_field( $client_ip ) );
+
+		if ( $incremented ) {
+			return ( Security::get_fixed_window_count( $rate_key ) >= 10 )
+				? new WP_Error( 'rate_limited', 'Too many requests. Please try again later.', array( 'status' => 429 ) )
+				: null;
+		}
+
+		$rl          = Security::consume_fixed_window_rate_limit( $rate_key, 10, MINUTE_IN_SECONDS * 15 );
+		$incremented = true;
+		if ( ! $rl['allowed'] ) {
 			return new WP_Error( 'rate_limited', 'Too many requests. Please try again later.', array( 'status' => 429 ) );
 		}
 
-		if ( ! $incremented ) {
-			set_transient( $rate_key, $rate_count + 1, MINUTE_IN_SECONDS * 15 );
-			$incremented = true;
-		}
-		
 		return null;
 	}
 
@@ -201,10 +202,14 @@ class PaymentsController extends WP_REST_Controller {
 			return new WP_Error( 'rest_forbidden', 'Invalid security token.', array( 'status' => 403 ) );
 		}
 
-		$room_id      = (int) $request->get_param( 'room_id' );
-		$type_id      = (int) $request->get_param( 'type_id' );
-		$check_in     = sanitize_text_field( (string) $request->get_param( 'check_in' ) );
-		$check_out    = sanitize_text_field( (string) $request->get_param( 'check_out' ) );
+		$room_id         = (int) $request->get_param( 'room_id' );
+		$type_id         = (int) $request->get_param( 'type_id' );
+		$check_in        = sanitize_text_field( (string) $request->get_param( 'check_in' ) );
+		$check_out       = sanitize_text_field( (string) $request->get_param( 'check_out' ) );
+		$date_validation = HotelTime::validate_date_range( $check_in, $check_out, true );
+		if ( is_wp_error( $date_validation ) ) {
+			return $date_validation;
+		}
 		$guests       = (int) ( $request->get_param( 'guests' ) ?: 1 );
 		$children     = 0;
 		$child_ages   = array();
@@ -263,16 +268,16 @@ class PaymentsController extends WP_REST_Controller {
 			if ( $req_booking_id > 0 && '' !== $req_booking_token ) {
 				// Direct DB query required: reuse provisional draft across cookie-restricted sessions when token matches.
 				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$matched_id = (int) $wpdb->get_var(
+				$matched_row = $wpdb->get_row(
 					$wpdb->prepare(
-						"SELECT id FROM %i WHERE id = %d AND status = 'pending_payment' AND booking_token = %s LIMIT 1",
+						"SELECT id, booking_token FROM %i WHERE id = %d AND status = 'pending_payment' AND booking_token = %s LIMIT 1",
 						$table,
 						$req_booking_id,
 						$req_booking_token
 					)
 				);
-				if ( $matched_id > 0 ) {
-					$existing_pending_id = $matched_id;
+				if ( $matched_row && hash_equals( (string) ( $matched_row->booking_token ?? '' ), $req_booking_token ) ) {
+					$existing_pending_id = (int) $matched_row->id;
 				}
 			}
 		}
@@ -331,7 +336,7 @@ class PaymentsController extends WP_REST_Controller {
 			$total_money = $calc['total'] ?? null;
 
 			// Coupon code handling if provided
-			$coupon_code             = sanitize_text_field( (string) ( $request->get_param( 'mhbo_coupon_code' ) ?: $request->get_param( 'mhbo_coupon_applied' ) ?: '' ) );
+			$coupon_code             = sanitize_text_field( (string) ( $request->get_param( 'mhbo_coupon_code' ) ?: $request->get_param( 'mhbo_coupon_applied' ) ?: $request->get_param( 'coupon_code' ) ?: '' ) );
 			$applied_coupon_code     = '';
 			$applied_coupon_discount = null;
 
@@ -523,11 +528,20 @@ if ( $total_money === null || $total_money->isZero() ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$booking = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT id, room_id, status FROM %i WHERE booking_token = %s LIMIT 1',
+				'SELECT id, room_id, status, booking_token FROM %i WHERE booking_token = %s LIMIT 1',
 				$table,
 				$booking_token
 			)
 		);
+
+		if ( ! $booking || '' === (string) ( $booking->booking_token ?? '' ) || ! hash_equals( (string) $booking->booking_token, $booking_token ) ) {
+			return new WP_REST_Response(
+				array(
+					'success'  => true,
+					'released' => false,
+				)
+			);
+		}
 
 		$released = false;
 

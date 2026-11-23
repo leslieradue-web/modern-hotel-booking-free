@@ -23,6 +23,7 @@
 	let titleEl = null;
 	let _isOpen = false;
 	let _previousFocus = null;
+	let _activeAbortController = null;
 
 	/* ── Build DOM (once) ───────────────────────────────────── */
 	function build() {
@@ -161,6 +162,11 @@
 		overlay.classList.remove( 'is-open' );
 		_isOpen = false;
 
+		if ( _activeAbortController ) {
+			_activeAbortController.abort();
+			_activeAbortController = null;
+		}
+
 		document.removeEventListener( 'keydown', trapFocus );
 		document.body.style.overflow = '';
 		document.body.classList.remove( 'mhbo-modal-open' );
@@ -193,7 +199,7 @@
 			( window.mhboModalI18n && window.mhboModalI18n.loading ) ||
 			'Loading…';
 		body.innerHTML =
-			'<div class="mhbo-modal-loading">' +
+			'<div class="mhbo-modal-loading" role="status" aria-live="polite">' +
 			'<div class="mhbo-modal-spinner" aria-hidden="true"></div>' +
 			'<span>' +
 			escHtml( label ) +
@@ -219,7 +225,9 @@
 			return;
 		}
 		body.innerHTML =
-			'<div class="mhbo-modal-error">' + escHtml( msg ) + '</div>';
+			'<div class="mhbo-modal-error" role="alert" aria-live="assertive">' +
+			escHtml( msg ) +
+			'</div>';
 	}
 
 	/* ── isOpen ──────────────────────────────────────────────── */
@@ -229,11 +237,12 @@
 
 	/* ── Utility ─────────────────────────────────────────────── */
 	function escHtml( str ) {
-		return String( str )
+		return String( str == null ? '' : str )
 			.replace( /&/g, '&amp;' )
 			.replace( /</g, '&lt;' )
 			.replace( />/g, '&gt;' )
-			.replace( /"/g, '&quot;' );
+			.replace( /"/g, '&quot;' )
+			.replace( /'/g, '&#039;' );
 	}
 
 	/* ── Expose public API ───────────────────────────────────── */
@@ -288,19 +297,43 @@
 			customer_phone: d.customer_phone || '',
 			mhbo_locale: ( window.mhbo_vars && window.mhbo_vars.locale ) || '',
 		} );
+		const rawChildAges = Array.isArray( d.child_ages )
+			? d.child_ages
+			: Array.isArray( d.childAges )
+			? d.childAges
+			: [];
+		rawChildAges.forEach( function ( ageVal ) {
+			params.append( 'child_ages[]', String( ageVal ) );
+		} );
 
 		/* 2026 BP: Public endpoint (permission_callback => __return_true) — do NOT
            send X-WP-Nonce.  A stale nonce baked into a Cloudflare/Redis-cached page
            triggers WP core rest_cookie_check_errors() → 403 "Cookie check failed"
            even though no auth is needed.  Omitting the header lets the public
            permission_callback pass without cookie-auth interference. */
+		if ( _activeAbortController ) {
+			_activeAbortController.abort();
+		}
+		_activeAbortController =
+			typeof AbortController !== 'undefined'
+				? new AbortController()
+				: null;
+		const reqController = _activeAbortController;
+
 		_fetchModalEndpoint(
 			restBase.replace( /\/$/, '' ) +
 				'/modal/booking-form?' +
 				params.toString(),
-			restBase
+			restBase,
+			reqController ? reqController.signal : undefined
 		)
 			.then( function ( data ) {
+				if ( reqController && reqController.signal.aborted ) {
+					return;
+				}
+				if ( ! _isOpen ) {
+					return;
+				}
 				if ( ! data || ! data.html ) {
 					throw new Error( 'Empty response from server.' );
 				}
@@ -312,6 +345,12 @@
 				);
 			} )
 			.catch( function ( err ) {
+				if ( err && err.name === 'AbortError' ) {
+					return;
+				}
+				if ( ! _isOpen ) {
+					return;
+				}
 				const label =
 					( window.mhboModalI18n &&
 						window.mhboModalI18n.errorLoading ) ||
@@ -320,6 +359,11 @@
 					label +
 						( err && err.message ? ' (' + err.message + ')' : '' )
 				);
+			} )
+			.finally( function () {
+				if ( _activeAbortController === reqController ) {
+					_activeAbortController = null;
+				}
 			} );
 	} );
 
@@ -328,33 +372,45 @@
        WAF rule or edge-case cookie-auth mismatch) retry once with cache-busted
        headers to recover without a page reload. */
 	let _modalRetried = false;
-	function _fetchModalEndpoint( url, restBase ) {
-		return fetch( url, {
+	function _fetchModalEndpoint( url, restBase, signal ) {
+		const fetchOpts = {
 			method: 'GET',
 			headers: { Accept: 'application/json' },
-		} ).then( function ( res ) {
+		};
+		if ( signal ) {
+			fetchOpts.signal = signal;
+		}
+		return fetch( url, fetchOpts ).then( function ( res ) {
 			if ( ! res.ok ) {
 				if ( res.status === 403 && ! _modalRetried ) {
 					_modalRetried = true;
 					/* Attempt a nonce-refresh: even though these endpoints are
                        public, some WAF/security plugins may require a valid
                        session.  Refresh then retry with credentials. */
+					const nonceOpts = {
+						cache: 'no-store',
+						credentials: 'same-origin',
+					};
+					if ( signal ) {
+						nonceOpts.signal = signal;
+					}
 					return fetch(
 						( restBase || '/wp-json/mhbo/v1' ).replace(
 							/\/$/,
 							''
 						) + '/nonce',
-						{
-							cache: 'no-store',
-							credentials: 'same-origin',
-						}
+						nonceOpts
 					)
 						.then( function () {
-							return fetch( url, {
+							const retryOpts = {
 								method: 'GET',
 								headers: { Accept: 'application/json' },
 								credentials: 'same-origin',
-							} );
+							};
+							if ( signal ) {
+								retryOpts.signal = signal;
+							}
+							return fetch( url, retryOpts );
 						} )
 						.then( function ( r2 ) {
 							_modalRetried = false;
@@ -397,13 +453,29 @@
 		} );
 
 		/* 2026 BP: Public endpoint — no X-WP-Nonce needed. */
+		if ( _activeAbortController ) {
+			_activeAbortController.abort();
+		}
+		_activeAbortController =
+			typeof AbortController !== 'undefined'
+				? new AbortController()
+				: null;
+		const reqController = _activeAbortController;
+
 		_fetchModalEndpoint(
 			restBase.replace( /\/$/, '' ) +
 				'/modal/confirmation?' +
 				params.toString(),
-			restBase
+			restBase,
+			reqController ? reqController.signal : undefined
 		)
 			.then( function ( data ) {
+				if ( reqController && reqController.signal.aborted ) {
+					return;
+				}
+				if ( ! _isOpen ) {
+					return;
+				}
 				if ( ! data || ! data.html ) {
 					throw new Error( 'Empty confirmation response.' );
 				}
@@ -413,12 +485,23 @@
 				);
 			} )
 			.catch( function ( err ) {
+				if ( err && err.name === 'AbortError' ) {
+					return;
+				}
+				if ( ! _isOpen ) {
+					return;
+				}
 				const label =
 					( window.mhboModalI18n &&
 						window.mhboModalI18n.errorConfirmation ) ||
 					'Your booking was received but we could not load the confirmation. Please check your email.';
 				setError( label );
 				console.error( '[MHBO Modal] Confirmation fetch failed:', err );
+			} )
+			.finally( function () {
+				if ( _activeAbortController === reqController ) {
+					_activeAbortController = null;
+				}
 			} );
 	} );
 

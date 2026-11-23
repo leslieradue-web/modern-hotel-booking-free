@@ -24,16 +24,24 @@ class GuestMigration {
 	public static function migrate_batch( int $last_processed_id = 0, int $batch_size = 250 ): array {
 		global $wpdb;
 
+		$local_invalid_like = '%' . $wpdb->esc_like( '@local.invalid' );
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$bookings = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT b.id, b.customer_name, b.customer_email, b.customer_phone, b.status, b.payment_status, b.payment_amount, b.total_price
                  FROM {$wpdb->prefix}mhbo_bookings b
                  LEFT JOIN {$wpdb->prefix}mhbo_guests g ON b.guest_id = g.id
-                 WHERE b.id > %d AND (b.guest_id IS NULL OR b.guest_id = 0 OR g.id IS NULL) AND b.customer_email IS NOT NULL AND b.customer_email != ''
+                 WHERE b.id > %d
+                   AND (b.guest_id IS NULL OR b.guest_id = 0 OR g.id IS NULL)
+                   AND b.customer_email IS NOT NULL
+                   AND b.customer_email != ''
+                   AND LOWER(TRIM(b.customer_email)) != 'guest@pending.local'
+                   AND LOWER(TRIM(b.customer_email)) NOT LIKE %s
                  ORDER BY b.id ASC
                  LIMIT %d",
 				$last_processed_id,
+				$local_invalid_like,
 				$batch_size
 			)
 		);
@@ -103,14 +111,21 @@ class GuestMigration {
 	public static function get_unmigrated_count(): int {
 		global $wpdb;
 
+		$local_invalid_like = '%' . $wpdb->esc_like( '@local.invalid' );
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->get_var(
-			"SELECT COUNT(*) 
-             FROM {$wpdb->prefix}mhbo_bookings b
-             LEFT JOIN {$wpdb->prefix}mhbo_guests g ON b.guest_id = g.id
-             WHERE (b.guest_id IS NULL OR b.guest_id = 0 OR g.id IS NULL) 
-               AND b.customer_email IS NOT NULL 
-               AND b.customer_email != ''"
+			$wpdb->prepare(
+				"SELECT COUNT(*) 
+                 FROM {$wpdb->prefix}mhbo_bookings b
+                 LEFT JOIN {$wpdb->prefix}mhbo_guests g ON b.guest_id = g.id
+                 WHERE (b.guest_id IS NULL OR b.guest_id = 0 OR g.id IS NULL) 
+                   AND b.customer_email IS NOT NULL 
+                   AND b.customer_email != ''
+                   AND LOWER(TRIM(b.customer_email)) != 'guest@pending.local'
+                   AND LOWER(TRIM(b.customer_email)) NOT LIKE %s",
+				$local_invalid_like
+			)
 		);
 	}
 }

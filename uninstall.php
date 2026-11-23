@@ -71,18 +71,14 @@ $mhbo_clear_crons = static function () use ( $mhbo_cron_hooks ): void {
 	}
 };
 
-if ( 0 !== $mhbo_save_data ) {
-	if ( function_exists( 'is_multisite' ) && is_multisite() ) {
-		$mhbo_sites = function_exists( 'get_sites' ) ? get_sites( array( 'number' => 0 ) ) : array();
-		foreach ( $mhbo_sites as $mhbo_site ) {
-			// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.switch_to_blog_switch_to_blog -- Multisite database context switch required for cron cleanup.
-			switch_to_blog( (int) $mhbo_site->blog_id );
-			$mhbo_clear_crons();
-			restore_current_blog();
-		}
-	} else {
-		$mhbo_clear_crons();
-	}
+$mhbo_should_save_blog_data = static function (): bool {
+	$mhbo_opt = get_option( 'mhbo_save_data_on_uninstall', 1 );
+	$mhbo_val = ( false === $mhbo_opt || '' === $mhbo_opt || null === $mhbo_opt ) ? 1 : (int) $mhbo_opt;
+	return 0 !== $mhbo_val;
+};
+
+if ( ! ( function_exists( 'is_multisite' ) && is_multisite() ) && 0 !== $mhbo_save_data ) {
+	$mhbo_clear_crons();
 	return; // Let script complete normally for WordPress
 }
 
@@ -208,17 +204,35 @@ $mhbo_purge_single_blog = static function () use ( $wpdb, $mhbo_clear_crons ): v
 			}
 		}
 	}
+
+	// Flush persistent object cache groups and options cache so subsequent fresh installs start clean
+	if ( function_exists( 'wp_cache_delete' ) ) {
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+	}
+	if ( function_exists( 'wp_cache_flush_group' ) ) {
+		foreach ( array( 'mhbo_cache', 'mhbo', 'mhbo_bookings', 'mhbo_rooms', 'mhbo_guests', 'mhbo_privacy', 'mhbo_coupons' ) as $mhbo_cache_group ) {
+			wp_cache_flush_group( $mhbo_cache_group );
+		}
+	}
 };
+
+$mhbo_any_blog_preserved = false;
 
 if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 	$mhbo_sites = function_exists( 'get_sites' ) ? get_sites( array( 'number' => 0 ) ) : array();
 	foreach ( $mhbo_sites as $mhbo_site ) {
 		// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.switch_to_blog_switch_to_blog -- Multisite database context switch required for table and options cleanup.
 		switch_to_blog( (int) $mhbo_site->blog_id );
-		$mhbo_purge_single_blog();
+		if ( $mhbo_should_save_blog_data() ) {
+			$mhbo_any_blog_preserved = true;
+			$mhbo_clear_crons();
+		} else {
+			$mhbo_purge_single_blog();
+		}
 		restore_current_blog();
 	}
-	if ( isset( $wpdb->sitemeta ) ) {
+	if ( ! $mhbo_any_blog_preserved && 0 === $mhbo_save_data && isset( $wpdb->sitemeta ) ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 		$wpdb->query(
 			"DELETE FROM {$wpdb->sitemeta} WHERE meta_key LIKE 'mhbo_%' OR meta_key LIKE '_site_transient_mhbo_%' OR meta_key LIKE '_site_transient_timeout_mhbo_%' OR meta_key IN ('external_updates-modern-hotel-booking', 'external_updates-modern-hotel-booking-pro')"
@@ -226,6 +240,9 @@ if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 	}
 	if ( function_exists( 'delete_site_transient' ) ) {
 		delete_site_transient( 'update_plugins' );
+	}
+	if ( $mhbo_any_blog_preserved || 0 !== $mhbo_save_data ) {
+		return;
 	}
 } else {
 	$mhbo_purge_single_blog();

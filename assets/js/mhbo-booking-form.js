@@ -35,7 +35,7 @@
 	window.mhboShowBookingError = function ( message, contextEl, options ) {
 		const opts = Object.assign( { scroll: true }, options || {} );
 		const activeModalWrapper = document.querySelector(
-			'#mhbo-booking-modal-overlay.mhbo-modal-open .mhbo-booking-form-wrapper'
+			'.mhbo-modal-overlay.is-open .mhbo-booking-form-wrapper'
 		);
 		const wrapper =
 			( contextEl &&
@@ -98,7 +98,7 @@
 	window.mhboValidateBookingForm = function ( targetForm, silent ) {
 		const isSilent = Boolean( silent );
 		const activeModalForm = document.querySelector(
-			'#mhbo-booking-modal-overlay.mhbo-modal-open .mhbo-booking-form'
+			'.mhbo-modal-overlay.is-open .mhbo-booking-form'
 		);
 		const form =
 			targetForm ||
@@ -285,49 +285,144 @@
 		const arrivalTotalEl = wrapper.querySelector(
 			'.mhbo-arrival-total-price'
 		);
+		totalDisplays.forEach( function ( el ) {
+			el.setAttribute( 'aria-live', 'polite' );
+			el.setAttribute( 'aria-atomic', 'true' );
+		} );
+		if ( arrivalTotalEl ) {
+			arrivalTotalEl.setAttribute( 'aria-live', 'polite' );
+			arrivalTotalEl.setAttribute( 'aria-atomic', 'true' );
+		}
 		const submitBtn = wrapper.querySelector( '.mhbo-submit-btn' );
 		const consentCheckbox = wrapper.querySelector(
 			'input[name="mhbo_consent"], #mhbo-consent, .mhbo-consent'
 		);
 		const errorBox = wrapper.querySelector( '.mhbo-booking-errors' );
 
-		let debounceTimer;
+		let debounceTimer = null;
 		let recalcAbortController = null; // Cancel in-flight requests to prevent 429
+		let recalcDirty = false;
+		let inFlightPromise = null;
+		let recalcSeq = 0;
 
-		/**
-		 * Recalculate price via REST API
-		 */
-		function recalculatePrice() {
+		if ( typeof window.mhboFlushPriceRecalculation !== 'function' ) {
+			window.mhboFlushPriceRecalculation = function ( targetEl ) {
+				const targetWrapper =
+					targetEl &&
+					targetEl.classList &&
+					targetEl.classList.contains( 'mhbo-booking-form-wrapper' )
+						? targetEl
+						: targetEl && typeof targetEl.closest === 'function'
+						? targetEl.closest( '.mhbo-booking-form-wrapper' )
+						: document.querySelector(
+								'.mhbo-modal-overlay.is-open .mhbo-booking-form-wrapper'
+						  ) ||
+						  document.querySelector( '.mhbo-booking-form-wrapper' );
+				if (
+					targetWrapper &&
+					typeof targetWrapper._mhboFlushRecalc === 'function'
+				) {
+					return targetWrapper._mhboFlushRecalc();
+				}
+				return Promise.resolve();
+			};
+			window.mhboHasPendingPriceRecalculation = function ( targetEl ) {
+				const targetWrapper =
+					targetEl &&
+					targetEl.classList &&
+					targetEl.classList.contains( 'mhbo-booking-form-wrapper' )
+						? targetEl
+						: targetEl && typeof targetEl.closest === 'function'
+						? targetEl.closest( '.mhbo-booking-form-wrapper' )
+						: document.querySelector(
+								'.mhbo-modal-overlay.is-open .mhbo-booking-form-wrapper'
+						  ) ||
+						  document.querySelector( '.mhbo-booking-form-wrapper' );
+				return Boolean(
+					targetWrapper &&
+						typeof targetWrapper._mhboIsRecalcPending ===
+							'function' &&
+						targetWrapper._mhboIsRecalcPending()
+				);
+			};
+		}
+
+		function scheduleRecalculate( delayMs ) {
 			if ( ! totalDisplays || totalDisplays.length === 0 ) {
 				return;
 			}
+			const delay = typeof delayMs === 'number' ? delayMs : 400;
 
-			// Cancel any in-flight request immediately so it doesn't count against rate limits.
 			if ( recalcAbortController ) {
 				recalcAbortController.abort();
 				recalcAbortController = null;
 			}
-
 			clearTimeout( debounceTimer );
+			debounceTimer = null;
+			recalcDirty = true;
+
 			totalDisplays.forEach( function ( el ) {
 				el.classList.add( 'mhbo_faded' );
 			} );
 			if ( arrivalTotalEl ) {
 				arrivalTotalEl.classList.add( 'mhbo_faded' );
 			}
-			if ( submitBtn ) {
-				submitBtn.disabled = true;
+
+			if ( delay <= 0 ) {
+				runRecalculatePromise();
+			} else {
+				debounceTimer = setTimeout( function () {
+					debounceTimer = null;
+					runRecalculatePromise();
+				}, delay );
 			}
+		}
 
-			debounceTimer = setTimeout( async function () {
-				recalcAbortController = new AbortController();
-				window.dispatchEvent(
-					new CustomEvent( 'mhbo_processing_start', {
-						detail: { source: 'booking_form', instance: wrapper },
-					} )
-				);
+		function recalculatePrice() {
+			scheduleRecalculate( 400 );
+		}
 
-				try {
+		function runRecalculatePromise() {
+			recalcDirty = false;
+			const mySeq = ++recalcSeq;
+			const promise = executeRecalculate( mySeq ).finally( function () {
+				if ( inFlightPromise === promise ) {
+					inFlightPromise = null;
+				}
+			} );
+			inFlightPromise = promise;
+			return promise;
+		}
+
+		wrapper._mhboIsRecalcPending = function () {
+			return Boolean( recalcDirty || debounceTimer || inFlightPromise );
+		};
+
+		wrapper._mhboFlushRecalc = async function () {
+			let guard = 0;
+			while (
+				( recalcDirty || debounceTimer || inFlightPromise ) &&
+				guard < 4
+			) {
+				guard++;
+				if ( debounceTimer ) {
+					clearTimeout( debounceTimer );
+					debounceTimer = null;
+				}
+				if ( recalcDirty ) {
+					await runRecalculatePromise();
+				} else if ( inFlightPromise ) {
+					try {
+						await inFlightPromise;
+					} catch ( _ ) {}
+				}
+			}
+		};
+
+		async function executeRecalculate( mySeq ) {
+			recalcAbortController = new AbortController();
+
+			try {
 					const roomIdInput = form.querySelector(
 						'input[name="mhbo_room_id"]'
 					);
@@ -409,6 +504,13 @@
 						? tokenField.value.trim()
 						: '';
 
+					const custEmailInput = form.querySelector(
+						'input[name="customer_email"], input[name="mhbo_customer_email"]'
+					);
+					const customerEmail = custEmailInput
+						? custEmailInput.value.trim()
+						: '';
+
 					const response = await fetch(
 						mhbo_vars.api_base + '/recalculate-price',
 						{
@@ -428,6 +530,7 @@
 								extras,
 								mhbo_payment_type: paymentType,
 								coupon_code: activeCouponCode,
+								customer_email: customerEmail,
 								exclude_id: excludeId,
 								update_id: excludeId,
 								booking_token: bookingToken,
@@ -436,6 +539,9 @@
 					);
 
 					const data = await response.json();
+					if ( mySeq !== recalcSeq ) {
+						return;
+					}
 
 					if ( data.success ) {
 						totalDisplays.forEach( function ( el ) {
@@ -552,7 +658,7 @@
 							}
 						}
 
-						// Synchronize top summary card coupon row
+						// Synchronize top summary card coupon row and live validation feedback
 						const couponSummaryRow = wrapper.querySelector(
 							'.mhbo-coupon-cost-row'
 						);
@@ -578,11 +684,9 @@
 								if ( couponAmountEl ) {
 									couponAmountEl.innerHTML =
 										'<strong>&minus;' +
-										String( data.coupon_discount_formatted )
-											.replace( /&/g, '&amp;' )
-											.replace( /</g, '&lt;' )
-											.replace( />/g, '&gt;' )
-											.replace( /"/g, '&quot;' ) +
+										escapeHtml(
+											data.coupon_discount_formatted
+										) +
 										'</strong>';
 								}
 								couponSummaryRow.style.display = 'flex';
@@ -592,6 +696,34 @@
 									couponAmountEl.innerHTML = '';
 								}
 							}
+						}
+
+						if (
+							data.coupon_valid === true &&
+							data.coupon_message
+						) {
+							const couponMsgEl = wrapper.querySelector(
+								'.mhbo-coupon-message'
+							);
+							if ( couponMsgEl ) {
+								couponMsgEl.textContent = data.coupon_message;
+								couponMsgEl.style.color = '#16a34a';
+							}
+						} else if ( data.coupon_valid === false ) {
+							const appliedCouponInput = form.querySelector(
+								'[name="mhbo_coupon_applied"]'
+							);
+							if ( appliedCouponInput ) {
+								appliedCouponInput.value = '';
+							}
+							wrapper.dispatchEvent(
+								new CustomEvent( 'mhboCouponInvalidated', {
+									bubbles: true,
+									detail: {
+										message: data.coupon_error || '',
+									},
+								} )
+							);
 						}
 
 						if ( arrivalTotalEl ) {
@@ -612,39 +744,26 @@
 							} else {
 								taxContainer.style.display = 'block';
 							}
-							// Re-apply deposit row visibility after HTML replacement —
-							// the server renders deposit rows hidden by default and relies
-							// on the client to show them when deposit payment is selected.
 							updateDepositVisibility();
-
-							// Re-insert the coupon discount row if the server confirmed the coupon is still valid.
-							// taxContainer.innerHTML wipes the row that mhbo-coupons.js inserted; this event
-							// lets mhbo-coupons.js re-add it without triggering another AJAX validation.
-							if (
-								data.coupon_applied &&
-								data.coupon_discount_formatted
-							) {
-								wrapper.dispatchEvent(
-									new CustomEvent( 'mhboCouponDisplay', {
-										bubbles: true,
-										detail: {
-											code: data.coupon_applied,
-											discount_formatted:
-												data.coupon_discount_formatted,
-											new_total_formatted:
-												data.total_formatted,
-										},
-									} )
-								);
-							}
 						}
 
-						// Update Payment Cards if deposit info returned
-						if ( data.deposit_amount_formatted ) {
-							// Reveal the deposit wrapper if it was hidden pending first price load.
-							const depositWrapper = form.querySelector(
-								'.mhbo-deposit-options-wrapper'
+						// Update Payment Cards and first-night amount if deposit info returned
+						const depositCard = form.querySelector(
+							'.mhbo-payment-card[data-payment-type="deposit"]'
+						);
+						if (
+							depositCard &&
+							typeof data.first_night_total !== 'undefined'
+						) {
+							depositCard.dataset.firstNightAmount = String(
+								data.first_night_total
 							);
+						}
+
+						const depositWrapper = form.querySelector(
+							'.mhbo-deposit-options-wrapper'
+						);
+						if ( data.deposit_amount_formatted ) {
 							if (
 								depositWrapper &&
 								depositWrapper.style.display === 'none'
@@ -652,9 +771,6 @@
 								depositWrapper.style.display = '';
 							}
 
-							const depositCard = form.querySelector(
-								'.mhbo-payment-card[data-payment-type="deposit"]'
-							);
 							if ( depositCard ) {
 								const amountEl = depositCard.querySelector(
 									'.mhbo-deposit-amount'
@@ -671,19 +787,12 @@
 										data.remaining_balance_formatted;
 								}
 
-								// Update data attributes for gateways
 								depositCard.dataset.amount =
 									data.deposit_amount;
 								depositCard.dataset.balance =
 									data.remaining_balance;
-								if ( data.first_night_total ) {
-									depositCard.dataset.firstNightAmount =
-										data.first_night_total;
-								}
 							}
 
-							// 2026 BP: Also update the Reservation Summary deposit rows so the
-							// in-summary breakdown matches the payment card and the charged amount.
 							const depositAmountDisplay = wrapper.querySelector(
 								'#mhbo-deposit-amount-display'
 							);
@@ -713,6 +822,14 @@
 										data.total_formatted;
 								}
 								fullCard.dataset.amount = data.total;
+							}
+						} else if ( depositWrapper ) {
+							depositWrapper.style.display = 'none';
+							const fullRadio = depositWrapper.querySelector(
+								'input[name="mhbo_payment_type"][value="full"]'
+							);
+							if ( fullRadio && ! fullRadio.checked ) {
+								fullRadio.checked = true;
 							}
 						}
 
@@ -760,6 +877,122 @@
 							);
 						}
 
+						// Sync dynamic stay timing, shifted check-in, and Early/Late availability
+						if ( data.stay_timing && typeof data.stay_timing === 'object' ) {
+							const st = data.stay_timing;
+							const syncExtensionCard = ( extraId, info ) => {
+								if ( ! info ) {
+									return;
+								}
+								const card = form.querySelector(
+									`.mhbo-arrival-option-card[data-extra-id="${ extraId }"]`
+								);
+								if ( ! card ) {
+									return;
+								}
+								const cb = card.querySelector( 'input[type="checkbox"]' );
+								const priceEl = card.querySelector( '.mhbo-arrival-option-price' );
+								const reqBadge = card.querySelector( '.mhbo-arrival-option-badge-request' );
+								const statusEl = card.querySelector( '.mhbo-arrival-option-status' );
+								const isAvail = !! info.available;
+
+								if ( priceEl ) {
+									if ( info.is_free ) {
+										priceEl.textContent = 'Complimentary';
+										priceEl.classList.add( 'mhbo-arrival-option-badge-free' );
+									} else {
+										priceEl.textContent = '+' + ( info.fee_formatted || info.fee || '0.00' );
+										priceEl.classList.remove( 'mhbo-arrival-option-badge-free' );
+									}
+								}
+
+								if ( reqBadge ) {
+									reqBadge.hidden = ! ( isAvail && info.request_only );
+								}
+
+								card.classList.toggle( 'is-unavailable', ! isAvail );
+								if ( cb ) {
+									cb.disabled = ! isAvail;
+									if ( ! isAvail && cb.checked ) {
+										cb.checked = false;
+										card.classList.remove( 'is-selected', 'selected' );
+										recalcDirty = true;
+									}
+								}
+								if ( statusEl ) {
+									if ( ! isAvail && info.message ) {
+										statusEl.textContent = info.message;
+										statusEl.hidden = false;
+									} else {
+										statusEl.textContent = '';
+										statusEl.hidden = true;
+									}
+								}
+							};
+
+							syncExtensionCard( '_early_checkin', st.early_checkin );
+							syncExtensionCard( '_late_checkout', st.late_checkout );
+
+							const ciVal = wrapper.querySelector( '.mhbo-checkin-time-val' );
+							if ( ciVal ) {
+								if ( st.effective_checkin ) {
+									ciVal.dataset.standard = st.effective_checkin;
+								}
+								if ( st.early_checkin && st.early_checkin.time ) {
+									ciVal.dataset.early = st.early_checkin.time;
+								}
+								const ecCb = form.querySelector(
+									'.mhbo-arrival-option-card[data-extra-id="_early_checkin"] input[type="checkbox"]'
+								);
+								const useEarly = !!( ecCb && ecCb.checked && ! ecCb.disabled && ciVal.dataset.early );
+								ciVal.textContent = useEarly
+									? ciVal.dataset.early
+									: ( ciVal.dataset.standard || ciVal.textContent );
+							}
+
+							const coVal = wrapper.querySelector( '.mhbo-checkout-time-val' );
+							if ( coVal ) {
+								if ( st.standard_checkout ) {
+									coVal.dataset.standard = st.standard_checkout;
+								}
+								if ( st.late_checkout && st.late_checkout.time ) {
+									coVal.dataset.late = st.late_checkout.time;
+								}
+								const lcCb = form.querySelector(
+									'.mhbo-arrival-option-card[data-extra-id="_late_checkout"] input[type="checkbox"]'
+								);
+								const useLate = !!( lcCb && lcCb.checked && ! lcCb.disabled && coVal.dataset.late );
+								coVal.textContent = useLate
+									? coVal.dataset.late
+									: ( coVal.dataset.standard || coVal.textContent );
+							}
+
+							const shiftNotice = wrapper.querySelector( '.mhbo-checkin-shift-notice' );
+							if ( shiftNotice ) {
+								const ecCb = form.querySelector(
+									'.mhbo-arrival-option-card[data-extra-id="_early_checkin"] input[type="checkbox"]'
+								);
+								const showShift = !!( st.checkin_shifted && ! ( ecCb && ecCb.checked ) );
+								if ( showShift ) {
+									shiftNotice.textContent =
+										'Arrival adjusted to ' +
+										st.effective_checkin +
+										' (standard ' +
+										( st.standard_checkin || '' ) +
+										') for room turnaround.';
+									shiftNotice.hidden = false;
+								} else {
+									shiftNotice.textContent = '';
+									shiftNotice.hidden = true;
+								}
+							}
+
+							if ( recalcDirty ) {
+								recalcDirty = false;
+								setTimeout( () => recalculatePrice(), 0 );
+							}
+						}
+
 						// Toggle deposit/balance rows based on selection
 						updateDepositVisibility();
 
@@ -784,6 +1017,8 @@
 						if ( errorContainer ) {
 							const errEl = document.createElement( 'div' );
 							errEl.className = 'mhbo-error';
+							errEl.setAttribute( 'role', 'alert' );
+							errEl.setAttribute( 'aria-live', 'assertive' );
 							errEl.textContent =
 								data.message || 'Error recalculating price.';
 							errorContainer.replaceChildren( errEl );
@@ -800,25 +1035,17 @@
 					debugLog( 'Recalculate error:', err );
 				} finally {
 					recalcAbortController = null;
-					totalDisplays.forEach( function ( el ) {
-						el.classList.remove( 'mhbo_faded' );
-					} );
-					if ( arrivalTotalEl ) {
-						arrivalTotalEl.classList.remove( 'mhbo_faded' );
+					if ( mySeq === recalcSeq && ! recalcDirty ) {
+						totalDisplays.forEach( function ( el ) {
+							el.classList.remove( 'mhbo_faded' );
+						} );
+						if ( arrivalTotalEl ) {
+							arrivalTotalEl.classList.remove( 'mhbo_faded' );
+						}
+
+						updateSubmitState();
 					}
-
-					window.dispatchEvent(
-						new CustomEvent( 'mhbo_processing_end', {
-							detail: {
-								source: 'booking_form',
-								instance: wrapper,
-							},
-						} )
-					);
-
-					updateSubmitState();
 				}
-			}, 400 );
 		}
 
 		/**
@@ -858,6 +1085,7 @@
 				return;
 			}
 			submitBtn.disabled = false;
+			submitBtn.classList.remove( 'loading' );
 			submitBtn.style.opacity = '';
 			submitBtn.style.cursor = '';
 		}
@@ -939,6 +1167,11 @@
 				if ( count > 0 ) {
 					agesContainer.style.display = 'block';
 					let html = '';
+					const agePlaceholder =
+						typeof mhbo_vars !== 'undefined' &&
+						mhbo_vars.label_child_age_placeholder
+							? mhbo_vars.label_child_age_placeholder
+							: 'Age';
 					for ( let i = 0; i < count; i++ ) {
 						const label = mhbo_vars.label_child_n_age.replace(
 							'%d',
@@ -949,7 +1182,9 @@
 							'<label>' +
 							escapeHtml( label ) +
 							' <span class="required">*</span></label>' +
-							'<input type="number" name="child_ages[]" value="" placeholder="0" min="0" max="17" required class="mhbo-child-age-input">' +
+							'<input type="number" name="child_ages[]" value="" placeholder="' +
+							escapeHtml( agePlaceholder ) +
+							'" min="0" max="17" required class="mhbo-child-age-input">' +
 							'</div>';
 					}
 					agesInputs.innerHTML = html;
@@ -957,19 +1192,15 @@
 					agesContainer.style.display = 'none';
 					agesInputs.innerHTML = '';
 				}
-				recalculatePrice();
+				scheduleRecalculate( 0 );
 			} );
 
-			let childAgeDebounceTimer = null;
 			wrapper.addEventListener( 'input', function ( e ) {
 				if (
 					e.target &&
 					e.target.classList.contains( 'mhbo-child-age-input' )
 				) {
-					clearTimeout( childAgeDebounceTimer );
-					childAgeDebounceTimer = setTimeout( function () {
-						recalculatePrice();
-					}, 300 );
+					scheduleRecalculate( 250 );
 				}
 			} );
 
@@ -978,8 +1209,9 @@
 					e.target &&
 					e.target.classList.contains( 'mhbo-child-age-input' )
 				) {
-					clearTimeout( childAgeDebounceTimer );
-					recalculatePrice();
+					if ( recalcDirty || debounceTimer ) {
+						scheduleRecalculate( 0 );
+					}
 				}
 			} );
 		}
@@ -1044,6 +1276,10 @@
 						selected && ciVal.dataset.early
 							? ciVal.dataset.early
 							: ciVal.dataset.standard || ciVal.textContent;
+				}
+				const shiftNotice = wrapper.querySelector( '.mhbo-checkin-shift-notice' );
+				if ( shiftNotice && shiftNotice.textContent.trim() !== '' ) {
+					shiftNotice.hidden = selected;
 				}
 			}
 			if (
@@ -1112,8 +1348,15 @@
 		} );
 
 		// Listen for coupon application or removal to ensure 100% price parity
-		wrapper.addEventListener( 'mhboCouponApplied', recalculatePrice );
-		wrapper.addEventListener( 'mhboCouponRemoved', recalculatePrice );
+		wrapper.addEventListener( 'mhboCouponApplied', function ( e ) {
+			if ( e && e.detail && e.detail.skipRecalculate ) {
+				return;
+			}
+			scheduleRecalculate( 0 );
+		} );
+		wrapper.addEventListener( 'mhboCouponRemoved', function () {
+			scheduleRecalculate( 0 );
+		} );
 
 		if ( consentCheckbox ) {
 			consentCheckbox.addEventListener( 'change', updateSubmitState );
@@ -1127,6 +1370,9 @@
 		 * Form submission validation
 		 */
 		form.addEventListener( 'submit', function ( e ) {
+			const wasFlushed = form.dataset.mhboRecalcFlushed === '1';
+			delete form.dataset.mhboRecalcFlushed;
+
 			if ( errorBox ) {
 				errorBox.style.display = 'none';
 			}
@@ -1136,6 +1382,40 @@
 				if ( typeof e.stopImmediatePropagation === 'function' ) {
 					e.stopImmediatePropagation();
 				}
+				return;
+			}
+
+			if (
+				! wasFlushed &&
+				typeof window.mhboHasPendingPriceRecalculation === 'function' &&
+				window.mhboHasPendingPriceRecalculation( form )
+			) {
+				e.preventDefault();
+				if ( typeof e.stopImmediatePropagation === 'function' ) {
+					e.stopImmediatePropagation();
+				}
+				if ( submitBtn ) {
+					submitBtn.disabled = true;
+					submitBtn.classList.add( 'loading' );
+				}
+				window.mhboFlushPriceRecalculation( form )
+					.then( function () {
+						updateSubmitState();
+						form.dataset.mhboRecalcFlushed = '1';
+						if ( typeof form.requestSubmit === 'function' ) {
+							form.requestSubmit();
+						} else {
+							form.dispatchEvent(
+								new Event( 'submit', {
+									bubbles: true,
+									cancelable: true,
+								} )
+							);
+						}
+					} )
+					.catch( function () {
+						updateSubmitState();
+					} );
 				return;
 			}
 
@@ -1202,6 +1482,7 @@
 			const origSubmitBtnText = submitBtn ? submitBtn.textContent : '';
 			if ( submitBtn ) {
 				submitBtn.disabled = true;
+				submitBtn.classList.add( 'loading' );
 				submitBtn.textContent = mhbo_vars.processing || 'Processing...';
 			}
 
@@ -1223,7 +1504,7 @@
 			const children = childrenSelect ? childrenSelect.value : 0;
 
 			const extras = {};
-			form.querySelectorAll( '.mhbo-extra-input' ).forEach(
+			form.querySelectorAll( '.mhbo-extra-input, .mhbo-booking-extra-checkbox' ).forEach(
 				function ( input ) {
 					let val = 0;
 					if ( input.type === 'checkbox' ) {
@@ -1327,6 +1608,18 @@
 					);
 					return el ? el.value : '';
 				} )(),
+				booking_token: ( function () {
+					const el = form.querySelector(
+						'input[name="mhbo_booking_token"]'
+					);
+					return el ? el.value : '';
+				} )(),
+				resume_nonce: ( function () {
+					const el = form.querySelector(
+						'input[name="mhbo_resume_nonce"]'
+					);
+					return el ? el.value : '';
+				} )(),
 				session_token: ( function () {
 					const el = form.querySelector(
 						'input[name="mhbo_session_token"]'
@@ -1399,6 +1692,7 @@
 						showInstanceError( msg );
 						if ( submitBtn ) {
 							submitBtn.disabled = false;
+							submitBtn.classList.remove( 'loading' );
 							submitBtn.textContent =
 								origSubmitBtnText ||
 								mhbo_vars.confirm ||
@@ -1414,6 +1708,7 @@
 					);
 					if ( submitBtn ) {
 						submitBtn.disabled = false;
+						submitBtn.classList.remove( 'loading' );
 						submitBtn.textContent =
 							origSubmitBtnText ||
 							mhbo_vars.confirm ||

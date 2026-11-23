@@ -28,8 +28,10 @@ class Consent {
 	 * Initialize WP Consent API hooks.
 	 */
 	public static function init(): void {
-		add_action( 'wp_consent_api_registered', array( self::class, 'register_consent_type' ) );
-		add_action( 'init', array( self::class, 'register_consent_type' ), 20 );
+		if ( defined( 'MHBO_PLUGIN_FILE' ) && function_exists( 'plugin_basename' ) ) {
+			$plugin = plugin_basename( MHBO_PLUGIN_FILE );
+			add_filter( "wp_consent_api_registered_{$plugin}", array( self::class, 'filter_consent_api_registered' ) );
+		}
 	}
 
 	/**
@@ -39,7 +41,7 @@ class Consent {
 	 */
 	public static function is_detected(): bool {
 		return function_exists( 'wp_has_consent' )
-			|| ( function_exists( 'did_action' ) && \did_action( 'wp_consent_api_registered' ) > 0 );
+			|| defined( 'WP_CONSENT_API_VERSION' );
 	}
 
 	/**
@@ -59,12 +61,13 @@ class Consent {
 	}
 
 	/**
-	 * Declare Modern Hotel Booking's primary consent type with WP Consent API.
+	 * Declare Modern Hotel Booking's compatibility with the WP Consent API.
+	 *
+	 * @param bool $registered Existing registration flag.
+	 * @return bool
 	 */
-	public static function register_consent_type(): void {
-		if ( self::is_enabled() && function_exists( 'wp_set_consent_type' ) ) {
-			\wp_set_consent_type( 'modern-hotel-booking', self::CATEGORY_FUNCTIONAL );
-		}
+	public static function filter_consent_api_registered( bool $registered ): bool {
+		return self::is_enabled() ? true : $registered;
 	}
 
 	/**

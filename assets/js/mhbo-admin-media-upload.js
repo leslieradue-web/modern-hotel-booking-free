@@ -46,6 +46,7 @@
 
 				const frame = wp.media( {
 					title,
+					library: { type: 'image' },
 					button: {
 						text: title,
 					},
@@ -59,31 +60,42 @@
 						.first()
 						.toJSON();
 
+					const attachmentUrl =
+						attachment.url ||
+						( attachment.sizes &&
+							attachment.sizes.full &&
+							attachment.sizes.full.url ) ||
+						'';
+
 					if ( idTarget ) {
-						idTarget.value = attachment.id;
+						idTarget.value = attachment.id || 0;
 						idTarget.dispatchEvent(
 							new Event( 'change', { bubbles: true } )
 						);
 					}
 					if ( urlTarget ) {
-						urlTarget.value = attachment.url;
+						urlTarget.value = attachmentUrl;
 						urlTarget.dispatchEvent(
 							new Event( 'change', { bubbles: true } )
 						);
 					}
 
-					if ( preview ) {
-						preview.innerHTML =
-							'<img src="' +
-							encodeURI( attachment.url ) +
-							'" alt="" style="max-width:200px;height:auto;" />';
+					if ( preview && attachmentUrl ) {
+						preview.textContent = '';
+						const img = document.createElement( 'img' );
+						img.src = attachmentUrl;
+						img.alt = '';
+						img.style.maxWidth = '200px';
+						img.style.height = 'auto';
+						preview.appendChild( img );
 						preview.style.display = '';
 					}
 
-					const removeBtn = uploadBtn.parentElement
-						? uploadBtn.parentElement.querySelector(
-								'.mhbo-remove-btn'
-						  )
+					const wrap =
+						uploadBtn.closest( '.mhbo-media-upload-wrap' ) ||
+						uploadBtn.parentElement;
+					const removeBtn = wrap
+						? wrap.querySelector( '.mhbo-remove-btn' )
 						: null;
 					if ( removeBtn ) {
 						removeBtn.style.display = '';

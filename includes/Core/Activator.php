@@ -202,6 +202,8 @@ class Activator {
 			note varchar(255) DEFAULT NULL,
 			early_checkin_fee decimal(19,4) DEFAULT NULL,
 			late_checkout_fee decimal(19,4) DEFAULT NULL,
+			early_checkin_allowed tinyint(1) DEFAULT NULL,
+			late_checkout_allowed tinyint(1) DEFAULT NULL,
 			source varchar(20) DEFAULT 'admin_manual',
 			created_at datetime DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -259,8 +261,44 @@ class Activator {
 		) $charset_collate;";
 		dbDelta( $sql_guests );
 
-// Ensure all required columns exist on all tables (Single-query introspection per table, 100% data preservation)
+if ( class_exists( Cache::class ) ) {
+			foreach ( array(
+				"{$wpdb->prefix}mhbo_room_types",
+				"{$wpdb->prefix}mhbo_rooms",
+				"{$wpdb->prefix}mhbo_bookings",
+				"{$wpdb->prefix}mhbo_ical_connections",
+				"{$wpdb->prefix}mhbo_pricing_rules",
+				"{$wpdb->prefix}mhbo_calendar_overrides",
+				"{$wpdb->prefix}mhbo_idempotency",
+				"{$wpdb->prefix}mhbo_guests",
+			) as $core_tbl ) {
+				Cache::mark_table_exists( $core_tbl );
+			}
+			
+		}
+
+		// Ensure all required columns exist on all tables (Single-query introspection per table, 100% data preservation)
 		$bookings_columns = array(
+			'booking_language'          => "varchar(10) DEFAULT 'en'",
+			'admin_notes'               => 'text DEFAULT NULL',
+			'booking_extras'            => 'text DEFAULT NULL',
+			'discount_amount'           => "decimal(19,4) DEFAULT '0.0000'",
+			'payment_method'            => "varchar(50) DEFAULT 'arrival'",
+			'payment_received'          => 'tinyint(1) DEFAULT 0',
+			'payment_status'            => "varchar(20) DEFAULT 'pending'",
+			'payment_transaction_id'    => 'varchar(255) DEFAULT NULL',
+			'payment_capture_id'        => 'varchar(255) DEFAULT NULL',
+			'payment_date'              => 'datetime DEFAULT NULL',
+			'payment_error'             => 'text DEFAULT NULL',
+			'payment_amount'            => 'decimal(19,4) DEFAULT NULL',
+			'email_sent'                => 'tinyint(1) DEFAULT 0',
+			'source'                    => "varchar(50) DEFAULT 'direct'",
+			'guests'                    => 'tinyint(4) DEFAULT 1',
+			'children'                  => 'int(11) DEFAULT 0',
+			'children_ages'             => 'text DEFAULT NULL',
+			'ical_uid'                  => 'varchar(255) DEFAULT NULL',
+			'external_id'               => 'varchar(255) DEFAULT NULL',
+			'custom_fields'             => 'text DEFAULT NULL',
 			'is_multi_room'             => 'tinyint(1) DEFAULT 0',
 			'multi_room_parent'         => 'varchar(64) DEFAULT NULL',
 			'balance_expected_amount'   => 'decimal(19,4) DEFAULT NULL',
@@ -308,6 +346,7 @@ class Activator {
 
 		$room_types_table   = $wpdb->prefix . 'mhbo_room_types';
 		$room_types_columns = array(
+			'max_children'         => 'tinyint(4) NOT NULL DEFAULT 0',
 			'child_age_free_limit' => 'tinyint(4) NOT NULL DEFAULT 0',
 			'child_rate'           => "decimal(19,4) NOT NULL DEFAULT '0.0000'",
 			'total_rooms'          => 'mediumint(9) NOT NULL DEFAULT 1',
@@ -324,15 +363,41 @@ class Activator {
 
 		$overrides_table   = $wpdb->prefix . 'mhbo_calendar_overrides';
 		$overrides_columns = array(
-			'early_checkin_fee' => 'decimal(19,4) DEFAULT NULL',
-			'late_checkout_fee' => 'decimal(19,4) DEFAULT NULL',
-			'source'            => "varchar(20) DEFAULT 'admin_manual'",
+			'early_checkin_fee'     => 'decimal(19,4) DEFAULT NULL',
+			'late_checkout_fee'     => 'decimal(19,4) DEFAULT NULL',
+			'early_checkin_allowed' => 'tinyint(1) DEFAULT NULL',
+			'late_checkout_allowed' => 'tinyint(1) DEFAULT NULL',
+			'source'                => "varchar(20) DEFAULT 'admin_manual'",
+		);
+
+		$ical_connections_table   = $wpdb->prefix . 'mhbo_ical_connections';
+		$ical_connections_columns = array(
+			'events_count' => 'int(11) DEFAULT 0',
+			'sync_token'   => 'varchar(255) DEFAULT NULL',
+		);
+
+		$pricing_rules_table   = $wpdb->prefix . 'mhbo_pricing_rules';
+		$pricing_rules_columns = array(
+			'type_id'   => 'mediumint(9) NOT NULL DEFAULT 0',
+			'rule_type' => "varchar(20) DEFAULT 'seasonal'",
+			'operation' => "varchar(20) DEFAULT 'increase'",
+			'priority'  => 'tinyint(4) DEFAULT 10',
+		);
+
+		$guests_table   = $wpdb->prefix . 'mhbo_guests';
+		$guests_columns = array(
+			'merged_into_guest_id' => 'mediumint(9) DEFAULT NULL',
+			'marketing_optin'      => 'tinyint(1) NOT NULL DEFAULT 1',
+			'marketing_groups'     => 'text DEFAULT NULL',
 		);
 
 self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 		self::ensure_table_columns_exist( $room_types_table, $room_types_columns );
 		self::ensure_table_columns_exist( $rooms_table, $rooms_columns );
 		self::ensure_table_columns_exist( $overrides_table, $overrides_columns );
+		self::ensure_table_columns_exist( $ical_connections_table, $ical_connections_columns );
+		self::ensure_table_columns_exist( $pricing_rules_table, $pricing_rules_columns );
+		self::ensure_table_columns_exist( $guests_table, $guests_columns );
 
 // Idempotent backfill of historical multi-room bookings sharing booking_token
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -350,6 +415,22 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 				     b.is_multi_room = 1
 				 WHERE b.multi_room_parent IS NULL OR b.multi_room_parent = ''",
 				$bookings_table,
+				$bookings_table
+			)
+		);
+
+		// Self-healing: Backfill total_gross and subtotal_net on pre-v2.4 bookings where only total_price was stored.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i
+				 SET total_gross = total_price,
+				     subtotal_net = CASE
+				         WHEN subtotal_net IS NULL OR subtotal_net = 0 THEN GREATEST(0, total_price - COALESCE(total_tax, 0))
+				         ELSE subtotal_net
+				     END
+				 WHERE total_price > 0
+				   AND (total_gross IS NULL OR total_gross = 0)",
 				$bookings_table
 			)
 		);
@@ -429,14 +510,8 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 
 		add_option( 'mhbo_additional_notification_email', '' );
 		add_option( 'mhbo_modal_enabled', 1 );
-		add_option( 'mhbo_prevent_same_day_turnover', 0 );
-		add_option( 'mhbo_confirmation_btn_enabled', 0 );
-		add_option( 'mhbo_confirmation_btn_text', 'Make Another Booking' );
-		add_option( 'mhbo_confirmation_btn_url', '' );
-		add_option( 'mhbo_orphan_gap_autocorrection', 0 );
-		add_option( 'mhbo_orphan_gap_min_stay', 1 );
 
-		// Children & Stay Limits Options (Core settings promoted to all tiers)
+// Children & Stay Limits Options (Core settings promoted to all tiers)
 		add_option( 'mhbo_children_enabled', 0 );
 		add_option( 'mhbo_global_min_stay', 0 );
 		add_option( 'mhbo_global_max_stay', 0 );
@@ -479,6 +554,7 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 
 		update_option( 'mhbo_version', MHBO_VERSION );
 		update_option( 'mhbo_db_version', MHBO_VERSION );
+		update_option( 'mhbo_schema_rev', 2 );
 
 		$current_tier = class_exists( 'MHBO\Core\Tier' ) ? \MHBO\Core\Tier::get_package_tier() : ( defined( 'MHBO_PRODUCT_TIER' ) ? MHBO_PRODUCT_TIER : 'free' );
 		update_option( 'mhbo_installed_tier', $current_tier );
@@ -492,14 +568,26 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 		// Ensure performance indexes exist from day 1 for new installs.
 		self::add_performance_indexes();
 
-		// Repair any data drift (Rule 13: maintain data integrity).
+// Repair any data drift (Rule 13: maintain data integrity).
 		self::repair_data_drift();
+
+		// One-time migration: encrypt legacy plaintext AI secrets and disable secret autoloading.
+		if ( class_exists( Security::class ) && method_exists( Security::class, 'maybe_migrate_legacy_secrets' ) ) {
+			Security::maybe_migrate_legacy_secrets();
+		}
 
 		// Cleanup inactive Pro crons on tier rollbacks/transitions downwards.
 		self::sync_tier_crons( $current_tier );
 
 		if ( class_exists( Plugin::class ) ) {
 			Plugin::ensure_cron_scheduled();
+		}
+
+		// Invalidate cached calendar and dashboard transients across activations, tier transitions, and version updates.
+		if ( class_exists( 'MHBO\Core\Cache' ) ) {
+			Cache::clear_dashboard_transients();
+			Cache::invalidate_table( Cache::TABLE_BOOKINGS );
+			Cache::invalidate_table( Cache::TABLE_CALENDAR_OVERRIDES );
 		}
 	}
 
@@ -511,63 +599,8 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 	 * @param string $new_version New version
 	 */
 	public static function migrate( string $old_version, string $new_version ): void {
-		// Run activate to ensure all tables and columns are up to date via dbDelta
+		// Run activate to ensure all tables, columns, indexes, options, and caches are up to date
 		self::activate();
-
-// Add tax options if they don't exist
-		add_option( 'mhbo_tax_mode', 'disabled' );
-		add_option( 'mhbo_tax_rate_accommodation', 0.00 );
-		add_option( 'mhbo_tax_rate_extras', 0.00 );
-		add_option( 'mhbo_tax_label', '[:en]VAT[:ro]TVA[:]' );
-		add_option( 'mhbo_tax_registration_number', '' );
-		add_option( 'mhbo_tax_display_frontend', 1 );
-		add_option( 'mhbo_tax_display_email', 1 );
-		add_option( 'mhbo_tax_rounding_mode', 'per_total' );
-		add_option( 'mhbo_tax_decimal_places', 2 );
-		add_option( 'mhbo_tax_zero_rate_label', '[:en]Zero Rate[:ro]Cotă Zero[:]' );
-
-// Cache Settings (for existing installations)
-		add_option( 'mhbo_cache_enabled', 1 );
-
-		// 2026 BP: Add updated_at column to bookings table for existing installations.
-		// Required for iCal LAST-MODIFIED timestamps and external platform sync conflict detection.
-		self::add_bookings_updated_at_column();
-
-		// Migrate iCal feeds to new connections table
-		self::migrate_ical_feeds_to_connections();
-
-add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 - requires user opt-in
-		// Core promoted options for existing installations
-		add_option( 'mhbo_hotel_timezone', '' );
-		add_option( 'mhbo_children_enabled', 0 );
-		add_option( 'mhbo_global_min_stay', 0 );
-		add_option( 'mhbo_global_max_stay', 0 );
-
-		// Default Amenities list for existing installations.
-		if ( false === get_option( 'mhbo_amenities_list' ) ) {
-			$default_amenities = array(
-				'wifi'      => 'Free WiFi',
-				'ac'        => 'Air Conditioning',
-				'tv'        => 'Smart TV',
-				'breakfast' => 'Breakfast Included',
-				'pool'      => 'Pool View',
-			);
-			update_option( 'mhbo_amenities_list', $default_amenities );
-		}
-
-		// Add new indexes for performance (for existing installations)
-		self::add_performance_indexes();
-
-		// Repair any data drift (Rule 13: maintain data integrity)
-		self::repair_data_drift();
-
-		// Invalidate cached calendar and dashboard transients across version transitions
-		if ( class_exists( 'MHBO\Core\Cache' ) ) {
-			Cache::clear_dashboard_transients();
-			Cache::invalidate_table( Cache::TABLE_BOOKINGS );
-			Cache::invalidate_table( Cache::TABLE_CALENDAR_OVERRIDES );
-		}
-
 		update_option( 'mhbo_db_version', $new_version );
 	}
 
@@ -741,17 +774,35 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Intentional schema migration using %i identifier placeholders.
 		switch ( $col_definition ) {
+			case 'tinyint(1) DEFAULT NULL':
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(1) DEFAULT NULL', $table_name, $col_name ) );
+				break;
 			case 'tinyint(1) DEFAULT 0':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(1) DEFAULT 0', $table_name, $col_name ) );
+				break;
+			case 'tinyint(1) NOT NULL DEFAULT 1':
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(1) NOT NULL DEFAULT 1', $table_name, $col_name ) );
 				break;
 			case 'tinyint(4) DEFAULT NULL':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(4) DEFAULT NULL', $table_name, $col_name ) );
 				break;
+			case 'tinyint(4) DEFAULT 1':
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(4) DEFAULT 1', $table_name, $col_name ) );
+				break;
+			case 'tinyint(4) DEFAULT 10':
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(4) DEFAULT 10', $table_name, $col_name ) );
+				break;
 			case 'tinyint(4) NOT NULL DEFAULT 0':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i tinyint(4) NOT NULL DEFAULT 0', $table_name, $col_name ) );
 				break;
+			case 'int(11) DEFAULT 0':
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i int(11) DEFAULT 0', $table_name, $col_name ) );
+				break;
 			case 'mediumint(9) DEFAULT NULL':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i mediumint(9) DEFAULT NULL', $table_name, $col_name ) );
+				break;
+			case 'mediumint(9) NOT NULL DEFAULT 0':
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i mediumint(9) NOT NULL DEFAULT 0', $table_name, $col_name ) );
 				break;
 			case 'mediumint(9) NOT NULL DEFAULT 1':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i mediumint(9) NOT NULL DEFAULT 1', $table_name, $col_name ) );
@@ -760,6 +811,7 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i decimal(19,4) DEFAULT NULL', $table_name, $col_name ) );
 				break;
 			case 'decimal(19,4) DEFAULT 0.0000':
+			case "decimal(19,4) DEFAULT '0.0000'":
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i decimal(19,4) DEFAULT 0.0000', $table_name, $col_name ) );
 				break;
 			case "decimal(19,4) NOT NULL DEFAULT '0.0000'":
@@ -767,6 +819,9 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 				break;
 			case 'decimal(7,4) DEFAULT 0.0000':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i decimal(7,4) DEFAULT 0.0000', $table_name, $col_name ) );
+				break;
+			case "varchar(10) DEFAULT 'en'":
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(10) DEFAULT %s', $table_name, $col_name, 'en' ) );
 				break;
 			case 'varchar(20) DEFAULT NULL':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(20) DEFAULT NULL', $table_name, $col_name ) );
@@ -789,8 +844,20 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 			case "varchar(20) DEFAULT 'admin_manual'":
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(20) DEFAULT %s', $table_name, $col_name, 'admin_manual' ) );
 				break;
+			case "varchar(20) DEFAULT 'seasonal'":
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(20) DEFAULT %s', $table_name, $col_name, 'seasonal' ) );
+				break;
+			case "varchar(20) DEFAULT 'increase'":
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(20) DEFAULT %s', $table_name, $col_name, 'increase' ) );
+				break;
 			case 'varchar(50) DEFAULT NULL':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(50) DEFAULT NULL', $table_name, $col_name ) );
+				break;
+			case "varchar(50) DEFAULT 'arrival'":
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(50) DEFAULT %s', $table_name, $col_name, 'arrival' ) );
+				break;
+			case "varchar(50) DEFAULT 'direct'":
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(50) DEFAULT %s', $table_name, $col_name, 'direct' ) );
 				break;
 			case 'varchar(64) DEFAULT NULL':
 				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN %i varchar(64) DEFAULT NULL', $table_name, $col_name ) );

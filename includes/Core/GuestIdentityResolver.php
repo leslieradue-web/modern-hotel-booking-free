@@ -66,7 +66,7 @@ class GuestIdentityResolver {
 		$raw_email        = (string) ( $booking_data['customer_email'] ?? '' );
 		$email_normalized = self::normalize_email( $raw_email );
 
-		if ( '' === $email_normalized ) {
+		if ( '' === $email_normalized || 'guest@pending.local' === $email_normalized || str_ends_with( $email_normalized, '@local.invalid' ) ) {
 			return 0;
 		}
 

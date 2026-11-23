@@ -30,6 +30,12 @@ final class Tier {
 	public const TIER_PRO     = 'pro';
 
 	/**
+	 * Canonical commercial URLs.
+	 */
+	public const PRICING_URL = 'https://modernhotelwp.com/pricing/';
+	public const ACCOUNT_URL = 'https://modernhotelwp.com/account/';
+
+	/**
 	 * Numeric rank for deterministic tier hierarchy comparison.
 	 */
 	public const ORDER = array(
@@ -61,7 +67,8 @@ final class Tier {
 		'license_system'            => self::TIER_STARTER,
 		'auto_updater'              => self::TIER_STARTER,
 
-		// Pro-only features (34 confirmed).
+		// Pro-only features (35 confirmed).
+		'early_late_checkout'       => self::TIER_PRO,
 		'deposits'                  => self::TIER_PRO,
 		'balance_payments'          => self::TIER_PRO,
 		'service_fee'               => self::TIER_PRO,
@@ -302,6 +309,25 @@ return $effective;
 	}
 
 	/**
+	 * Determine whether a gated feature is active in the current runtime.
+	 *
+	 * Enforces `has_feature()` in all production distributions and tier-scoped
+	 * unit tests while allowing legacy unit tests that do not configure
+	 * an explicit test package tier to test core calculation routines.
+	 *
+	 * @param string $feature Feature slug.
+	 * @return bool
+	 */
+	public static function is_feature_enabled( string $feature ): bool {
+		if ( self::has_feature( $feature ) ) {
+			return true;
+		}
+		$allow_unscoped_test = false;
+		
+		return $allow_unscoped_test;
+	}
+
+	/**
 	 * @param string $action Action slug.
 	 * @return bool
 	 */
@@ -341,6 +367,48 @@ return $effective;
 		}
 
 		return array_values( array_unique( $features ) );
+	}
+
+	/**
+	 * Get the canonical purchase/pricing URL.
+	 *
+	 * @return string
+	 */
+	public static function get_pricing_url(): string {
+		$url = self::PRICING_URL;
+		if ( function_exists( 'apply_filters' ) ) {
+			return (string) apply_filters( 'mhbo_pricing_url', $url );
+		}
+		return $url;
+	}
+
+	/**
+	 * Get the canonical customer account portal URL (renewals, upgrades, downloads).
+	 *
+	 * @return string
+	 */
+	public static function get_account_url(): string {
+		$url = self::ACCOUNT_URL;
+		if ( function_exists( 'apply_filters' ) ) {
+			return (string) apply_filters( 'mhbo_account_url', $url );
+		}
+		return $url;
+	}
+
+	/**
+	 * Resolve the context-aware upgrade/purchase/renewal URL for the active package and license state.
+	 *
+	 * @return string
+	 */
+	public static function get_upgrade_url(): string {
+		$url = self::TIER_STARTER === self::get_package_tier()
+			? self::get_account_url()
+			: self::get_pricing_url();
+
+if ( function_exists( 'apply_filters' ) ) {
+			return (string) apply_filters( 'mhbo_upgrade_url', $url );
+		}
+		return $url;
 	}
 
 	/**

@@ -20,11 +20,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 use MHBO\Core\Pricing;
 use MHBO\Core\HotelTime;
 use MHBO\Core\Money;
-use MHBO\Core\License;
 use MHBO\Core\Tax;
+use MHBO\Core\Tier;
 
 use function __;
 use function absint;
+use function sanitize_email;
 use function sanitize_text_field;
 use function strtotime;
 use function count;
@@ -123,31 +124,21 @@ return array(
 			);
 		}
 
-		$t_in  = strtotime( $check_in_raw );
-		$t_out = strtotime( $check_out_raw );
-
-		if ( ! $t_in || ! $t_out ) {
+		$range_valid = HotelTime::validate_date_range( $check_in_raw, $check_out_raw, true );
+		if ( is_wp_error( $range_valid ) ) {
 			return array(
 				'error'   => true,
-				'message' => 'Invalid date format provided. Use YYYY-MM-DD.',
+				'message' => $range_valid->get_error_message(),
 			);
 		}
-
 		$today_ymd = HotelTime::today();
-		$today     = strtotime( $today_ymd );
-		if ( $t_in < $today ) {
+		if ( $check_in_raw < $today_ymd ) {
 			return array(
 				'error'   => true,
 				'message' => 'Check-in date cannot be in the past.',
 			);
 		}
-
-		if ( $t_in >= $t_out ) {
-			return array(
-				'error'   => true,
-				'message' => 'Check-out date must be after check-in date.',
-			);
-		}
+		$nights_count = $range_valid;
 
 		$adults   = absint( $args['adults'] ?? 2 );
 		$children = absint( $args['children'] ?? 0 );
@@ -187,9 +178,8 @@ return array(
 		$child_ages = array();
 		$promo_code = '';
 
-$nights_count = (int) ( ( $t_out - $t_in ) / DAY_IN_SECONDS );
-
-		$extras = array();
+$extras      = array();
+		$stay_timing = null;
 
 // 2026 BP: Use calculate_booking_money for precise financial calculation
 		$calc = Pricing::calculate_booking_money( $room_id, $check_in_raw, $check_out_raw, $adults, $extras, $children, $child_ages );
@@ -204,17 +194,27 @@ $nights_count = (int) ( ( $t_out - $t_in ) / DAY_IN_SECONDS );
 
 		$daily_breakdown = array();
 		if ( isset( $calc['daily_prices'] ) && is_array( $calc['daily_prices'] ) ) {
-			$t_start = HotelTime::midnight( $check_in_raw );
 			foreach ( $calc['daily_prices'] as $i => $m ) {
-				$day_date                     = HotelTime::date( 'Y-m-d', $t_start + $i * DAY_IN_SECONDS );
+				$day_date                     = HotelTime::add_days( $check_in_raw, (int) $i );
 				$daily_breakdown[ $day_date ] = $m instanceof Money ? (float) $m->toDecimal() : (float) $m;
 			}
 		}
 
 		$discount_amount = 0.0;
+		$accom_ctx       = array(
+			'discount' => null,
+			'base'     => null,
+		);
 
-$subtotal = $calc['subtotal'] instanceof Money ? (float) $calc['subtotal']->toDecimal() : 0.0;
-		$total    = $calc['total'] instanceof Money ? (float) $calc['total']->toDecimal() : 0.0;
+$room_total_m     = ( isset( $calc['room_total'] ) && $calc['room_total'] instanceof Money ) ? $calc['room_total'] : Money::fromCents( 0, $currency );
+		$children_total_m = ( isset( $calc['children_total'] ) && $calc['children_total'] instanceof Money ) ? $calc['children_total'] : Money::fromCents( 0, $currency );
+		$extras_total_m   = ( isset( $calc['extras_total'] ) && $calc['extras_total'] instanceof Money ) ? $calc['extras_total'] : Money::fromCents( 0, $currency );
+		$service_fee_m    = ( isset( $calc['service_fee'] ) && $calc['service_fee'] instanceof Money ) ? $calc['service_fee'] : Money::fromCents( 0, $currency );
+		$total_money      = $calc['total'] instanceof Money ? $calc['total'] : Money::fromCents( 0, $currency );
+		$subtotal         = $calc['subtotal'] instanceof Money ? (float) $calc['subtotal']->toDecimal() : 0.0;
+		$total            = (float) $total_money->toDecimal();
+		$tax_enabled      = Tax::is_enabled();
+		$tax_mode         = $tax_enabled ? Tax::get_mode() : 'disabled';
 
 		$itemized = array(
 			'room_id'       => $room_id,
@@ -223,18 +223,28 @@ $subtotal = $calc['subtotal'] instanceof Money ? (float) $calc['subtotal']->toDe
 			'nights_count'  => $calc['nights'] ?? $nights_count,
 			'adults'        => $adults,
 			'children'      => $children,
+			'child_ages'    => $child_ages,
 			'currency'      => $currency,
 			'pricing'       => array(
-				'subtotal'        => $subtotal,
-				'discount_amount' => $discount_amount,
-				'coupon_code'     => $discount_amount > 0 ? $promo_code : '',
-				'tax_total'       => ( isset( $calc['tax']['totals']['total_tax'] ) && $calc['tax']['totals']['total_tax'] instanceof Money ) ? (float) $calc['tax']['totals']['total_tax']->toDecimal() : (float) ( $calc['tax']['tax_amount'] ?? 0.0 ),
-				'total_price'     => $total,
+				'room_total'        => (float) $room_total_m->toDecimal(),
+				'children_total'    => (float) $children_total_m->toDecimal(),
+				'extras_total'      => (float) $extras_total_m->toDecimal(),
+				'subtotal'          => $subtotal,
+				'service_fee'       => (float) $service_fee_m->toDecimal(),
+				'service_fee_label' => $service_fee_m->isPositive() ? (string) get_option( 'mhbo_service_fee_label', 'Service Fee' ) : '',
+				'discount_amount'   => $discount_amount,
+				'coupon_code'       => $discount_amount > 0 ? $promo_code : '',
+				'tax_total'         => ( isset( $calc['tax']['totals']['total_tax'] ) && $calc['tax']['totals']['total_tax'] instanceof Money ) ? (float) $calc['tax']['totals']['total_tax']->toDecimal() : (float) ( $calc['tax']['tax_amount'] ?? 0.0 ),
+				'tax_mode'          => $tax_mode,
+				'tax_label'         => $tax_enabled ? Tax::get_label() : '',
+				'is_vat'            => $tax_enabled && Tax::MODE_VAT === $tax_mode,
+				'total_price'       => $total,
+				'price_formatted'   => $total_money->format(),
 			),
 			'nightly_rates' => $daily_breakdown,
 		);
 
-		return $itemized;
+return $itemized;
 	}
 
 	/**
@@ -245,6 +255,6 @@ $subtotal = $calc['subtotal'] instanceof Money ? (float) $calc['subtotal']->toDe
 			return;
 		}
 
-		call_user_func( 'wp_register_ability', 'mhbo/get-price-breakdown', self::get_definition() );
+		\wp_register_ability( 'mhbo/get-price-breakdown', self::get_definition() );
 	}
 }

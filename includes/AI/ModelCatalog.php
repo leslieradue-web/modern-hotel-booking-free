@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use MHBO\Core\Security;
 use Throwable;
 use WordPress\AiClient\AiClient;
 
@@ -46,23 +47,35 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
-			'gemini-4-carbon'        => array(
-				'label'    => 'Gemini 4 Carbon (High-Intelligence Reasoning Flagship - GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'adaptive',
-			),
-			'gemini-4-argon'         => array(
-				'label'    => 'Gemini 4 Argon (Supreme Deep Reasoning & Coding Flagship - GA)',
-				'status'   => 'active',
-				'tools'    => true,
-				'thinking' => 'adaptive',
-			),
 			'gemini-3.7-flash'       => array(
-				'label'    => 'Gemini 3.7 Flash — Alias / High-Efficiency Workhorse (GA)',
+				'label'    => 'Gemini 3.7 Flash — Auto-Routing Alias Workhorse (GA)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
+			),
+			'gemini-3.6-flash'       => array(
+				'label'    => 'Gemini 3.6 Flash — Stable Production Workhorse (GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'gemini-3-flash-preview' => array(
+				'label'    => 'Gemini 3 Flash Preview (High-Availability / Computer Use)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'gemini-2.5-flash'       => array(
+				'label'    => 'Gemini 2.5 Flash — High-Availability Universal Workhorse (GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+			),
+			'gemini-2.5-flash-lite'  => array(
+				'label'    => 'Gemini 2.5 Flash-Lite — Ultra-Fast High-Availability Lite (GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
 			),
 			'gemini-3.5-flash-lite'  => array(
 				'label'    => 'Gemini 3.5 Flash-Lite — Ultra Budget (GA)',
@@ -70,27 +83,32 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'none',
 			),
-			'gemini-3-flash-preview' => array(
-				'label'    => 'Gemini 3 Flash Preview (Computer Use Preview)',
+			'gemini-4-neon'          => array(
+				'label'    => 'Gemini 4 Neon ⚡ (Frontier Coding & Agentic Workhorse - Paid)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'gemini-4-carbon'        => array(
+				'label'    => 'Gemini 4 Carbon (High-Intelligence Reasoning Flagship - Paid)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'gemini-4-argon'         => array(
+				'label'    => 'Gemini 4 Argon (Supreme Deep Reasoning & Coding Flagship - Paid)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
 			'gemini-3.1-pro-preview' => array(
-				'label'    => 'Gemini 3.1 Pro Preview (Reasoning Preview)',
+				'label'    => 'Gemini 3.1 Pro Preview (Reasoning Preview - Paid)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
-			'gemini-2.5-flash'       => array(
-				'label'    => 'Gemini 2.5 Flash — Retired (EOL Oct 2026)',
-				'status'   => 'retired',
-				'tools'    => true,
-				'thinking' => 'none',
-				'eol'      => '2026-10-20',
-			),
-			'gemini-2.5-flash-lite'  => array(
-				'label'    => 'Gemini 2.5 Flash-Lite — Retired (EOL Oct 2026)',
+			'gemini-2.5-pro'         => array(
+				'label'    => 'Gemini 2.5 Pro — Retired (EOL Oct 2026)',
 				'status'   => 'retired',
 				'tools'    => true,
 				'thinking' => 'none',
@@ -98,13 +116,27 @@ class ModelCatalog {
 			),
 		),
 		Client::PROVIDER_OPENAI     => array(
-			'gpt-6.1-sol'   => array(
-				'label'       => 'GPT-6.1 Sol ⚡ Recommended (Cost-Efficient Frontier - GA)',
+			'gpt-6.2-sol'   => array(
+				'label'       => 'GPT-6.2 Sol ⚡ Recommended (Balanced Frontier - GA)',
 				'status'      => 'active',
 				'tools'       => true,
 				'thinking'    => 'effort',
 				'api'         => 'responses',
 				'recommended' => true,
+			),
+			'gpt-6.2-astra' => array(
+				'label'    => 'GPT-6.2 Astra (Flagship Deep Reasoning & Coding - GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
+				'api'      => 'responses',
+			),
+			'gpt-6.1-sol'   => array(
+				'label'    => 'GPT-6.1 Sol (Cost-Efficient Frontier - GA)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
+				'api'      => 'responses',
 			),
 			'gpt-6-astra'   => array(
 				'label'    => 'GPT-6 Astra (Flagship Alignment & Deep Reasoning - GA)',
@@ -180,10 +212,10 @@ class ModelCatalog {
 				'thinking' => 'adaptive',
 			),
 			'claude-haiku-5-5'  => array(
-				'label'    => 'Claude Haiku 5.5 (Ultra-Fast Low-Latency Budget - GA)',
+				'label'    => 'Claude Haiku 5.5 (Ultra-Fast Low-Latency Adaptive - GA)',
 				'status'   => 'active',
 				'tools'    => true,
-				'thinking' => 'none',
+				'thinking' => 'adaptive',
 			),
 			'claude-haiku-5'    => array(
 				'label'    => 'Claude Haiku 5 (Previous-Gen Fast Budget)',
@@ -225,6 +257,18 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
+			'anthropic/claude-haiku-5.5'  => array(
+				'label'    => 'Claude Haiku 5.5 via OpenRouter (Fast Adaptive Budget)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
+			'google/gemini-4-neon'        => array(
+				'label'    => 'Gemini 4 Neon via OpenRouter (Frontier Coding & Agentic)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
 			'google/gemini-4-hydrogen'    => array(
 				'label'    => 'Gemini 4 Hydrogen via OpenRouter (Ultra-Fast Agentic)',
 				'status'   => 'active',
@@ -248,6 +292,18 @@ class ModelCatalog {
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'adaptive',
+			),
+			'openai/gpt-6.2-sol'          => array(
+				'label'    => 'GPT-6.2 Sol via OpenRouter (Balanced Frontier)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
+			),
+			'openai/gpt-6.2-astra'        => array(
+				'label'    => 'GPT-6.2 Astra via OpenRouter (Flagship Reasoning)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'effort',
 			),
 			'openai/gpt-6.1-sol'          => array(
 				'label'    => 'GPT-6.1 Sol via OpenRouter (Cost-Efficient Frontier)',
@@ -279,6 +335,12 @@ class ModelCatalog {
 				'tools'    => true,
 				'thinking' => 'adaptive',
 			),
+			'qwen/qwen3.8-27b'            => array(
+				'label'    => 'Qwen 3.8 27B via OpenRouter (Agentic & Multilingual)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'adaptive',
+			),
 			'qwen/qwen3.6-plus'           => array(
 				'label'    => 'Qwen 3.6 Plus via OpenRouter',
 				'status'   => 'active',
@@ -287,6 +349,12 @@ class ModelCatalog {
 			),
 			'meta-llama/llama-4-maverick' => array(
 				'label'    => 'Meta Llama 4 Maverick via OpenRouter',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
+			),
+			'meta-llama/llama-4-scout'    => array(
+				'label'    => 'Meta Llama 4 Scout via OpenRouter (Long-Context)',
 				'status'   => 'active',
 				'tools'    => true,
 				'thinking' => 'none',
@@ -305,6 +373,12 @@ class ModelCatalog {
 				'tools'       => true,
 				'thinking'    => 'none',
 				'recommended' => true,
+			),
+			'qwen3.8:27b'       => array(
+				'label'    => 'Qwen 3.8 27B (Local Frontier Agentic & Multilingual)',
+				'status'   => 'active',
+				'tools'    => true,
+				'thinking' => 'none',
 			),
 			'qwen3.6'           => array(
 				'label'    => 'Qwen 3.6 (Local Tool-Calling Workhorse)',
@@ -370,8 +444,9 @@ class ModelCatalog {
 			$discovered = get_transient( self::TRANSIENT_PREFIX . $provider );
 			if ( is_array( $discovered ) && array() !== $discovered ) {
 				foreach ( $discovered as $id => $meta ) {
-					if ( is_array( $meta ) ) {
-						$out[ (string) $id ] = (string) ( $meta['label'] ?? $id );
+					$id_str = (string) $id;
+					if ( is_array( $meta ) && ! self::is_non_chat_model_id( $id_str ) && ! self::is_retired_model_id( $id_str ) ) {
+						$out[ $id_str ] = (string) ( $meta['label'] ?? $id_str );
 					}
 				}
 				return $out;
@@ -508,7 +583,7 @@ class ModelCatalog {
 			return (string) $models[ $model ]['thinking'];
 		}
 
-		if ( Client::PROVIDER_ANTHROPIC === $provider && ! str_contains( $model, 'haiku' ) && ( str_contains( $model, '-5' ) || str_contains( $model, 'sonnet-5' ) || str_contains( $model, 'opus-5' ) || str_contains( $model, 'fable' ) ) ) {
+		if ( Client::PROVIDER_ANTHROPIC === $provider && ( ! str_contains( $model, 'haiku' ) || str_contains( $model, '5-5' ) || str_contains( $model, '5.5' ) ) && ( str_contains( $model, '-5' ) || str_contains( $model, 'sonnet-5' ) || str_contains( $model, 'opus-5' ) || str_contains( $model, 'fable' ) ) ) {
 			return 'adaptive';
 		}
 
@@ -516,7 +591,7 @@ class ModelCatalog {
 			return 'effort';
 		}
 
-		if ( Client::PROVIDER_GEMINI === $provider && ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'carbon' ) || str_contains( $model, 'hydrogen' ) || str_contains( $model, '3.8' ) || str_contains( $model, '3.7' ) || str_contains( $model, 'preview' ) ) ) {
+		if ( Client::PROVIDER_GEMINI === $provider && ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'neon' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'carbon' ) || str_contains( $model, 'hydrogen' ) || str_contains( $model, '3.8' ) || str_contains( $model, '3.7' ) || str_contains( $model, '3.6' ) || ( str_contains( $model, '3.5-flash' ) && ! str_contains( $model, 'lite' ) ) || str_contains( $model, 'preview' ) ) ) {
 			return 'adaptive';
 		}
 
@@ -524,7 +599,7 @@ class ModelCatalog {
 			if ( str_contains( $model, 'openai/' ) && ( str_contains( $model, 'gpt-5' ) || ( str_contains( $model, 'gpt-6' ) && ! str_contains( $model, 'luna' ) ) || str_contains( $model, 'o1' ) || str_contains( $model, 'o3' ) || str_contains( $model, 'o4' ) ) ) {
 				return 'effort';
 			}
-			if ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'carbon' ) || str_contains( $model, 'hydrogen' ) || str_contains( $model, 'gemini-3.8' ) || str_contains( $model, 'claude-sonnet-5' ) || str_contains( $model, 'claude-opus-5' ) || str_contains( $model, 'claude-fable' ) || str_contains( $model, 'deepseek-v4' ) || str_contains( $model, 'deepseek-r' ) ) {
+			if ( str_contains( $model, 'gemini-4' ) || str_contains( $model, 'neon' ) || str_contains( $model, 'argon' ) || str_contains( $model, 'carbon' ) || str_contains( $model, 'hydrogen' ) || str_contains( $model, 'gemini-3.8' ) || str_contains( $model, 'gemini-3.6' ) || str_contains( $model, 'claude-sonnet-5' ) || str_contains( $model, 'claude-opus-5' ) || str_contains( $model, 'claude-haiku-5.5' ) || str_contains( $model, 'claude-haiku-5-5' ) || str_contains( $model, 'claude-fable' ) || str_contains( $model, 'deepseek-v4' ) || str_contains( $model, 'deepseek-r' ) || str_contains( $model, 'qwen3.8' ) ) {
 				return 'adaptive';
 			}
 		}
@@ -580,13 +655,18 @@ class ModelCatalog {
 			$chain[] = $primary;
 		}
 
-		foreach ( $reliable as $m ) {
-			if ( $m !== $primary ) {
-				$chain[] = $m;
+		if ( array() !== $reliable ) {
+			foreach ( $reliable as $m ) {
+				if ( $m !== $primary ) {
+					$chain[] = $m;
+				}
 			}
+			// Skip already-failed/limit:0 models whenever healthy candidates remain in the pool.
+			return array_values( array_unique( $chain ) );
 		}
 
-		// Append recently failed models at the very end as a last resort
+		// Every model in the pool has a recent failure transient — retry primary first as last resort.
+		$chain[] = $primary;
 		foreach ( $unreliable as $m ) {
 			if ( ! in_array( $m, $chain, true ) ) {
 				$chain[] = $m;
@@ -597,13 +677,104 @@ class ModelCatalog {
 	}
 
 	/**
+	 * Determine whether a model ID represents a non-chat specialty endpoint
+	 * (TTS, image generation, music, transcription, robotics, research, embeddings, etc.)
+	 * that should be excluded from conversational chatbot model dropdowns.
+	 *
+	 * @param string $model_id Raw model identifier.
+	 * @return bool True when the model is non-chat specialty.
+	 */
+	public static function is_non_chat_model_id( string $model_id ): bool {
+		$lower = strtolower( trim( $model_id ) );
+		if ( '' === $lower ) {
+			return true;
+		}
+		$excluded_markers = array(
+			'-tts',
+			'-image',
+			'nano-banana',
+			'imagen',
+			'lyria',
+			'transcribe',
+			'robotics',
+			'deep-research',
+			'computer-use',
+			'veo',
+			'embedding',
+			'aqa',
+			'whisper',
+			'dall-e',
+			'sora',
+			'moderation',
+			'realtime',
+			'gpt-live',
+			'audio-preview',
+			'omni-moderation',
+		);
+		foreach ( $excluded_markers as $marker ) {
+			if ( str_contains( $lower, $marker ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Determine whether a model ID is retired or past EOL and must be excluded from discovery.
+	 *
+	 * @param string $model_id Raw model identifier.
+	 * @return bool True when retired or past EOL.
+	 */
+	public static function is_retired_model_id( string $model_id ): bool {
+		$lower = strtolower( trim( $model_id ) );
+		if ( '' === $lower ) {
+			return true;
+		}
+		$today = gmdate( 'Y-m-d' );
+		foreach ( self::SEED as $models ) {
+			if ( isset( $models[ $model_id ] ) ) {
+				$meta = $models[ $model_id ];
+				if ( 'retired' === $meta['status'] ) {
+					return true;
+				}
+				if ( array_key_exists( 'eol', $meta ) && $meta['eol'] <= $today ) {
+					return true;
+				}
+				return false;
+			}
+		}
+
+		$retired_exact = array(
+			'gemini-3.1-flash-lite-preview',
+			'gemini-2.5-flash-lite-preview',
+			'gemini-3-pro-preview',
+			'claude-3-5-sonnet-20240620',
+			'claude-3-5-sonnet',
+			'gpt-5.4',
+			'gpt-5.4-mini',
+		);
+		if ( in_array( $lower, $retired_exact, true ) ) {
+			return true;
+		}
+
+		foreach ( array( 'gemini-1.5-', 'gemini-2.0-', 'claude-3-5-sonnet', 'gpt-4o' ) as $prefix ) {
+			if ( str_starts_with( $lower, $prefix ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Query the provider's live models endpoint and update the cache.
 	 *
-	 * @param string $provider Provider identifier.
-	 * @param string $api_key  API credentials.
+	 * @param string $provider   Provider identifier.
+	 * @param string $api_key    API credentials.
+	 * @param string $custom_url Optional custom endpoint / Ollama loopback URL override.
 	 * @return array{success:bool,count:int,models:array<string,string>,message:string}
 	 */
-	public static function discover_live_models( string $provider, string $api_key ): array {
+	public static function discover_live_models( string $provider, string $api_key, string $custom_url = '' ): array {
 		if ( '' === $api_key && Client::PROVIDER_WP_CONNECTOR !== $provider && Client::PROVIDER_OLLAMA !== $provider ) {
 			return array(
 				'success' => false,
@@ -621,8 +792,9 @@ class ModelCatalog {
 			$res      = wp_safe_remote_get(
 				$endpoint,
 				array(
-					'timeout' => 20,
-					'headers' => array(
+					'timeout'     => 20,
+					'redirection' => 0,
+					'headers'     => array(
 						'Content-Type'   => 'application/json',
 						'x-goog-api-key' => $api_key,
 					),
@@ -653,7 +825,7 @@ class ModelCatalog {
 					$methods = implode( ',', (array) ( $m['supportedGenerationMethods'] ?? array() ) );
 					if ( str_contains( $methods, 'generateContent' ) ) {
 						$raw_id = str_replace( 'models/', '', (string) ( $m['name'] ?? '' ) );
-						if ( '' !== $raw_id ) {
+						if ( '' !== $raw_id && ! self::is_non_chat_model_id( $raw_id ) && ! self::is_retired_model_id( $raw_id ) ) {
 							$found[ $raw_id ] = array(
 								'label'  => (string) ( $m['displayName'] ?? $raw_id ) . ' (' . $raw_id . ')',
 								'status' => 'active',
@@ -669,8 +841,9 @@ class ModelCatalog {
 			$res      = wp_safe_remote_get(
 				$endpoint,
 				array(
-					'timeout' => 20,
-					'headers' => array(
+					'timeout'     => 20,
+					'redirection' => 0,
+					'headers'     => array(
 						'Content-Type'  => 'application/json',
 						'Authorization' => 'Bearer ' . $api_key,
 					),
@@ -699,7 +872,7 @@ class ModelCatalog {
 			if ( isset( $data['data'] ) && is_array( $data['data'] ) ) {
 				foreach ( $data['data'] as $m ) {
 					$raw_id = (string) ( $m['id'] ?? '' );
-					if ( '' !== $raw_id ) {
+					if ( '' !== $raw_id && ! self::is_non_chat_model_id( $raw_id ) && ! self::is_retired_model_id( $raw_id ) ) {
 						$found[ $raw_id ] = array(
 							'label'  => (string) ( $m['name'] ?? $raw_id ),
 							'status' => 'active',
@@ -713,8 +886,9 @@ class ModelCatalog {
 			$res      = wp_safe_remote_get(
 				$endpoint,
 				array(
-					'timeout' => 20,
-					'headers' => array(
+					'timeout'     => 20,
+					'redirection' => 0,
+					'headers'     => array(
 						'Content-Type'      => 'application/json',
 						'x-api-key'         => $api_key,
 						'anthropic-version' => '2023-06-01',
@@ -744,7 +918,7 @@ class ModelCatalog {
 			if ( isset( $data['data'] ) && is_array( $data['data'] ) ) {
 				foreach ( $data['data'] as $m ) {
 					$raw_id = (string) ( $m['id'] ?? '' );
-					if ( '' !== $raw_id ) {
+					if ( '' !== $raw_id && ! self::is_non_chat_model_id( $raw_id ) && ! self::is_retired_model_id( $raw_id ) ) {
 						$found[ $raw_id ] = array(
 							'label'  => (string) ( $m['display_name'] ?? $raw_id ) . ' (' . $raw_id . ')',
 							'status' => 'active',
@@ -754,7 +928,7 @@ class ModelCatalog {
 				}
 			}
 		} elseif ( Client::PROVIDER_OLLAMA === $provider ) {
-			$raw_url = (string) get_option( 'mhbo_ai_custom_url', 'http://localhost:11434' );
+			$raw_url = '' !== trim( $custom_url ) ? trim( $custom_url ) : (string) get_option( 'mhbo_ai_custom_url', 'http://localhost:11434' );
 			if ( '' === $raw_url ) {
 				$raw_url = 'http://localhost:11434';
 			}
@@ -763,18 +937,33 @@ class ModelCatalog {
 			if ( '' === $base_url ) {
 				$base_url = 'http://localhost:11434';
 			}
-			// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get -- Intentional local loopback request to local Ollama daemon.
-			$res = wp_remote_get(
-				$base_url . '/api/tags',
-				array( 'timeout' => 10 )
-			);
+			$parsed_ollama = Security::is_loopback_url( $base_url ) ? wp_parse_url( $base_url ) : false;
+			if ( is_array( $parsed_ollama ) && ! empty( $parsed_ollama['scheme'] ) && ! empty( $parsed_ollama['host'] ) ) {
+				$o_scheme = strtolower( (string) $parsed_ollama['scheme'] );
+				$o_host   = (string) $parsed_ollama['host'];
+				if ( str_contains( $o_host, ':' ) && ! str_starts_with( $o_host, '[' ) ) {
+					$o_host = '[' . $o_host . ']';
+				}
+				$o_port   = isset( $parsed_ollama['port'] ) ? ':' . (int) $parsed_ollama['port'] : ':11434';
+				$tags_url = $o_scheme . '://' . $o_host . $o_port . '/api/tags';
+				// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_remote_get_wp_remote_get -- Intentional validated local loopback request to local Ollama daemon.
+				$res = wp_remote_get(
+					$tags_url,
+					array(
+						'timeout'     => 10,
+						'redirection' => 0,
+					)
+				);
+			} else {
+				$res = new \WP_Error( 'mhbo_unsafe_ollama_url', 'Invalid Ollama loopback URL.' );
+			}
 
 			if ( is_wp_error( $res ) ) {
 				return array(
 					'success' => false,
 					'count'   => 0,
 					'models'  => array(),
-					'message' => $res->get_error_message(),
+					'message' => __( 'Unable to reach local Ollama daemon on the configured loopback port.', 'modern-hotel-booking' ),
 				);
 			}
 
@@ -792,14 +981,24 @@ class ModelCatalog {
 				}
 			}
 		} elseif ( Client::PROVIDER_CUSTOM === $provider ) {
-			$raw_url  = (string) get_option( 'mhbo_ai_custom_url', '' );
+			$raw_url  = '' !== trim( $custom_url ) ? trim( $custom_url ) : (string) get_option( 'mhbo_ai_custom_url', '' );
 			$base_url = rtrim( esc_url_raw( $raw_url, array( 'http', 'https' ) ), '/' );
-			$base_url = (string) preg_replace( '#/chat/completions$#i', '', $base_url );
-			if ( '' !== $base_url ) {
+			$parsed_c = '' !== $base_url ? wp_parse_url( $base_url ) : false;
+			if ( is_array( $parsed_c ) && ! empty( $parsed_c['scheme'] ) && ! empty( $parsed_c['host'] ) ) {
+				$c_host   = (string) $parsed_c['host'];
+				if ( str_contains( $c_host, ':' ) && ! str_starts_with( $c_host, '[' ) ) {
+					$c_host = '[' . $c_host . ']';
+				}
+				$c_port   = isset( $parsed_c['port'] ) ? ':' . (int) $parsed_c['port'] : '';
+				$c_path   = rtrim( (string) preg_replace( '#/chat/completions$#i', '', (string) ( $parsed_c['path'] ?? '' ) ), '/' );
+				$base_url = strtolower( (string) $parsed_c['scheme'] ) . '://' . $c_host . $c_port . $c_path;
+			}
+			if ( '' !== $base_url && Security::is_safe_url( $base_url ) ) {
 				$endpoint = str_ends_with( $base_url, '/models' ) ? $base_url : $base_url . '/models';
-				$res      = wp_safe_remote_get(
+				$res      = Security::safe_remote_request(
 					$endpoint,
 					array(
+						'method'  => 'GET',
 						'timeout' => 20,
 						'headers' => array(
 							'Content-Type'  => 'application/json',
@@ -812,7 +1011,7 @@ class ModelCatalog {
 						'success' => false,
 						'count'   => 0,
 						'models'  => array(),
-						'message' => $res->get_error_message(),
+						'message' => __( 'Unable to query custom OpenAI-compatible models endpoint.', 'modern-hotel-booking' ),
 					);
 				}
 				$data = json_decode( wp_remote_retrieve_body( $res ), true );
@@ -851,11 +1050,13 @@ class ModelCatalog {
 										}
 									}
 									$mid           = $m->getId();
-									$found[ $mid ] = array(
-										'label'  => $m->getName() . ' [' . $pid . ']',
-										'status' => 'active',
-										'tools'  => $supports_tools,
-									);
+									if ( ! self::is_non_chat_model_id( $mid ) && ! self::is_retired_model_id( $mid ) ) {
+										$found[ $mid ] = array(
+											'label'  => $m->getName() . ' [' . $pid . ']',
+											'status' => 'active',
+											'tools'  => $supports_tools,
+										);
+									}
 								}
 							}
 						}

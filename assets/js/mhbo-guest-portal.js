@@ -28,6 +28,7 @@
 		var lookupView = document.getElementById('mhbo-portal-lookup-view');
 		var detailsView = document.getElementById('mhbo-portal-details-view');
 		var currentBooking = null;
+		var bookingAbortController = null;
 
 		var i18n = window.mhbo_portal_i18n || {};
 		function __t(key, fallback) {
@@ -45,6 +46,8 @@
 
 		function showAlert(msg, isSuccess) {
 			if (!alertEl) return;
+			alertEl.setAttribute('role', isSuccess ? 'status' : 'alert');
+			alertEl.setAttribute('aria-live', isSuccess ? 'polite' : 'assertive');
 			alertEl.textContent = msg;
 			alertEl.className = 'mhbo-portal-alert ' + (isSuccess ? 'mhbo-portal-alert-success' : 'mhbo-portal-alert-error');
 			alertEl.style.display = 'block';
@@ -59,10 +62,17 @@
 
 		function fetchBooking(params) {
 			hideAlert();
+			if (bookingAbortController) {
+				bookingAbortController.abort();
+			}
+			bookingAbortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+			var reqController = bookingAbortController;
 			var query = new URLSearchParams(params).toString();
-			fetch(restUrl + '/booking?' + query, {
-				method: 'GET'
-			})
+			var fetchOpts = { method: 'GET' };
+			if (reqController) {
+				fetchOpts.signal = reqController.signal;
+			}
+			fetch(restUrl + '/booking?' + query, fetchOpts)
 			.then(function(res) {
 				return res.json().then(function(data) {
 					return { ok: res.ok, status: res.status, data: data };
@@ -71,6 +81,9 @@
 				});
 			})
 			.then(function(result) {
+				if (reqController && reqController.signal.aborted) {
+					return;
+				}
 				var data = result.data;
 				if (result.ok && data && data.success && data.booking) {
 					try {
@@ -85,9 +98,55 @@
 				}
 			})
 			.catch(function(err) {
+				if (err && err.name === 'AbortError') {
+					return;
+				}
 				console.error('MHBO Guest Portal Fetch Error:', err);
 				showAlert(__t('network_error', 'Network error while looking up reservation. Please try again.'), false);
+			})
+			.finally(function() {
+				if (bookingAbortController === reqController) {
+					bookingAbortController = null;
+				}
 			});
+		}
+
+		function getPortalLookupParams() {
+			if ( currentBooking && currentBooking.booking_token ) {
+				return { token: currentBooking.booking_token };
+			}
+			return {
+				booking_id: currentBooking ? currentBooking.booking_id : '',
+				email: currentBooking ? currentBooking.customer_email : ''
+			};
+		}
+
+		function requestAndOpenBalanceLink( payScope, fallbackBtn ) {
+			if ( ! currentBooking ) return;
+			if ( fallbackBtn ) {
+				fallbackBtn.setAttribute( 'aria-busy', 'true' );
+			}
+			var payload = Object.assign( {}, getPortalLookupParams(), { pay_scope: payScope || 'room' } );
+			fetch( restUrl + '/balance-link', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify( payload )
+			} )
+			.then( function( res ) { return res.json(); } )
+			.then( function( data ) {
+				if ( fallbackBtn ) fallbackBtn.removeAttribute( 'aria-busy' );
+				if ( data && data.success && data.url ) {
+					window.location.href = data.url;
+				} else {
+					showAlert( ( data && data.message ) || __t( 'balance_link_error', 'Unable to open payment link. Please contact the hotel.' ), false );
+				}
+			} )
+			.catch( function() {
+				if ( fallbackBtn ) fallbackBtn.removeAttribute( 'aria-busy' );
+				showAlert( __t( 'network_error', 'Network error while opening payment link. Please try again.' ), false );
+			} );
 		}
 
 		function renderDetails(b) {
@@ -95,7 +154,11 @@
 
 			// Broadcast authenticated guest context to AI Concierge and save in session (Law 65)
 			try {
-				sessionStorage.setItem('mhbo_portal_token', b.booking_token || '');
+				if ( b.booking_token ) {
+					sessionStorage.setItem('mhbo_portal_token', b.booking_token);
+				} else {
+					sessionStorage.removeItem('mhbo_portal_token');
+				}
 				sessionStorage.setItem('mhbo_portal_booking_id', b.booking_id || '');
 				window.mhboGuestPortalContext = b;
 				window.dispatchEvent(new CustomEvent('mhbo_guest_logged_in', { detail: b }));
@@ -215,20 +278,26 @@
 				};
 			}
 
-			// Share / Copy Portal Link
+			// Share / Copy Portal Link (only available when authenticated via magic link token)
 			var shareBtn = document.getElementById('mhbo-qa-share-btn');
 			var shareText = document.getElementById('mhbo-qa-share-text');
-			if (shareBtn && b.booking_token) {
-				shareBtn.onclick = function() {
-					var shareUrl = window.location.origin + window.location.pathname + '?token=' + encodeURIComponent(b.booking_token);
-					if (navigator.clipboard) {
-						navigator.clipboard.writeText(shareUrl);
-						if (shareText) shareText.textContent = __t('copied', 'Copied!');
-						setTimeout(function() {
-							if (shareText) shareText.textContent = 'Share Portal Link';
-						}, 2000);
-					}
-				};
+			if (shareBtn) {
+				if (b.booking_token) {
+					shareBtn.style.display = 'inline-flex';
+					shareBtn.onclick = function() {
+						var shareUrl = window.location.origin + window.location.pathname + '?token=' + encodeURIComponent(b.booking_token);
+						if (navigator.clipboard) {
+							navigator.clipboard.writeText(shareUrl);
+							if (shareText) shareText.textContent = __t('copied', 'Copied!');
+							setTimeout(function() {
+								if (shareText) shareText.textContent = 'Share Portal Link';
+							}, 2000);
+						}
+					};
+				} else {
+					shareBtn.style.display = 'none';
+					shareBtn.onclick = null;
+				}
 			}
 
 			// Multi-Room Group Reservation Banner
@@ -243,8 +312,17 @@
 						const groupRemaining = b.group_remaining_balance !== undefined ? parseFloat(b.group_remaining_balance) : parseFloat(b.balance_remaining || 0);
 						if (groupRemaining > 0.001 && b.group_balance_payment_url) {
 							groupPayBtn.href = b.group_balance_payment_url;
+							groupPayBtn.onclick = null;
+							groupPayBtn.style.display = 'inline-flex';
+						} else if (groupRemaining > 0.001 && b.group_can_pay_balance) {
+							groupPayBtn.href = '#mhbo-pay-group-balance';
+							groupPayBtn.onclick = function(e) {
+								e.preventDefault();
+								requestAndOpenBalanceLink('group', groupPayBtn);
+							};
 							groupPayBtn.style.display = 'inline-flex';
 						} else {
+							groupPayBtn.onclick = null;
 							groupPayBtn.style.display = 'none';
 						}
 					}
@@ -284,9 +362,33 @@
 			var coEl = document.getElementById('mhbo-res-checkout');
 			if (coEl) coEl.textContent = b.check_out_formatted;
 			var ciTimeEl = document.getElementById('mhbo-res-checkin-time');
-			if (ciTimeEl) ciTimeEl.textContent = b.check_in_time || '14:00';
+			if (ciTimeEl) {
+				ciTimeEl.textContent = b.check_in_time || '14:00';
+				syncPortalTimeBadge(ciTimeEl, b.is_early_checkin ? { cls: 'is-early', text: 'Early Check-in' } : (b.is_checkin_shifted ? { cls: 'is-shifted', text: 'Adjusted for Turnaround' } : null), b.is_request_only);
+			}
 			var coTimeEl = document.getElementById('mhbo-res-checkout-time');
-			if (coTimeEl) coTimeEl.textContent = b.check_out_time || '11:00';
+			if (coTimeEl) {
+				coTimeEl.textContent = b.check_out_time || '11:00';
+				syncPortalTimeBadge(coTimeEl, b.is_late_checkout ? { cls: 'is-late', text: 'Late Check-out' } : null, b.is_request_only);
+			}
+			function syncPortalTimeBadge(targetEl, primaryBadge, isRequestOnly) {
+				var parent = targetEl.parentElement;
+				if (!parent) return;
+				var existing = parent.querySelectorAll('.mhbo-portal-time-badge');
+				existing.forEach(function(n) { n.remove(); });
+				if (primaryBadge) {
+					var pill = document.createElement('span');
+					pill.className = 'mhbo-portal-time-badge ' + primaryBadge.cls;
+					pill.textContent = primaryBadge.text;
+					parent.appendChild(pill);
+					if (isRequestOnly) {
+						var req = document.createElement('span');
+						req.className = 'mhbo-portal-time-badge is-request';
+						req.textContent = 'Subject to confirmation';
+						parent.appendChild(req);
+					}
+				}
+			}
 			var nightsEl = document.getElementById('mhbo-res-nights');
 			if (nightsEl) nightsEl.textContent = b.nights;
 			var nameEl = document.getElementById('mhbo-res-name');
@@ -509,18 +611,6 @@
 			var printHotelContact = document.getElementById('mhbo-print-hotel-contact');
 			if (printHotelContact) printHotelContact.textContent = (b.hotel_phone ? b.hotel_phone + ' | ' : '') + (b.hotel_email || '');
 
-			// Promotional Coupon Breakdown
-			var couponRow = document.getElementById('mhbo-res-coupon-row');
-			var couponCodeEl = document.getElementById('mhbo-res-coupon-code');
-			var couponDiscountEl = document.getElementById('mhbo-res-coupon-discount');
-			if (b.coupon_code && b.coupon_discount_formatted) {
-				if (couponCodeEl) couponCodeEl.textContent = b.coupon_code.toUpperCase();
-				if (couponDiscountEl) couponDiscountEl.textContent = '-' + b.coupon_discount_formatted;
-				if (couponRow) couponRow.style.display = 'flex';
-			} else if (couponRow) {
-				couponRow.style.display = 'none';
-			}
-
 			// Available Vouchers / Promo Codes (Pro)
 			var vouchersCard = document.getElementById('mhbo-res-vouchers-card');
 			var vouchersList = document.getElementById('mhbo-res-vouchers-list');
@@ -572,8 +662,17 @@
 			if (balanceCta && balanceBtn) {
 				if (b.balance_remaining > 0.001 && b.balance_payment_url) {
 					balanceBtn.href = b.balance_payment_url;
+					balanceBtn.onclick = null;
+					balanceCta.style.display = 'block';
+				} else if (b.balance_remaining > 0.001 && b.can_pay_balance) {
+					balanceBtn.href = '#mhbo-pay-balance';
+					balanceBtn.onclick = function(e) {
+						e.preventDefault();
+						requestAndOpenBalanceLink('room', balanceBtn);
+					};
 					balanceCta.style.display = 'block';
 				} else {
+					balanceBtn.onclick = null;
 					balanceCta.style.display = 'none';
 				}
 			}
@@ -764,7 +863,7 @@
 					if (cancelBtn) cancelBtn.focus();
 					if (data && data.success) {
 						showAlert(data.message, true);
-						fetchBooking({ token: currentBooking.booking_token });
+						fetchBooking(getPortalLookupParams());
 					} else {
 						showAlert(data.message || __t('cancel_failed', 'Failed to process cancellation request.'), false);
 					}
@@ -815,6 +914,8 @@
 
 		function showModError(msg) {
 			if (!modError) return;
+			modError.setAttribute('role', 'alert');
+			modError.setAttribute('aria-live', 'assertive');
 			modError.textContent = msg;
 			modError.style.display = 'block';
 		}
@@ -915,7 +1016,7 @@
 						modModal.style.display = 'none';
 						if (modBtn) modBtn.focus();
 						showAlert(data.message, true);
-						fetchBooking({ token: currentBooking.booking_token });
+						fetchBooking(getPortalLookupParams());
 					} else {
 						showModError(data && data.message ? data.message : __t('modify_failed', 'Failed to update stay.'));
 					}
@@ -937,6 +1038,8 @@
 
 		function showProfError(msg) {
 			if (!editProfError) return;
+			editProfError.setAttribute('role', 'alert');
+			editProfError.setAttribute('aria-live', 'assertive');
 			editProfError.textContent = msg;
 			editProfError.style.display = 'block';
 		}
@@ -957,7 +1060,13 @@
 					var phoneInput = document.getElementById('mhbo-profile-phone');
 					if (phoneInput) phoneInput.value = currentBooking.customer_phone || '';
 					var emailInput = document.getElementById('mhbo-profile-email');
-					if (emailInput) emailInput.value = currentBooking.customer_email || '';
+					if (emailInput) {
+						emailInput.value = currentBooking.customer_email || '';
+						emailInput.readOnly = !currentBooking.booking_token;
+						emailInput.title = currentBooking.booking_token
+							? ''
+							: __t('email_requires_token', 'Open the portal from your confirmation email link to change your email address.');
+					}
 					var arrivalInput = document.getElementById('mhbo-profile-arrival');
 					if (arrivalInput) arrivalInput.value = currentBooking.arrival_time || '';
 					var reqInput = document.getElementById('mhbo-profile-requests');

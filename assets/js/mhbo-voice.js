@@ -146,7 +146,10 @@
 					return;
 				}
 				let msg = s.voiceError || 'Voice input error.';
-				if ( event.error === 'not-allowed' ) {
+				if (
+					event.error === 'not-allowed' ||
+					event.error === 'service-not-allowed'
+				) {
 					msg =
 						s.voicePermissionDenied ||
 						'Microphone access was denied. Please allow microphone access in your browser settings.';
@@ -262,8 +265,9 @@
 		/**
 		 * Speak text via TTS (browser SpeechSynthesis or ElevenLabs Pro).
 		 * @param {string} text
+		 * @param {string} [ttsToken=''] Single-use server-minted TTS token for authenticated reply audio.
 		 */
-		speak( text ) {
+		speak( text, ttsToken = '' ) {
 			const clean = this._cleanTextForSpeech( text );
 			if ( ! clean ) {
 				return;

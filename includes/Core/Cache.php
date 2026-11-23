@@ -320,12 +320,15 @@ class Cache {
 			delete_transient( 'mhbo_widget_today_bookings_' . $today );
 			delete_transient( 'mhbo_widget_ops_' . $today );
 			delete_transient( 'mhbo_widget_ops_v260_' . $today );
+			delete_transient( 'mhbo_widget_ops_v270_' . $today );
 			delete_transient( 'mhbo_widget_pro_' . $today );
+			delete_transient( 'mhbo_widget_pro_v270_' . $today );
 			
 			// Full Dashboard Stats
 			delete_transient( 'mhbo_dashboard_stats_' . $today );
 			delete_transient( 'mhbo_dashboard_ops_' . $today );
 			delete_transient( 'mhbo_dashboard_ops_v260_' . $today );
+			delete_transient( 'mhbo_dashboard_ops_v270_' . $today );
 
 			// Legacy transients (Cleanup)
 			delete_transient( 'mhbo_dashboard_earned_revenue_' . $today );

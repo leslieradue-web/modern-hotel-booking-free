@@ -19,7 +19,7 @@ class Upsell {
         if ('' !== $description) {
             echo '<p>' . esc_html($description) . '</p>';
         }
-        echo '<p><a href="' . esc_url('https://startmysuccess.com/modern-hotel-booking-wordpress-plugin/') . '" target="_blank" rel="noopener noreferrer" class="button button-primary">' . esc_html__('Learn More About Pro', 'modern-hotel-booking') . '</a></p>';
+        echo '<p><a href="' . esc_url('https://modernhotelwp.com/pricing/') . '" target="_blank" rel="noopener noreferrer" class="button button-primary">' . esc_html__('Learn More About Pro', 'modern-hotel-booking') . '</a></p>';
         if (class_exists(AdminUI::class)) {
             AdminUI::render_card_end();
         } else {

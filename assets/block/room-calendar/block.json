@@ -1,7 +1,7 @@
 {
     "apiVersion": 3,
     "name": "modern-hotel-booking/room-calendar",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "title": "Hotel: Room Calendar",
     "category": "hotel-booking",
     "icon": "calendar-alt",
@@ -21,10 +21,17 @@
         "roomId": {
             "type": "number",
             "default": 0
+        },
+        "showTitle": {
+            "type": "boolean",
+            "default": true
+        },
+        "showBadge": {
+            "type": "boolean",
+            "default": true
         }
     },
     "supports": {
-        "interactivity": true,
         "html": false,
         "anchor": true,
         "color": {
@@ -44,7 +51,6 @@
     },
     "editorScript": "file:./block.js",
     "editorStyle": "file:./block.css",
-    "viewScriptModule": "file:./view.js",
     "style": [
         "mhbo-flatpickr-css",
         "mhbo-calendar-style"

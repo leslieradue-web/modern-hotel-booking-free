@@ -18,6 +18,7 @@ namespace MHBO\AI\Abilities;
 
 use MHBO\Business\Info;
 use MHBO\Core\Pricing;
+use MHBO\Core\Tier;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -160,27 +161,8 @@ class GetBusinessCard {
 
 		// ── Deposit Policy ──────────────────────────────────────────
 		if ( 'all' === $section || 'deposit' === $section ) {
-			if ( get_option( 'mhbo_deposits_enabled', 0 ) ) {
-				$dep_type  = (string) get_option( 'mhbo_deposit_type', 'percentage' );
-				$dep_value = (float) get_option( 'mhbo_deposit_value', 20 );
-				$non_r     = (bool) get_option( 'mhbo_deposit_non_refundable', 0 );
-
-				$label = match ( $dep_type ) {
-					'first_night' => __( 'First night\'s rate', 'modern-hotel-booking' ),
-					'fixed'       => sprintf( '%s %s', number_format( $dep_value, 2 ), Pricing::get_currency_code() ),
-					default       => sprintf( '%d%% of total', (int) $dep_value ),
-				};
-
-				$result['deposit'] = array(
-					'required'       => true,
-					'type'           => $dep_type,
-					'value'          => $dep_value,
-					'label'          => $label,
-					'non_refundable' => $non_r,
-				);
-			} else {
-				$result['deposit'] = array( 'required' => false );
-			}
+			$result['deposit'] = array( 'required' => false );
+			
 		}
 
 		// ── Meta ────────────────────────────────────────────────────
@@ -219,6 +201,6 @@ class GetBusinessCard {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/get-business-card', self::get_definition() );
+		\wp_register_ability( 'mhbo/get-business-card', self::get_definition() );
 	}
 }

@@ -133,6 +133,6 @@ class HotelInfo {
 			return;
 		}
 		$def = self::get_definition();
-		call_user_func( 'wp_register_ability', 'mhbo/get-hotel-info', $def );
+		\wp_register_ability( 'mhbo/get-hotel-info', $def );
 	}
 }

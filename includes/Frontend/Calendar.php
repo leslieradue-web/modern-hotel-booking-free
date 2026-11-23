@@ -7,7 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use MHBO\Api\RestApi;
-use MHBO\Core\Cache;
 use MHBO\Core\HotelTime;
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
@@ -230,6 +229,7 @@ class Calendar {
 					),
 					'inline_modal' => (int) get_option( 'mhbo_modal_enabled', 1 ) === 1,
 					'current_lang' => $current_lang,
+					'hotel_today'  => HotelTime::today(),
 				)
 			);
 		}
@@ -258,6 +258,119 @@ class Calendar {
 	}
 
 	/**
+	 * Retrieve per-room frontend display settings (title & badge visibility).
+	 *
+	 * @param int $room_id Room ID.
+	 * @return array{show_title: bool, show_badge: bool}
+	 */
+	public static function get_room_display_settings( int $room_id ): array {
+		$defaults = array(
+			'show_title' => true,
+			'show_badge' => true,
+		);
+		if ( $room_id <= 0 ) {
+			return $defaults;
+		}
+		$all = get_option( 'mhbo_room_display_opts', array() );
+		if ( ! is_array( $all ) || ! isset( $all[ $room_id ] ) || ! is_array( $all[ $room_id ] ) ) {
+			return $defaults;
+		}
+		$entry = $all[ $room_id ];
+		return array(
+			'show_title' => ! array_key_exists( 'show_title', $entry ) || (bool) $entry['show_title'],
+			'show_badge' => ! array_key_exists( 'show_badge', $entry ) || (bool) $entry['show_badge'],
+		);
+	}
+
+	/**
+	 * Retrieve per-room-type frontend display settings (title & badge visibility).
+	 *
+	 * @param int $type_id Room Type ID.
+	 * @return array{show_title: bool, show_badge: bool}
+	 */
+	public static function get_room_type_display_settings( int $type_id ): array {
+		$defaults = array(
+			'show_title' => true,
+			'show_badge' => true,
+		);
+		if ( $type_id <= 0 ) {
+			return $defaults;
+		}
+		$all = get_option( 'mhbo_room_type_display_opts', array() );
+		if ( ! is_array( $all ) || ! isset( $all[ $type_id ] ) || ! is_array( $all[ $type_id ] ) ) {
+			return $defaults;
+		}
+		$entry = $all[ $type_id ];
+		return array(
+			'show_title' => ! array_key_exists( 'show_title', $entry ) || (bool) $entry['show_title'],
+			'show_badge' => ! array_key_exists( 'show_badge', $entry ) || (bool) $entry['show_badge'],
+		);
+	}
+
+	/**
+	 * Resolve effective title and badge visibility combining global settings,
+	 * room type settings, physical room settings, and shortcode/block attributes.
+	 *
+	 * @param int       $room_id         Physical room ID (0 for aggregated/category view).
+	 * @param int       $type_id         Room type ID (0 if not specified).
+	 * @param bool|null $attr_show_title Explicit shortcode/block show_title flag (null if omitted).
+	 * @param bool|null $attr_show_badge Explicit shortcode/block show_badge flag (null if omitted).
+	 * @param bool      $is_booking_page Whether rendered via [mhbo_booking_form] / booking page.
+	 * @return array{show_title: bool, show_badge: bool}
+	 */
+	public static function resolve_calendar_display_flags(
+		int $room_id = 0,
+		int $type_id = 0,
+		?bool $attr_show_title = null,
+		?bool $attr_show_badge = null,
+		bool $is_booking_page = false
+	): array {
+		$resolved_type_id = $type_id;
+		if ( $room_id > 0 && $resolved_type_id <= 0 ) {
+			$pdata = Pricing::get_room_pricing_data( $room_id );
+			if ( $pdata && isset( $pdata->type_id ) ) {
+				$resolved_type_id = (int) $pdata->type_id;
+			}
+		}
+
+		if ( $room_id > 0 && ! $is_booking_page ) {
+			$global_title = (int) get_option( 'mhbo_calendar_show_title', 1 ) === 1;
+			$global_badge = (int) get_option( 'mhbo_calendar_show_badge', 1 ) === 1;
+		} elseif ( $is_booking_page ) {
+			$global_title = (int) get_option( 'mhbo_booking_show_title', 1 ) === 1;
+			$global_badge = (int) get_option( 'mhbo_booking_show_badge', 1 ) === 1;
+		} else {
+			$global_title = (int) get_option( 'mhbo_calendar_show_title', 1 ) === 1 && (int) get_option( 'mhbo_booking_show_title', 1 ) === 1;
+			$global_badge = (int) get_option( 'mhbo_calendar_show_badge', 1 ) === 1 && (int) get_option( 'mhbo_booking_show_badge', 1 ) === 1;
+		}
+
+		$type_opts = self::get_room_type_display_settings( $resolved_type_id );
+		$room_opts = self::get_room_display_settings( $room_id );
+
+		$eff_title = $global_title && $type_opts['show_title'] && $room_opts['show_title'] && ( false !== $attr_show_title );
+		$eff_badge = $global_badge && $type_opts['show_badge'] && $room_opts['show_badge'] && ( false !== $attr_show_badge );
+
+		return array(
+			'show_title' => $eff_title,
+			'show_badge' => $eff_badge,
+		);
+	}
+
+	/**
+	 * Parse an optional boolean shortcode attribute into true, false, or null (omitted).
+	 *
+	 * @param array<string, mixed> $atts Attribute map.
+	 * @param string               $key  Attribute key.
+	 * @return bool|null
+	 */
+	public static function parse_optional_bool_attr( array $atts, string $key ): ?bool {
+		if ( ! array_key_exists( $key, $atts ) || '' === trim( (string) $atts[ $key ] ) ) {
+			return null;
+		}
+		return ! in_array( strtolower( trim( (string) $atts[ $key ] ) ), array( 'no', 'false', '0', 'off' ), true );
+	}
+
+	/**
 	 * Render the shortcode.
 	 *
 	 * @param array<string, mixed>|string|false $atts Shortcode attributes.
@@ -267,8 +380,11 @@ class Calendar {
 		$atts_array = is_array( $atts ) ? $atts : array();
 		$raw_id     = $atts_array['room_id'] ?? $atts_array['roomId'] ?? $atts_array['id'] ?? 0;
 		$room_id    = absint( $raw_id );
+		$type_id    = absint( $atts_array['type_id'] ?? $atts_array['typeId'] ?? 0 );
+		$show_title = self::parse_optional_bool_attr( $atts_array, 'show_title' );
+		$show_badge = self::parse_optional_bool_attr( $atts_array, 'show_badge' );
 
-		if ( ! $room_id ) {
+		if ( ! $room_id && ! $type_id ) {
 			return '<p>' . esc_html( I18n::get_label( 'label_calendar_no_id' ) ) . '</p>';
 		}
 
@@ -285,7 +401,7 @@ class Calendar {
 			);
 		}
 
-		return self::render_unified_view( $room_id );
+		return self::render_unified_view( $room_id, $show_title, $type_id, $show_badge, false );
 	}
 
 	/**
@@ -359,11 +475,21 @@ class Calendar {
 
 	/**
 	 * Render the unified calendar view (used by Shortcode, Widget, and Block).
-	 * 
-	 * @param int $room_id Room ID to display (0 for aggregated view).
+	 *
+	 * @param int       $room_id         Room ID to display (0 for aggregated view).
+	 * @param bool|null $show_title      Whether to render the header title (null falls back to settings).
+	 * @param int       $type_id         Optional room type ID pre-selection filter when $room_id = 0.
+	 * @param bool|null $show_badge      Whether to render the header badge (null falls back to settings).
+	 * @param bool      $is_booking_page Whether rendered inside the primary booking form flow.
 	 * @return string HTML content.
 	 */
-	public static function render_unified_view( int $room_id = 0 ): string {
+	public static function render_unified_view(
+		int $room_id = 0,
+		?bool $show_title = null,
+		int $type_id = 0,
+		?bool $show_badge = null,
+		bool $is_booking_page = false
+	): string {
 		global $wpdb;
 
 		// 1. Check if ANY physical rooms exist in the system
@@ -393,7 +519,10 @@ class Calendar {
 			}
 		}
 
-		// 2. If a specific room_id is requested, verify that specific room exists
+		// 2. Resolve header title & badge for specific room ($room_id > 0), category ($type_id > 0), or general booking calendar
+		$room_header_title = '';
+		$room_header_badge = '';
+		$resolved_type_id  = $type_id;
 		if ( $room_id > 0 ) {
 			$room_pricing_data = Pricing::get_room_pricing_data( $room_id );
 			if ( ! $room_pricing_data ) {
@@ -413,7 +542,50 @@ class Calendar {
 					'</div>';
 				}
 			}
+
+			if ( isset( $room_pricing_data->type_id ) && $resolved_type_id <= 0 ) {
+				$resolved_type_id = (int) $room_pricing_data->type_id;
+			}
+			$decoded_type_name = trim( (string) I18n::decode( (string) ( $room_pricing_data->type_name ?? '' ) ) );
+			$decoded_room_num  = trim( (string) I18n::decode( (string) ( $room_pricing_data->room_number ?? '' ) ) );
+			$lower_fn          = static fn( string $s ): string => function_exists( 'mb_strtolower' ) ? mb_strtolower( $s, 'UTF-8' ) : strtolower( $s );
+			$room_label        = I18n::get_label( 'label_room' );
+			$room_num_label    = I18n::get_label( 'label_room_number' );
+			$has_room_prefix   = '' !== $decoded_room_num && (
+				str_starts_with( $lower_fn( $decoded_room_num ), 'room' )
+				|| ( '' !== $room_label && str_starts_with( $lower_fn( $decoded_room_num ), $lower_fn( $room_label ) ) )
+			);
+			if ( '' !== $decoded_type_name ) {
+				$room_header_title = $decoded_type_name;
+				if ( '' !== $decoded_room_num && $lower_fn( $decoded_room_num ) !== $lower_fn( $decoded_type_name ) ) {
+					$room_header_badge = $has_room_prefix ? $decoded_room_num : trim( $room_num_label . ' ' . $decoded_room_num );
+				}
+			} elseif ( '' !== $decoded_room_num ) {
+				$room_header_title = $has_room_prefix ? $decoded_room_num : trim( $room_label . ' ' . $decoded_room_num );
+			}
+		} elseif ( $type_id > 0 ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Primary key lookup for category header.
+			$type_row = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT name, max_adults FROM {$wpdb->prefix}mhbo_room_types WHERE id = %d",
+					$type_id
+				)
+			);
+			if ( $type_row ) {
+				$room_header_title = trim( (string) I18n::decode( (string) ( $type_row->name ?? '' ) ) );
+				$max_adults        = max( 1, (int) ( $type_row->max_adults ?? 2 ) );
+				$room_header_badge = sprintf( I18n::get_label( 'label_max_guests' ), $max_adults );
+			}
 		}
+
+		if ( '' === $room_header_title && 0 === $room_id ) {
+			$room_header_title = I18n::get_label( 'label_booking_page_title' );
+			$room_header_badge = I18n::get_label( 'label_booking_page_badge' );
+		}
+
+		$display_flags  = self::resolve_calendar_display_flags( $room_id, $resolved_type_id, $show_title, $show_badge, $is_booking_page );
+		$eff_show_title = $display_flags['show_title'];
+		$eff_show_badge = $display_flags['show_badge'];
 
 		// Ensure assets are loaded
 		self::enqueue_assets();
@@ -424,26 +596,22 @@ class Calendar {
 		// Flag to control whether pricing should be shown in the calendar UI.
 		// Room-specific calendars (room_id > 0) show prices, aggregated views (room_id = 0) do not.
 		$show_pricing = ( $room_id > 0 );
-		// Interactivity API (WP 6.5+) fallback
-		$is_interactive = function_exists( 'wp_interactivity_state' );
-		if ( $is_interactive ) {
-			wp_interactivity_state(
-				'modern-hotel-booking',
-				array(
-					'roomId'    => $room_id,
-					'showPrice' => $show_pricing,
-				)
-			);
-		}
 		?>
 		<div class="mhbo-calendar-container mhbo-calendar-wrapper"
-		<?php
-		if ( $is_interactive ) :
-			?>
-			data-wp-interactive="modern-hotel-booking"<?php endif; ?> data-room-id="<?php echo esc_attr( (string) $room_id ); ?>"
+			data-room-id="<?php echo esc_attr( (string) $room_id ); ?>"
 			data-show-price="<?php echo esc_attr( $show_pricing ? '1' : '0' ); ?>"
 			data-modal-mode="<?php echo esc_attr( ( $room_id > 0 && (int) get_option( 'mhbo_modal_enabled', 1 ) === 1 ) ? '1' : '0' ); ?>"
 			data-action-url="<?php echo esc_url( $action_url ); ?>">
+			<?php if ( ( $eff_show_title && '' !== $room_header_title ) || ( $eff_show_badge && '' !== $room_header_badge ) ) : ?>
+				<div class="mhbo-calendar-header">
+					<?php if ( $eff_show_title && '' !== $room_header_title ) : ?>
+						<h2 class="mhbo-calendar-room-title"><?php echo esc_html( $room_header_title ); ?></h2>
+					<?php endif; ?>
+					<?php if ( $eff_show_badge && '' !== $room_header_badge ) : ?>
+						<span class="mhbo-calendar-room-badge"><?php echo esc_html( $room_header_badge ); ?></span>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 			<div class="mhbo-calendar-guide">
 				<?php echo esc_html( I18n::get_label( 'label_select_check_in' ) ); ?>
 			</div>
@@ -475,6 +643,7 @@ class Calendar {
 					<?php Shortcode::render_url_hidden_inputs( $action_url ); ?>
 					<input type="hidden" name="mhbo_nonce" value="<?php echo esc_attr( wp_create_nonce( 'mhbo_auto_action' ) ); ?>">
 					<input type="hidden" name="room_id" value="<?php echo esc_attr( (string) $room_id ); ?>">
+					<input type="hidden" name="type_id" class="mhbo-cal-type-id" value="<?php echo esc_attr( (string) $type_id ); ?>">
 					<input type="hidden" name="check_in" class="mhbo-cal-check-in">
 					<input type="hidden" name="check_out" class="mhbo-cal-check-out">
 					<!-- For aggregated view, total price is just an estimate/starting from -->
@@ -508,7 +677,6 @@ class Calendar {
 							</div>
 						<?php else : ?>
 							<!-- Room Type and Guests selections are deliberately deferred to the subsequent pages -->
-							<input type="hidden" name="type_id" class="mhbo-cal-type-id" value="0">
 							<input type="hidden" name="guests" class="mhbo-cal-guests" value="2">
 							
 						<?php endif; ?>
@@ -532,8 +700,9 @@ class Calendar {
 			// BP 2026: DOM Preloading for Zero-Latency Initialization.
 			// Fetch the payload natively for single-room and aggregated views to avoid the first AJAX roundtrip.
 			if ( $room_id >= 0 && class_exists( '\MHBO\Api\RestApi' ) ) {
-				$current_year  = (int) wp_date( 'Y' );
-				$current_month = (int) wp_date( 'm' );
+				$hotel_now     = HotelTime::now();
+				$current_year  = (int) $hotel_now->format( 'Y' );
+				$current_month = (int) $hotel_now->format( 'm' );
 
 				// Replicate the transient logic to avoid generating it if already cached
 				$initial_days   = HotelTime::get_initial_calendar_days();

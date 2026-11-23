@@ -129,10 +129,17 @@ class RoomDetails {
 		$display_price = (float) $price_money->toDecimal();
 
 		$amenities = array();
-		if ( isset( $type->amenities ) && $type->amenities ) {
-			$a = maybe_unserialize( $type->amenities );
-			if ( is_array( $a ) ) {
-				$amenities = $a;
+		if ( isset( $type->amenities ) && is_string( $type->amenities ) && '' !== $type->amenities ) {
+			$decoded = json_decode( $type->amenities, true );
+			if ( is_array( $decoded ) ) {
+				foreach ( $decoded as $item ) {
+					if ( is_scalar( $item ) ) {
+						$sanitized = sanitize_text_field( (string) $item );
+						if ( '' !== $sanitized ) {
+							$amenities[] = $sanitized;
+						}
+					}
+				}
 			}
 		}
 
@@ -162,6 +169,6 @@ class RoomDetails {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/get-room-details', self::get_definition() );
+		\wp_register_ability( 'mhbo/get-room-details', self::get_definition() );
 	}
 }

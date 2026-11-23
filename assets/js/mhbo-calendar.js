@@ -37,6 +37,83 @@
 		return Math.min( 120, getMaxAdvanceDays() );
 	}
 
+	function getHotelTodayDate() {
+		const todayStr =
+			typeof mhbo_calendar !== 'undefined' && mhbo_calendar.hotel_today
+				? mhbo_calendar.hotel_today
+				: '';
+		if ( /^\d{4}-\d{2}-\d{2}$/.test( todayStr ) ) {
+			const parts = todayStr.split( '-' ).map( Number );
+			return new Date( parts[ 0 ], parts[ 1 ] - 1, parts[ 2 ] );
+		}
+		const local = new Date();
+		local.setHours( 0, 0, 0, 0 );
+		return local;
+	}
+
+	function addHotelDays( baseDate, days ) {
+		return new Date(
+			baseDate.getFullYear(),
+			baseDate.getMonth(),
+			baseDate.getDate() + days
+		);
+	}
+
+	function formatStayCountMessage(
+		template,
+		count,
+		fallbackSingular,
+		fallbackPlural
+	) {
+		const num = parseInt( count, 10 );
+		if ( ! template ) {
+			const fb = num === 1 ? fallbackSingular : fallbackPlural;
+			return fb.replace( '%d', num ).replace( '%1$d', num );
+		}
+		let msg = String( template )
+			.replace( '%d', num )
+			.replace( '%1$d', num );
+		if ( num === 1 ) {
+			const i18nNight =
+				typeof mhbo_calendar !== 'undefined' &&
+				mhbo_calendar.i18n &&
+				mhbo_calendar.i18n.night
+					? mhbo_calendar.i18n.night
+					: 'night';
+			const i18nNights =
+				typeof mhbo_calendar !== 'undefined' &&
+				mhbo_calendar.i18n &&
+				mhbo_calendar.i18n.nights
+					? mhbo_calendar.i18n.nights
+					: 'nights';
+			if (
+				i18nNights &&
+				i18nNight &&
+				i18nNights.toLowerCase() !== i18nNight.toLowerCase()
+			) {
+				const escaped = i18nNights.replace(
+					/[.*+?^${}()|[\]\\]/g,
+					'\\$&'
+				);
+				const re = new RegExp(
+					'(\\b1\\s+)' + escaped + '\\b',
+					'i'
+				);
+				msg = msg.replace( re, ( _m, prefix ) => {
+					const replacement =
+						msg.indexOf( i18nNights ) !== -1
+							? i18nNight
+							: i18nNight.toLowerCase();
+					return prefix + replacement;
+				} );
+			}
+			msg = msg.replace( /\b(1\s+)nights\b/gi, ( _m, prefix ) => {
+				return prefix + 'night';
+			} );
+		}
+		return msg;
+	}
+
 	// Debug logger - only logs when mhbo_calendar.debug is true or localStorage flag is set
 	const debugLog = ( function () {
 		const isDebug =
@@ -62,7 +139,11 @@
 	if ( ! document.documentElement.dataset.mhboTooltipTouchAttached ) {
 		const dismissTooltip = function ( e ) {
 			if ( ! e.target.closest( '.mhbo-calendar-inline' ) ) {
-				tooltip.classList.remove( 'mhbo-visible', 'mhbo-tooltip-warn' );
+				tooltip.classList.remove(
+					'mhbo-visible',
+					'mhbo-tooltip-warn',
+					'mhbo-tooltip-solo'
+				);
 				const constraint = tooltip.querySelector(
 					'.mhbo-tooltip-constraint'
 				);
@@ -131,11 +212,22 @@
 				const minStayReasonDates = new Set(); // Track dates whose reasonData came from dynamic minStay pre-filtering
 				const minStayStatusDates = new Set(); // Track dates whose bookingStatusData came from dynamic minStay pre-filtering
 				const ctaRestrictedDates = new Set(); // Track available nights restricted to arrival (CTA)
+				const ctdBlockedCheckIns = new Set(); // Track available nights dead-ended by Closed to Departure (CTD)
 				const rawChangeoverData = {}; // Preserve server changeover status before dead-gap suppression
 				let pendingCheckIn = null; // Track the first date clicked to detect backwards selection
 				const rawDisabledDates = []; // Track backend disabled dates (ignoring dynamic min-stay blocks)
 				let isHydrated = false;
 				let isHydrating = false;
+				let calendarAbortController = null;
+				let hydrationAbortController = null;
+
+				if ( errorBox ) {
+					errorBox.setAttribute( 'role', 'alert' );
+					errorBox.setAttribute( 'aria-live', 'assertive' );
+				}
+				if ( selectionBox ) {
+					selectionBox.setAttribute( 'aria-live', 'polite' );
+				}
 
 				function scheduleHydration( offsetDays, totalDays ) {
 					if (
@@ -162,22 +254,35 @@
 					if ( isHydrated || isHydrating || limit <= 0 ) {
 						return;
 					}
+					if ( hydrationAbortController ) {
+						hydrationAbortController.abort();
+					}
+					hydrationAbortController =
+						typeof AbortController !== 'undefined'
+							? new AbortController()
+							: null;
+					const reqController = hydrationAbortController;
 					isHydrating = true;
+					const hotelToday = getHotelTodayDate();
 					const params = new URLSearchParams( {
 						room_id: roomId,
-						year: new Date().getFullYear(),
-						month: new Date().getMonth() + 1,
+						year: hotelToday.getFullYear(),
+						month: hotelToday.getMonth() + 1,
 						offset_days: offset,
 						days_limit: limit,
 					} );
+					const fetchOpts = {
+						method: 'GET',
+						headers: {
+							Accept: 'application/json',
+						},
+					};
+					if ( reqController ) {
+						fetchOpts.signal = reqController.signal;
+					}
 					fetch(
 						mhbo_calendar.rest_url + '?' + params.toString(),
-						{
-							method: 'GET',
-							headers: {
-								Accept: 'application/json',
-							},
-						}
+						fetchOpts
 					)
 						.then( ( res ) => {
 							if ( ! res.ok ) {
@@ -186,6 +291,9 @@
 							return res.json();
 						} )
 						.then( ( data ) => {
+							if ( reqController && reqController.signal.aborted ) {
+								return;
+							}
 							isHydrating = false;
 							if (
 								Array.isArray( data ) &&
@@ -206,11 +314,19 @@
 							}
 						} )
 						.catch( ( err ) => {
+							if ( err && err.name === 'AbortError' ) {
+								return;
+							}
 							isHydrating = false;
 							debugLog(
 								'Progressive Hydration Error:',
 								err ? err.message : err
 							);
+						} )
+						.finally( () => {
+							if ( hydrationAbortController === reqController ) {
+								hydrationAbortController = null;
+							}
 						} );
 				}
 
@@ -378,22 +494,39 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					minStayReasonDates.clear();
 					minStayStatusDates.clear();
 					ctaRestrictedDates.clear();
+					ctdBlockedCheckIns.clear();
 				}
 
 				function verifyCacheState( currentHash, initialDays ) {
+					if ( calendarAbortController ) {
+						calendarAbortController.abort();
+					}
+					calendarAbortController =
+						typeof AbortController !== 'undefined'
+							? new AbortController()
+							: null;
+					const reqController = calendarAbortController;
+					const hotelToday = getHotelTodayDate();
 					const params = new URLSearchParams( {
 						room_id: roomId,
-						year: new Date().getFullYear(),
-						month: new Date().getMonth() + 1,
+						year: hotelToday.getFullYear(),
+						month: hotelToday.getMonth() + 1,
 						offset_days: 0,
 						days_limit: initialDays || getInitialCalendarDays(),
 					} );
-					fetch( mhbo_calendar.rest_url + '?' + params.toString(), {
+					const fetchOpts = {
 						method: 'GET',
 						headers: {
 							Accept: 'application/json',
 						},
-					} )
+					};
+					if ( reqController ) {
+						fetchOpts.signal = reqController.signal;
+					}
+					fetch(
+						mhbo_calendar.rest_url + '?' + params.toString(),
+						fetchOpts
+					)
 						.then( ( response ) => {
 							if ( ! response.ok ) {
 								throw new Error(
@@ -412,7 +545,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							return response.json();
 						} )
 						.then( ( data ) => {
-							if ( ! data ) {
+							if ( ! data || ( reqController && reqController.signal.aborted ) ) {
 								return;
 							}
 							// Cache mismatch! Silent hot-swap of availability
@@ -448,28 +581,52 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							}
 						} )
 						.catch( ( err ) => {
+							if ( err && err.name === 'AbortError' ) {
+								return;
+							}
 							debugLog(
 								'REST Verification Error:',
 								err ? err.message : err
 							);
+						} )
+						.finally( () => {
+							if ( calendarAbortController === reqController ) {
+								calendarAbortController = null;
+							}
 						} );
 				}
 
 				function fetchCalendarData() {
+					if ( calendarAbortController ) {
+						calendarAbortController.abort();
+					}
+					calendarAbortController =
+						typeof AbortController !== 'undefined'
+							? new AbortController()
+							: null;
+					const reqController = calendarAbortController;
 					const initialDays = getInitialCalendarDays();
+					const hotelToday = getHotelTodayDate();
 					const params = new URLSearchParams( {
 						room_id: roomId,
-						year: new Date().getFullYear(),
-						month: new Date().getMonth() + 1,
+						year: hotelToday.getFullYear(),
+						month: hotelToday.getMonth() + 1,
 						offset_days: 0,
 						days_limit: initialDays,
 					} );
-					fetch( mhbo_calendar.rest_url + '?' + params.toString(), {
+					const fetchOpts = {
 						method: 'GET',
 						headers: {
 							Accept: 'application/json',
 						},
-					} )
+					};
+					if ( reqController ) {
+						fetchOpts.signal = reqController.signal;
+					}
+					fetch(
+						mhbo_calendar.rest_url + '?' + params.toString(),
+						fetchOpts
+					)
 						.then( ( response ) => {
 							if ( ! response.ok ) {
 								throw new Error(
@@ -479,6 +636,9 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							return response.json();
 						} )
 						.then( ( data ) => {
+							if ( reqController && reqController.signal.aborted ) {
+								return;
+							}
 							if (
 								data &&
 								Array.isArray( data ) &&
@@ -497,11 +657,19 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							}
 						} )
 						.catch( ( err ) => {
+							if ( err && err.name === 'AbortError' ) {
+								return;
+							}
 							debugLog(
 								'REST Error:',
 								err ? err.message : 'Network error'
 							);
 							renderFlatpickr();
+						} )
+						.finally( () => {
+							if ( calendarAbortController === reqController ) {
+								calendarAbortController = null;
+							}
 						} );
 				}
 
@@ -730,6 +898,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					} );
 					minStayStatusDates.clear();
 					ctaRestrictedDates.clear();
+					ctdBlockedCheckIns.clear();
 
 					data.forEach( ( item ) => {
 						if (
@@ -887,8 +1056,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					// Pre-filter: Disable check-in dates that mathematically cannot satisfy minStay/CTA/CTD requirements.
 					const isAggregated =
 						Object.keys( freeRoomsData ).length > 0;
-					const todayNow = new Date();
-					todayNow.setHours( 0, 0, 0, 0 );
+					const todayNow = getHotelTodayDate();
 					const todayStr = formatLocalDate( todayNow );
 
 					const invalidCheckIns = [];
@@ -935,6 +1103,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							}
 
 							const achievableMins = [];
+							let anyRoomHitCtd = false;
 							startRooms.forEach( ( rid ) => {
 								const reqMin = Math.max(
 									1,
@@ -997,6 +1166,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 											foundMinForRoom = candidateNights;
 											break;
 										}
+										anyRoomHitCtd = true;
 									}
 								}
 
@@ -1007,6 +1177,9 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 
 							if ( achievableMins.length === 0 ) {
 								invalidCheckIns.push( checkInStr );
+								if ( anyRoomHitCtd ) {
+									ctdBlockedCheckIns.add( checkInStr );
+								}
 							} else {
 								validCheckIns.push( checkInStr );
 								const minAchievable = Math.min(
@@ -1026,6 +1199,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							);
 							const maxSearch = minRequired + 14;
 							let foundValidNights = null;
+							let hitCtdBlock = false;
 
 							for ( let j = 0; j < maxSearch; j++ ) {
 								const nextNightDate = new Date(
@@ -1075,11 +1249,15 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 										foundValidNights = candidateNights;
 										break;
 									}
+									hitCtdBlock = true;
 								}
 							}
 
 							if ( foundValidNights === null ) {
 								invalidCheckIns.push( checkInStr );
+								if ( hitCtdBlock ) {
+									ctdBlockedCheckIns.add( checkInStr );
+								}
 							} else {
 								validCheckIns.push( checkInStr );
 								if ( foundValidNights > minRequired ) {
@@ -1163,14 +1341,19 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								mhbo_calendar.i18n.reason_cta ||
 								mhbo_calendar.i18n.api_err_cta ||
 								'Closed to Arrival';
+						} else if ( ctdBlockedCheckIns.has( checkInStr ) ) {
+							reasonData[ checkInStr ] =
+								mhbo_calendar.i18n.reason_ctd ||
+								mhbo_calendar.i18n.api_err_ctd ||
+								'Closed to Departure';
 						} else {
 							const minRequired = minStayData[ checkInStr ] || 2;
-							const baseReason =
-								mhbo_calendar.i18n.api_err_min_stay ||
-								'Minimum stay is %d nights.';
-							reasonData[ checkInStr ] = baseReason
-								.replace( '%d', minRequired )
-								.replace( '%1$d', minRequired );
+							reasonData[ checkInStr ] = formatStayCountMessage(
+								mhbo_calendar.i18n.api_err_min_stay,
+								minRequired,
+								'Minimum stay is %d night.',
+								'Minimum stay is %d nights.'
+							);
 						}
 						minStayReasonDates.add( checkInStr );
 
@@ -1210,8 +1393,11 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					picker = flatpickr( inlineContainer, {
 						inline: true,
 						mode: 'range',
-						minDate: 'today',
-						maxDate: new Date().fp_incr( getMaxAdvanceDays() ), // Limit selectable dates to advance booking window
+						minDate: getHotelTodayDate(),
+						maxDate: addHotelDays(
+							getHotelTodayDate(),
+							getMaxAdvanceDays()
+						), // Limit selectable dates to advance booking window
 						dateFormat: 'Y-m-d',
 						disable: disabledDates,
 						disableMobile: true,
@@ -1438,16 +1624,17 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 												'en',
 											{ month: 'short', day: 'numeric' }
 										);
-									const base =
-										mhbo_calendar.i18n.api_err_min_stay ||
-										'Minimum stay is %d nights.';
+									const minErrMsg = formatStayCountMessage(
+										mhbo_calendar.i18n.api_err_min_stay,
+										minRequired,
+										'Minimum stay is %d night.',
+										'Minimum stay is %d nights.'
+									);
 									const hint =
 										mhbo_calendar.i18n.min_stay_hint ||
 										'Please select %s or later as your check-out date.';
 									const msg =
-										base
-											.replace( '%d', minRequired )
-											.replace( '%1$d', minRequired ) +
+										minErrMsg +
 										' ' +
 										hint
 											.replace( '%s', earliestStr )
@@ -1466,16 +1653,17 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 										document.documentElement.lang || 'en',
 										{ month: 'short', day: 'numeric' }
 									);
-									const base =
-										mhbo_calendar.i18n.api_err_max_stay ||
-										'Maximum stay is %d nights.';
+									const maxErrMsg = formatStayCountMessage(
+										mhbo_calendar.i18n.api_err_max_stay,
+										maxAllowed,
+										'Maximum stay is %d night.',
+										'Maximum stay is %d nights.'
+									);
 									const hint =
 										mhbo_calendar.i18n.max_stay_hint ||
 										'Please select %s or earlier as your check-out date.';
 									const msg =
-										base
-											.replace( '%d', maxAllowed )
-											.replace( '%1$d', maxAllowed ) +
+										maxErrMsg +
 										' ' +
 										hint
 											.replace( '%s', latestStr )
@@ -1788,7 +1976,8 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								} else {
 									instance.set(
 										'maxDate',
-										new Date().fp_incr(
+										addHotelDays(
+											getHotelTodayDate(),
 											getMaxAdvanceDays()
 										)
 									);
@@ -1811,7 +2000,10 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								);
 								instance.set(
 									'maxDate',
-									new Date().fp_incr( getMaxAdvanceDays() )
+									addHotelDays(
+										getHotelTodayDate(),
+										getMaxAdvanceDays()
+									)
 								);
 
 								const checkOutStr2 = instance.formatDate(
@@ -1830,7 +2022,10 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								activeCandidateOverlay = {};
 								instance.set(
 									'maxDate',
-									new Date().fp_incr( getMaxAdvanceDays() )
+									addHotelDays(
+										getHotelTodayDate(),
+										getMaxAdvanceDays()
+									)
 								);
 								instance.set( 'disable', disabledDates );
 								if ( selectionBox ) {
@@ -1870,8 +2065,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							num.textContent = dayNum;
 							dayElem.appendChild( num );
 
-							const today = new Date();
-							today.setHours( 0, 0, 0, 0 );
+							const today = getHotelTodayDate();
 
 							// Dynamic Candidate Room Resolution for Aggregated Search (room_id = 0)
 							let effectiveChangeover =
@@ -1964,34 +2158,40 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								}
 							}
 
-							// Apply booking status CSS class for full booked days
+							// Apply booking status CSS class for full booked, expired, or unavailable days
 							if (
-								! changeover &&
-								effectiveBookingStatus &&
-								( isCandidateBlocked ||
-									dayElem.classList.contains(
-										'flatpickr-disabled'
-									) ||
-									dayElem.classList.contains(
-										'mhbo-unbookable'
-									) )
+								dayElem.dateObj < today ||
+								( ! changeover &&
+									( isCandidateBlocked ||
+										rawDisabledDates.includes( date ) ||
+										disabledDates.includes( date ) ||
+										dayElem.classList.contains(
+											'flatpickr-disabled'
+										) ||
+										dayElem.classList.contains(
+											'mhbo-unbookable'
+										) ) )
 							) {
-								if ( dayElem.dateObj >= today ) {
+								const resolvedFullStatus =
+									dayElem.dateObj < today
+										? 'confirmed'
+										: effectiveBookingStatus || 'confirmed';
+								dayElem.classList.add(
+									'mhbo-booking-' + resolvedFullStatus
+								);
+								if ( isCandidateBlocked ) {
+									dayElem.classList.add(
+										'mhbo-candidate-blocked'
+									);
+								}
+								if (
+									dayElem.dateObj >= today &&
+									rawBookingStatusData[ date ]
+								) {
 									dayElem.classList.add(
 										'mhbo-booking-' +
-											effectiveBookingStatus
+											rawBookingStatusData[ date ]
 									);
-									if ( isCandidateBlocked ) {
-										dayElem.classList.add(
-											'mhbo-candidate-blocked'
-										);
-									}
-									if ( rawBookingStatusData[ date ] ) {
-										dayElem.classList.add(
-											'mhbo-booking-' +
-												rawBookingStatusData[ date ]
-										);
-									}
 								}
 							}
 
@@ -2001,33 +2201,49 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							}
 
 							// Accessible state annotation (WCAG 2.2 AA)
-							const baseAria =
-								dayElem.getAttribute( 'aria-label' ) || date;
-							let ariaDesc = '';
-							if ( changeover === 'both' ) {
-								ariaDesc = ', Check-out & Check-in Day';
-							} else if ( changeover === 'checkout' ) {
-								ariaDesc = ', Check-out Only';
-							} else if ( changeover === 'checkin' ) {
-								ariaDesc = ', Check-in Only';
-							} else if ( effectiveBookingStatus ) {
-								ariaDesc =
-									effectiveBookingStatus === 'pending'
-										? ', Provisional / Pending'
-										: ', Booked';
+							if ( dayElem.dateObj >= today ) {
+								const baseAria =
+									dayElem.getAttribute( 'aria-label' ) ||
+									date;
+								let ariaDesc = '';
+								if ( changeover === 'both' ) {
+									ariaDesc = ', Check-out & Check-in Day';
+								} else if ( changeover === 'checkout' ) {
+									ariaDesc = ', Check-out Only';
+								} else if ( changeover === 'checkin' ) {
+									ariaDesc = ', Check-in Only';
+								} else if ( effectiveBookingStatus ) {
+									ariaDesc =
+										effectiveBookingStatus === 'pending'
+											? ', Provisional / Pending'
+											: ', Booked';
+								}
+								if ( ariaDesc ) {
+									dayElem.setAttribute(
+										'aria-label',
+										baseAria + ariaDesc
+									);
+								}
 							}
-							if ( ariaDesc ) {
-								dayElem.setAttribute(
-									'aria-label',
-									baseAria + ariaDesc
-								);
-							}
+
+							const isUnavailableDay =
+								rawDisabledDates.includes( date ) ||
+								disabledDates.includes( date ) ||
+								isCandidateBlocked ||
+								( ! changeover &&
+									Boolean( effectiveBookingStatus ) &&
+									( dayElem.classList.contains(
+										'flatpickr-disabled'
+									) ||
+										dayElem.classList.contains(
+											'mhbo-unbookable'
+										) ) );
 
 							// Price rendering
 							if (
 								showPrice &&
 								priceData[ date ] &&
-								! rawDisabledDates.includes( date ) &&
+								! isUnavailableDay &&
 								dayElem.dateObj >= today
 							) {
 								const pos =
@@ -2054,20 +2270,30 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 									document.createElement( 'span' );
 								priceTag.className = 'mhbo-fp-price';
 								const spanCurrency =
-									'<span class="mhbo-price-part-currency">' +
-									symbol +
-									'</span>';
+									document.createElement( 'span' );
+								spanCurrency.className =
+									'mhbo-price-part-currency';
+								spanCurrency.textContent = String(
+									symbol || ''
+								);
 								const spanAmount =
-									'<span class="mhbo-price-part-amount">' +
-									formattedPrice +
-									'</span>';
+									document.createElement( 'span' );
+								spanAmount.className =
+									'mhbo-price-part-amount';
+								spanAmount.textContent = formattedPrice;
 
 								if ( pos === 'before' ) {
-									priceTag.innerHTML =
-										spanCurrency + ' ' + spanAmount;
+									priceTag.appendChild( spanCurrency );
+									priceTag.appendChild(
+										document.createTextNode( '\u00A0' )
+									);
+									priceTag.appendChild( spanAmount );
 								} else {
-									priceTag.innerHTML =
-										spanAmount + ' ' + spanCurrency;
+									priceTag.appendChild( spanAmount );
+									priceTag.appendChild(
+										document.createTextNode( '\u00A0' )
+									);
+									priceTag.appendChild( spanCurrency );
 								}
 
 								dayElem.appendChild( priceTag );
@@ -2079,9 +2305,42 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 					wrapper._mhboPicker = picker;
 
 					// --- INTERACTIVE PRICE-ON-HOVER (2026 BP) ---
+					function hideCalendarTooltip() {
+						tooltip.classList.remove(
+							'mhbo-visible',
+							'mhbo-tooltip-warn',
+							'mhbo-tooltip-solo'
+						);
+						const cSpan = tooltip.querySelector(
+							'.mhbo-tooltip-constraint'
+						);
+						if ( cSpan ) {
+							cSpan.style.display = 'none';
+						}
+						wrapper
+							.querySelectorAll( '.mhbo-range-hover' )
+							.forEach( ( el ) =>
+								el.classList.remove( 'mhbo-range-hover' )
+							);
+						wrapper.classList.remove(
+							'mhbo-hovering-valid-checkout'
+						);
+					}
+
+					if ( inlineContainer ) {
+						inlineContainer.addEventListener(
+							'mouseleave',
+							hideCalendarTooltip
+						);
+					}
+
 					wrapper.addEventListener( 'mousemove', function ( e ) {
 						const dayElem = e.target.closest( '.flatpickr-day' );
-						if ( ! dayElem ) {
+						if (
+							! dayElem ||
+							( picker && picker.selectedDates.length === 2 )
+						) {
+							hideCalendarTooltip();
 							return;
 						}
 
@@ -2091,6 +2350,10 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							) &&
 							dayElem.dateObj
 						) {
+							if ( dayElem.dateObj < getHotelTodayDate() ) {
+								hideCalendarTooltip();
+								return;
+							}
 							const disabledDateStr = picker
 								? picker.formatDate( dayElem.dateObj, 'Y-m-d' )
 								: '';
@@ -2134,6 +2397,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								);
 								if ( nSpan ) {
 									nSpan.textContent = '';
+									nSpan.style.display = 'none';
 								}
 								const pSpan = tooltip.querySelector(
 									'.mhbo-tooltip-price'
@@ -2151,19 +2415,19 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								}
 								tooltip.style.left = e.clientX + 'px';
 								tooltip.style.top = e.clientY + 'px';
-								tooltip.classList.add( 'mhbo-visible' );
+								tooltip.classList.add(
+									'mhbo-visible',
+									'mhbo-tooltip-solo'
+								);
 								tooltip.classList.remove( 'mhbo-tooltip-warn' );
 								return;
 							}
+							hideCalendarTooltip();
+							return;
 						}
 
 						if ( ! picker || picker.selectedDates.length !== 1 ) {
-							tooltip.classList.remove( 'mhbo-visible' );
-							wrapper
-								.querySelectorAll( '.mhbo-range-hover' )
-								.forEach( ( el ) =>
-									el.classList.remove( 'mhbo-range-hover' )
-								);
+							hideCalendarTooltip();
 							return;
 						}
 
@@ -2173,12 +2437,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							hoverDate < picker.selectedDates[ 0 ] ||
 							dayElem.classList.contains( 'flatpickr-disabled' )
 						) {
-							tooltip.classList.remove( 'mhbo-visible' );
-							wrapper
-								.querySelectorAll( '.mhbo-range-hover' )
-								.forEach( ( el ) =>
-									el.classList.remove( 'mhbo-range-hover' )
-								);
+							hideCalendarTooltip();
 							return;
 						}
 
@@ -2186,12 +2445,7 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 						const end = hoverDate;
 
 						if ( start.getTime() === end.getTime() ) {
-							tooltip.classList.remove( 'mhbo-visible' );
-							wrapper
-								.querySelectorAll( '.mhbo-range-hover' )
-								.forEach( ( el ) =>
-									el.classList.remove( 'mhbo-range-hover' )
-								);
+							hideCalendarTooltip();
 							return;
 						}
 
@@ -2233,11 +2487,13 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 								: mhbo_calendar.i18n.nights || 'Nights';
 						const nightsFull = nights + ' ' + nightsLabel;
 
+						tooltip.classList.remove( 'mhbo-tooltip-solo' );
 						const nSpan = tooltip.querySelector(
 							'.mhbo-tooltip-nights'
 						);
 						if ( nSpan ) {
 							nSpan.textContent = nightsFull;
+							nSpan.style.display = '';
 						}
 
 						const pSpan = tooltip.querySelector(
@@ -2300,19 +2556,25 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 							tooltip.classList.add( 'mhbo-tooltip-warn' );
 						} else if ( minReqHover && nights < minReqHover ) {
 							if ( constraintSpan ) {
-								constraintSpan.textContent = (
-									mhbo_calendar.i18n.tooltip_min_hint ||
-									'⚠ Min stay: %d nights'
-								).replace( '%d', minReqHover );
+								constraintSpan.textContent =
+									formatStayCountMessage(
+										mhbo_calendar.i18n.tooltip_min_hint,
+										minReqHover,
+										'⚠ Min stay: %d night',
+										'⚠ Min stay: %d nights'
+									);
 								constraintSpan.style.display = '';
 							}
 							tooltip.classList.add( 'mhbo-tooltip-warn' );
 						} else if ( maxAllHover && nights > maxAllHover ) {
 							if ( constraintSpan ) {
-								constraintSpan.textContent = (
-									mhbo_calendar.i18n.tooltip_max_hint ||
-									'⚠ Max stay: %d nights'
-								).replace( '%d', maxAllHover );
+								constraintSpan.textContent =
+									formatStayCountMessage(
+										mhbo_calendar.i18n.tooltip_max_hint,
+										maxAllHover,
+										'⚠ Max stay: %d night',
+										'⚠ Max stay: %d nights'
+									);
 								constraintSpan.style.display = '';
 							}
 							tooltip.classList.add( 'mhbo-tooltip-warn' );
@@ -2328,29 +2590,18 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 						tooltip.classList.add( 'mhbo-visible' );
 					} );
 
-					wrapper.addEventListener( 'mouseleave', function () {
-						tooltip.classList.remove(
-							'mhbo-visible',
-							'mhbo-tooltip-warn'
-						);
-						const cSpan = tooltip.querySelector(
-							'.mhbo-tooltip-constraint'
-						);
-						if ( cSpan ) {
-							cSpan.style.display = 'none';
-						}
-						wrapper
-							.querySelectorAll( '.mhbo-range-hover' )
-							.forEach( ( el ) =>
-								el.classList.remove( 'mhbo-range-hover' )
-							);
-						wrapper.classList.remove(
-							'mhbo-hovering-valid-checkout'
-						);
-					} );
+					wrapper.addEventListener(
+						'mouseleave',
+						hideCalendarTooltip
+					);
 				}
 
 				function updateBookingForm( dates ) {
+					tooltip.classList.remove(
+						'mhbo-visible',
+						'mhbo-tooltip-warn',
+						'mhbo-tooltip-solo'
+					);
 					const start = dates[ 0 ];
 					const end = dates[ 1 ];
 					const startStr = picker.formatDate( start, 'Y-m-d' );
@@ -2641,23 +2892,23 @@ if ( preloadedData && Array.isArray( preloadedData ) ) {
 				const maxAll = maxStayFinal[ checkIn ];
 				if ( minReq && nightsFinal < minReq ) {
 					showError(
-						(
-							mhbo_calendar.i18n.api_err_min_stay ||
+						formatStayCountMessage(
+							mhbo_calendar.i18n.api_err_min_stay,
+							minReq,
+							'Minimum stay is %d night.',
 							'Minimum stay is %d nights.'
 						)
-							.replace( '%d', minReq )
-							.replace( '%1$d', minReq )
 					);
 					return;
 				}
 				if ( maxAll && nightsFinal > maxAll ) {
 					showError(
-						(
-							mhbo_calendar.i18n.api_err_max_stay ||
+						formatStayCountMessage(
+							mhbo_calendar.i18n.api_err_max_stay,
+							maxAll,
+							'Maximum stay is %d night.',
 							'Maximum stay is %d nights.'
 						)
-							.replace( '%d', maxAll )
-							.replace( '%1$d', maxAll )
 					);
 					return;
 				}

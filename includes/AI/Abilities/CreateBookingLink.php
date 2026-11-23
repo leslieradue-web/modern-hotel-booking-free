@@ -24,10 +24,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use MHBO\AI\KnowledgeBase;
 use MHBO\Business\Info;
+use MHBO\Core\HotelTime;
 use MHBO\Core\I18n;
 use MHBO\Core\Money;
 use MHBO\Core\Pricing;
 use MHBO\Core\Tax;
+use MHBO\Core\Tier;
 
 use function __;
 use function _n;
@@ -61,69 +63,80 @@ class CreateBookingLink {
 	 * @return array<mixed>
 	 */
 	public static function get_definition(): array {
-		return array(
+		$properties = array(
+			'room_id'          => array(
+				'type'        => 'integer',
+				'description' => 'Room ID from the availability check.',
+			),
+			'type_id'          => array(
+				'type'        => 'integer',
+				'description' => 'Room type ID from the availability check.',
+			),
+			'check_in'         => array(
+				'type'        => 'string',
+				'format'      => 'date',
+				'description' => 'Check-in date (YYYY-MM-DD).',
+			),
+			'check_out'        => array(
+				'type'        => 'string',
+				'format'      => 'date',
+				'description' => 'Check-out date (YYYY-MM-DD).',
+			),
+			'adults'           => array(
+				'type'        => 'integer',
+				'minimum'     => 1,
+				'default'     => 2,
+				'description' => 'Number of adults.',
+			),
+			'children'         => array(
+				'type'        => 'integer',
+				'minimum'     => 0,
+				'default'     => 0,
+				'description' => 'Number of children.',
+			),
+			'child_ages'       => array(
+				'type'        => 'array',
+				'items'       => array(
+					'type'    => 'integer',
+					'minimum' => 0,
+					'maximum' => 17,
+				),
+				'description' => 'Optional ages of each child (0-17) for accurate family-policy child pricing.',
+			),
+			'guest_name'       => array(
+				'type'        => 'string',
+				'description' => 'Full name of the primary guest.',
+			),
+			'guest_email'      => array(
+				'type'        => 'string',
+				'format'      => 'email',
+				'description' => 'Guest email address.',
+			),
+			'guest_phone'      => array(
+				'type'        => 'string',
+				'description' => 'Guest phone number.',
+			),
+			'multi_room_index' => array(
+				'type'        => 'integer',
+				'description' => 'Sequential index (1-based) of this room in a multi-room group.',
+			),
+			'multi_room_total' => array(
+				'type'        => 'integer',
+				'description' => 'Total number of rooms required in the multi-room group.',
+			),
+			'promo_code'       => array(
+				'type'        => 'string',
+				'description' => 'Optional promotional discount code to apply to the booking link.',
+			),
+		);
+
+return array(
 			'label'               => \__( 'Create Booking Link', 'modern-hotel-booking' ),
 			'description'         => \__( 'Generate a pre-filled booking URL with complete pricing summary, deposit info, and guest details for reserving a room.', 'modern-hotel-booking' ),
 			'category'            => 'booking-management',
 			'input_schema'        => array(
 				'type'       => 'object',
-				'properties' => array(
-					'room_id'          => array(
-						'type'        => 'integer',
-						'description' => 'Room ID from the availability check.',
-					),
-					'type_id'          => array(
-						'type'        => 'integer',
-						'description' => 'Room type ID from the availability check.',
-					),
-					'check_in'         => array(
-						'type'        => 'string',
-						'format'      => 'date',
-						'description' => 'Check-in date (YYYY-MM-DD).',
-					),
-					'check_out'        => array(
-						'type'        => 'string',
-						'format'      => 'date',
-						'description' => 'Check-out date (YYYY-MM-DD).',
-					),
-					'adults'           => array(
-						'type'        => 'integer',
-						'minimum'     => 1,
-						'default'     => 2,
-						'description' => 'Number of adults.',
-					),
-					'children'         => array(
-						'type'        => 'integer',
-						'minimum'     => 0,
-						'default'     => 0,
-						'description' => 'Number of children.',
-					),
-					'guest_name'       => array(
-						'type'        => 'string',
-						'description' => 'Full name of the primary guest.',
-					),
-					'guest_email'      => array(
-						'type'        => 'string',
-						'format'      => 'email',
-						'description' => 'Guest email address.',
-					),
-					'guest_phone'      => array(
-						'type'        => 'string',
-						'description' => 'Guest phone number.',
-					),
-					'multi_room_index' => array(
-						'type'        => 'integer',
-						'description' => 'Sequential index (1-based) of this room in a multi-room group.',
-					),
-					'multi_room_total' => array(
-						'type'        => 'integer',
-						'description' => 'Total number of rooms required in the multi-room group.',
-					),
-					'promo_code'       => array(
-						'type'        => 'string',
-						'description' => 'Optional promotional discount code to apply to the booking link.',
-					),
-				),
+				'properties' => $properties,
 				'required'   => array( 'room_id', 'check_in', 'check_out', 'adults' ),
 			),
 			'permission_callback' => '__return_true',
@@ -157,6 +170,7 @@ class CreateBookingLink {
 		$check_out        = \preg_replace( '/[^0-9\-]/', '', \sanitize_text_field( (string) ( $args['check_out'] ?? '' ) ) );
 		$adults           = \absint( $args['adults'] ?? 2 );
 		$children         = \absint( $args['children'] ?? 0 );
+		$child_ages       = Pricing::sanitize_child_ages( $args['child_ages'] ?? array() );
 		$guest_name       = \sanitize_text_field( (string) ( $args['guest_name'] ?? '' ) );
 		$guest_email_raw  = (string) ( $args['guest_email'] ?? '' );
 		$guest_email      = \sanitize_email( $guest_email_raw );
@@ -179,15 +193,12 @@ class CreateBookingLink {
 			return array( 'error' => \__( 'Check-in and check-out dates are required.', 'modern-hotel-booking' ) );
 		}
 
-		$ci_ts = \strtotime( $check_in );
-		$co_ts = \strtotime( $check_out );
-
-		if ( ! $ci_ts || ! $co_ts || $co_ts <= $ci_ts ) {
-			return array( 'error' => \__( 'Invalid date range. Check-out must be after check-in.', 'modern-hotel-booking' ) );
+		$range_valid = HotelTime::validate_date_range( $check_in, $check_out, true );
+		if ( \is_wp_error( $range_valid ) ) {
+			return array( 'error' => $range_valid->get_error_message() );
 		}
 
-		$today_ts = \strtotime( \gmdate( 'Y-m-d' ) );
-		if ( $ci_ts < $today_ts ) {
+		if ( $check_in < HotelTime::today() ) {
 			return array( 'error' => \__( 'Check-in date cannot be in the past.', 'modern-hotel-booking' ) );
 		}
 
@@ -195,7 +206,7 @@ class CreateBookingLink {
 			return array( 'error' => \__( 'A valid room ID is required.', 'modern-hotel-booking' ) );
 		}
 
-		$nights = (int) ( ( $co_ts - $ci_ts ) / \DAY_IN_SECONDS );
+		$nights = $range_valid;
 
 // ── Validate room exists ────────────────────────────────────
 		global $wpdb;
@@ -231,20 +242,32 @@ class CreateBookingLink {
 		}
 
 		// ── Calculate pricing (read-only, no DB insert) ─────────────
-		$currency = Pricing::get_currency_code();
-		$calc     = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $adults, array(), $children, array() );
+		$calc_extras      = array();
+		$link_stay_timing = null;
 
-		if ( ! isset( $calc['total'] ) || ! ( $calc['total'] instanceof Money ) ) {
+$currency = Pricing::get_currency_code();
+		$calc     = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $adults, $calc_extras, $children, $child_ages );
+
+		if ( ! \is_array( $calc ) || ! isset( $calc['total'] ) || ! ( $calc['total'] instanceof Money ) ) {
 			return array( 'error' => \__( 'Unable to calculate pricing for this room and dates.', 'modern-hotel-booking' ) );
 		}
 
 		$total_money      = $calc['total'];
+		$service_fee_m    = ( isset( $calc['service_fee'] ) && $calc['service_fee'] instanceof Money ) ? $calc['service_fee'] : Money::fromCents( 0, $currency );
 		$discount_money   = Money::fromCents( 0, $currency );
 		$resolved_type_id = $type_id > 0 ? $type_id : (int) $room->type_id;
+		$recalc           = null;
+		$accom_ctx        = array(
+			'discount' => null,
+			'base'     => null,
+		);
 
 // ── Generate pre-filled booking URL ─────────────────────────
 		$base_url  = KnowledgeBase::get_booking_url();
 		$nonce     = \wp_create_nonce( 'mhbo_auto_action' );
+		if ( array() !== $child_ages ) {
+			\set_transient( 'mhbo_child_ages_' . (string) $nonce, (string) \wp_json_encode( $child_ages ), \HOUR_IN_SECONDS );
+		}
 		$url_args  = array(
 			'mhbo_auto_book' => 1,
 			'mhbo_nonce'     => $nonce,
@@ -267,7 +290,9 @@ $booking_url = \add_query_arg( $url_args, $base_url );
 			: $total_money->toDecimal();
 
 		// ── Build response ──────────────────────────────────────────
-		$result = array(
+		$room_only_m   = ( isset( $calc['room_total'] ) && $calc['room_total'] instanceof Money ) ? $calc['room_total'] : Money::fromCents( 0, $currency );
+		$children_m    = ( isset( $calc['children_total'] ) && $calc['children_total'] instanceof Money ) ? $calc['children_total'] : Money::fromCents( 0, $currency );
+		$result        = array(
 			'booking_url'     => \esc_url_raw( $booking_url ),
 			'room_id'         => $room_id,
 			'room_number'     => (string) ( $room->room_number ?? '' ),
@@ -277,6 +302,10 @@ $booking_url = \add_query_arg( $url_args, $base_url );
 			'nights'          => $nights,
 			'adults'          => $adults,
 			'children'        => $children,
+			'child_ages'      => $child_ages,
+			'room_total'      => $room_only_m->toDecimal(),
+			'children_total'  => $children_m->toDecimal(),
+			'service_fee'     => $service_fee_m->toDecimal(),
 			'total_price'     => $total_money->toDecimal(),
 			'price_formatted' => $total_money->format(),
 			'price_per_night' => $night_rate_str,
@@ -287,39 +316,7 @@ $booking_url = \add_query_arg( $url_args, $base_url );
 			
 		);
 
-		// ── Tax summary ─────────────────────────────────────────────
-		if ( Tax::is_enabled() ) {
-			$tax_label = I18n::decode( (string) \get_option( 'mhbo_tax_label', 'VAT' ) );
-			$tax_mode  = (string) \get_option( 'mhbo_tax_mode', 'disabled' );
-			$tax_rate  = (float) \get_option( 'mhbo_tax_rate_accommodation', 0 );
-			$display   = 'vat' === $tax_mode ? 'inclusive' : 'exclusive';
-
-			$result['tax_summary'] = array(
-				'label' => $tax_label,
-				'rate'  => $tax_rate,
-				'mode'  => $display,
-				'note'  => \sprintf( '%s %s%% (%s)', $tax_label, $tax_rate, $display ),
-			);
-		}
-
-		// ── Deposit info ────────────────────────────────────────────
-		if ( \get_option( 'mhbo_deposits_enabled', 0 ) ) {
-			$first_night_money = Pricing::resolve_first_night_money( $room_id, $check_in, $adults, null, array(), $children, array(), $total_money->getCurrency() );
-			$deposit_data      = Pricing::calculate_deposit_money( $total_money, $first_night_money );
-			if ( $deposit_data && $deposit_data['deposit_money']->lessThan( $total_money ) ) {
-				$dep_val = (float) \get_option( 'mhbo_deposit_value', 20 );
-				$result['deposit'] = array(
-					'required'       => true,
-					'amount'         => $deposit_data['deposit_money']->toDecimal(),
-					'balance_due'    => $deposit_data['remaining_money']->toDecimal(),
-					'type'           => $deposit_data['deposit_type'],
-					'non_refundable' => $deposit_data['is_non_refundable'],
-					'label'          => self::format_deposit_label( $deposit_data['deposit_type'], $dep_val, $currency, $deposit_data['is_non_refundable'] ),
-				);
-			}
-		}
-
-		// ── Payment methods summary (Aligned for UI Card) ─────────────────
+// ── Payment methods summary (Aligned for UI Card) ─────────────────
 		$result['payment_methods'] = \implode( ', ', self::get_payment_summary() );
 
 		// ── Banking details (if enabled) ────────────────────────────
@@ -496,6 +493,6 @@ $booking_url = \add_query_arg( $url_args, $base_url );
 		if ( ! \function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/create-booking-link', self::get_definition() );
+		\wp_register_ability( 'mhbo/create-booking-link', self::get_definition() );
 	}
 }

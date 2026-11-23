@@ -110,10 +110,6 @@
     background: #ef4444;
 }
 
-.mhbo-pulse-indicator.mhbo-pulse-blue {
-    background: #3b82f6;
-}
-
 @keyframes mhbo-dash-pulse {
     0% {
         transform: scale(0.95);

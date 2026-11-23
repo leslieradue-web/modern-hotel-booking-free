@@ -162,7 +162,7 @@ class Info {
 			'phone_number'  => '',
 			'default_msg'   => '',
 			'button_text'   => 'Chat on WhatsApp',
-			'display_style' => 'button',
+			'display_style' => 'floating',
 			'position'      => 'bottom-right',
 		);
 	}
@@ -226,10 +226,31 @@ class Info {
 		OPTION GETTERS
 		═══════════════════════════════════════════════════════════════ */
 
+	/**
+	 * Resolve the current attachment URL from an attachment ID when available, falling back to stored URL.
+	 *
+	 * Ensures media URLs remain valid across port changes, domain migrations, and Playground scopes.
+	 *
+	 * @param int    $attachment_id WordPress attachment post ID.
+	 * @param string $stored_url    Stored fallback URL.
+	 * @return string
+	 */
+	private static function resolve_media_url( int $attachment_id, string $stored_url ): string {
+		if ( $attachment_id > 0 && \function_exists( 'wp_get_attachment_url' ) ) {
+			$attachment_url = \wp_get_attachment_url( $attachment_id );
+			if ( is_string( $attachment_url ) && '' !== $attachment_url ) {
+				return $attachment_url;
+			}
+		}
+		return $stored_url;
+	}
+
 	/** @return array{company_name: string, address_line_1: string, address_line_2: string, city: string, state: string, postcode: string, country: string, telephone: string, email: string, contact_name: string, logo_id: int, logo_url: string, tax_id: string, registration_no: string, website: string, google_place_id?: string, google_maps_url?: string, show_map_in_email?: int} */
 	public static function get_company(): array {
 		/** @var array{company_name: string, address_line_1: string, address_line_2: string, city: string, state: string, postcode: string, country: string, telephone: string, email: string, contact_name: string, logo_id: int, logo_url: string, tax_id: string, registration_no: string, website: string, google_place_id?: string, google_maps_url?: string, show_map_in_email?: int} $result */
-		$result = wp_parse_args( get_option( self::OPT_COMPANY, array() ), self::get_company_defaults() );
+		$result             = wp_parse_args( get_option( self::OPT_COMPANY, array() ), self::get_company_defaults() );
+		$result['logo_id']  = absint( $result['logo_id'] );
+		$result['logo_url'] = self::resolve_media_url( $result['logo_id'], (string) $result['logo_url'] );
 		return $result;
 	}
 
@@ -250,7 +271,9 @@ class Info {
 	/** @return array{enabled: int, revolut_name: string, revolut_tag: string, revolut_iban: string, revolut_link: string, qr_code_id: int, qr_code_url: string, instructions: string} */
 	public static function get_revolut(): array {
 		/** @var array{enabled: int, revolut_name: string, revolut_tag: string, revolut_iban: string, revolut_link: string, qr_code_id: int, qr_code_url: string, instructions: string} $result */
-		$result = wp_parse_args( get_option( self::OPT_REVOLUT, array() ), self::get_revolut_defaults() );
+		$result                = wp_parse_args( get_option( self::OPT_REVOLUT, array() ), self::get_revolut_defaults() );
+		$result['qr_code_id']  = absint( $result['qr_code_id'] );
+		$result['qr_code_url'] = self::resolve_media_url( $result['qr_code_id'], (string) $result['qr_code_url'] );
 		return $result;
 	}
 
@@ -284,6 +307,10 @@ class Info {
 				$this->save_revolut( $data );
 				break;
 			
+		}
+
+		if ( class_exists( '\MHBO\Core\Cache' ) ) {
+			\MHBO\Core\Cache::bump( \MHBO\Core\Cache::TABLE_SETTINGS );
 		}
 
 		add_settings_error( 'mhbo_settings', 'saved', __( 'Business settings saved successfully.', 'modern-hotel-booking' ), 'success' );
@@ -324,6 +351,12 @@ class Info {
 		$clean_data['contact_name']    = isset( $data['contact_name'] ) ? sanitize_text_field( wp_unslash( $data['contact_name'] ) ) : '';
 		$clean_data['logo_id']         = isset( $data['logo_id'] ) ? absint( wp_unslash( $data['logo_id'] ) ) : 0;
 		$clean_data['logo_url']        = isset( $data['logo_url'] ) ? esc_url_raw( wp_unslash( $data['logo_url'] ) ) : '';
+		if ( $clean_data['logo_id'] > 0 && '' === $clean_data['logo_url'] ) {
+			$clean_data['logo_url'] = esc_url_raw( self::resolve_media_url( $clean_data['logo_id'], '' ) );
+		}
+		if ( '' === $clean_data['logo_url'] ) {
+			$clean_data['logo_id'] = 0;
+		}
 		$clean_data['tax_id']          = isset( $data['tax_id'] ) ? sanitize_text_field( wp_unslash( $data['tax_id'] ) ) : '';
 		$clean_data['registration_no'] = isset( $data['registration_no'] ) ? sanitize_text_field( wp_unslash( $data['registration_no'] ) ) : '';
 		$clean_data['website']         = isset( $data['website'] ) ? esc_url_raw( wp_unslash( $data['website'] ) ) : '';
@@ -336,15 +369,15 @@ update_option( self::OPT_COMPANY, $clean_data );
 	 */
 	private function save_whatsapp( array $data ): void {
 		$clean_data                  = array();
-		$clean_data['enabled']       = isset( $data['wa_enabled'] ) ? 1 : 0;
+		$clean_data['enabled']       = ! empty( $data['wa_enabled'] ) ? 1 : 0;
 		$clean_data['phone_number']  = isset( $data['wa_phone_number'] ) ? sanitize_text_field( wp_unslash( $data['wa_phone_number'] ) ) : '';
 		$clean_data['default_msg']   = isset( $data['wa_default_msg'] ) ? sanitize_textarea_field( wp_unslash( $data['wa_default_msg'] ) ) : '';
 		$clean_data['button_text']   = isset( $data['wa_button_text'] ) ? sanitize_text_field( wp_unslash( $data['wa_button_text'] ) ) : '';
-		$clean_data['display_style'] = isset( $data['wa_display_style'] ) ? sanitize_key( wp_unslash( $data['wa_display_style'] ) ) : 'button';
+		$clean_data['display_style'] = isset( $data['wa_display_style'] ) ? sanitize_key( wp_unslash( $data['wa_display_style'] ) ) : 'floating';
 		$clean_data['position']      = isset( $data['wa_position'] ) ? sanitize_key( wp_unslash( $data['wa_position'] ) ) : 'bottom-right';
 
 		if ( ! in_array( $clean_data['display_style'], array( 'button', 'floating', 'link' ), true ) ) {
-			$clean_data['display_style'] = 'button';
+			$clean_data['display_style'] = 'floating';
 		}
 		if ( ! in_array( $clean_data['position'], array( 'bottom-right', 'bottom-left' ), true ) ) {
 			$clean_data['position'] = 'bottom-right';
@@ -360,7 +393,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 	 */
 	private function save_banking( array $data ): void {
 		$clean_data                     = array();
-		$clean_data['enabled']          = isset( $data['bank_enabled'] ) ? 1 : 0;
+		$clean_data['enabled']          = ! empty( $data['bank_enabled'] ) ? 1 : 0;
 		$clean_data['bank_name']        = isset( $data['bank_name'] ) ? sanitize_text_field( wp_unslash( $data['bank_name'] ) ) : '';
 		$clean_data['account_name']     = isset( $data['account_name'] ) ? sanitize_text_field( wp_unslash( $data['account_name'] ) ) : '';
 		$clean_data['account_number']   = isset( $data['account_number'] ) ? sanitize_text_field( wp_unslash( $data['account_number'] ) ) : '';
@@ -381,13 +414,19 @@ update_option( self::OPT_COMPANY, $clean_data );
 	 */
 	private function save_revolut( array $data ): void {
 		$clean_data                 = array();
-		$clean_data['enabled']      = isset( $data['rev_enabled'] ) ? 1 : 0;
+		$clean_data['enabled']      = ! empty( $data['rev_enabled'] ) ? 1 : 0;
 		$clean_data['revolut_name'] = isset( $data['revolut_name'] ) ? sanitize_text_field( wp_unslash( $data['revolut_name'] ) ) : '';
 		$clean_data['revolut_tag']  = isset( $data['revolut_tag'] ) ? sanitize_text_field( wp_unslash( $data['revolut_tag'] ) ) : '';
 		$clean_data['revolut_iban'] = isset( $data['revolut_iban'] ) ? sanitize_text_field( wp_unslash( $data['revolut_iban'] ) ) : '';
 		$clean_data['revolut_link'] = isset( $data['revolut_link'] ) ? esc_url_raw( wp_unslash( $data['revolut_link'] ) ) : '';
 		$clean_data['qr_code_id']   = isset( $data['qr_code_id'] ) ? absint( wp_unslash( $data['qr_code_id'] ) ) : 0;
 		$clean_data['qr_code_url']  = isset( $data['qr_code_url'] ) ? esc_url_raw( wp_unslash( $data['qr_code_url'] ) ) : '';
+		if ( $clean_data['qr_code_id'] > 0 && '' === $clean_data['qr_code_url'] ) {
+			$clean_data['qr_code_url'] = esc_url_raw( self::resolve_media_url( $clean_data['qr_code_id'], '' ) );
+		}
+		if ( '' === $clean_data['qr_code_url'] ) {
+			$clean_data['qr_code_id'] = 0;
+		}
 		$clean_data['instructions'] = isset( $data['rev_instructions'] ) ? wp_kses_post( wp_unslash( $data['rev_instructions'] ) ) : '';
 
 		$clean_data['revolut_iban'] = strtoupper( (string) preg_replace( '/\s+/', '', (string) $clean_data['revolut_iban'] ) );
@@ -659,6 +698,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 							<option value="floating" <?php selected( $data['display_style'], 'floating' ); ?>><?php echo esc_html( I18n::get_label( 'business_info_style_floating' ) ); ?></option>
 							<option value="link" <?php selected( $data['display_style'], 'link' ); ?>><?php echo esc_html( I18n::get_label( 'business_info_style_link' ) ); ?></option>
 						</select>
+						<p class="mhbo-form-help"><?php esc_html_e( 'Floating and Button modes display the corner WhatsApp button automatically site-wide when enabled. Select Text Link to render inline only via the [mhbo_whatsapp] shortcode or block.', 'modern-hotel-booking' ); ?></p>
 					</div>
 
 					<div class="mhbo-form-group">
@@ -852,13 +892,15 @@ update_option( self::OPT_COMPANY, $clean_data );
 	 * Render the shortcodes tab.
 	 */
 	private function render_tab_shortcodes(): void {
-		$shortcodes = array(
+		$ai_concierge_attrs = 'variant, position, welcome_message';
+
+$shortcodes = array(
 			// ---- Core / Free Tier ----
 			array(
 				'tag'        => '[mhbo_booking_form]',
 				'alias'      => '[modern_hotel_booking]',
 				'desc'       => I18n::get_label( 'shortcode_desc_booking_form' ),
-				'attrs'      => 'room_id, show_calendar',
+				'attrs'      => 'room_id, type_id, show_calendar, show_title, show_badge',
 				'tier'       => 'free',
 				'tier_badge' => __( 'Core / Free', 'modern-hotel-booking' ),
 				'category'   => __( 'Reservations & Guests', 'modern-hotel-booking' ),
@@ -867,7 +909,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 				'tag'        => '[mhbo_rooms]',
 				'alias'      => '',
 				'desc'       => I18n::get_label( 'shortcode_desc_rooms_grid' ),
-				'attrs'      => 'columns, limit',
+				'attrs'      => 'columns, limit, show_title, show_badge, show_card_title, show_card_badge',
 				'tier'       => 'free',
 				'tier_badge' => __( 'Core / Free', 'modern-hotel-booking' ),
 				'category'   => __( 'Reservations & Guests', 'modern-hotel-booking' ),
@@ -876,7 +918,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 				'tag'        => '[mhbo_room_calendar]',
 				'alias'      => '',
 				'desc'       => I18n::get_label( 'shortcode_desc_room_calendar' ),
-				'attrs'      => 'room_id',
+				'attrs'      => 'room_id, type_id, show_title, show_badge',
 				'tier'       => 'free',
 				'tier_badge' => __( 'Core / Free', 'modern-hotel-booking' ),
 				'category'   => __( 'Reservations & Guests', 'modern-hotel-booking' ),
@@ -885,7 +927,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 				'tag'        => '[mhbo_guest_portal]',
 				'alias'      => '',
 				'desc'       => I18n::get_label( 'shortcode_desc_guest_portal' ),
-				'attrs'      => 'booking_id, email, token',
+				'attrs'      => 'booking_id, email, token, show_header, show_title, show_badge',
 				'tier'       => 'free',
 				'tier_badge' => __( 'Core / Free', 'modern-hotel-booking' ),
 				'category'   => __( 'Reservations & Guests', 'modern-hotel-booking' ),
@@ -950,7 +992,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 				'tag'        => '[mhbo_ai_concierge]',
 				'alias'      => '',
 				'desc'       => I18n::get_label( 'shortcode_desc_ai_concierge' ),
-				'attrs'      => 'variant, position, welcome_message, theme',
+				'attrs'      => $ai_concierge_attrs,
 				'tier'       => 'all',
 				'tier_badge' => __( 'All Tiers · Pro Enhanced', 'modern-hotel-booking' ),
 				'category'   => __( 'AI & Automation', 'modern-hotel-booking' ),
@@ -1237,6 +1279,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 	 * @param string $title     Media modal title.
 	 */
 	private function render_media_field( string $prefix, int $image_id, string $image_url, string $title ): void {
+		$image_url = self::resolve_media_url( $image_id, $image_url );
 		$has_image = '' !== (string) $image_url;
 		$id_field  = str_replace( 'mhbo_', '', $prefix ) . '_id';
 		$url_field = str_replace( 'mhbo_', '', $prefix ) . '_url';
@@ -1244,14 +1287,14 @@ update_option( self::OPT_COMPANY, $clean_data );
 		<div class="mhbo-media-upload-wrap">
 			<input type="hidden" name="<?php echo esc_attr( (string) $id_field ); ?>" id="<?php echo esc_attr( $prefix ); ?>_id" value="<?php echo esc_attr( (string) $image_id ); ?>" />
 			<input type="hidden" name="<?php echo esc_attr( (string) $url_field ); ?>" id="<?php echo esc_attr( $prefix ); ?>_url" value="<?php echo esc_url( $image_url ); ?>" />
-			<div id="<?php echo esc_attr( $prefix ); ?>_preview" class="mhbo-image-preview" <?php echo esc_attr( $has_image ? '' : 'style=display:none;' ); ?>>
+			<div id="<?php echo esc_attr( $prefix ); ?>_preview" class="mhbo-image-preview" style="<?php echo esc_attr( $has_image ? '' : 'display:none;' ); ?>">
 				<?php if ( $has_image ) : ?>
 					<img src="<?php echo esc_url( $image_url ); ?>" alt="" style="max-width:200px;height:auto;" />
 				<?php endif; ?>
 			</div>
 			<?php // phpcs:disable WordPressVIPMinimum.Security.ProperEscapingFunction.hrefSrcEscUrl -- data-target-url is a DOM element ID attribute, not a URL. ?>
 			<button type="button" class="button mhbo-upload-btn" data-target-id="<?php echo esc_attr( $prefix ); ?>_id" data-target-url="<?php echo esc_attr( $prefix ); ?>_url" data-preview="<?php echo esc_attr( $prefix ); ?>_preview" data-title="<?php echo esc_attr( $title ); ?>"><?php echo esc_html( $title ); ?></button>
-			<button type="button" class="button mhbo-remove-btn" data-target-id="<?php echo esc_attr( $prefix ); ?>_id" data-target-url="<?php echo esc_attr( $prefix ); ?>_url" data-preview="<?php echo esc_attr( $prefix ); ?>_preview" <?php echo esc_attr( $has_image ? '' : 'style=display:none;' ); ?>><?php echo esc_html( I18n::get_label( 'general_btn_remove' ) ); ?></button>
+			<button type="button" class="button mhbo-remove-btn" data-target-id="<?php echo esc_attr( $prefix ); ?>_id" data-target-url="<?php echo esc_attr( $prefix ); ?>_url" data-preview="<?php echo esc_attr( $prefix ); ?>_preview" style="<?php echo esc_attr( $has_image ? '' : 'display:none;' ); ?>"><?php echo esc_html( I18n::get_label( 'general_btn_remove' ) ); ?></button>
 			<?php // phpcs:enable WordPressVIPMinimum.Security.ProperEscapingFunction.hrefSrcEscUrl ?>
 		</div>
 		<?php

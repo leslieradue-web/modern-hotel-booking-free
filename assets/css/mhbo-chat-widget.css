@@ -112,6 +112,39 @@
 .mhbo-chat-widget--bottom-right { bottom: 24px; right: 24px; }
 .mhbo-chat-widget--bottom-left  { bottom: 24px; left:  24px; }
 
+/* Inline variant embedded inside page / shortcode / portal content */
+.mhbo-chat-widget--inline {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    left: auto;
+    width: 100%;
+    max-width: 100%;
+}
+
+.mhbo-chat-widget--inline .mhbo-chat-panel {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    left: auto;
+    width: 100%;
+    height: var(--mhbo-chat-panel-height);
+    transform-origin: center;
+}
+
+/* Hide floating AI Concierge while modals or active booking/payment checkout forms are on screen */
+body.mhbo-modal-open .mhbo-chat-widget:not(.mhbo-chat-widget--inline),
+body:has(.mhbo-modal-overlay.is-open) .mhbo-chat-widget:not(.mhbo-chat-widget--inline),
+body:has(.mhbo-portal-modal[style*="flex"]) .mhbo-chat-widget:not(.mhbo-chat-widget--inline),
+body:has(form.mhbo-booking-form) .mhbo-chat-widget:not(.mhbo-chat-widget--inline),
+body:has(#mhbo-balance-payment-form) .mhbo-chat-widget:not(.mhbo-chat-widget--inline) {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transform: translateY(16px) scale(0.9) !important;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s !important;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
    FAB
 ───────────────────────────────────────────────────────────────────────────── */
@@ -245,8 +278,8 @@
         left: max(16px, env(safe-area-inset-left, 0px)) !important;
     }
 
-    /* Keep widget at its anchor position; panel goes full-screen via fixed */
-    .mhbo-chat-panel {
+    /* Keep widget at its anchor position; floating panel goes full-screen via fixed */
+    .mhbo-chat-widget:not(.mhbo-chat-widget--inline) .mhbo-chat-panel {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
@@ -866,17 +899,6 @@
 
 @media (prefers-reduced-motion: reduce) {
     .mhbo-book-now-cta { animation: none; }
-}
-
-.mhbo-book-now-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1b5e20;
-    flex: 1;
-}
-
-@media (prefers-color-scheme: dark) {
-    .mhbo-book-now-label { color: #a5d6a7; }
 }
 
 .mhbo-book-now-btn {

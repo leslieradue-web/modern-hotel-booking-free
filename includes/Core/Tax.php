@@ -401,9 +401,19 @@ class Tax {
 	public static function calculate_booking_tax( array $booking_data, ?string $tax_mode = null ): array {
 		$raw_mode           = ( null !== $tax_mode && '' !== $tax_mode ) ? $tax_mode : (string) ( $booking_data['tax_mode'] ?? self::get_mode() );
 		$mode               = self::normalize_mode( $raw_mode );
+		
+		$mode = self::MODE_DISABLED;
+
+if ( class_exists( Tier::class ) && ! Tier::is_feature_enabled( 'tax_advanced' ) ) {
+			$mode = self::MODE_DISABLED;
+		}
 		$is_enabled         = self::MODE_DISABLED !== $mode;
-		$accommodation_rate = self::get_accommodation_rate();
-		$extras_rate        = self::get_extras_rate();
+		$accommodation_rate = ( isset( $booking_data['tax_rate_accommodation'] ) && is_numeric( $booking_data['tax_rate_accommodation'] ) )
+			? max( 0.0, min( 100.0, (float) $booking_data['tax_rate_accommodation'] ) )
+			: self::get_accommodation_rate();
+		$extras_rate        = ( isset( $booking_data['tax_rate_extras'] ) && is_numeric( $booking_data['tax_rate_extras'] ) )
+			? max( 0.0, min( 100.0, (float) $booking_data['tax_rate_extras'] ) )
+			: self::get_extras_rate();
 		$rounding_mode      = self::get_rounding_mode();
 		$currency           = strtoupper( (string) get_option( 'mhbo_currency_code', 'USD' ) );
 		$base_label         = self::get_label( null, $mode );
@@ -685,34 +695,7 @@ class Tax {
 		// Decode stored extras
 		$extras_breakdown = \MHBO\Core\Pricing::decode_stored_extras( $booking['booking_extras'] ?? null );
 
-		// Decode custom fields for early checkin / late checkout supplements if not already in extras
-		if ( ! empty( $booking['custom_fields'] ) ) {
-			$custom_data = is_array( $booking['custom_fields'] ) ? $booking['custom_fields'] : json_decode( (string) $booking['custom_fields'], true );
-			if ( is_array( $custom_data ) ) {
-				if ( ! empty( $custom_data['_early_checkin'] ) && ! isset( $extras_breakdown['_early_checkin'] ) ) {
-					$early_fee_m = Money::fromDecimal( (string) get_option( 'mhbo_early_checkin_fee', '0' ), $currency );
-					if ( $early_fee_m->isPositive() ) {
-						$extras_breakdown['_early_checkin'] = array(
-							'id'    => '_early_checkin',
-							'name'  => I18n::get_label( 'label_early_checkin' ) ?: 'Early Check-in',
-							'total' => $early_fee_m->toDecimal(),
-						);
-					}
-				}
-				if ( ! empty( $custom_data['_late_checkout'] ) && ! isset( $extras_breakdown['_late_checkout'] ) ) {
-					$late_fee_m = Money::fromDecimal( (string) get_option( 'mhbo_late_checkout_fee', '0' ), $currency );
-					if ( $late_fee_m->isPositive() ) {
-						$extras_breakdown['_late_checkout'] = array(
-							'id'    => '_late_checkout',
-							'name'  => I18n::get_label( 'label_late_checkout' ) ?: 'Late Check-out',
-							'total' => $late_fee_m->toDecimal(),
-						);
-					}
-				}
-			}
-		}
-
-		$extras_sum            = Money::fromCents( 0, $currency );
+$extras_sum            = Money::fromCents( 0, $currency );
 		$extras_items          = array();
 		$acc_tax_reconstructed = Money::fromCents( 0, $currency );
 		$ext_tax_reconstructed = Money::fromCents( 0, $currency );
@@ -746,24 +729,52 @@ class Tax {
 			}
 		}
 
-		// Room Base: Reconstruct from stored room_total_net if present, or subtotal_net / total_price.
-		$room_net_stored = (string) ( $booking['room_total_net'] ?? '0' );
-		$room_net_m      = Money::fromDecimal( $room_net_stored, $currency );
+		// Room Base: Reconstruct gross from stored room_total_net (+ room_tax in VAT mode), or subtotal_net / total_price.
+		$room_net_stored       = (string) ( $booking['room_total_net'] ?? '0' );
+		$room_tax_stored_m     = Money::fromDecimal( (string) ( $booking['room_tax'] ?? '0' ), $currency );
+		$children_tax_stored_m = Money::fromDecimal( (string) ( $booking['children_tax'] ?? '0' ), $currency );
+		$room_net_m            = Money::fromDecimal( $room_net_stored, $currency );
 		if ( $room_net_m->isPositive() ) {
-			$room_gross = $room_net_m;
+			if ( self::MODE_VAT === $tax_mode ) {
+				$room_gross = $room_tax_stored_m->isPositive()
+					? $room_net_m->add( $room_tax_stored_m )
+					: ( $acc_rate > 0 ? self::calculate_tax_money( $room_net_m, $acc_rate, self::MODE_SALES_TAX )['gross'] : $room_net_m );
+			} else {
+				$room_gross = $room_net_m;
+			}
 		} else {
 			$subtotal_net_stored = (string) ( $booking['subtotal_net'] ?? '0' );
 			$subtotal_net_m      = Money::fromDecimal( $subtotal_net_stored, $currency );
 			if ( $subtotal_net_m->isPositive() ) {
-				$room_gross = $subtotal_net_m
+				$extras_net_sum = Money::fromCents( 0, $currency );
+				foreach ( $extras_items as $ei ) {
+					$extras_net_sum = $extras_net_sum->add( Money::fromDecimal( (string) ( $ei['net'] ?? '0' ), $currency ) );
+				}
+				$sf_pre_calc = self::calculate_tax_money( $sf_money, $ext_rate, $tax_mode );
+				$room_net_fb = $subtotal_net_m
 					->add( $coupon_discount_money )
 					->subtract( $children_net_money )
-					->subtract( $extras_sum )
-					->subtract( $sf_money );
+					->subtract( $extras_net_sum )
+					->subtract( $sf_pre_calc['net'] );
+				if ( $room_net_fb->isNegative() ) {
+					$room_net_fb = Money::fromCents( 0, $currency );
+				}
+				if ( self::MODE_VAT === $tax_mode ) {
+					$room_gross = $room_tax_stored_m->isPositive()
+						? $room_net_fb->add( $room_tax_stored_m )
+						: ( $acc_rate > 0 ? self::calculate_tax_money( $room_net_fb, $acc_rate, self::MODE_SALES_TAX )['gross'] : $room_net_fb );
+				} else {
+					$room_gross = $room_net_fb;
+				}
 			} else {
-				$room_gross = $total_price_money
+				$children_fb_gross = ( self::MODE_VAT === $tax_mode && $children_net_money->isPositive() )
+					? ( $children_tax_stored_m->isPositive()
+						? $children_net_money->add( $children_tax_stored_m )
+						: ( $acc_rate > 0 ? self::calculate_tax_money( $children_net_money, $acc_rate, self::MODE_SALES_TAX )['gross'] : $children_net_money ) )
+					: $children_net_money;
+				$room_gross        = $total_price_money
 					->add( $coupon_discount_money )
-					->subtract( $children_net_money )
+					->subtract( $children_fb_gross )
 					->subtract( $extras_sum )
 					->subtract( $sf_money );
 			}
@@ -772,8 +783,15 @@ class Tax {
 			$room_gross = Money::fromCents( 0, $currency );
 		}
 
+		$children_input = $children_net_money;
+		if ( self::MODE_VAT === $tax_mode && $children_net_money->isPositive() ) {
+			$children_input = $children_tax_stored_m->isPositive()
+				? $children_net_money->add( $children_tax_stored_m )
+				: ( $acc_rate > 0 ? self::calculate_tax_money( $children_net_money, $acc_rate, self::MODE_SALES_TAX )['gross'] : $children_net_money );
+		}
+
 		$room_calc     = self::calculate_tax_money( $room_gross, $acc_rate, $tax_mode );
-		$children_calc = self::calculate_tax_money( $children_net_money, $acc_rate, $tax_mode );
+		$children_calc = self::calculate_tax_money( $children_input, $acc_rate, $tax_mode );
 		$sf_calc       = self::calculate_tax_money( $sf_money, $ext_rate, $tax_mode );
 
 		$acc_tax_reconstructed = $acc_tax_reconstructed->add( $room_calc['tax'] )->add( $children_calc['tax'] );
@@ -810,6 +828,7 @@ class Tax {
 		} elseif ( $diff_gross->isNegative() ) {
 			$neg_amt   = $tot_gross->subtract( $total_price_money );
 			$adj_calc  = self::calculate_tax_money( $neg_amt, $ext_rate, $tax_mode );
+			$ext_tax_reconstructed = $ext_tax_reconstructed->subtract( $adj_calc['tax'] );
 			$tot_net   = $tot_net->subtract( $adj_calc['net'] );
 			$tot_tax   = $tot_tax->subtract( $adj_calc['tax'] );
 			$tot_gross = $tot_gross->subtract( $adj_calc['gross'] );
@@ -842,7 +861,7 @@ class Tax {
 					'gross'        => $room_calc['gross']->toDecimal(),
 				),
 				'children' => array(
-					'gross_amount' => $children_net_money->toDecimal(),
+					'gross_amount' => $children_calc['gross']->toDecimal(),
 					'net'          => $children_calc['net']->toDecimal(),
 					'tax_rate'     => $acc_rate,
 					'tax'          => $children_calc['tax']->toDecimal(),
@@ -923,9 +942,18 @@ class Tax {
 			: Money::fromCents( 0, $currency );
 		$extras_red_map      = ( null !== $coupon_reds && isset( $coupon_reds['extras_reductions'] ) && is_array( $coupon_reds['extras_reductions'] ) ) ? $coupon_reds['extras_reductions'] : array();
 
+		$rates_map = isset( $breakdown['rates'] ) && is_array( $breakdown['rates'] ) ? $breakdown['rates'] : array();
+
 		// Room
-		if ( isset( $breakdown['breakdown']['room'] ) && array() !== $breakdown['breakdown']['room'] ) {
-			$room       = $breakdown['breakdown']['room'];
+		if ( ( isset( $breakdown['breakdown']['room'] ) && array() !== $breakdown['breakdown']['room'] ) || ( $has_coupon_row && $room_red_m->isPositive() ) ) {
+			$room       = ( isset( $breakdown['breakdown']['room'] ) && is_array( $breakdown['breakdown']['room'] ) && array() !== $breakdown['breakdown']['room'] )
+				? $breakdown['breakdown']['room']
+				: array(
+					'net'      => '0',
+					'tax'      => '0',
+					'gross'    => '0',
+					'tax_rate' => $rates_map['accommodation'] ?? 0,
+				);
 			$room_label = I18n::get_label( 'label_room' );
 			if ( isset( $meta['guests'] ) && (int) $meta['guests'] > 0 ) {
 				$room_label .= sprintf( ' (%s)', sprintf( I18n::get_label( 'label_guests_count' ), (int) $meta['guests'] ) );
@@ -955,9 +983,13 @@ class Tax {
 		}
 
 // Extras
+		$rendered_extra_ids = array();
 		if ( isset( $breakdown['breakdown']['extras'] ) && array() !== $breakdown['breakdown']['extras'] ) {
 			foreach ( $breakdown['breakdown']['extras'] as $extra ) {
 				$ex_id           = (string) ( $extra['id'] ?? '' );
+				if ( '' !== $ex_id ) {
+					$rendered_extra_ids[] = $ex_id;
+				}
 				$ex_red_m        = ( $has_coupon_row && '' !== $ex_id && isset( $extras_red_map[ $ex_id ] ) )
 					? Money::fromDecimal( (string) $extras_red_map[ $ex_id ], $currency )
 					: Money::fromCents( 0, $currency );
@@ -990,6 +1022,44 @@ class Tax {
 					'tax_formatted'    => I18n::format_currency( $ex_tax_m ),
 					'gross_formatted'  => I18n::format_currency( $ex_gross_m ),
 					'amount_formatted' => I18n::format_currency( $ex_amount_m ),
+				);
+			}
+		}
+
+		// Preserve extras reduced to 0.00 by a coupon so itemized summary rows still reconcile.
+		if ( $has_coupon_row && array() !== $extras_red_map ) {
+			$extras_meta_map = ( null !== $coupon_reds && isset( $coupon_reds['extras_meta'] ) && is_array( $coupon_reds['extras_meta'] ) )
+				? $coupon_reds['extras_meta']
+				: array();
+			$zero_extra_m    = Money::fromCents( 0, $currency );
+			foreach ( $extras_red_map as $red_ex_id => $red_ex_val ) {
+				$red_ex_key = (string) $red_ex_id;
+				if ( in_array( $red_ex_key, $rendered_extra_ids, true ) ) {
+					continue;
+				}
+				$red_ex_m = Money::fromDecimal( (string) $red_ex_val, $currency );
+				if ( ! $red_ex_m->isPositive() ) {
+					continue;
+				}
+				$ex_meta_entry = is_array( $extras_meta_map[ $red_ex_key ] ?? null ) ? $extras_meta_map[ $red_ex_key ] : array();
+				$raw_ex_name   = (string) ( $ex_meta_entry['name'] ?? '' );
+				$ex_disp_name  = '' !== $raw_ex_name ? I18n::decode( $raw_ex_name, $language ) : I18n::get_label( 'label_extras' );
+				$ex_tclass     = (string) ( $ex_meta_entry['tax_class'] ?? 'extras' );
+				$ex_rate_disp  = ( 'accommodation' === $ex_tclass || in_array( $red_ex_key, array( '_early_checkin', '_late_checkout' ), true ) )
+					? ( $rates_map['accommodation'] ?? 0 )
+					: ( $rates_map['extras'] ?? 0 );
+				$formatted['items'][] = array(
+					'type'             => 'extra',
+					'label'            => $ex_disp_name,
+					'net'              => $zero_extra_m->toDecimal(),
+					'tax_rate'         => $ex_rate_disp,
+					'tax'              => $zero_extra_m->toDecimal(),
+					'gross'            => $zero_extra_m->toDecimal(),
+					'amount'           => $red_ex_m->toDecimal(),
+					'net_formatted'    => I18n::format_currency( $zero_extra_m ),
+					'tax_formatted'    => I18n::format_currency( $zero_extra_m ),
+					'gross_formatted'  => I18n::format_currency( $zero_extra_m ),
+					'amount_formatted' => I18n::format_currency( $red_ex_m ),
 				);
 			}
 		}
@@ -1031,7 +1101,7 @@ class Tax {
 			'total_tax_formatted'    => I18n::format_currency( $totals['total_tax'] ?? 0 ),
 			'total_gross_formatted'  => I18n::format_currency( $totals['total_gross'] ?? 0 ),
 			'tax_included_note'      => self::MODE_VAT === $mode
-				? sprintf( I18n::get_label( 'label_includes_tax' ), $base_label . ' ' . self::get_accommodation_rate() . '%' )
+				? sprintf( I18n::get_label( 'label_includes_tax' ), $base_label . ' ' . self::format_rate( self::get_accommodation_rate() ) . '%' )
 				: '',
 		);
 
@@ -1216,7 +1286,8 @@ class Tax {
 								<td class="<?php echo $is_email ? '' : esc_attr( $styles['td'] ); ?>"
 									style="<?php echo $is_email ? esc_attr( $styles['td'] ) : 'text-align: left;'; ?>">
 									<?php
-									echo esc_html( sprintf( I18n::get_label( 'label_tax_rate' ), $formatted['label'], self::format_rate( $accommodation_rate ) ) );
+									$single_rate = ( $accommodation_tax_total <= 0 && $extras_tax > 0 ) ? $extras_rate : $accommodation_rate;
+									echo esc_html( sprintf( I18n::get_label( 'label_tax_rate' ), $formatted['label'], self::format_rate( $single_rate ) ) );
 									?>
 								</td>
 								<td class="<?php echo $is_email ? '' : esc_attr( $styles['td_right'] ); ?> mhbo-item-amount"

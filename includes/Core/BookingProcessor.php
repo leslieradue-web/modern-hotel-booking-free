@@ -60,9 +60,13 @@ class BookingProcessor {
 	 *                                          for this room and is responsible for releasing them.
 	 *                                          MUST only be set via this parameter — never via $data —
 	 *                                          to prevent HTTP clients from bypassing concurrency guards.
+	 * @param bool                 $trusted_internal When true the caller is trusted server-side code (e.g. AI
+	 *                                               multi-room orchestration) allowed to pass internal group
+	 *                                               coupon apportionment flags. MUST only be set via this
+	 *                                               parameter — never via $data.
 	 * @return array<string, mixed>|\WP_Error Result array on success, WP_Error on failure.
 	 */
-	public static function process( array $data, bool $bypass_lock = false ): array|\WP_Error {
+	public static function process( array $data, bool $bypass_lock = false, bool $trusted_internal = false ): array|\WP_Error {
 		global $wpdb;
 
 		// 1. Sanitize Inputs
@@ -77,11 +81,12 @@ class BookingProcessor {
 		$payment_method = sanitize_key( $data['payment_method'] ?? 'arrival' ) ?: 'arrival';
 		$language       = sanitize_key( $data['language'] ?? I18n::get_current_language() );
 		$update_id      = absint( $data['update_id'] ?? 0 );
-		$source         = sanitize_text_field( $data['source'] ?? 'public' );
-		$external_id    = sanitize_text_field( $data['external_id'] ?? '' );
-		$parent_token   = sanitize_text_field( $data['parent_token'] ?? '' );
-		$bypass_past    = (bool) ( $data['bypass_past'] ?? false );
-		$session_token  = sanitize_text_field( $data['session_token'] ?? $data['mhbo_session_token'] ?? '' );
+		$source           = sanitize_text_field( $data['source'] ?? 'public' );
+		$is_public_source = in_array( strtolower( $source ), array( 'public', 'ai_concierge' ), true );
+		$external_id      = sanitize_text_field( $data['external_id'] ?? '' );
+		$parent_token     = sanitize_text_field( $data['parent_token'] ?? '' );
+		$raw_bypass_past  = ! empty( $data['bypass_past'] );
+		$session_token    = sanitize_text_field( $data['session_token'] ?? $data['mhbo_session_token'] ?? '' );
 
 if ( 0 === $update_id && '' !== $session_token ) {
 			$session_meta = get_transient( 'mhbo_booking_session_' . $session_token ) ?: get_transient( 'mhbo_session_' . $session_token );
@@ -113,7 +118,7 @@ if ( 0 === $update_id && '' !== $session_token ) {
 				)
 			);
 			if ( $existing_booking ) {
-				if ( ! self::caller_owns_booking( $existing_booking, $data ) ) {
+				if ( ! self::caller_owns_booking( $existing_booking, $data, $is_public_source ) ) {
 					$update_id = 0;
 				} elseif ( 'pending_payment' !== $existing_booking->status ) {
 					// Existing booking is already completed or confirmed — must not overwrite!
@@ -125,6 +130,14 @@ if ( 0 === $update_id && '' !== $session_token ) {
 				}
 			} else {
 				$update_id = 0;
+			}
+		}
+
+		// Validate date format and stay-length bounds BEFORE invoking pricing/availability loops.
+		if ( '' !== $check_in && '' !== $check_out ) {
+			$range_check = HotelTime::validate_date_range( $check_in, $check_out, false );
+			if ( is_wp_error( $range_check ) ) {
+				return $range_check;
 			}
 		}
 
@@ -144,14 +157,33 @@ if ( 0 === $update_id && '' !== $session_token ) {
 		// stay restrictions, GDPR, custom fields) that don't apply to
 		// automated sync imports or back-office staff workstations. Uses a filter so
 		// ICalManager (and any future OTA integration) can register platforms dynamically.
+		// Law 55: Only booking-management staff (never read-only VIEW_BOOKINGS housekeepers) are privileged,
+		// and a staff session never elevates a public-channel submission (public rules always apply there).
 		$privileged_sources = apply_filters( 'mhbo_privileged_booking_sources', array( 'admin', 'manual', 'ical', 'tablet' ) );
-		$is_staff_user      = function_exists( 'is_user_logged_in' ) && is_user_logged_in() && (
+		$has_logged_in_user = function_exists( 'is_user_logged_in' ) && is_user_logged_in();
+		$is_staff_user      = ! $is_public_source && $has_logged_in_user && (
 			current_user_can( 'manage_options' ) ||
 			current_user_can( Capabilities::MANAGE_LHBO ) ||
-			current_user_can( Capabilities::VIEW_BOOKINGS ) ||
 			current_user_can( Capabilities::MANAGE_SETTINGS )
 		);
 		$is_privileged      = in_array( strtolower( $source ), $privileged_sources, true ) || $is_staff_user;
+		$bypass_past        = $is_privileged && $raw_bypass_past;
+		$allow_internal     = $is_privileged || $trusted_internal;
+		$can_override_tax   = $has_logged_in_user
+			? ( ! $is_public_source && ( $trusted_internal || Capabilities::can_override_booking_tax() ) )
+			: $is_privileged;
+		$can_override_total = $has_logged_in_user
+			? ( ! $is_public_source && ( $trusted_internal || Capabilities::can_override_booking_pricing() ) )
+			: $is_privileged;
+		$can_mark_paid      = $has_logged_in_user
+			? ( ! $is_public_source && ( $trusted_internal || Capabilities::can_process_payments() ) )
+			: $is_privileged;
+
+		// Multi-room group linkage is server-issued only; public submissions can never join an existing group.
+		if ( $is_public_source ) {
+			$parent_token = '';
+			unset( $data['is_multi_room'] );
+		}
 
 		// Resolve room_id from type_id if it's 0 (category booking)
 		if ( 0 === $room_id && 0 !== $type_id && '' !== $check_in && '' !== $check_out ) {
@@ -177,7 +209,7 @@ if ( 0 === $update_id && '' !== $session_token ) {
 		}
 
 if ( ! $bypass_past ) {
-			$today = wp_date( 'Y-m-d' );
+			$today = HotelTime::today();
 			if ( $check_in < $today ) {
 				return new \WP_Error( 'mhbo_past_date', I18n::get_label( 'label_check_in_past' ) );
 			}
@@ -249,11 +281,11 @@ $children     = 0;
 				return new \WP_Error( 'mhbo_unavailable', I18n::get_label( $label ) );
 			}
 
-			// 4. Pricing Calculation (public/unprivileged callers cannot override property tax mode).
-			$tax_mode = ( $is_privileged && isset( $data['tax_mode'] ) && '' !== (string) $data['tax_mode'] )
-				? sanitize_key( (string) $data['tax_mode'] )
-				: null;
-			$calc     = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, $extras_input, $children, $child_ages, $tax_mode );
+// 4. Pricing Calculation (only Administrators / automated privileged sources with Starter+ tax engine may override booking tax mode or rates).
+			$tax_mode  = null;
+			$tax_rates = null;
+			
+			$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, $extras_input, $children, $child_ages, $tax_mode, $tax_rates, $is_privileged );
 			if ( ! $calc ) {
 				return new \WP_Error( 'mhbo_pricing_failed', I18n::get_label( 'label_price_calc_error' ) );
 			}
@@ -269,10 +301,9 @@ $children     = 0;
 				return new \WP_Error( 'mhbo_invalid_price', I18n::get_label( 'label_invalid_price' ) );
 			}
 
-			// Allow manual price override ONLY for privileged/internal sources (admin, iCal, OTA).
-			// 2026 BP: Public bookings MUST always use server-recalculated pricing to prevent
-			// URL/POST price tampering.
-			if ( $is_privileged && isset( $data['total_price'] ) ) {
+			// Allow manual price override ONLY for Hotel Managers / Administrators (MANAGE_PRICING / MANAGE_SETTINGS) or automated sync.
+			// 2026 BP: Public and Front Desk bookings MUST use server-recalculated pricing to prevent tampering.
+			if ( $can_override_total && isset( $data['total_price'] ) ) {
 				$total = Money::fromDecimal( (string) $data['total_price'], Pricing::get_currency_code() );
 			}
 			$booking_extras = $calc['extras_breakdown'] ?? array();
@@ -282,10 +313,10 @@ $charge_amount = $total;
 			$deposit_data  = null;
 
 // 5. Payment Verification
-			// Only privileged internal sources may preset status/payment_status.
+			// Only privileged internal sources may preset status; manual paid flags require PROCESS_PAYMENTS / MANAGE_SETTINGS.
 			$status           = $is_privileged ? sanitize_key( $data['status'] ?? 'pending' ) : 'pending';
-			$payment_status   = $is_privileged ? sanitize_key( $data['payment_status'] ?? 'pending' ) : 'pending';
-			$payment_received = ( $is_privileged && (bool) ( $data['payment_received'] ?? false ) ) ? 1 : 0;
+			$payment_status   = $can_mark_paid ? sanitize_key( $data['payment_status'] ?? 'pending' ) : 'pending';
+			$payment_received = ( $can_mark_paid && (bool) ( $data['payment_received'] ?? false ) ) ? 1 : 0;
 			$transaction_id   = sanitize_text_field( $data['transaction_id'] ?? '' );
 			$capture_id       = sanitize_text_field( $data['capture_id'] ?? '' );
 			$payment_date     = isset( $data['payment_date'] ) ? sanitize_text_field( $data['payment_date'] ) : null;
@@ -619,12 +650,13 @@ if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) 
 	/**
 	 * Verify whether the active caller owns a booking draft/record before reuse or ID return.
 	 *
-	 * @param object               $booking Booking database row object.
-	 * @param array<string, mixed> $data    Submitted booking request data.
+	 * @param object               $booking          Booking database row object.
+	 * @param array<string, mixed> $data             Submitted booking request data.
+	 * @param bool                 $is_public_source True when invoked from public/AI channels (suppresses staff bypass).
 	 * @return bool
 	 */
-	private static function caller_owns_booking( object $booking, array $data ): bool {
-		if ( current_user_can( Capabilities::MANAGE_LHBO ) ) {
+	private static function caller_owns_booking( object $booking, array $data, bool $is_public_source = false ): bool {
+		if ( ! $is_public_source && current_user_can( Capabilities::MANAGE_LHBO ) ) {
 			return true;
 		}
 		$booking_id    = (int) ( $booking->id ?? 0 );

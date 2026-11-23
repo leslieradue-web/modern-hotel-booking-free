@@ -21,6 +21,19 @@ class Pricing {
 	public const LOCK_TIMEOUT = 10;
 
 	/**
+	 * Hard ceiling on single-booking stay length in nights to prevent multi-year DoS loops.
+	 */
+	public const MAX_STAY_NIGHTS = 366;
+
+	/**
+	 * Return the active ceiling for stay length in nights (filterable up to 730).
+	 */
+	public static function get_max_stay_nights(): int {
+		$limit = (int) apply_filters( 'mhbo_max_stay_nights', self::MAX_STAY_NIGHTS );
+		return max( 1, min( 730, $limit ) );
+	}
+
+	/**
 	 * Runtime static cache for get_booking_payment_amounts() to avoid redundant ledger parsing.
 	 *
 	 * @var array<string, array{total: Money, deposit: Money, payment: Money, received: Money, remaining: Money, deposit_received: bool, is_paid: bool, due_now: Money, due_type: string, is_overdue: bool, is_urgent_unpaid: bool, effective_payment_status: string, effective_payment_status_label: string}>
@@ -136,7 +149,8 @@ class Pricing {
 			? $int_formatted . $decimal_separator . $frac_part
 			: $int_formatted;
 
-		if ( $is_neg && '0' !== $int_formatted ) {
+		$has_nonzero_value = '0' !== $int_formatted || ( '' !== $frac_part && 1 === preg_match( '/[1-9]/', $frac_part ) );
+		if ( $is_neg && $has_nonzero_value ) {
 			$formatted = '-' . $formatted;
 		}
 
@@ -897,6 +911,8 @@ return true;
 		// Determine received amount according to USALI Folio Truth (Law 59)
 		if ( $has_ledger_entries ) {
 			$received = $ledger_total;
+		} elseif ( 'refunded' === $payment_status ) {
+			$received = Money::fromCents( 0, $currency );
 		} elseif ( $payment->isPositive() ) {
 			$received = $payment;
 		} elseif ( (bool) ( $booking->payment_received ?? false ) && $total->isPositive() ) {
@@ -1047,7 +1063,7 @@ return true;
 					 FROM {$wpdb->prefix}mhbo_bookings b
 					 LEFT JOIN {$wpdb->prefix}mhbo_rooms r ON b.room_id = r.id
 					 LEFT JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id
-					 WHERE (b.multi_room_parent = %s OR b.id = %d)
+					 WHERE (b.multi_room_parent = %s OR (b.id = %d AND b.is_multi_room = 1))
 					   AND b.status NOT IN ('cancelled', 'refunded', 'deleted')
 					 ORDER BY b.id ASC",
 					$parent,
@@ -1634,9 +1650,14 @@ return true;
 		$booking_id = (int) ( $booking->id ?? 0 );
 		$check_in   = (string) ( $booking->check_in ?? '' );
 		$check_out  = (string) ( $booking->check_out ?? '' );
-		$ts_in      = strtotime( $check_in );
-		$ts_out     = strtotime( $check_out );
-		$nights     = ( $ts_in && $ts_out && $ts_out > $ts_in ) ? (int) round( ( $ts_out - $ts_in ) / DAY_IN_SECONDS ) : 1;
+		try {
+			$utc    = new \DateTimeZone( 'UTC' );
+			$dt_in  = new \DateTimeImmutable( $check_in, $utc );
+			$dt_out = new \DateTimeImmutable( $check_out, $utc );
+			$nights = ( $dt_out > $dt_in ) ? max( 1, (int) $dt_in->diff( $dt_out )->days ) : 1;
+		} catch ( \Exception ) {
+			$nights = 1;
+		}
 
 		$room_id     = (int) ( $booking->room_id ?? 0 );
 		$room_number = (string) ( $booking->room_number ?? '' );
@@ -1662,34 +1683,55 @@ return true;
 			$room_name = (string) ( I18n::decode( $room_name, $lang ) ?? $room_name );
 		}
 
-		// Tax mode and rates
+		// Stored booking-time breakdown is the audit trail; decode once for tax resolution and room/children reuse.
+		$tb_decoded = array();
+		if ( ! empty( $booking->tax_breakdown ) ) {
+			$tb_raw = is_string( $booking->tax_breakdown ) ? json_decode( $booking->tax_breakdown, true ) : (array) $booking->tax_breakdown;
+			if ( is_array( $tb_raw ) ) {
+				$tb_decoded = $tb_raw;
+			}
+		}
+
+		// Tax mode and rates: honor booking's historical snapshot before falling back to global option state.
 		$global_tax_enabled = class_exists( Tax::class ) && Tax::is_enabled();
+		$saved_tax_mode     = sanitize_key( (string) ( $booking->tax_mode ?? '' ) );
+		if ( '' === $saved_tax_mode && ! empty( $tb_decoded['mode'] ) ) {
+			$saved_tax_mode = sanitize_key( (string) $tb_decoded['mode'] );
+		}
 		if ( null === $tax_mode || '' === $tax_mode ) {
-			if ( ! $global_tax_enabled ) {
-				$tax_mode = class_exists( Tax::class ) ? Tax::MODE_DISABLED : 'disabled';
+			if ( '' !== $saved_tax_mode ) {
+				$tax_mode = $saved_tax_mode;
+			} elseif ( $global_tax_enabled ) {
+				$tax_mode = Tax::get_mode();
 			} else {
-				$tax_mode = sanitize_key( $booking->tax_mode ?? Tax::get_mode() );
-				if ( '' === $tax_mode ) {
-					$tax_mode = Tax::get_mode();
-				}
+				$tax_mode = class_exists( Tax::class ) ? Tax::MODE_DISABLED : 'disabled';
 			}
 		} else {
 			$tax_mode = sanitize_key( $tax_mode );
 		}
-		$tax_enabled    = class_exists( Tax::class ) && Tax::MODE_DISABLED !== $tax_mode;
-		$is_tax_vat     = in_array( $tax_mode, array( 'vat', 'inclusive' ), true );
-		$base_tax_label = class_exists( Tax::class ) ? Tax::get_label( $lang, $tax_mode ) : 'Tax';
-		$tax_label      = $is_tax_vat ? sprintf( I18n::get_label( 'label_tax_included' ), $base_tax_label ) : $base_tax_label;
-		$acc_rate       = $tax_enabled ? ( isset( $booking->tax_rate_accommodation ) && '' !== (string) $booking->tax_rate_accommodation ? floatval( $booking->tax_rate_accommodation ) : ( class_exists( Tax::class ) ? (float) Tax::get_accommodation_rate() : 0.0 ) ) : 0.0;
-		$ext_rate       = $tax_enabled ? ( isset( $booking->tax_rate_extras ) && '' !== (string) $booking->tax_rate_extras ? floatval( $booking->tax_rate_extras ) : ( class_exists( Tax::class ) ? (float) Tax::get_extras_rate() : 0.0 ) ) : 0.0;
+		if ( class_exists( Tax::class ) && method_exists( Tax::class, 'normalize_mode' ) ) {
+			$tax_mode = Tax::normalize_mode( $tax_mode );
+		}
+		$tax_enabled     = class_exists( Tax::class ) && Tax::MODE_DISABLED !== $tax_mode;
+		$is_tax_vat      = in_array( $tax_mode, array( 'vat', 'inclusive' ), true );
+		$saved_norm_mode = ( '' !== $saved_tax_mode && class_exists( Tax::class ) && method_exists( Tax::class, 'normalize_mode' ) )
+			? Tax::normalize_mode( $saved_tax_mode )
+			: $saved_tax_mode;
+		$base_tax_label  = ( '' !== $saved_norm_mode && $saved_norm_mode === $tax_mode && ! empty( $tb_decoded['base_label'] ) )
+			? (string) $tb_decoded['base_label']
+			: ( class_exists( Tax::class ) ? Tax::get_label( $lang, $tax_mode ) : 'Tax' );
+		$tax_label       = $is_tax_vat ? sprintf( I18n::get_label( 'label_tax_included' ), $base_tax_label ) : $base_tax_label;
+		$use_global_tax_rate = ( '' !== $saved_norm_mode && $saved_norm_mode !== $tax_mode && ( class_exists( Tax::class ) ? Tax::MODE_DISABLED : 'disabled' ) === $saved_norm_mode );
+		$acc_rate            = $tax_enabled ? ( ( ! $use_global_tax_rate && isset( $booking->tax_rate_accommodation ) && '' !== (string) $booking->tax_rate_accommodation ) ? floatval( $booking->tax_rate_accommodation ) : ( class_exists( Tax::class ) ? (float) Tax::get_accommodation_rate() : 0.0 ) ) : 0.0;
+		$ext_rate            = $tax_enabled ? ( ( ! $use_global_tax_rate && isset( $booking->tax_rate_extras ) && '' !== (string) $booking->tax_rate_extras ) ? floatval( $booking->tax_rate_extras ) : ( class_exists( Tax::class ) ? (float) Tax::get_extras_rate() : 0.0 ) ) : 0.0;
 
 		// 1. Room accommodation & daily rates
 		$daily_prices = array();
 		$room_money   = Money::fromCents( 0, $currency );
 
-		if ( $room_id > 0 && $ts_in && $ts_out && $ts_out > $ts_in ) {
+		if ( $room_id > 0 && '' !== $check_in && '' !== $check_out ) {
 			for ( $i = 0; $i < $nights; $i++ ) {
-				$cur_date    = HotelTime::date( 'Y-m-d', HotelTime::midnight( $check_in ) + $i * DAY_IN_SECONDS );
+				$cur_date    = HotelTime::add_days( $check_in, $i );
 				$day_price_m = self::calculate_daily_price_money( $room_id, $cur_date );
 				$daily_prices[] = array(
 					'date'      => $cur_date,
@@ -1697,15 +1739,6 @@ return true;
 					'formatted' => I18n::format_currency( $day_price_m ),
 				);
 				$room_money = $room_money->add( $day_price_m );
-			}
-		}
-
-		// Stored booking-time breakdown is the audit trail; decode once for room and children reuse.
-		$tb_decoded = array();
-		if ( ! empty( $booking->tax_breakdown ) ) {
-			$tb_raw = is_string( $booking->tax_breakdown ) ? json_decode( $booking->tax_breakdown, true ) : (array) $booking->tax_breakdown;
-			if ( is_array( $tb_raw ) ) {
-				$tb_decoded = $tb_raw;
 			}
 		}
 
@@ -1811,36 +1844,11 @@ return true;
 		}
 
 		// 3. Extras & Early Check-in / Late Check-out
-		$extras_breakdown = self::decode_stored_extras( $booking->booking_extras ?? null );
-		$saved_custom     = ! empty( $booking->custom_fields ) ? ( is_array( $booking->custom_fields ) ? $booking->custom_fields : json_decode( (string) $booking->custom_fields, true ) ) : array();
+		$extras_breakdown    = self::decode_stored_extras( $booking->booking_extras ?? null );
+		$saved_custom        = ! empty( $booking->custom_fields ) ? ( is_array( $booking->custom_fields ) ? $booking->custom_fields : json_decode( (string) $booking->custom_fields, true ) ) : array();
+		$resolved_stay_times = null;
 
-		if ( is_array( $saved_custom ) ) {
-			if ( ! empty( $saved_custom['_early_checkin'] ) && ! isset( $extras_breakdown['_early_checkin'] ) ) {
-				$early_fee_m = Money::fromDecimal( (string) get_option( 'mhbo_early_checkin_fee', '0' ), $currency );
-				if ( $early_fee_m->isPositive() ) {
-					$extras_breakdown['_early_checkin'] = array(
-						'id'       => '_early_checkin',
-						'name'     => I18n::get_label( 'label_early_checkin' ) ?: __( 'Early Check-in', 'modern-hotel-booking' ),
-						'total'    => $early_fee_m->toDecimal(),
-						'price'    => $early_fee_m->toDecimal(),
-						'quantity' => 1,
-					);
-				}
-			}
-			if ( ! empty( $saved_custom['_late_checkout'] ) && ! isset( $extras_breakdown['_late_checkout'] ) ) {
-				$late_fee_m = Money::fromDecimal( (string) get_option( 'mhbo_late_checkout_fee', '0' ), $currency );
-				if ( $late_fee_m->isPositive() ) {
-					$extras_breakdown['_late_checkout'] = array(
-						'id'       => '_late_checkout',
-						'name'     => I18n::get_label( 'label_late_checkout' ) ?: __( 'Late Check-out', 'modern-hotel-booking' ),
-						'total'    => $late_fee_m->toDecimal(),
-						'price'    => $late_fee_m->toDecimal(),
-						'quantity' => 1,
-					);
-				}
-			}
-		}
-
+$folio_extra_meta = array();
 		foreach ( $extras_breakdown as $ex_k => $ex_item ) {
 			$ex_id   = (string) ( $ex_item['id'] ?? $ex_k );
 			$ex_name = (string) ( $ex_item['name'] ?? '' );
@@ -1849,16 +1857,45 @@ return true;
 			}
 			$ex_name = class_exists( I18n::class ) ? ( (string) ( I18n::decode( $ex_name, $lang ) ?? $ex_name ) ) : (string) $ex_name;
 
-			$ex_amt_str = isset( $ex_item['total'] ) ? (string) $ex_item['total'] : (string) ( $ex_item['price'] ?? 0 );
-			$ex_qty     = isset( $ex_item['quantity'] ) ? max( 1, (int) $ex_item['quantity'] ) : 1;
-			$ex_money   = Money::fromDecimal( $ex_amt_str, $currency );
-			if ( ! $ex_money->isPositive() ) {
+			$ex_amt_str  = isset( $ex_item['total'] ) ? (string) $ex_item['total'] : (string) ( $ex_item['price'] ?? 0 );
+			$ex_qty      = isset( $ex_item['quantity'] ) ? max( 1, (int) $ex_item['quantity'] ) : 1;
+			$ex_money    = Money::fromDecimal( $ex_amt_str, $currency );
+			$is_stay_ext = in_array( $ex_id, array( '_early_checkin', '_late_checkout' ), true );
+			if ( ! $ex_money->isPositive() && ! $is_stay_ext ) {
 				continue;
 			}
 
-			$is_acc_ex     = in_array( $ex_id, array( '_early_checkin', '_late_checkout' ), true );
-			$item_tax_rate = $is_acc_ex ? $acc_rate : $ext_rate;
-			$item_calc     = class_exists( Tax::class ) ? Tax::calculate_tax_money( $ex_money, $item_tax_rate, $tax_mode ) : array( 'net' => $ex_money, 'tax' => Money::fromCents( 0, $currency ), 'gross' => $ex_money );
+			$is_acc_ex = ( 'accommodation' === (string) ( $ex_item['tax_class'] ?? '' ) ) || $is_stay_ext;
+			if ( $is_stay_ext && $ex_money->isZero() ) {
+				$item_tax_rate  = 0.0;
+				$zero_m         = Money::fromCents( 0, $currency );
+				$item_calc      = array(
+					'net'   => $zero_m,
+					'tax'   => $zero_m,
+					'gross' => $zero_m,
+				);
+				$unit_price_fmt = __( 'Complimentary', 'modern-hotel-booking' );
+				$total_fmt      = __( 'Complimentary', 'modern-hotel-booking' );
+			} else {
+				$item_tax_rate  = $is_acc_ex ? $acc_rate : $ext_rate;
+				$item_calc      = class_exists( Tax::class ) ? Tax::calculate_tax_money( $ex_money, $item_tax_rate, $tax_mode ) : array( 'net' => $ex_money, 'tax' => Money::fromCents( 0, $currency ), 'gross' => $ex_money );
+				$unit_price_m   = ( $ex_qty > 0 ) ? $ex_money->divide( (string) $ex_qty ) : $ex_money;
+				$unit_price_fmt = I18n::format_currency( $unit_price_m );
+				$total_fmt      = I18n::format_currency( $ex_money );
+			}
+
+			$folio_extra_meta[ $ex_id ] = array(
+				'amount'   => $ex_money,
+				'tax_rate' => $item_tax_rate,
+				'tax_m'    => $item_calc['tax'],
+				'is_accom' => $is_acc_ex,
+			);
+
+			$ex_details = isset( $ex_item['pricing_type'] ) ? ucfirst( str_replace( '_', ' ', (string) $ex_item['pricing_type'] ) ) : '';
+			if ( $is_stay_ext ) {
+				$ex_details = __( 'Stay schedule extension', 'modern-hotel-booking' );
+				
+			}
 
 			$unit_price_m = ( $ex_qty > 0 ) ? $ex_money->divide( (string) $ex_qty ) : $ex_money;
 			$charges[]    = array(
@@ -1867,14 +1904,14 @@ return true;
 				'category'             => $is_acc_ex ? 'early_late' : 'extra',
 				'qty'                  => $ex_qty,
 				'unit_price'           => floatval( $unit_price_m->toDecimal() ),
-				'unit_price_formatted' => I18n::format_currency( $unit_price_m ),
+				'unit_price_formatted' => $unit_price_fmt,
 				'total'                => (float) $ex_money->toDecimal(),
-				'total_formatted'      => I18n::format_currency( $ex_money ),
+				'total_formatted'      => $total_fmt,
 				'tax_rate'             => $item_tax_rate,
 				'tax_amount'           => (float) $item_calc['tax']->toDecimal(),
 				'tax_formatted'        => I18n::format_currency( $item_calc['tax'] ),
 				'is_negative'          => false,
-				'details'              => $is_acc_ex ? __( 'Stay schedule extension', 'modern-hotel-booking' ) : ( isset( $ex_item['pricing_type'] ) ? ucfirst( str_replace( '_', ' ', (string) $ex_item['pricing_type'] ) ) : '' ),
+				'details'              => $ex_details,
 			);
 		}
 
@@ -1904,33 +1941,82 @@ return true;
 		}
 
 		// 5. Coupon / Promotional Discount
-		$coupon_code = trim( (string) ( $booking->coupon_code ?? '' ) );
-		$disc_col_m  = Money::fromDecimal( (string) ( $booking->discount_amount ?? '0' ), $currency );
-		$coup_col_m  = Money::fromDecimal( (string) ( $booking->coupon_discount ?? '0' ), $currency );
-		$discount_m  = $disc_col_m->greaterThan( $coup_col_m ) ? $disc_col_m : $coup_col_m;
+		$coupon_code          = trim( (string) ( $booking->coupon_code ?? '' ) );
+		$disc_col_m           = Money::fromDecimal( (string) ( $booking->discount_amount ?? '0' ), $currency );
+		$coup_col_m           = Money::fromDecimal( (string) ( $booking->coupon_discount ?? '0' ), $currency );
+		$discount_m           = $disc_col_m->greaterThan( $coup_col_m ) ? $disc_col_m : $coup_col_m;
+		$coupon_acc_tax_red_m = Money::fromCents( 0, $currency );
+		$coupon_ext_tax_red_m = Money::fromCents( 0, $currency );
 		if ( $discount_m->isPositive() ) {
-			$disc_tax_m = Money::fromCents( 0, $currency );
-			if ( $tax_enabled && class_exists( Tax::class ) && $acc_rate > 0 ) {
-				$disc_on_room      = Money::fromCents( (string) min( (int) $discount_m->getAmount(), (int) $room_money->getAmount() ), $currency );
-				$after_room_m      = $room_money->subtract( $disc_on_room );
-				$after_room_calc   = Tax::calculate_tax_money( $after_room_m, $acc_rate, $tax_mode );
-				$room_tax_red_m    = $room_calc['tax']->subtract( $after_room_calc['tax'] );
-				$rem_disc_m        = $discount_m->subtract( $disc_on_room );
-				$child_tax_red_m   = Money::fromCents( 0, $currency );
-				if ( $rem_disc_m->isPositive() && $children_total_m->isPositive() ) {
-					$disc_on_child   = Money::fromCents( (string) min( (int) $rem_disc_m->getAmount(), (int) $children_total_m->getAmount() ), $currency );
-					$after_child_m   = $children_total_m->subtract( $disc_on_child );
+			$disc_tax_m   = Money::fromCents( 0, $currency );
+			$disc_tax_pct = 0.0;
+			if ( $tax_enabled && class_exists( Tax::class ) && ( $acc_rate > 0 || $ext_rate > 0 ) ) {
+				$coupon_reds = is_array( $tb_decoded['coupon_reductions'] ?? null ) ? $tb_decoded['coupon_reductions'] : null;
+				if ( null !== $coupon_reds ) {
+					$disc_on_room  = Money::fromDecimal( (string) ( $coupon_reds['room_reduction'] ?? '0' ), $currency );
+					$disc_on_child = Money::fromDecimal( (string) ( $coupon_reds['children_reduction'] ?? '0' ), $currency );
+					$ex_reds       = is_array( $coupon_reds['extras_reductions'] ?? null ) ? $coupon_reds['extras_reductions'] : array();
+				} else {
+					$disc_on_room  = Money::fromCents( (string) min( (int) $discount_m->getAmount(), (int) $room_money->getAmount() ), $currency );
+					$rem_legacy    = $discount_m->subtract( $disc_on_room );
+					$disc_on_child = $children_total_m->isPositive()
+						? Money::fromCents( (string) min( (int) $rem_legacy->getAmount(), (int) $children_total_m->getAmount() ), $currency )
+						: Money::fromCents( 0, $currency );
+					$rem_legacy    = $rem_legacy->subtract( $disc_on_child );
+					$ex_reds       = $rem_legacy->isPositive() ? array( '__legacy__' => $rem_legacy->toDecimal() ) : array();
+				}
+
+				$room_tax_red_m = Money::fromCents( 0, $currency );
+				if ( $disc_on_room->isPositive() && $acc_rate > 0 ) {
+					$clamped_room   = Money::fromCents( (string) min( (int) $disc_on_room->getAmount(), (int) $room_money->getAmount() ), $currency );
+					$after_room_m   = $room_money->subtract( $clamped_room );
+					$after_room_c   = Tax::calculate_tax_money( $after_room_m, $acc_rate, $tax_mode );
+					$room_tax_red_m = $room_calc['tax']->subtract( $after_room_c['tax'] );
+				}
+
+				$child_tax_red_m = Money::fromCents( 0, $currency );
+				if ( $disc_on_child->isPositive() && $children_total_m->isPositive() && $acc_rate > 0 ) {
+					$clamped_child   = Money::fromCents( (string) min( (int) $disc_on_child->getAmount(), (int) $children_total_m->getAmount() ), $currency );
+					$after_child_m   = $children_total_m->subtract( $clamped_child );
 					$orig_ch_calc    = Tax::calculate_tax_money( $children_total_m, $acc_rate, $tax_mode );
 					$after_ch_calc   = Tax::calculate_tax_money( $after_child_m, $acc_rate, $tax_mode );
 					$child_tax_red_m = $orig_ch_calc['tax']->subtract( $after_ch_calc['tax'] );
-					$rem_disc_m      = $rem_disc_m->subtract( $disc_on_child );
 				}
-				$extra_tax_red_m = Money::fromCents( 0, $currency );
-				if ( $rem_disc_m->isPositive() && $ext_rate > 0 ) {
-					$ex_disc_calc    = Tax::calculate_tax_money( $rem_disc_m, $ext_rate, $tax_mode );
-					$extra_tax_red_m = $ex_disc_calc['tax'];
+
+				$acc_ex_tax_red_m = Money::fromCents( 0, $currency );
+				$std_ex_tax_red_m = Money::fromCents( 0, $currency );
+				foreach ( $ex_reds as $red_ex_id => $red_ex_val ) {
+					$red_ex_m = Money::fromDecimal( (string) $red_ex_val, $currency );
+					if ( ! $red_ex_m->isPositive() ) {
+						continue;
+					}
+					$red_ex_key = (string) $red_ex_id;
+					if ( isset( $folio_extra_meta[ $red_ex_key ] ) ) {
+						$ex_meta_item = $folio_extra_meta[ $red_ex_key ];
+						$ex_rate_item = (float) $ex_meta_item['tax_rate'];
+						if ( $ex_rate_item > 0 ) {
+							$clamped_ex_red = Money::fromCents( (string) min( (int) $red_ex_m->getAmount(), (int) $ex_meta_item['amount']->getAmount() ), $currency );
+							$after_ex_m     = $ex_meta_item['amount']->subtract( $clamped_ex_red );
+							$after_ex_calc  = Tax::calculate_tax_money( $after_ex_m, $ex_rate_item, $tax_mode );
+							$ex_tax_diff    = $ex_meta_item['tax_m']->subtract( $after_ex_calc['tax'] );
+							if ( ! empty( $ex_meta_item['is_accom'] ) ) {
+								$acc_ex_tax_red_m = $acc_ex_tax_red_m->add( $ex_tax_diff );
+							} else {
+								$std_ex_tax_red_m = $std_ex_tax_red_m->add( $ex_tax_diff );
+							}
+						}
+					} elseif ( $ext_rate > 0 ) {
+						$ex_disc_calc     = Tax::calculate_tax_money( $red_ex_m, $ext_rate, $tax_mode );
+						$std_ex_tax_red_m = $std_ex_tax_red_m->add( $ex_disc_calc['tax'] );
+					}
 				}
-				$disc_tax_m = $room_tax_red_m->add( $child_tax_red_m )->add( $extra_tax_red_m );
+
+				$coupon_acc_tax_red_m = $room_tax_red_m->add( $child_tax_red_m )->add( $acc_ex_tax_red_m );
+				$coupon_ext_tax_red_m = $std_ex_tax_red_m;
+				$disc_tax_m           = $coupon_acc_tax_red_m->add( $coupon_ext_tax_red_m );
+				if ( $disc_tax_m->isPositive() ) {
+					$disc_tax_pct = $coupon_acc_tax_red_m->isPositive() ? $acc_rate : $ext_rate;
+				}
 			}
 			/* translators: %s: Promotional coupon code */
 			$disc_label = '' !== $coupon_code ? sprintf( __( 'Coupon / Promo Discount (%s)', 'modern-hotel-booking' ), $coupon_code ) : __( 'Promotional Discount', 'modern-hotel-booking' );
@@ -1943,7 +2029,7 @@ return true;
 				'unit_price_formatted' => '−' . I18n::format_currency( $discount_m ),
 				'total'                => - floatval( $discount_m->toDecimal() ),
 				'total_formatted'      => '−' . I18n::format_currency( $discount_m ),
-				'tax_rate'             => $disc_tax_m->isPositive() ? $acc_rate : 0.0,
+				'tax_rate'             => $disc_tax_pct,
 				'tax_amount'           => $disc_tax_m->isPositive() ? - floatval( $disc_tax_m->toDecimal() ) : 0.0,
 				'tax_formatted'        => $disc_tax_m->isPositive() ? ( '−' . I18n::format_currency( $disc_tax_m ) ) : '',
 				'is_negative'          => true,
@@ -2048,12 +2134,17 @@ return true;
 				if ( in_array( $c['category'], array( 'room', 'children', 'early_late' ), true ) ) {
 					$acc_tax_m = $acc_tax_m->add( $c_tax );
 				} elseif ( 'discount' === $c['category'] ) {
-					$abs_disc_tax = Money::fromDecimal( ltrim( (string) $c['tax_amount'], '-' ), $currency );
-					$on_acc       = Money::fromCents( (string) min( (int) $abs_disc_tax->getAmount(), max( 0, (int) $acc_tax_m->getAmount() ) ), $currency );
-					$acc_tax_m    = $acc_tax_m->subtract( $on_acc );
-					$on_ext       = $abs_disc_tax->subtract( $on_acc );
-					if ( $on_ext->isPositive() ) {
-						$ext_tax_m = $ext_tax_m->subtract( $on_ext );
+					if ( 'discount_coupon' === $c['id'] && ( $coupon_acc_tax_red_m->isPositive() || $coupon_ext_tax_red_m->isPositive() ) ) {
+						$acc_tax_m = $acc_tax_m->subtract( $coupon_acc_tax_red_m );
+						$ext_tax_m = $ext_tax_m->subtract( $coupon_ext_tax_red_m );
+					} else {
+						$abs_disc_tax = Money::fromDecimal( ltrim( (string) $c['tax_amount'], '-' ), $currency );
+						$on_acc       = Money::fromCents( (string) min( (int) $abs_disc_tax->getAmount(), max( 0, (int) $acc_tax_m->getAmount() ) ), $currency );
+						$acc_tax_m    = $acc_tax_m->subtract( $on_acc );
+						$on_ext       = $abs_disc_tax->subtract( $on_acc );
+						if ( $on_ext->isPositive() ) {
+							$ext_tax_m = $ext_tax_m->subtract( $on_ext );
+						}
 					}
 				} else {
 					$ext_tax_m = $ext_tax_m->add( $c_tax );
@@ -2243,14 +2334,16 @@ return true;
 	/**
 	 * Calculate complete booking pricing server-side.
 	 *
-	 * @param int                      $room_id    Room ID.
-	 * @param string                   $check_in   Check-in date (Y-m-d).
-	 * @param string                   $check_out  Check-out date (Y-m-d).
-	 * @param int                      $adults     Number of adults.
-	 * @param array<string|int, mixed> $extras     Booking extras.
-	 * @param int                      $children   Number of children.
-	 * @param array<int, int>          $child_ages Ages of children.
-	 * @param string|null              $tax_mode   Optional tax mode override.
+	 * @param int                                                                        $room_id    Room ID.
+	 * @param string                                                                     $check_in   Check-in date (Y-m-d).
+	 * @param string                                                                     $check_out  Check-out date (Y-m-d).
+	 * @param int                                                                        $adults     Number of adults.
+	 * @param array<string|int, mixed>                                                   $extras     Booking extras.
+	 * @param int                                                                        $children   Number of children.
+	 * @param array<int, int>                                                            $child_ages Ages of children.
+	 * @param string|null                                                                $tax_mode                Optional tax mode override.
+	 * @param array{accommodation?: float|int|string|null, extras?: float|int|string|null}|null $tax_rates         Optional per-booking tax rate overrides.
+	 * @param bool                                                                       $allow_calendar_override Allow staff/admin callers to price early/late options even on calendar-blackout dates.
 	 * @return array<string, mixed>|false
 	 */
 	public static function calculate_booking_money(
@@ -2261,7 +2354,9 @@ return true;
 		array $extras = array(),
 		int $children = 0,
 		array $child_ages = array(),
-		?string $tax_mode = null
+		?string $tax_mode = null,
+		?array $tax_rates = null,
+		bool $allow_calendar_override = false
 	): array|false {
 		
 		$extras = self::normalize_extras( $extras );
@@ -2271,21 +2366,25 @@ return true;
 		}
 
 		$currency = self::get_currency_code();
-		$ts_in    = strtotime( $check_in );
-		$ts_out   = strtotime( $check_out );
-
-		if ( ! $ts_in || ! $ts_out || $ts_out <= $ts_in ) {
-			return false;
+		try {
+			$utc    = new \DateTimeZone( 'UTC' );
+			$dt_in  = new \DateTimeImmutable( $check_in, $utc );
+			$dt_out = new \DateTimeImmutable( $check_out, $utc );
+			$nights = ( $dt_out > $dt_in ) ? (int) $dt_in->diff( $dt_out )->days : 0;
+		} catch ( \Exception ) {
+			$nights = 0;
 		}
 
-		$nights = (int) round( ( $ts_out - $ts_in ) / 86400 );
+		if ( $nights <= 0 || $nights > self::get_max_stay_nights() ) {
+			return false;
+		}
 
 		// --- Per-night room pricing ---
 		$room_total_money = Money::fromCents( 0, $currency );
 		$daily_prices     = array();
 
 		for ( $i = 0; $i < $nights; $i++ ) {
-			$date             = HotelTime::date( 'Y-m-d', HotelTime::midnight( $check_in ) + $i * DAY_IN_SECONDS );
+			$date             = HotelTime::add_days( $check_in, $i );
 			$day_price        = self::calculate_daily_price_money( $room_id, $date );
 			$daily_prices[]   = $day_price;
 			$room_total_money = $room_total_money->add( $day_price );
@@ -2331,15 +2430,24 @@ return true;
 		);
 
 		// --- Tax ---
+		$tax_input = array(
+			'room_total'        => $room_total_money->toDecimal(),
+			'children_total'    => $children_total_money->toDecimal(),
+			'extras_total'      => $extras_total_money->toDecimal(),
+			'extras'            => $extras_for_tax,
+			'service_fee'       => $service_fee_money->toDecimal(),
+			'service_fee_label' => $service_fee_label,
+		);
+		if ( is_array( $tax_rates ) ) {
+			if ( isset( $tax_rates['accommodation'] ) && is_numeric( $tax_rates['accommodation'] ) ) {
+				$tax_input['tax_rate_accommodation'] = $tax_rates['accommodation'];
+			}
+			if ( isset( $tax_rates['extras'] ) && is_numeric( $tax_rates['extras'] ) ) {
+				$tax_input['tax_rate_extras'] = $tax_rates['extras'];
+			}
+		}
 		$tax_data = Tax::calculate_booking_tax(
-			array(
-				'room_total'        => $room_total_money->toDecimal(),
-				'children_total'    => $children_total_money->toDecimal(),
-				'extras_total'      => $extras_total_money->toDecimal(),
-				'extras'            => $extras_for_tax,
-				'service_fee'       => $service_fee_money->toDecimal(),
-				'service_fee_label' => $service_fee_label,
-			),
+			$tax_input,
 			$tax_mode
 		);
 
@@ -2423,21 +2531,125 @@ return true;
 	}
 
 	/**
+	 * Extract coupon accommodation discount and base from calculation/tax payloads.
+	 *
+	 * @param array<string, mixed>      $calc     Booking calculation array.
+	 * @param array<string, mixed>|null $tax_data Optional recalculated tax data.
+	 * @return array{discount: ?Money, base: ?Money}
+	 */
+	public static function extract_coupon_accommodation_context( array $calc, ?array $tax_data = null ): array {
+		$currency = null;
+		if ( isset( $calc['room_total'] ) && $calc['room_total'] instanceof Money ) {
+			$currency = $calc['room_total']->getCurrency();
+		} elseif ( isset( $calc['total'] ) && $calc['total'] instanceof Money ) {
+			$currency = $calc['total']->getCurrency();
+		}
+		$currency = $currency ?? self::get_currency_code();
+
+		$tax_arr = $tax_data ?? ( is_array( $calc['tax'] ?? null ) ? $calc['tax'] : array() );
+		$reds    = is_array( $tax_arr['coupon_reductions'] ?? null ) ? $tax_arr['coupon_reductions'] : null;
+		if ( null === $reds ) {
+			return array(
+				'discount' => null,
+				'base'     => null,
+			);
+		}
+
+		$room_m     = ( $calc['room_total'] ?? null ) instanceof Money
+			? $calc['room_total']
+			: Money::fromDecimal( (string) ( $calc['room_total'] ?? '0' ), $currency );
+		$children_m = ( $calc['children_total'] ?? null ) instanceof Money
+			? $calc['children_total']
+			: Money::fromDecimal( (string) ( $calc['children_total'] ?? '0' ), $currency );
+		$base_m     = $room_m->add( $children_m );
+
+		$room_red_m  = Money::fromDecimal( (string) ( $reds['room_reduction'] ?? '0' ), $currency );
+		$child_red_m = Money::fromDecimal( (string) ( $reds['children_reduction'] ?? '0' ), $currency );
+		$disc_m      = $room_red_m->add( $child_red_m );
+
+		if ( ! $disc_m->isPositive() || ! $base_m->isPositive() ) {
+			return array(
+				'discount' => null,
+				'base'     => null,
+			);
+		}
+
+		return array(
+			'discount' => $disc_m,
+			'base'     => $base_m,
+		);
+	}
+
+	/**
+	 * Extract coupon accommodation discount and base from a persisted booking record.
+	 *
+	 * @param object      $booking  Booking DB row object.
+	 * @param string|null $currency ISO currency code.
+	 * @return array{discount: ?Money, base: ?Money}
+	 */
+	public static function extract_coupon_context_from_booking( object $booking, ?string $currency = null ): array {
+		$currency = $currency ?? self::get_currency_code();
+		$tb_raw   = ! empty( $booking->tax_breakdown )
+			? ( is_string( $booking->tax_breakdown ) ? json_decode( $booking->tax_breakdown, true ) : (array) $booking->tax_breakdown )
+			: null;
+		$reds     = ( is_array( $tb_raw ) && is_array( $tb_raw['coupon_reductions'] ?? null ) ) ? $tb_raw['coupon_reductions'] : null;
+		if ( null === $reds ) {
+			return array(
+				'discount' => null,
+				'base'     => null,
+			);
+		}
+
+		$room_red_m  = Money::fromDecimal( (string) ( $reds['room_reduction'] ?? '0' ), $currency );
+		$child_red_m = Money::fromDecimal( (string) ( $reds['children_reduction'] ?? '0' ), $currency );
+		$disc_m      = $room_red_m->add( $child_red_m );
+
+		$raw_mode = sanitize_key( (string) ( $booking->tax_mode ?? ( $tb_raw['mode'] ?? '' ) ) );
+		$is_vat   = in_array( $raw_mode, array( 'vat', 'inclusive' ), true );
+
+		$room_post_m = Money::fromDecimal( (string) ( $booking->room_total_net ?? '0' ), $currency );
+		if ( $is_vat ) {
+			$room_post_m = $room_post_m->add( Money::fromDecimal( (string) ( $booking->room_tax ?? '0' ), $currency ) );
+		}
+		$child_post_m = Money::fromDecimal( (string) ( $booking->children_total_net ?? '0' ), $currency );
+		if ( $is_vat ) {
+			$child_post_m = $child_post_m->add( Money::fromDecimal( (string) ( $booking->children_tax ?? '0' ), $currency ) );
+		}
+		$base_m = $room_post_m->add( $room_red_m )->add( $child_post_m )->add( $child_red_m );
+
+		if ( ! $disc_m->isPositive() || ! $base_m->isPositive() ) {
+			return array(
+				'discount' => null,
+				'base'     => null,
+			);
+		}
+
+		return array(
+			'discount' => $disc_m,
+			'base'     => $base_m,
+		);
+	}
+
+	/**
 	 * Resolve the first night Money amount for deposit calculations.
 	 *
 	 * For the 'first_night' deposit type, calculates 1-night room lodging cost
-	 * (including child supplements and applicable accommodation tax, but excluding
-	 * one-time extras). For percentage or fixed types, returns zero Money as the
-	 * first night rate is not required for percentage/fixed calculations.
+	 * (including child supplements, proportional coupon reduction, percentage
+	 * service fee, and applicable tax, while excluding one-time extras and
+	 * stay-level fixed service fees).
 	 *
-	 * @param int                  $room_id      Room ID or Room Type ID.
-	 * @param string               $check_in     Check-in date (YYYY-MM-DD).
-	 * @param int                  $guests       Number of adults.
-	 * @param string|null          $deposit_type Deposit type ('first_night', 'percentage', 'fixed').
-	 * @param array<string, mixed> $extras       Selected extras.
-	 * @param int                  $children     Number of children.
-	 * @param array<int, int>      $child_ages   Child ages array.
-	 * @param string|null          $currency     ISO currency code.
+	 * @param int                  $room_id                Room ID or Room Type ID.
+	 * @param string               $check_in               Check-in date (YYYY-MM-DD).
+	 * @param int                  $guests                 Number of adults.
+	 * @param string|null                                                                       $deposit_type           Deposit type ('first_night', 'percentage', 'fixed').
+	 * @param array<string|int, mixed>                                                          $extras                 Selected extras (unused; excluded from Night 1 hold).
+	 * @param int                                                                               $children               Number of children.
+	 * @param array<int, int>                                                                   $child_ages             Child ages array.
+	 * @param string|null                                                                       $currency               ISO currency code.
+	 * @param Money|null                                                                        $accommodation_discount Optional coupon accommodation reduction.
+	 * @param Money|null                                                                        $accommodation_base     Optional pre-discount accommodation base.
+	 * @param string|null                                                                       $tax_mode               Optional tax mode override.
+	 * @param array{accommodation?: float|int|string|null, extras?: float|int|string|null}|null $tax_rates              Optional per-booking tax rate overrides.
 	 * @return Money
 	 */
 	public static function resolve_first_night_money(
@@ -2448,7 +2660,11 @@ return true;
 		array $extras = array(),
 		int $children = 0,
 		array $child_ages = array(),
-		?string $currency = null
+		?string $currency = null,
+		?Money $accommodation_discount = null,
+		?Money $accommodation_base = null,
+		?string $tax_mode = null,
+		?array $tax_rates = null
 	): Money {
 		$deposit_type = $deposit_type ?? (string) get_option( 'mhbo_deposit_type', 'percentage' );
 		$currency     = $currency ?? self::get_currency_code();
@@ -2465,14 +2681,75 @@ return true;
 			$guests,
 			array(), // Exclude one-time extras for 1-night room deposit hold
 			$children,
-			$child_ages
+			$child_ages,
+			$tax_mode,
+			$tax_rates
 		);
 
-		if ( is_array( $first_night_calc ) && isset( $first_night_calc['total'] ) && $first_night_calc['total'] instanceof Money ) {
-			return $first_night_calc['total'];
+		if ( ! is_array( $first_night_calc ) ) {
+			return Money::fromCents( 0, $currency );
 		}
 
-		return Money::fromCents( 0, $currency );
+		$fn_room     = ( $first_night_calc['room_total'] ?? null ) instanceof Money ? $first_night_calc['room_total'] : Money::fromCents( 0, $currency );
+		$fn_children = ( $first_night_calc['children_total'] ?? null ) instanceof Money ? $first_night_calc['children_total'] : Money::fromCents( 0, $currency );
+		$fn_accom    = $fn_room->add( $fn_children );
+
+		if (
+			$accommodation_discount instanceof Money
+			&& $accommodation_discount->isPositive()
+			&& $accommodation_base instanceof Money
+			&& $accommodation_base->isPositive()
+			&& $fn_accom->isPositive()
+		) {
+			$ratio = function_exists( 'bcdiv' )
+				? bcdiv( $accommodation_discount->toDecimal(), $accommodation_base->toDecimal(), 6 )
+				: number_format( (float) $accommodation_discount->toDecimal() / (float) $accommodation_base->toDecimal(), 6, '.', '' );
+			if ( function_exists( 'bccomp' ) ? bccomp( $ratio, '1.000000', 6 ) > 0 : (float) $ratio > 1.0 ) {
+				$ratio = '1.000000';
+			} elseif ( function_exists( 'bccomp' ) ? bccomp( $ratio, '0.000000', 6 ) < 0 : (float) $ratio < 0.0 ) {
+				$ratio = '0.000000';
+			}
+			$fn_disc = $fn_accom->multiply( $ratio );
+			if ( $fn_disc->greaterThan( $fn_accom ) ) {
+				$fn_disc = $fn_accom;
+			}
+			$fn_room_disc  = Money::fromCents( (string) min( (int) $fn_disc->getAmount(), (int) $fn_room->getAmount() ), $currency );
+			$fn_room       = $fn_room->subtract( $fn_room_disc );
+			$fn_rem_disc   = $fn_disc->subtract( $fn_room_disc );
+			$fn_child_disc = Money::fromCents( (string) min( (int) $fn_rem_disc->getAmount(), (int) $fn_children->getAmount() ), $currency );
+			$fn_children   = $fn_children->subtract( $fn_child_disc );
+		}
+
+		// Apply only percentage-based service fees proportionally to Night 1 (fixed stay fees are excluded).
+		$fn_sf = Money::fromCents( 0, $currency );
+
+$fn_tax_input = array(
+			'room_total'        => $fn_room->toDecimal(),
+			'children_total'    => $fn_children->toDecimal(),
+			'extras_total'      => '0',
+			'extras'            => array(),
+			'service_fee'       => $fn_sf->toDecimal(),
+			'service_fee_label' => '',
+		);
+		if ( is_array( $tax_rates ) ) {
+			if ( isset( $tax_rates['accommodation'] ) && is_numeric( $tax_rates['accommodation'] ) ) {
+				$fn_tax_input['tax_rate_accommodation'] = $tax_rates['accommodation'];
+			}
+			if ( isset( $tax_rates['extras'] ) && is_numeric( $tax_rates['extras'] ) ) {
+				$fn_tax_input['tax_rate_extras'] = $tax_rates['extras'];
+			}
+		}
+
+		$fn_tax = Tax::calculate_booking_tax(
+			$fn_tax_input,
+			$tax_mode
+		);
+
+		if ( isset( $fn_tax['totals']['total_gross'] ) && $fn_tax['totals']['total_gross'] instanceof Money ) {
+			return $fn_tax['totals']['total_gross'];
+		}
+
+		return $fn_room->add( $fn_children )->add( $fn_sf );
 	}
 
 	/**
@@ -2483,7 +2760,7 @@ return true;
 	 * @return void
 	 */
 	public static function render_deposit_selection_html( Money $total, array $calc ): void {
-		if ( ! get_option( 'mhbo_deposits_enabled', 0 ) ) {
+		if ( ! Tier::is_feature_enabled( 'deposits' ) || ! get_option( 'mhbo_deposits_enabled', 0 ) ) {
 			return;
 		}
 
@@ -2614,7 +2891,8 @@ return true;
 	 * @param string               $check_out              Y-m-d check-out date.
 	 * @param int                  $adults                 Adult count.
 	 * @param int                  $children               Children count.
-	 * @param array<string, mixed> $custom_fields_override Optional updated custom fields map.
+	 * @param array<string, mixed>|null $custom_fields_override  Optional updated custom fields map (null to read from $booking->custom_fields).
+	 * @param bool                      $allow_calendar_override Optional staff/admin calendar blackout override.
 	 * @return array{total: Money, discount: Money, db_fields: array<string, string>}|null
 	 */
 	public static function recalculate_booking_financials(
@@ -2624,16 +2902,20 @@ return true;
 		string $check_out,
 		int $adults,
 		int $children,
-		array $custom_fields_override = array()
+		?array $custom_fields_override = null,
+		bool $allow_calendar_override = false
 	): ?array {
 		self::ensure_pro_init();
 		$currency = self::get_currency_code();
 
 		$custom_fields = $custom_fields_override;
-		if ( array() === $custom_fields && ! empty( $booking->custom_fields ) ) {
-			$decoded_cf = json_decode( (string) $booking->custom_fields, true );
-			if ( is_array( $decoded_cf ) ) {
-				$custom_fields = $decoded_cf;
+		if ( null === $custom_fields ) {
+			$custom_fields = array();
+			if ( ! empty( $booking->custom_fields ) ) {
+				$decoded_cf = json_decode( (string) $booking->custom_fields, true );
+				if ( is_array( $decoded_cf ) ) {
+					$custom_fields = $decoded_cf;
+				}
 			}
 		}
 
@@ -2658,18 +2940,8 @@ return true;
 				$calc_extras[ (string) $ex_key ] = max( 1, (int) $ex['quantity'] );
 			}
 		}
-		if ( ! empty( $custom_fields['_early_checkin'] ) ) {
-			$calc_extras['_early_checkin'] = 1;
-		} else {
-			unset( $calc_extras['_early_checkin'] );
-		}
-		if ( ! empty( $custom_fields['_late_checkout'] ) ) {
-			$calc_extras['_late_checkout'] = 1;
-		} else {
-			unset( $calc_extras['_late_checkout'] );
-		}
 
-		$recalc = self::calculate_booking_money( $room_id, $check_in, $check_out, max( 1, $adults ), $calc_extras, max( 0, $children ), $child_ages );
+$recalc = self::calculate_booking_money( $room_id, $check_in, $check_out, max( 1, $adults ), $calc_extras, max( 0, $children ), $child_ages, null, null, $allow_calendar_override );
 		if ( ! is_array( $recalc ) || ! isset( $recalc['total'] ) || ! ( $recalc['total'] instanceof Money ) ) {
 			return null;
 		}
@@ -2696,6 +2968,25 @@ $zero_str  = Money::fromCents( 0, $currency )->toDecimal();
 			$rem_money = Money::fromCents( 0, $currency );
 		}
 
+		$serialized_extras = array();
+		if ( ! empty( $recalc['extras_breakdown'] ) && is_array( $recalc['extras_breakdown'] ) ) {
+			foreach ( $recalc['extras_breakdown'] as $eb_id => $eb_item ) {
+				$serialized_extras[ (string) $eb_id ] = array(
+					'id'            => (string) ( $eb_item['id'] ?? $eb_id ),
+					'name'          => (string) ( $eb_item['name'] ?? '' ),
+					'price'         => ( isset( $eb_item['price'] ) && $eb_item['price'] instanceof Money ) ? $eb_item['price']->toDecimal() : (string) ( $eb_item['price'] ?? '0' ),
+					'quantity'      => (int) ( $eb_item['quantity'] ?? 1 ),
+					'multiplier'    => (int) ( $eb_item['multiplier'] ?? 1 ),
+					'pricing_type'  => (string) ( $eb_item['pricing_type'] ?? 'fixed' ),
+					'total'         => ( isset( $eb_item['total'] ) && $eb_item['total'] instanceof Money ) ? $eb_item['total']->toDecimal() : (string) ( $eb_item['total'] ?? '0' ),
+					'compulsory'    => (int) ( $eb_item['compulsory'] ?? 0 ),
+					'complimentary' => (int) ( $eb_item['complimentary'] ?? 0 ),
+					'allow_coupon'  => (int) ( $eb_item['allow_coupon'] ?? 0 ),
+					'tax_class'     => (string) ( $eb_item['tax_class'] ?? '' ),
+				);
+			}
+		}
+
 		$db_fields = array(
 			'total_price'        => $new_total->toDecimal(),
 			'total_gross'        => $new_total->toDecimal(),
@@ -2712,11 +3003,12 @@ $zero_str  = Money::fromCents( 0, $currency )->toDecimal();
 			'service_fee_amount' => $to_str( $recalc['service_fee'] ?? null ),
 			'service_fee_net'    => $to_str( $totals['service_fee_net'] ?? null ),
 			'service_fee_tax'    => $to_str( $totals['service_fee_tax'] ?? null ),
+			'booking_extras'     => (string) wp_json_encode( $serialized_extras ),
 			'tax_breakdown'      => (string) wp_json_encode( $tax_data ),
 			'remaining_balance'  => $rem_money->toDecimal(),
 		);
 
-		return array(
+return array(
 			'total'     => $new_total,
 			'discount'  => $discount_m,
 			'db_fields' => $db_fields,

@@ -23,9 +23,9 @@ use MHBO\Core\Pricing;
 use MHBO\Core\HotelTime;
 use MHBO\Core\Cache;
 use MHBO\Core\I18n;
-use MHBO\Core\License;
 use MHBO\Core\Money;
 use MHBO\Core\Tax;
+use MHBO\Core\Tier;
 
 use function __;
 use function _n;
@@ -337,25 +337,35 @@ class CheckAvailability {
 					$avail_rooms_for_type = (array) $data['available_room_ids'];
 
 					if ( $count >= $min_rooms ) {
-						$single_calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, \min( $adults, $max_a ), array(), \min( $children, $max_c ), array() );
+						$slot_a_est  = \min( $adults, $max_a );
+						$slot_c_est  = \min( $children, $max_c );
+						$slot_ages   = \array_slice( $child_ages, 0, $slot_c_est );
+						$single_calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $slot_a_est, array(), $slot_c_est, $slot_ages );
 						$est_total   = null;
 						$est_fmt     = null;
+						$est_room_t  = null;
+						$est_fn_amt  = null;
 						if ( isset( $single_calc['total'] ) && $single_calc['total'] instanceof Money ) {
 							$est_decimal = $single_calc['total']->multiply( $min_rooms )->toDecimal();
 							$est_total   = (float) $est_decimal;
 							$est_fmt     = '~' . Money::fromDecimal( $est_decimal, (string) $currency )->format();
+							$single_rt   = ( isset( $single_calc['room_total'] ) && $single_calc['room_total'] instanceof Money ) ? $single_calc['room_total'] : $single_calc['total'];
+							$est_room_t  = (float) $single_rt->multiply( $min_rooms )->toDecimal();
+							$est_fn_amt  = Pricing::resolve_first_night_money( $room_id, $check_in, $slot_a_est, null, array(), $slot_c_est, $slot_ages, $currency )->multiply( $min_rooms )->toDecimal();
 						}
 
 						// Build per-room distribution from confirmed available rooms so the AI can
 						// call create_booking_link once per room with the correct guest split.
 						$a_left       = $adults;
 						$c_left       = $children;
+						$ages_left    = $child_ages;
 						$distribution = array();
 						for ( $i = 0; $i < $min_rooms; $i++ ) {
 							$slot_a         = \min( $a_left, $max_a );
 							$slot_c         = $c_left > 0 ? \min( $c_left, $max_c ) : 0;
 							$a_left        -= $slot_a;
 							$c_left         = \max( 0, $c_left - $slot_c );
+							$slot_c_ages    = \array_splice( $ages_left, 0, $slot_c );
 							$avail_room     = $avail_rooms_for_type[ $i ] ?? array(
 								'id'     => $room_id,
 								'number' => '',
@@ -365,23 +375,25 @@ class CheckAvailability {
 								'room_number' => (string) $avail_room['number'],
 								'adults'      => (int) $slot_a,
 								'children'    => (int) $slot_c,
+								'child_ages'  => $slot_c_ages,
 							);
 						}
 
 						$available[] = array(
-							'room_id'         => $room_id,
-							'room_name'       => I18n::decode( (string) $room->type_name ),
-							'room_type'       => 'type_' . (int) $type_id,
-							'is_multi_room'   => true,
-							'num_rooms'       => $min_rooms,
-							'units_remaining' => (int) \floor( $count / $min_rooms ),
-							'price_per_night' => $est_total !== null && $nights > 0 ? \round( $est_total / $nights, 2 ) : null,
-							'total_price'     => $est_total,
-							'price_formatted' => $est_fmt,
-							'currency'        => $currency,
-							'max_adults'      => $max_a,
-							'max_children'    => $max_c,
-							'distribution'    => $distribution,
+							'room_id'            => $room_id,
+							'room_name'          => I18n::decode( (string) $room->type_name ),
+							'room_type'          => 'type_' . (int) $type_id,
+							'is_multi_room'      => true,
+							'num_rooms'          => $min_rooms,
+							'units_remaining'    => (int) \floor( $count / $min_rooms ),
+							'price_per_night'    => $est_room_t !== null && $nights > 0 ? \round( $est_room_t / $nights / $min_rooms, 2 ) : null,
+							'first_night_amount' => $est_fn_amt ?? (string) ( $est_total ?? '0' ),
+							'total_price'        => $est_total,
+							'price_formatted'    => $est_fmt,
+							'currency'           => $currency,
+							'max_adults'         => $max_a,
+							'max_children'       => $max_c,
+							'distribution'       => $distribution,
 						);
 					}
 				}
@@ -389,12 +401,21 @@ class CheckAvailability {
 			}
 
 			// --- Single Room Logic ---
-			$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $adults, array(), $children, $child_ages );
+			$room_stay_timing = null;
+
+$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $adults, array(), $children, $child_ages );
 			if ( ! isset( $calc['total'] ) || ! ( $calc['total'] instanceof Money ) ) {
 				continue;
 			}
 
-			$total_money = $calc['total'];
+			$total_money   = $calc['total'];
+			$room_only_m   = ( isset( $calc['room_total'] ) && $calc['room_total'] instanceof Money ) ? $calc['room_total'] : $total_money;
+			$first_night_m = Pricing::resolve_first_night_money( $room_id, $check_in, $adults, null, array(), $children, $child_ages, $currency );
+			$night_rate    = (int) $nights > 0
+				? ( \function_exists( 'bcdiv' )
+					? (float) \bcdiv( $room_only_m->toDecimal(), (string) (int) $nights, 2 )
+					: (float) $room_only_m->divide( (int) $nights )->toDecimal() )
+				: 0.0;
 
 			$room_amenities = array();
 			if ( isset( $room->amenities ) && '' !== (string) $room->amenities ) {
@@ -428,22 +449,25 @@ class CheckAvailability {
 				$base_url 
 			);
 
-			$available[] = array(
-				'room_id'         => $room_id,
-				'room_name'       => I18n::decode( (string) $room->type_name ),
-				'room_type'       => 'type_' . (int) $type_id,
-				'units_remaining' => $count,
-				'price_per_night' => (int) $nights > 0 ? \round( (float) $total_money->toDecimal() / (int) $nights, 2 ) : 0.0,
-				'total_price'     => (float) $total_money->toDecimal(),
-				'price_formatted' => $total_money->format(),
-				'currency'        => $currency,
-				'max_adults'      => (int) $room->max_adults,
-				'max_children'    => (int) $room->max_children,
-				'max_guests'      => $max_guests,
-				'amenities'       => $room_amenities,
-				'thumbnail_url'   => \esc_url_raw( (string) ( $room->image_url ?? '' ) ),
-				'booking_url'     => \esc_url_raw( (string) $room_booking_url ),
+			$single_entry = array(
+				'room_id'            => $room_id,
+				'room_name'          => I18n::decode( (string) $room->type_name ),
+				'room_type'          => 'type_' . (int) $type_id,
+				'units_remaining'    => $count,
+				'price_per_night'    => $night_rate,
+				'first_night_amount' => $first_night_m->toDecimal(),
+				'total_price'        => (float) $total_money->toDecimal(),
+				'price_formatted'    => $total_money->format(),
+				'currency'           => $currency,
+				'max_adults'         => (int) $room->max_adults,
+				'max_children'       => (int) $room->max_children,
+				'max_guests'         => $max_guests,
+				'amenities'          => $room_amenities,
+				'thumbnail_url'      => \esc_url_raw( (string) ( $room->image_url ?? '' ) ),
+				'booking_url'        => \esc_url_raw( (string) $room_booking_url ),
 			);
+			
+			$available[] = $single_entry;
 		}
 
 		// Capacity guidelines — help the AI explain limits and child policies.
@@ -456,11 +480,8 @@ class CheckAvailability {
 		);
 		$capacity_hints = array();
 		foreach ( (array) $all_types as $t ) {
-			$name = I18n::decode( (string) ( $t->name ?? '' ) );
-			$free = (int) $t->child_age_free_limit;
-			if ( $free <= 0 ) {
-				$free = (int) \get_option( 'mhbo_child_free_age', 0 );
-			}
+			$name   = I18n::decode( (string) ( $t->name ?? '' ) );
+			$free   = max( 0, (int) $t->child_age_free_limit );
 			$policy = ( $free > 0 )
 				// translators: %d: age
 				? \sprintf( \__( ' (Children aged %d and under stay free)', 'modern-hotel-booking' ), $free )
@@ -499,35 +520,8 @@ class CheckAvailability {
 
 		// Include deposit policy with computed amounts so the AI can quote exact payment terms.
 		$deposit_info = null;
-		if ( (int) \get_option( 'mhbo_deposits_enabled', 0 ) ) {
-			$deposit_type = (string) \get_option( 'mhbo_deposit_type', 'percentage' );
-			$non_refund   = (bool) \get_option( 'mhbo_deposit_non_refundable', 0 );
 
-			// Compute the deposit amount for each available room so the AI can quote it.
-			$deposit_examples = array();
-			foreach ( $available as $room ) {
-				$tot_m      = Money::fromDecimal( (string) $room['total_price'], $currency );
-				$fn_m       = Money::fromDecimal( (string) ( $room['price_per_night'] ?? '0' ), $currency );
-				$dep_calc   = Pricing::calculate_deposit_money( $tot_m, $fn_m );
-				$dep_amount = $dep_calc ? $dep_calc['deposit_money']->toDecimal() : $tot_m->toDecimal();
-				$bal_due    = $dep_calc ? $dep_calc['remaining_money']->toDecimal() : '0.00';
-				$deposit_examples[ (string) $room['room_name'] ] = array(
-					'deposit_due' => $dep_amount,
-					'balance_due' => $bal_due,
-					'currency'    => $currency,
-				);
-			}
-
-			$deposit_info = array(
-				'enabled'          => true,
-				'type'             => $deposit_type,
-				'value'            => (string) \get_option( 'mhbo_deposit_value', '20' ),
-				'non_refundable'   => $non_refund,
-				'per_room_amounts' => $deposit_examples,
-			);
-		}
-
-		return array(
+return array(
 			'available'               => array() !== $available,
 			'rooms'                   => $available,
 			'nights_count'            => $nights,
@@ -538,11 +532,16 @@ class CheckAvailability {
 			'message'                 => $message,
 			'search_url'              => $search_url,
 			'deposit_info'            => $deposit_info,
-			'is_pro'                  => false,
+			'is_pro'                  => Tier::is_effective_at_least( Tier::TIER_PRO ),
 			'payment_methods_summary' => CreateBookingLink::get_payment_summary(),
 			'multi_room_guidance'     => $multi_room_guidance ?? '',
 			'tax_note'                => Tax::is_enabled()
-				? \sprintf( '%s %s%%', \get_option( 'mhbo_tax_label', 'VAT' ), \get_option( 'mhbo_tax_rate_accommodation', 0 ) )
+				? \sprintf(
+					'%s %s%% (%s)',
+					Tax::get_label(),
+					Tax::format_rate( Tax::get_accommodation_rate() ),
+					Tax::is_vat() ? 'inclusive' : 'exclusive'
+				)
 				: '',
 		);
 	}
@@ -554,6 +553,6 @@ class CheckAvailability {
 		if ( ! \function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		call_user_func( 'wp_register_ability', 'mhbo/check-availability', self::get_definition() );
+		\wp_register_ability( 'mhbo/check-availability', self::get_definition() );
 	}
 }

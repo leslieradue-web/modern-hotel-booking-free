@@ -33,40 +33,50 @@ class GuestStatsService {
 		global $wpdb;
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$stats = $wpdb->get_row(
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT 
-                    SUM(
-                        CASE 
-                            WHEN status = 'cancelled' OR payment_status = 'refunded' THEN 0
-                            WHEN payment_received = 1 OR payment_status IN ('completed', 'paid') 
-                                THEN GREATEST(CAST(COALESCE(total_price, 0) AS DECIMAL(10,2)), CAST(COALESCE(payment_amount, 0) AS DECIMAL(10,2)))
-                            WHEN payment_status = 'deposit_paid' OR deposit_received = 1 
-                                THEN CAST(COALESCE(NULLIF(payment_amount, 0), deposit_amount, 0) AS DECIMAL(10,2))
-                            WHEN CAST(COALESCE(payment_amount, 0) AS DECIMAL(10,2)) > 0 
-                                THEN CAST(payment_amount AS DECIMAL(10,2))
-                            ELSE 0 
-                        END
-                    ) as total_spend,
-                    COUNT(
-                        CASE 
-                            WHEN status IN ('confirmed', 'checked_in', 'checked_out', 'completed', 'paid') 
-                             AND status != 'cancelled'
-                            THEN 1 
-                            ELSE NULL 
-                        END
-                    ) as total_stays
-                 FROM {$wpdb->prefix}mhbo_bookings
-                 WHERE guest_id = %d",
+				"SELECT b.* FROM {$wpdb->prefix}mhbo_bookings b WHERE b.guest_id = %d ORDER BY b.id ASC",
 				$guest_id
 			)
 		);
 
-		$currency            = (string) get_option( 'mhbo_currency_code', 'USD' );
-		$raw_spend           = (string) ( $stats->total_spend ?? '0' );
-		$spend_money         = Money::fromDecimal( $raw_spend, $currency );
+		$currency    = class_exists( Pricing::class ) ? Pricing::get_currency_code() : strtoupper( (string) get_option( 'mhbo_currency_code', 'USD' ) );
+		$spend_money = Money::fromCents( 0, $currency );
+		$stay_keys   = array();
+
+		foreach ( (array) $rows as $b ) {
+			if ( ! is_object( $b ) ) {
+				continue;
+			}
+			$status     = strtolower( trim( (string) ( $b->status ?? '' ) ) );
+			$pay_status = strtolower( trim( (string) ( $b->payment_status ?? '' ) ) );
+			$cust_email = strtolower( trim( (string) ( $b->customer_email ?? '' ) ) );
+
+			if ( 'guest@pending.local' === $cust_email || str_ends_with( $cust_email, '@local.invalid' ) ) {
+				continue;
+			}
+			if ( 'pending_payment' === $status && 'pending' === $pay_status ) {
+				continue;
+			}
+
+			if ( ! in_array( $status, array( 'cancelled', 'refunded', 'deleted' ), true ) && 'refunded' !== $pay_status ) {
+				if ( class_exists( Pricing::class ) ) {
+					$b_amts      = Pricing::get_booking_payment_amounts( $b );
+					$spend_money = $spend_money->add( $b_amts['received'] );
+				} else {
+					$spend_money = $spend_money->add( Money::fromDecimal( (string) ( $b->payment_amount ?? 0 ), $currency ) );
+				}
+			}
+
+			if ( in_array( $status, array( 'confirmed', 'checked_in', 'checked_out', 'completed', 'paid' ), true ) ) {
+				$grp_tok               = trim( (string) ( $b->multi_room_parent ?? '' ) );
+				$stay_key              = '' !== $grp_tok ? ( 'grp:' . $grp_tok ) : ( 'single:' . (int) ( $b->id ?? 0 ) );
+				$stay_keys[ $stay_key ] = true;
+			}
+		}
+
 		$total_spend_decimal = $spend_money->toDecimal();
-		$total_stays         = (int) ( $stats->total_stays ?? 0 );
+		$total_stays         = count( $stay_keys );
 
 		// Fetch current guest profile to respect manual VIP overrides
 		$current_guest = GuestManager::get_guest( $guest_id );

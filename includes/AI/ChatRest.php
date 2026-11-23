@@ -69,6 +69,74 @@ class ChatRest {
 	private const RATE_WINDOW    = \HOUR_IN_SECONDS;
 	private const MAX_TOOL_TURNS = 5;   // prevent infinite tool loops
 
+	/**
+	 * Request-scoped flag identifying execution inside the public chat endpoint
+	 * so Pro abilities never grant ambient WordPress staff bypasses in public chat.
+	 */
+	private static bool $in_public_chat = false;
+
+	/**
+	 * Active IP key currently holding an in-flight concurrency slot for cleanup.
+	 */
+	private static string $active_inflight_key = '';
+
+	/**
+	 * Return true while executing within public POST /mhbo/v1/chat tool turns.
+	 */
+	public static function is_public_chat_context(): bool {
+		return self::$in_public_chat;
+	}
+
+	/**
+	 * Sanitize untrusted guest/user profile fields before inserting into prompt context.
+	 */
+	private static function sanitize_prompt_field( string $value, int $max_len = 120 ): string {
+		$clean = (string) \preg_replace( '/[\r\n\t\x00-\x1F\x7F]+/', ' ', $value );
+		$clean = \str_replace( array( '===', '<untrusted_', '</untrusted_' ), '', $clean );
+		$clean = \trim( \sanitize_text_field( $clean ) );
+		if ( \mb_strlen( $clean ) > $max_len ) {
+			$clean = \mb_substr( $clean, 0, $max_len );
+		}
+		return $clean;
+	}
+
+	/**
+	 * Strip internal LLM-steering fields before exposing tool results to browsers.
+	 *
+	 * @param array<int, array<string, mixed>> $tool_calls Raw tool log.
+	 * @return array<int, array<string, mixed>> Sanitized log for client rendering.
+	 */
+	private static function sanitize_tool_calls_for_client( array $tool_calls ): array {
+		return \array_map(
+			static function ( array $entry ): array {
+				if ( isset( $entry['result'] ) && \is_array( $entry['result'] ) ) {
+					unset( $entry['result']['internal_message'], $entry['result']['hint'] );
+					if ( isset( $entry['result']['message'] ) && \str_starts_with( (string) $entry['result']['message'], '[SYSTEM]' ) ) {
+						unset( $entry['result']['message'] );
+					}
+				}
+				return $entry;
+			},
+			$tool_calls
+		);
+	}
+
+	/**
+	 * Release active per-IP in-flight concurrency slot.
+	 */
+	private static function release_inflight_lock(): void {
+		if ( '' === self::$active_inflight_key ) {
+			return;
+		}
+		$cur = (int) \get_transient( self::$active_inflight_key );
+		if ( $cur > 1 ) {
+			\set_transient( self::$active_inflight_key, $cur - 1, 35 );
+		} else {
+			\delete_transient( self::$active_inflight_key );
+		}
+		self::$active_inflight_key = '';
+	}
+
 	// -------------------------------------------------------------------------
 	// Registration
 	// -------------------------------------------------------------------------
@@ -139,15 +207,39 @@ class ChatRest {
 }
 
 	/**
-	 * Return fresh nonces so the JS widget can recover from a stale cached nonce (403).
+	 * Return fresh chat nonce so the JS widget can recover from a stale cached nonce (403).
 	 */
-	public static function handle_nonce(): WP_REST_Response {
+	public static function handle_nonce(): WP_REST_Response|WP_Error {
+		$ip       = self::get_client_ip();
+		$rate_key = 'mhbo_nonce_rl_' . \md5( (string) $ip );
+		$rate     = \get_transient( $rate_key );
+		$now      = \time();
+		if ( \is_array( $rate ) && isset( $rate['count'], $rate['reset'] ) ) {
+			$count = (int) $rate['count'];
+			$reset = (int) $rate['reset'];
+			$ttl   = \max( 1, $reset - $now );
+		} else {
+			$count = \is_numeric( $rate ) ? (int) $rate : 0;
+			$reset = $now + \MINUTE_IN_SECONDS;
+			$ttl   = \MINUTE_IN_SECONDS;
+		}
+		if ( $count >= 60 ) {
+			return new WP_Error( 'mhbo_rate_limit', 'Rate limit exceeded. Please wait a moment.', array( 'status' => 429 ) );
+		}
+		\set_transient(
+			$rate_key,
+			array(
+				'count' => $count + 1,
+				'reset' => $reset,
+			),
+			$ttl
+		);
+
 		$response = new WP_REST_Response(
 			array(
-				'nonce'      => \wp_create_nonce( 'mhbo_chat_nonce' ),
-				'rest_nonce' => \wp_create_nonce( 'wp_rest' ),
+				'nonce' => \wp_create_nonce( 'mhbo_chat_nonce' ),
 			),
-			200 
+			200
 		);
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate' );
 		$response->header( 'Pragma', 'no-cache' );
@@ -223,9 +315,9 @@ class ChatRest {
 
 		// 3. Fail-Fast: Check if AI Circuit Breaker is currently tripped.
 		if ( Client::is_circuit_broken() ) {
-			$score = (int) \get_transient( 'mhbo_ai_error_score' );
-			$lock  = (int) \get_transient( 'mhbo_ai_quota_lock' );
-			$delay = \max( 15, $lock - \time() );
+			$resilience = Client::get_resilience_status();
+			$score      = max( 1, $resilience['error_score'] );
+			$delay      = max( 1, $resilience['remaining_seconds'] );
 
 			$msg = \sprintf(
 				// translators: %1$d: circuit breaker tier score, %2$d: seconds remaining before retry
@@ -246,23 +338,25 @@ class ChatRest {
 			return new WP_Error( 'mhbo_message_too_long', I18n::get_label( 'ai_error_message_too_long' ), array( 'status' => 400 ) );
 		}
 
+		// 4b. Per-IP in-flight concurrency cap (prevents PHP-FPM SSE worker starvation).
+		$inflight_key   = 'mhbo_chat_inflight_' . \md5( (string) $ip );
+		$inflight_count = (int) \get_transient( $inflight_key );
+		if ( $inflight_count >= 2 ) {
+			return new WP_Error( 'mhbo_too_many_concurrent', __( 'Another concierge request is currently finishing. Please wait a moment.', 'modern-hotel-booking' ), array( 'status' => 429 ) );
+		}
+		\set_transient( $inflight_key, $inflight_count + 1, 35 );
+		self::$active_inflight_key = $inflight_key;
+
 		// 5. Streaming Support (SSE) - Defer header emission until validation passes.
-		if ( $is_streaming && ! \headers_sent() ) {
-			\header( 'Content-Type: text/event-stream' );
-			\header( 'Cache-Control: no-cache' );
-			\header( 'X-Accel-Buffering: no' );
-			\header( 'Connection: keep-alive' );
-			echo "retry: 1000\n\n";
-			if ( \ob_get_level() > 0 ) {
-				\ob_flush();
-			}
-			\flush();
+		if ( $is_streaming ) {
+			self::init_sse_headers();
 		}
 
 		// 2026 BP: Bound the entire request lifecycle (tool loops + fallbacks)
-		// within 42s to guarantee clean response emission well before webserver
-		// FastCGI/Apache read timeout ceilings.
-		Client::set_deadline( 42.0 );
+		// within 28s to guarantee clean response emission well before webserver
+		// FastCGI/Apache mod_fcgid 40s read timeout ceilings.
+		Client::set_deadline( 28.0 );
+		self::$in_public_chat = true;
 
 		try {
 
@@ -279,7 +373,7 @@ class ChatRest {
 			);
 
 			// 6. System prompt + tools.
-			$lang          = (string) ( $request->get_param( 'lang' ) ?? '' );
+			$lang          = KnowledgeBase::sanitize_lang_code( (string) ( $request->get_param( 'lang' ) ?? '' ) );
 			$system_prompt = KnowledgeBase::get_system_prompt( $lang );
 			
 			$tools = KnowledgeBase::get_tool_definitions( false );
@@ -305,25 +399,30 @@ class ChatRest {
 						) 
 					);
 					if ( is_array( $user_info ) ) {
-						$wp_display = (string) ( $user_info['display_name'] ?? '' );
-						$wp_locale  = (string) ( $user_info['locale'] ?? '' );
+						$wp_display = self::sanitize_prompt_field( (string) ( $user_info['display_name'] ?? '' ), 80 );
+						$wp_locale  = KnowledgeBase::sanitize_lang_code( (string) ( $user_info['locale'] ?? '' ) );
 						if ( '' !== $wp_display ) {
-							$wp_user_context = "\nLogged-in WP user: {$wp_display}";
+							$wp_user_context = "\n<untrusted_guest_data>Logged-in WP user: {$wp_display}";
 							if ( '' !== $wp_locale ) {
 								$wp_user_context .= " (locale: {$wp_locale})";
 							}
-							$wp_user_context .= ".\n";
+							$wp_user_context .= ".</untrusted_guest_data>\n";
 						}
 					}
 				}
 			}
 
-			$lang_block = $lang ? \sprintf( I18n::get_label( 'ai_prompt_lang_rule' ), $lang ) : '';
-		
-			$context_name  = $guest_name ? \sprintf( I18n::get_label( 'ai_prompt_guest_name' ), $guest_name ) : '';
-			$context_email = $guest_email ? \sprintf( I18n::get_label( 'ai_prompt_guest_email' ), $guest_email ) : '';
-			$context_phone = $guest_phone ? \sprintf( I18n::get_label( 'ai_prompt_guest_phone' ), $guest_phone ) : '';
-		
+			$lang_block = '' !== $lang ? \sprintf( I18n::get_label( 'ai_prompt_lang_rule' ), $lang ) : '';
+
+			$safe_g_name   = self::sanitize_prompt_field( (string) $guest_name, 80 );
+			$safe_g_email  = sanitize_email( (string) $guest_email );
+			$safe_g_phone  = self::sanitize_prompt_field( (string) $guest_phone, 30 );
+			$context_name  = '' !== $safe_g_name ? \sprintf( I18n::get_label( 'ai_prompt_guest_name' ), $safe_g_name ) : '';
+			$context_email = '' !== $safe_g_email ? \sprintf( I18n::get_label( 'ai_prompt_guest_email' ), $safe_g_email ) : '';
+			$context_phone = '' !== $safe_g_phone ? \sprintf( I18n::get_label( 'ai_prompt_guest_phone' ), $safe_g_phone ) : '';
+			$guest_profile_line = trim( $context_name . ' ' . $context_email . ' ' . $context_phone );
+			$guest_profile_block = '' !== $guest_profile_line ? "<untrusted_guest_data>{$guest_profile_line}</untrusted_guest_data>" : '';
+
 			$date_context  = \sprintf( 
 				I18n::get_label( 'ai_prompt_date_context' ), 
 				$today, 
@@ -334,8 +433,8 @@ class ChatRest {
 				I18n::get_label( 'ai_prompt_decisive_rule' ), 
 				false ? '`create_booking_link` (or `create_booking_draft` if is_pro)' : '`create_booking_link`'
 			);
-		
-			$system_prompt .= "\n" . $lang_block . "\n" . $context_name . ' ' . $context_email . ' ' . $context_phone . "\n" . $date_context . "\n" . $scarcity_rule . $decisive_rule . $wp_user_context;
+
+			$system_prompt .= "\n" . $lang_block . "\n" . $guest_profile_block . "\n" . $date_context . "\n" . $scarcity_rule . $decisive_rule . $wp_user_context;
 
 			// 7c. Authenticated Guest Portal Context (2026 BP).
 			// If the guest is logged into the Guest Portal, inject their verified reservation details
@@ -355,26 +454,30 @@ class ChatRest {
 					)
 				);
 
-				if ( $auth_booking ) {
-					$amts            = Pricing::get_booking_payment_amounts( $auth_booking );
-					$clean_room_type = (string) ( I18n::decode( (string) $auth_booking->room_type_name ) ?? $auth_booking->room_type_name );
-					$unit_label      = ! empty( $auth_booking->room_number ) ? "{$clean_room_type} (Room {$auth_booking->room_number})" : $clean_room_type;
+				if ( $auth_booking && is_string( $auth_booking->booking_token ) && hash_equals( $auth_booking->booking_token, $portal_token ) ) {
+					$amts               = Pricing::get_booking_payment_amounts( $auth_booking );
+					$clean_room_type    = self::sanitize_prompt_field( (string) ( I18n::decode( (string) $auth_booking->room_type_name ) ?? $auth_booking->room_type_name ), 80 );
+					$clean_portal_name  = self::sanitize_prompt_field( (string) $auth_booking->customer_name, 80 );
+					$clean_portal_email = sanitize_email( (string) $auth_booking->customer_email );
+					$unit_label         = ! empty( $auth_booking->room_number ) ? "{$clean_room_type} (Room " . self::sanitize_prompt_field( (string) $auth_booking->room_number, 20 ) . ')' : $clean_room_type;
 
 					$children_count = (int) ( $auth_booking->children ?? 0 );
 					$children_text  = $children_count > 0 ? ', ' . $children_count . ' Children' : '';
 
 					$portal_context = "\n\n=== AUTHENTICATED GUEST PORTAL CONTEXT ===\n"
+						. "<untrusted_guest_data>\n"
 						. "The user chatting with you is LOGGED IN to their verified reservation in the Guest Portal:\n"
-						. '- Guest Name: ' . (string) $auth_booking->customer_name . "\n"
-						. '- Guest Email: ' . (string) $auth_booking->customer_email . "\n"
+						. '- Guest Name: ' . $clean_portal_name . "\n"
+						. '- Guest Email: ' . $clean_portal_email . "\n"
 						. '- Booking Reference ID: #' . (int) $auth_booking->id . "\n"
 						. '- Room Reserved: ' . $unit_label . "\n"
 						. '- Stay Dates: ' . (string) $auth_booking->check_in . ' to ' . (string) $auth_booking->check_out . "\n"
 						. '- Party: ' . (int) $auth_booking->guests . ' Adults' . $children_text . "\n"
 						. '- Status: ' . (string) $auth_booking->status . "\n"
 						. '- Financial Summary: Total ' . $amts['total']->format() . ', Paid ' . $amts['received']->format() . ', Remaining Due: ' . $amts['remaining']->format() . "\n"
+						. "</untrusted_guest_data>\n"
 						. "PERSONALIZATION INSTRUCTIONS:\n"
-						. '- Greet the guest warmly by their name (' . (string) $auth_booking->customer_name . ").\n"
+						. '- Greet the guest warmly by their name (' . $clean_portal_name . ").\n"
 						. "- You already know their reservation details; NEVER ask them for their booking ID or email address.\n"
 						. "- Provide immediate, personalized assistance regarding their check-in time, directions, room amenities, balance payment, or stay modifications.\n"
 						. "===========================================\n";
@@ -405,9 +508,10 @@ class ChatRest {
 				$mr_slot      = $mr_dist[ $mr_idx ] ?? null;
 
 				if ( null !== $mr_slot ) {
-					$mr_room_id  = (int) ( $mr_slot['room_id'] ?? 0 );
-					$mr_adults   = (int) ( $mr_slot['adults'] ?? 1 );
-					$mr_children = (int) ( $mr_slot['children'] ?? 0 );
+					$mr_room_id    = (int) ( $mr_slot['room_id'] ?? 0 );
+					$mr_adults     = (int) ( $mr_slot['adults'] ?? 1 );
+					$mr_children   = (int) ( $mr_slot['children'] ?? 0 );
+					$mr_child_ages = ( isset( $mr_slot['child_ages'] ) && is_array( $mr_slot['child_ages'] ) ) ? Pricing::sanitize_child_ages( $mr_slot['child_ages'] ) : array();
 
 					// Live re-validation (Gate 3): Confirm the room is still bookable.
 					$mr_avail      = Pricing::is_room_available( $mr_room_id, $mr_check_in, $mr_check_out );
@@ -436,9 +540,11 @@ class ChatRest {
 
 					if ( null !== $mr_slot ) {
 						$mr_human_idx   = $mr_idx + 1;
+						$mr_ages_label  = array() !== $mr_child_ages ? ', child_ages: [' . implode( ', ', $mr_child_ages ) . ']' : '';
+						$mr_ages_param  = array() !== $mr_child_ages ? ', child_ages=[' . implode( ', ', $mr_child_ages ) . ']' : '';
 						$system_prompt .= "\n\n=== MULTI-ROOM BOOKING IN PROGRESS ===\n" .
 						"This is booking {$mr_human_idx} of {$mr_total}.\n" .
-						"Room type: {$mr_type_name}. room_id: {$mr_room_id}, adults: {$mr_adults}, children: {$mr_children}.\n" .
+						"Room type: {$mr_type_name}. room_id: {$mr_room_id}, adults: {$mr_adults}, children: {$mr_children}{$mr_ages_label}.\n" .
 						"Dates: {$mr_check_in} to {$mr_check_out}. (Room {$mr_room_id} CONFIRMED AVAILABLE{$mr_avail_note})\n" .
 						"INSTRUCTIONS:\n";
 
@@ -446,9 +552,9 @@ class ChatRest {
 							$system_prompt .= "- Explain that you need the guest's Full Name, Email, and Phone number to prepare the individual booking cards for these {$mr_total} rooms.\n" .
 							"- Do NOT call create_booking_link yet. Wait for the guest to provide their details.\n";
 						} else {
-							$system_prompt .= "- Generate EXACTLY ONE `create_booking_link` call with room_id={$mr_room_id}, adults={$mr_adults}, children={$mr_children}, " .
+							$system_prompt .= "- Generate EXACTLY ONE `create_booking_link` call with room_id={$mr_room_id}, adults={$mr_adults}, children={$mr_children}{$mr_ages_param}, " .
 							"check_in={$mr_check_in}, check_out={$mr_check_out}, multi_room_index={$mr_human_idx}, multi_room_total={$mr_total}.\n" .
-							"- Use the guest_name: \"{$guest_name}\", guest_email: \"{$guest_email}\", guest_phone: \"{$guest_phone}\" from session context.\n";
+							"- Use the guest_name: \"{$safe_g_name}\", guest_email: \"{$safe_g_email}\", guest_phone: \"{$safe_g_phone}\" from session context.\n";
 
 							if ( $mr_remaining > 0 ) {
 								$system_prompt .= "- After the card appears, EXPLICITLY tell the guest: \"This is booking {$mr_human_idx} of {$mr_total}. " .
@@ -473,14 +579,16 @@ class ChatRest {
 			// We therefore drive the loop purely on whether tool_calls are present:
 			// • No tool_calls  → text content is the final answer; break.
 			// • Has tool_calls → execute them, append results, continue to next turn.
-			$final_response  = '';
-			$tool_calls_log  = array();
-			$messages        = $history;
-			$loop_start_time = \microtime( true );
+			$final_response         = '';
+			$last_thought           = '';
+			$last_thought_signature = '';
+			$tool_calls_log         = array();
+			$messages               = $history;
+			$loop_start_time        = \microtime( true );
 
 			for ( $turn = 0; $turn < self::MAX_TOOL_TURNS; $turn++ ) {
 				// Prevent multi-turn loops from bumping against gateway/server timeout boundaries (Law 62).
-				if ( $turn > 0 && ( ( \microtime( true ) - $loop_start_time ) > 35.0 || Client::remaining_time() < 5.0 ) ) {
+				if ( $turn > 0 && ( ( \microtime( true ) - $loop_start_time ) > 24.0 || Client::remaining_time() < 4.0 ) ) {
 					break;
 				}
 
@@ -503,8 +611,10 @@ class ChatRest {
 					return self::respond( I18n::get_label( 'ai_status_cooling_down' ), $session_id, $is_streaming );
 				}
 
-				$tool_calls = $ai_response['tool_calls'] ?? array();
-				$thought    = (string) ( $ai_response['thought'] ?? '' );
+				$tool_calls             = $ai_response['tool_calls'] ?? array();
+				$thought                = (string) ( $ai_response['thought'] ?? '' );
+				$last_thought           = $thought;
+				$last_thought_signature = (string) ( $ai_response['thought_signature'] ?? '' );
 
 				// 2026 BP: Rule 15 explicit check for empty toolset.
 				if ( array() === (array) $tool_calls ) {
@@ -513,9 +623,10 @@ class ChatRest {
 				}
 
 				$assistant_meta = array(
-					'tool_calls' => $tool_calls,
-					'thought'    => $thought,
-					'raw_parts'  => $ai_response['raw_parts'] ?? null,
+					'tool_calls'        => $tool_calls,
+					'thought'           => $thought,
+					'thought_signature' => $ai_response['thought_signature'] ?? null,
+					'raw_parts'         => $ai_response['raw_parts'] ?? null,
 				);
 				$messages[]     = array(
 					'role'              => 'assistant',
@@ -570,13 +681,26 @@ class ChatRest {
 								'content'      => (string) ( \wp_json_encode( $tool_result ) ?: '{}' ),
 							);
 							$messages[]       = $tc_msg;
-							ChatSession::add_message( $session_id, 'tool', (string) ( \wp_json_encode( $tool_result ) ?: '{}' ), array( 'name' => $fn_name ) );
+							ChatSession::add_message(
+								$session_id,
+								'tool',
+								(string) ( \wp_json_encode( $tool_result ) ?: '{}' ),
+								array(
+									'name'         => $fn_name,
+									'tool_call_id' => $tc_id,
+								)
+							);
 							continue;
 						}
 						$booking_link_created_this_turn = true;
 					}
 
 					$tool_result = self::execute_tool( $fn_name, $fn_args );
+
+					// Refresh session ID in case OTP verification rotated the active session.
+					if ( 'verify_identity' === $fn_name && ! empty( $tool_result['success'] ) ) {
+						$session_id = ChatSession::get_session_id();
+					}
 
 					// 2026 BP: Multi-Room Plan — Pre-flight and state management.
 					if ( 'check_availability' === $fn_name && isset( $tool_result['rooms'] ) && array() !== (array) $tool_result['rooms'] ) {
@@ -607,7 +731,10 @@ class ChatRest {
 
 					$messages[] = $tc_msg;
 
-					$tool_meta = array( 'name' => $fn_name );
+					$tool_meta = array(
+						'name'         => $fn_name,
+						'tool_call_id' => $tc_id,
+					);
 					if ( isset( $tc['thought_signature'] ) && '' !== (string) $tc['thought_signature'] ) {
 						$tool_meta['thought_signature'] = $tc['thought_signature'];
 					}
@@ -638,7 +765,7 @@ class ChatRest {
 						if ( '' !== $g_name ) {
 							ChatSession::set_guest_name( $session_id, $g_name );
 						}
-						if ( '' !== $g_email ) {
+						if ( '' !== $g_email && '' === ChatSession::get_guest_email( $session_id ) ) {
 							ChatSession::set_guest_email( $session_id, $g_email );
 						}
 						if ( '' !== $g_phone ) {
@@ -670,6 +797,7 @@ class ChatRest {
 				}
 			}
 
+			$raw_final_response = $final_response;
 			if ( $card_created && ! $mr_rooms_remain ) {
 				$final_response = '';
 			}
@@ -678,9 +806,17 @@ class ChatRest {
 				return self::respond( I18n::get_label( 'ai_status_cooling_down' ), $session_id, $is_streaming );
 			}
 
-			// 8b. Save assistant response to history.
-			if ( $final_response ) {
-				ChatSession::add_message( $session_id, 'assistant', $final_response, array( 'tool_calls_summary' => $tool_calls_log ) );
+			// 8b. Save assistant response to history (always close tool turns in history even when UI suppresses duplicate card text).
+			$history_response = '' !== $raw_final_response ? $raw_final_response : ( $card_created ? 'Booking card prepared.' : '' );
+			if ( '' !== $history_response ) {
+				$final_meta = array( 'tool_calls_summary' => $tool_calls_log );
+				if ( '' !== $last_thought ) {
+					$final_meta['thought'] = $last_thought;
+				}
+				if ( '' !== $last_thought_signature ) {
+					$final_meta['thought_signature'] = $last_thought_signature;
+				}
+				ChatSession::add_message( $session_id, 'assistant', $history_response, $final_meta );
 			}
 
 			// 9. Generate suggestions.
@@ -701,22 +837,29 @@ class ChatRest {
 			$intent  = self::score_booking_intent( $messages, $tool_calls_log );
 			$handoff = self::build_handoff_options();
 
-			// 11. Handle SSE streaming if requested.
+			$client_tool_calls = self::sanitize_tool_calls_for_client( $tool_calls_log );
+
+			$tts_token = null;
+
+// 11. Handle SSE streaming if requested.
 			if ( $is_streaming ) {
-				self::stream_response( (string) $final_response, $session_id, $tool_calls_log, $suggestions, $intent, $handoff );
-				exit; // SSE never returns a WP_REST_Response
+				self::stream_response( (string) $final_response, $session_id, $client_tool_calls, $suggestions, $intent, $handoff, $tts_token );
+				self::terminate_sse();
 			}
 
-			return \rest_ensure_response(
-				array(
-					'response'        => $final_response,
-					'session_id'      => $session_id,
-					'tool_calls_made' => $tool_calls_log,
-					'suggestions'     => $suggestions,
-					'booking_intent'  => $intent,
-					'handoff'         => $handoff,
-				) 
+			$json_response = array(
+				'response'        => $final_response,
+				'session_id'      => $session_id,
+				'tool_calls_made' => $client_tool_calls,
+				'suggestions'     => $suggestions,
+				'booking_intent'  => $intent,
+				'handoff'         => $handoff,
 			);
+			if ( null !== $tts_token ) {
+				$json_response['tts_token'] = $tts_token;
+			}
+
+			return \rest_ensure_response( $json_response );
 
 		} catch ( Throwable $e ) {
 			if ( \defined( 'WP_DEBUG_LOG' ) && \WP_DEBUG_LOG ) {
@@ -724,6 +867,8 @@ class ChatRest {
 			}
 			return self::respond( I18n::get_label( 'ai_status_cooling_down' ), $session_id, $is_streaming );
 		} finally {
+			self::$in_public_chat = false;
+			self::release_inflight_lock();
 			ChatSession::set_active_session_id( '' );
 			Client::set_deadline( 0.0 );
 		}
@@ -746,7 +891,7 @@ class ChatRest {
 	private static function respond( string $message, string $session_id, bool $is_streaming, int $status = 200, array $extra = array() ): WP_REST_Response {
 		if ( $is_streaming ) {
 			self::stream_response( $message, $session_id, array(), array(), null, null );
-			exit;
+			self::terminate_sse();
 		}
 
 		$payload = array_merge(
@@ -796,10 +941,53 @@ class ChatRest {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Send SSE headers, disable compression buffering, and drain nested output buffers.
+	 */
+	private static function init_sse_headers(): void {
+		if ( ! \headers_sent() ) {
+			\header( 'Content-Type: text/event-stream; charset=utf-8' );
+			\header( 'Cache-Control: no-cache, no-transform' );
+			\header( 'X-Accel-Buffering: no' );
+			\header( 'Connection: keep-alive' );
+		}
+		if ( \function_exists( 'apache_setenv' ) ) {
+			// phpcs:ignore Generic.PHP.NoSilencedErrors.Forbidden, WordPress.PHP.NoSilencedErrors.Discouraged -- Prevent mod_deflate buffering SSE chunks.
+			@\call_user_func( 'apache_setenv', 'no-gzip', '1' );
+		}
+		while ( \ob_get_level() > 0 ) {
+			\ob_end_flush();
+		}
+		\flush();
+		echo "retry: 1000\n\n";
+		self::flush_sse();
+	}
+
+	/**
+	 * Flush active output buffers cleanly for SSE delivery.
+	 */
+	private static function flush_sse(): void {
+		if ( \ob_get_level() > 0 ) {
+			\ob_flush();
+		}
+		\flush();
+	}
+
+	/**
+	 * Clean up static request state before exiting an SSE response.
+	 */
+	private static function terminate_sse(): never {
+		self::$in_public_chat = false;
+		self::release_inflight_lock();
+		ChatSession::set_active_session_id( '' );
+		Client::set_deadline( 0.0 );
+		exit;
+	}
+
+	/**
 	 * Emit a 'thought' event mid-stream to update the guest on AI progress.
 	 */
 	private static function emit_thought( string $content, bool $enabled ): void {
-		if ( ! $enabled ) {
+		if ( ! $enabled || \connection_aborted() ) {
 			return;
 		}
 		echo 'data: ' . \wp_json_encode(
@@ -808,10 +996,7 @@ class ChatRest {
 				'content' => $content,
 			) 
 		) . "\n\n";
-		if ( \ob_get_level() > 0 ) {
-			\ob_flush();
-		}
-		\flush();
+		self::flush_sse();
 	}
 
 	/**
@@ -830,48 +1015,39 @@ class ChatRest {
 		array $tool_calls,
 		array $suggestions,
 		?array $intent = null,
-		?array $handoff = null
+		?array $handoff = null,
+		?string $tts_token = null
 	): void {
 		if ( ! \headers_sent() ) {
-			\header( 'Content-Type: text/event-stream' );
-			\header( 'Cache-Control: no-cache' );
-			\header( 'X-Accel-Buffering: no' );
+			self::init_sse_headers();
 		}
 
-		// Stream the text word-by-word (visual typing).
-		$words = \preg_split( '/(\s+)/', $text, -1, \PREG_SPLIT_DELIM_CAPTURE );
-		if ( \is_array( $words ) ) {
-			$chunk_count = \count( $words );
-			// Scale per-chunk delay so total typing simulation never exceeds 1.5s (1,500,000 us), max 25ms per chunk.
-			$delay_us    = $chunk_count > 0 ? (int) \min( 25000, (int) ( 1500000 / $chunk_count ) ) : 0;
-			foreach ( $words as $chunk ) {
-				echo 'data: ' . \wp_json_encode( array( 'delta' => $chunk ) ) . "\n\n";
-				if ( \ob_get_level() > 0 ) {
-					\ob_flush();
-				}
-				\flush();
-				if ( $delay_us > 0 ) {
-					\usleep( $delay_us );
-				}
-			}
+		// Emit final response text immediately without blocking PHP worker sleep;
+		// the client animates smooth typing locally via requestAnimationFrame.
+		if ( '' !== $text && ! \connection_aborted() ) {
+			echo 'data: ' . \wp_json_encode( array( 'delta' => $text ) ) . "\n\n";
+			self::flush_sse();
+		}
+
+		if ( \connection_aborted() ) {
+			return;
 		}
 
 		// Send final metadata event with intent and handoff options.
-		echo 'data: ' . \wp_json_encode(
-			array(
-				'done'            => true,
-				'session_id'      => $session_id,
-				'tool_calls_made' => $tool_calls,
-				'suggestions'     => $suggestions,
-				'booking_intent'  => $intent ?? array( 'score' => 0, 'label' => 'low' ),
-				'handoff'         => $handoff ?? array(),
-			) 
-		) . "\n\n";
-		echo "data: [DONE]\n\n";
-		if ( \ob_get_level() > 0 ) {
-			\ob_flush();
+		$done_payload = array(
+			'done'            => true,
+			'session_id'      => $session_id,
+			'tool_calls_made' => $tool_calls,
+			'suggestions'     => $suggestions,
+			'booking_intent'  => $intent ?? array( 'score' => 0, 'label' => 'low' ),
+			'handoff'         => $handoff ?? array(),
+		);
+		if ( null !== $tts_token ) {
+			$done_payload['tts_token'] = $tts_token;
 		}
-		\flush();
+		echo 'data: ' . \wp_json_encode( $done_payload ) . "\n\n";
+		echo "data: [DONE]\n\n";
+		self::flush_sse();
 	}
 
 	// -------------------------------------------------------------------------

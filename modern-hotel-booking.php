@@ -5,7 +5,7 @@
  * Plugin Name:       Modern Hotel Booking — Direct Booking Engine, Availability Calendar & Vacation Rental PMS
  * Plugin URI:        https://modernhotelwp.com/
  * Description:       Hotel booking plugin & availability calendar for vacation rentals, B&Bs & accommodations. Direct booking engine, hotel reservations & guest portal.
- * Version:           3.0.3
+ * Version:           3.0.4
  * Requires at least: 6.6
  * Requires PHP:      8.0
  * Author:            StartMySuccess
@@ -60,7 +60,7 @@ if ( ! extension_loaded( 'bcmath' ) ) {
 	);
 }
 
-define( 'MHBO_VERSION', '3.0.3' );
+define( 'MHBO_VERSION', '3.0.4' );
 define( 'MHBO_IS_PRO', false );
 if ( ! defined( 'MHBO_PRODUCT_TIER' ) ) {
 	define( 'MHBO_PRODUCT_TIER', 'free' );
@@ -162,12 +162,13 @@ function mhbo_run(): void {
 			return;
 		}
 
-		// Auto-upgrade DB schema when version or installed tier changes (e.g. same-version ZIP replacement upgrade).
+		// Auto-upgrade DB schema when version, schema revision, or installed tier changes (e.g. same-version ZIP replacement upgrade).
 		$stored       = get_option( 'mhbo_db_version' );
 		$stored_tier  = get_option( 'mhbo_installed_tier', '' );
 		$current_tier = class_exists( 'MHBO\Core\Tier' ) ? \MHBO\Core\Tier::get_package_tier() : ( defined( 'MHBO_PRODUCT_TIER' ) ? MHBO_PRODUCT_TIER : 'free' );
+		$schema_rev   = 2;
 
-		if ( MHBO_VERSION !== $stored || $current_tier !== $stored_tier ) {
+		if ( MHBO_VERSION !== $stored || $current_tier !== $stored_tier || (int) get_option( 'mhbo_schema_rev', 0 ) < $schema_rev ) {
 			if ( class_exists( 'MHBO\Core\Activator' ) ) {
 				if ( false !== $stored && MHBO_VERSION !== $stored ) {
 					\MHBO\Core\Activator::migrate( is_string( $stored ) ? $stored : (string) $stored, MHBO_VERSION );
@@ -177,6 +178,7 @@ function mhbo_run(): void {
 			}
 			update_option( 'mhbo_db_version', MHBO_VERSION );
 			update_option( 'mhbo_installed_tier', $current_tier );
+			update_option( 'mhbo_schema_rev', $schema_rev );
 		}
 
 		// Rule 13: Initialize table versions for caching.
@@ -236,25 +238,20 @@ add_action(
 /**
  * Boot the Elementor Integration.
  */
-add_action(
-	'elementor/elements/categories_registered',
-	static function ( $elements_manager ): void {
-		if ( class_exists( 'MHBO\Integrations\Elementor' ) ) {
-			$elementor = new \MHBO\Integrations\Elementor();
-			$elementor->register_categories( $elements_manager );
-		}
+if ( function_exists( 'did_action' ) && did_action( 'elementor/loaded' ) ) {
+	if ( class_exists( 'MHBO\Integrations\Elementor' ) ) {
+		( new \MHBO\Integrations\Elementor() )->init();
 	}
-);
-
-add_action(
-	'elementor/widgets/register',
-	static function ( $widgets_manager ): void {
-		if ( class_exists( 'MHBO\Integrations\Elementor' ) ) {
-			$elementor = new \MHBO\Integrations\Elementor();
-			$elementor->register_widgets( $widgets_manager );
+} elseif ( function_exists( 'add_action' ) ) {
+	add_action(
+		'elementor/loaded',
+		static function (): void {
+			if ( class_exists( 'MHBO\Integrations\Elementor' ) ) {
+				( new \MHBO\Integrations\Elementor() )->init();
+			}
 		}
-	}
-);
+	);
+}
 
 if ( ! function_exists( 'mhbo_get_tier' ) ) {
 	/**

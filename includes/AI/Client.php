@@ -20,6 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use MHBO\Core\Security;
 use Throwable;
 
 class Client {
@@ -46,6 +47,10 @@ class Client {
 	/** How long a model that returned 404 stays demoted (it will not reappear within minutes). */
 	private const MODEL_MISSING_TTL = 6 * HOUR_IN_SECONDS;
 
+	/** Circuit breaker failure threshold and rolling telemetry window. */
+	public const CIRCUIT_BREAKER_THRESHOLD      = 3;
+	public const CIRCUIT_BREAKER_WINDOW_SECONDS = 900;
+
 	/**
 	 * Absolute request deadline (microtime) shared by all AI calls in this request.
 	 *
@@ -61,6 +66,40 @@ class Client {
 	 */
 	public static function set_deadline( float $seconds ): void {
 		self::$deadline = $seconds > 0 ? \microtime( true ) + $seconds : null;
+	}
+
+	/**
+	 * Ephemeral option overrides for admin connection probes so unsaved UI
+	 * selections can be tested without mutating saved WordPress options.
+	 *
+	 * @var array<string, string>
+	 */
+	private static array $diagnostic_overrides = array();
+
+	/**
+	 * Set or clear ephemeral option overrides for admin diagnostic probes.
+	 *
+	 * @param array<string, string> $overrides Option name => value overrides; empty array clears.
+	 */
+	public static function set_diagnostic_overrides( array $overrides ): void {
+		self::$diagnostic_overrides = $overrides;
+	}
+
+	/**
+	 * Read a plugin AI option, honoring ephemeral diagnostic overrides when active.
+	 *
+	 * @param string $option  Full option key.
+	 * @param string $default Default value if unset.
+	 * @return string
+	 */
+	private static function opt( string $option, string $default = '' ): string {
+		$val = array_key_exists( $option, self::$diagnostic_overrides )
+			? self::$diagnostic_overrides[ $option ]
+			: (string) get_option( $option, $default );
+		if ( in_array( $option, array( self::OPT_PREFIX . 'api_key', self::OPT_PREFIX . 'fallback_api_key' ), true ) && '' !== $val ) {
+			return Security::decrypt_ai_secret( $val );
+		}
+		return $val;
 	}
 
 	/**
@@ -278,8 +317,7 @@ class Client {
 		return match ( $model ) {
 			'gemini-3.8-pro', 'gemini-stable-high' => 'gemini-4-carbon',
 			'gemini-pro-latest'                    => 'gemini-4-argon',
-			'gemini-2.5-flash', 'gemini-2.5-pro'   => 'gemini-3.8-flash',
-			'gemini-2.5-flash-lite'                => 'gemini-3.5-flash-lite',
+			'gemini-2.5-pro'                       => 'gemini-3.8-flash',
 			'claude-fable-5-1'                     => 'claude-fable-5-2',
 			'claude-3-7-sonnet', 'claude-sonnet-4' => 'claude-sonnet-5-5',
 			'gpt-4o', 'gpt-4o-mini', 'gpt-5.4-mini'=> 'gpt-6-luna',
@@ -300,7 +338,7 @@ class Client {
 	 */
 	private static function get_native_model_preferences( string|false $provider_scope = false ): array {
 		$provider = false !== $provider_scope ? $provider_scope : self::get_configured_provider();
-		$model    = trim( (string) get_option( self::OPT_PREFIX . 'model', '' ) );
+		$model    = trim( self::opt( self::OPT_PREFIX . 'model', '' ) );
 
 		if ( 'custom' === $model || 'auto' === $model ) {
 			$model = '';
@@ -324,10 +362,11 @@ class Client {
 			// Prefer current GA frontier workhorses over alphabetical/legacy connector defaults.
 			$preferences = array(
 				array( 'google', 'gemini-3.8-flash' ),
-				array( 'openai', 'gpt-6.1-sol' ),
+				array( 'google', 'gemini-4-neon' ),
+				array( 'openai', 'gpt-6.2-sol' ),
 				array( 'anthropic', 'claude-sonnet-5-5' ),
 				array( 'google', 'gemini-4-hydrogen' ),
-				array( 'openai', 'gpt-6-astra' ),
+				array( 'openai', 'gpt-6.2-astra' ),
 				array( 'anthropic', 'claude-fable-5-2' ),
 			);
 		}
@@ -356,24 +395,51 @@ class Client {
 		}
 
 		$start        = microtime( true );
-		$diag_timeout = 10;
+		$diag_timeout = 6;
 		$short_http   = static function ( array $args ) use ( &$diag_timeout ): array {
-			$args['timeout'] = $diag_timeout;
+			$rem = self::remaining_time();
+			$cap = \min( (float) $diag_timeout, \max( 3.0, \PHP_FLOAT_MAX === $rem ? (float) $diag_timeout : $rem - 1.0 ) );
+			$args['timeout'] = isset( $args['timeout'] ) ? \min( (float) $args['timeout'], $cap ) : $cap;
 			return $args;
 		};
 		$short_ai     = static function () use ( &$diag_timeout ): float {
-			return (float) $diag_timeout;
+			$rem = self::remaining_time();
+			return \min( (float) $diag_timeout, \max( 3.0, \PHP_FLOAT_MAX === $rem ? (float) $diag_timeout : $rem - 1.0 ) );
 		};
 
 		add_filter( 'http_request_args', $short_http, 9999 );
 		add_filter( 'wp_ai_client_default_request_timeout', $short_ai, 9999 );
+		self::set_deadline( 20.0 );
 
 		try {
-			// Use 256 tokens without forcing temperature (reasoning models like GPT-6/Gemini-4 reject custom temperatures).
-			$builder = \wp_ai_client_prompt( 'Reply with only the word: CONNECTOR_OK' )
-				->using_max_tokens( 256 );
-
 			$configured_provider = self::get_configured_provider();
+			$configured_natives  = self::get_configured_native_provider_ids();
+			$target_native_pid   = null;
+			if ( is_string( $configured_provider ) && isset( self::NATIVE_PROVIDER_IDS[ $configured_provider ] ) ) {
+				$target_native_pid = self::NATIVE_PROVIDER_IDS[ $configured_provider ];
+			} elseif ( in_array( 'google', $configured_natives, true ) && ( false === $configured_provider || self::PROVIDER_WP_CONNECTOR === $configured_provider || 1 === count( $configured_natives ) ) ) {
+				$target_native_pid = 'google';
+			}
+
+			$preferences = self::get_native_model_preferences();
+			$first_pref  = $preferences[0] ?? 'gemini-3.8-flash';
+			$first_model = is_array( $first_pref ) ? (string) ( $first_pref[1] ?? 'gemini-3.8-flash' ) : (string) $first_pref;
+
+			// Use 256 tokens without forcing temperature (reasoning models like GPT-6/Gemini-4 reject custom temperatures).
+			$builder = \wp_ai_client_prompt( 'Reply with only the word: CONNECTOR_OK' );
+			if ( 'google' === $target_native_pid && 'adaptive' === ModelCatalog::get_thinking_mode( self::PROVIDER_GEMINI, $first_model ) && class_exists( '\WordPress\AiClient\Providers\Models\DTO\ModelConfig' ) ) {
+				$model_config = new \WordPress\AiClient\Providers\Models\DTO\ModelConfig();
+				$model_config->setCustomOptions(
+					array(
+						'generationConfig.thinkingConfig' => array(
+							'thinkingLevel' => 'low',
+						),
+					)
+				);
+				$builder->using_model_config( $model_config );
+			}
+			$builder->using_max_tokens( 256 );
+
 			if ( is_string( $configured_provider ) && isset( self::NATIVE_PROVIDER_IDS[ $configured_provider ] ) ) {
 				$builder->using_provider( self::NATIVE_PROVIDER_IDS[ $configured_provider ] );
 			}
@@ -388,7 +454,6 @@ class Client {
 				);
 			}
 
-			$preferences = self::get_native_model_preferences();
 			if ( array() !== $preferences ) {
 				$builder->using_model_preference( ...$preferences );
 			}
@@ -400,8 +465,8 @@ class Client {
 				$err_msg  = $result->get_error_message();
 				$err_code = (string) $result->get_error_code();
 
-				// Check for WordPress AI Connector Approval block (WordPress AI plugin 1.4.0+).
-				if ( 'wpai_connector_not_approved' === $err_code || str_contains( strtolower( $err_msg ), 'not been approved for use' ) ) {
+				// Check for WordPress AI Connector Approval block (WordPress AI plugin 1.4.0+ / 1.5.0).
+				if ( 'wpai_connector_not_approved' === $err_code || str_contains( strtolower( $err_msg ), 'not been approved for use' ) || str_contains( strtolower( $err_msg ), 'pending approval' ) ) {
 					$approval_url = admin_url( 'tools.php?page=ai-connector-approval' );
 					return array(
 						'success'    => false,
@@ -423,39 +488,58 @@ class Client {
 
 				$first_pref = $preferences[0] ?? null;
 				if ( $is_transient && null !== $first_pref ) {
-					$pref_model     = is_array( $first_pref ) ? (string) ( $first_pref[1] ?? '' ) : (string) $first_pref;
-					$fallback_model = in_array( $pref_model, array( 'gemini-3.8-flash', 'gemini-4-hydrogen', 'gemini-4-carbon', 'gemini-4-argon' ), true )
-						? ( is_array( $first_pref ) ? array( $first_pref[0], 'gemini-3.5-flash-lite' ) : 'gemini-3.5-flash-lite' )
-						: null;
+					$pref_model       = is_array( $first_pref ) ? (string) ( $first_pref[1] ?? '' ) : (string) $first_pref;
+					$is_google_target = 'google' === $target_native_pid
+						|| ( is_array( $first_pref ) && 'google' === ( $first_pref[0] ?? '' ) )
+						|| str_contains( $err_msg, 'googleapis.com' )
+						|| str_starts_with( strtolower( $pref_model ), 'gemini' );
 
-					if ( null !== $fallback_model ) {
-						try {
-							$diag_timeout = 8;
-							$fb_builder   = \wp_ai_client_prompt( 'Reply with only the word: CONNECTOR_OK' )
-								->using_max_tokens( 128 )
-								->using_model_preference( $fallback_model );
-							$fb_result    = $fb_builder->generate_text_result();
-
-							if ( ! is_wp_error( $fb_result ) ) {
-								self::remember_native_availability( true );
-								$fb_latency = (int) round( ( microtime( true ) - $start ) * 1000 );
-								$fb_parsed  = self::parse_generative_ai_result( $fb_result );
-								return array(
-									'success'    => true,
-									'message'    => sprintf(
-										/* translators: 1: primary model name, 2: fallback model name */
-										__( 'WordPress AI Connector is active and connected! Note: Primary model "%1$s" is temporarily experiencing high demand on Google (503/timeout), but verified operational via "%2$s". Live chats automatically cascade across models to ensure 100%% uptime.', 'modern-hotel-booking' ),
-										$pref_model,
-										is_array( $fallback_model ) ? $fallback_model[1] : (string) $fallback_model
-									),
-									'latency_ms' => $fb_latency,
-									'response'   => trim( $fb_parsed['content'] ),
-									'provider'   => (string) $fb_result->getProviderMetadata()->getId(),
-									'model'      => (string) $fb_result->getModelMetadata()->getId(),
-								);
+					if ( $is_google_target ) {
+						$fallback_candidates = array( 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.7-flash' );
+						foreach ( $fallback_candidates as $fb_id ) {
+							if ( $fb_id === $pref_model || self::remaining_time() < 3.5 ) {
+								continue;
 							}
-						} catch ( Throwable ) {
-							// Continue to default error return if fallback probe fails.
+							try {
+								$fb_builder = \wp_ai_client_prompt( 'Reply with only the word: CONNECTOR_OK' );
+								if ( ! str_contains( $fb_id, '2.5' ) && class_exists( '\WordPress\AiClient\Providers\Models\DTO\ModelConfig' ) ) {
+									$fb_config = new \WordPress\AiClient\Providers\Models\DTO\ModelConfig();
+									$fb_config->setCustomOptions(
+										array(
+											'generationConfig.thinkingConfig' => array(
+												'thinkingLevel' => 'low',
+											),
+										)
+									);
+									$fb_builder->using_model_config( $fb_config );
+								}
+								$fb_result = $fb_builder
+									->using_max_tokens( 128 )
+									->using_provider( 'google' )
+									->using_model_preference( array( 'google', $fb_id ) )
+									->generate_text_result();
+
+								if ( ! is_wp_error( $fb_result ) ) {
+									self::remember_native_availability( true );
+									$fb_latency = (int) round( ( microtime( true ) - $start ) * 1000 );
+									$fb_parsed  = self::parse_generative_ai_result( $fb_result );
+									return array(
+										'success'    => true,
+										'message'    => sprintf(
+											/* translators: 1: primary model name, 2: fallback model name */
+											__( 'WordPress AI Connector is active and connected! Note: Primary model "%1$s" is temporarily experiencing high demand on Google (503/timeout), but verified operational via "%2$s". Live chats automatically cascade across models to ensure 100%% uptime.', 'modern-hotel-booking' ),
+											$pref_model,
+											$fb_id
+										),
+										'latency_ms' => $fb_latency,
+										'response'   => trim( $fb_parsed['content'] ),
+										'provider'   => (string) $fb_result->getProviderMetadata()->getId(),
+										'model'      => (string) $fb_result->getModelMetadata()->getId(),
+									);
+								}
+							} catch ( Throwable ) {
+								// Try next fallback candidate within deadline.
+							}
 						}
 					}
 				}
@@ -488,6 +572,7 @@ class Client {
 				'latency_ms' => $latency,
 			);
 		} finally {
+			self::set_deadline( 0.0 );
 			remove_filter( 'http_request_args', $short_http, 9999 );
 			remove_filter( 'wp_ai_client_default_request_timeout', $short_ai, 9999 );
 		}
@@ -496,27 +581,33 @@ class Client {
 	/**
 	 * Send a prompt to the configured AI provider.
 	 *
-	 * @param array<int, array<string, mixed>> $messages       Conversation history.
-	 * @param string                            $system_prompt  System/context prompt.
-	 * @param array<mixed>                      $tools          Tool definitions (for agentic flow).
+	 * @param array<int, array<string, mixed>> $messages                        Conversation history.
+	 * @param string                            $system_prompt                   System/context prompt.
+	 * @param array<mixed>                      $tools                           Tool definitions (for agentic flow).
+	 * @param bool                              $enable_cross_provider_fallback  Whether to allow cross-provider fallback tiers (false for primary-only diagnostic tests).
 	 *
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,fallback_model?:string,original_model?:string,model?:string,thought?:string,signature?:string}
+	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int,fallback_model?:string,original_model?:string,model?:string,thought?:string,thought_signature?:string,raw_parts?:array<mixed>,usage?:array<string,mixed>}
 	 */
-	public static function prompt( array $messages, string $system_prompt, array $tools = array() ): array {
+	public static function prompt( array $messages, string $system_prompt, array $tools = array(), bool $enable_cross_provider_fallback = true ): array {
 		$start    = microtime( true );
 		$was_open = self::is_circuit_broken();
 
-		$result = self::do_prompt( $messages, $system_prompt, $tools );
+		$result = self::do_prompt( $messages, $system_prompt, $tools, $enable_cross_provider_fallback );
 
-		// Circuit breaker accounting happens once per turn, AFTER every tier
+		// Circuit breaker accounting happens once per live chat turn, AFTER every tier
 		// (primary cascade, WP connector, secondary provider) has had its chance.
 		// Previously the primary cascade tripped the breaker even when the fallback
 		// then succeeded, which blocked the very next tool-loop turn for 15s.
-		if ( ! $was_open ) {
-			$error = (string) ( $result['error'] ?? '' );
+		if ( $enable_cross_provider_fallback && ! $was_open ) {
+			$error       = (string) ( $result['error'] ?? '' );
+			$http_status = isset( $result['http_status'] ) ? (int) $result['http_status'] : 0;
 			if ( '' === $error ) {
 				self::reset_failure_score();
-			} elseif ( self::is_transport_error( $error ) || self::is_transient_gemini_error( $error ) ) {
+			} elseif (
+				self::is_transient_http_status( $http_status )
+				|| self::is_transport_error( $error )
+				|| self::is_transient_gemini_error( $error )
+			) {
 				self::increment_failure_score();
 			}
 		}
@@ -532,13 +623,14 @@ class Client {
 	/**
 	 * Internal prompt execution logic.
 	 *
-	 * @param array<int, array<string, mixed>> $messages       Conversation history.
-	 * @param string                            $system_prompt  System/context prompt.
-	 * @param array<mixed>                      $tools          Tool definitions (for agentic flow).
+	 * @param array<int, array<string, mixed>> $messages                        Conversation history.
+	 * @param string                            $system_prompt                   System/context prompt.
+	 * @param array<mixed>                      $tools                           Tool definitions (for agentic flow).
+	 * @param bool                              $enable_cross_provider_fallback  Whether cross-provider fallback tiers are enabled.
 	 *
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,fallback_model?:string,original_model?:string,model?:string,thought?:string,signature?:string}
+	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int,fallback_model?:string,original_model?:string,model?:string,thought?:string,thought_signature?:string,raw_parts?:array<mixed>,usage?:array<string,mixed>}
 	 */
-	private static function do_prompt( array $messages, string $system_prompt, array $tools = array() ): array {
+	private static function do_prompt( array $messages, string $system_prompt, array $tools = array(), bool $enable_cross_provider_fallback = true ): array {
 		$empty = array(
 			'content'       => '',
 			'tool_calls'    => array(),
@@ -546,10 +638,12 @@ class Client {
 			'error'         => null,
 		);
 
-		// Global Quota Protection (2026.4 BP)
-		if ( self::is_circuit_broken() ) {
-			$lock      = (int) get_transient( 'mhbo_ai_quota_lock' );
-			$remaining = max( 1, $lock - time() );
+		// Global Quota Protection (2026.4 BP) — enforce for live guest requests;
+		// allow admin diagnostic connection tests ($enable_cross_provider_fallback === false)
+		// to verify updated keys/models even while a guest cooldown lock is active.
+		if ( $enable_cross_provider_fallback && self::is_circuit_broken() ) {
+			$resilience = self::get_resilience_status();
+			$remaining  = max( 1, $resilience['remaining_seconds'] );
 			return array_merge(
 				$empty,
 				array(
@@ -593,14 +687,26 @@ class Client {
 			$result['error'] = $native_error;
 		}
 
+		if ( ! $enable_cross_provider_fallback ) {
+			return $result;
+		}
+
 		// ── Fallback Path A: If direct HTTP failed and Native was not tried, try Native ──
-		if ( null !== ( $result['error'] ?? null ) && ! $try_native && self::PROVIDER_WP_CONNECTOR !== $configured_provider && function_exists( 'wp_ai_client_prompt' ) && self::is_native_available() ) {
-			self::log_error( 'Direct AI provider failed. Attempting fallback via WordPress AI Connector...' );
-			$native_res = self::execute_native_prompt( $messages, $system_prompt, $tools, self::PROVIDER_WP_CONNECTOR );
-			if ( null === ( $native_res['error'] ?? null ) ) {
-				$native_res['fallback_model'] = (string) ( $native_res['model'] ?? 'WordPress AI Connector' );
-				$native_res['original_model'] = (string) ( self::get_configured_provider() ?: 'primary' );
-				return $native_res;
+		if ( null !== ( $result['error'] ?? null ) && ! $try_native && self::PROVIDER_WP_CONNECTOR !== $configured_provider && function_exists( 'wp_ai_client_prompt' ) && self::remaining_time() >= 4.0 && self::is_native_available() ) {
+			$only_same_native = is_string( $configured_provider )
+				&& isset( self::NATIVE_PROVIDER_IDS[ $configured_provider ] )
+				&& self::get_configured_native_provider_ids() === array( self::NATIVE_PROVIDER_IDS[ $configured_provider ] );
+
+			if ( $only_same_native ) {
+				self::log_error( "Skipping WordPress AI Connector fallback: only configured native connector matches exhausted {$configured_provider}." );
+			} else {
+				self::log_error( 'Direct AI provider failed. Attempting fallback via WordPress AI Connector...' );
+				$native_res = self::execute_native_prompt( $messages, $system_prompt, $tools, self::PROVIDER_WP_CONNECTOR );
+				if ( null === ( $native_res['error'] ?? null ) ) {
+					$native_res['fallback_model'] = (string) ( $native_res['model'] ?? 'WordPress AI Connector' );
+					$native_res['original_model'] = (string) ( self::get_configured_provider() ?: 'primary' );
+					return $native_res;
+				}
 			}
 		}
 
@@ -615,7 +721,7 @@ return $result;
 	 * @return string|false
 	 */
 	public static function get_configured_provider(): string|false {
-		$provider = (string) get_option( self::OPT_PREFIX . 'provider', '' );
+		$provider = self::opt( self::OPT_PREFIX . 'provider', '' );
 		$allowed  = array( self::PROVIDER_WP_CONNECTOR, self::PROVIDER_GEMINI, self::PROVIDER_OPENAI, self::PROVIDER_OPENROUTER, self::PROVIDER_ANTHROPIC, self::PROVIDER_OLLAMA, self::PROVIDER_CUSTOM );
 		return in_array( $provider, $allowed, true ) ? $provider : false;
 	}
@@ -626,7 +732,7 @@ return $result;
 	 * @return string
 	 */
 	public static function get_fallback_api_key(): string {
-		return (string) get_option( self::OPT_PREFIX . 'api_key', '' );
+		return self::opt( self::OPT_PREFIX . 'api_key', '' );
 	}
 
 	/**
@@ -635,7 +741,7 @@ return $result;
 	 * @return string|false
 	 */
 	public static function get_configured_fallback_provider(): string|false {
-		$provider = (string) get_option( self::OPT_PREFIX . 'fallback_provider', '' );
+		$provider = self::opt( self::OPT_PREFIX . 'fallback_provider', '' );
 		$allowed  = array( self::PROVIDER_GEMINI, self::PROVIDER_OPENAI, self::PROVIDER_OPENROUTER, self::PROVIDER_ANTHROPIC, self::PROVIDER_OLLAMA, self::PROVIDER_CUSTOM );
 		return in_array( $provider, $allowed, true ) ? $provider : false;
 	}
@@ -646,7 +752,7 @@ return $result;
 	 * @return string
 	 */
 	public static function get_fallback_configured_api_key(): string {
-		return (string) get_option( self::OPT_PREFIX . 'fallback_api_key', '' );
+		return self::opt( self::OPT_PREFIX . 'fallback_api_key', '' );
 	}
 
 	/**
@@ -655,7 +761,7 @@ return $result;
 	 * @param array<mixed> $messages
 	 * @param string       $system_prompt
 	 * @param array<mixed> $tools
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,fallback_model?:string,original_model?:string,model?:string,thought?:string,signature?:string}
+	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int,fallback_model?:string,original_model?:string,model?:string,thought?:string,thought_signature?:string,raw_parts?:array<mixed>,usage?:array<string,mixed>}
 	 */
 	public static function fallback_prompt( array $messages, string $system_prompt, array $tools = array() ): array {
 		$result = array(
@@ -727,7 +833,11 @@ return $result;
 	 * @return float
 	 */
 	public static function filter_native_timeout( float|int $timeout ): float {
-		return (float) min( max( (float) $timeout, 25.0 ), 30.0 );
+		$t = (float) min( max( (float) $timeout, 25.0 ), 30.0 );
+		if ( null !== self::$deadline ) {
+			$t = (float) max( 3.0, min( $t, self::remaining_time() - 1.5 ) );
+		}
+		return $t;
 	}
 
 	/**
@@ -749,6 +859,9 @@ return $result;
 				// Prevent timeouts exceeding webserver gateway limits (Apache mod_fcgid 40s / FastCGI 30-45s).
 				$args['timeout'] = 25.0;
 			}
+			if ( null !== self::$deadline ) {
+				$args['timeout'] = (float) max( 3.0, min( (float) $args['timeout'], self::remaining_time() - 1.5 ) );
+			}
 		}
 		return $args;
 	}
@@ -758,6 +871,95 @@ return $result;
 	// -------------------------------------------------------------------------
 
 /**
+	 * Assemble a native WP AI Client prompt builder with history, system prompt, model prefs, and tools.
+	 *
+	 * @param list<\WordPress\AiClient\Messages\DTO\Message> $native_history Normalized history DTOs.
+	 * @param string                                         $fallback_text  Fallback user message text.
+	 * @param string                                         $system_prompt  System instruction.
+	 * @param int                                            $max_tokens     Max output tokens.
+	 * @param string                                         $google_effort  Google thinkingLevel ('low'|'medium'|'high'|'xhigh'|'').
+	 * @param string|null                                    $target_pid     Target native provider ID or null.
+	 * @param array<int, array{0:string,1:string}|string>    $preferences    Ordered model preferences.
+	 * @param array<int, array<string, mixed>>               $tools          Tool definitions.
+	 * @return \WP_AI_Client_Prompt_Builder
+	 */
+	private static function create_native_builder(
+		array $native_history,
+		string $fallback_text,
+		string $system_prompt,
+		int $max_tokens,
+		string $google_effort,
+		?string $target_pid,
+		array $preferences,
+		array $tools
+	) {
+		$builder = array() !== $native_history
+			? \wp_ai_client_prompt( null )->with_history( ...$native_history )
+			: \wp_ai_client_prompt( $fallback_text );
+
+		// Apply provider-specific custom ModelConfig BEFORE builder setters so builder fields take precedence.
+		$primary_pref  = $preferences[0] ?? 'gemini-3.8-flash';
+		$primary_model = is_array( $primary_pref ) ? (string) ( $primary_pref[1] ?? 'gemini-3.8-flash' ) : (string) $primary_pref;
+		if ( 'google' === $target_pid && class_exists( '\WordPress\AiClient\Providers\Models\DTO\ModelConfig' ) ) {
+			if ( in_array( $google_effort, array( 'low', 'medium', 'high', 'xhigh' ), true ) ) {
+				$model_config = new \WordPress\AiClient\Providers\Models\DTO\ModelConfig();
+				$model_config->setCustomOptions(
+					array(
+						'generationConfig.thinkingConfig' => array(
+							'thinkingLevel' => $google_effort,
+						),
+					)
+				);
+				$builder->using_model_config( $model_config );
+			} elseif ( str_starts_with( $primary_model, 'gemini-2.5-flash' ) && ! str_contains( $primary_model, 'lite' ) ) {
+				$model_config = new \WordPress\AiClient\Providers\Models\DTO\ModelConfig();
+				$model_config->setCustomOptions(
+					array(
+						'generationConfig.thinkingConfig' => array(
+							'thinkingBudget' => 0,
+						),
+					)
+				);
+				$builder->using_model_config( $model_config );
+			}
+		}
+
+		$builder->using_system_instruction( $system_prompt )
+			->using_max_tokens( $max_tokens );
+
+		if ( null !== $target_pid ) {
+			$builder->using_provider( $target_pid );
+		}
+
+		if ( array() !== $preferences ) {
+			$builder->using_model_preference( ...$preferences );
+		}
+
+		// Attach function calling declarations when tools are provided.
+		if ( array() !== $tools && class_exists( '\WordPress\AiClient\Tools\DTO\FunctionDeclaration' ) ) {
+			$declarations = array();
+			foreach ( $tools as $tool ) {
+				$fn     = ( isset( $tool['function'] ) && is_array( $tool['function'] ) ) ? $tool['function'] : $tool;
+				$t_name = (string) ( $fn['name'] ?? '' );
+				if ( '' === $t_name ) {
+					continue;
+				}
+				$t_desc   = (string) ( $fn['description'] ?? '' );
+				$t_params = ( isset( $fn['parameters'] ) && is_array( $fn['parameters'] ) ) ? $fn['parameters'] : null;
+				if ( is_array( $t_params ) && isset( $t_params['properties'] ) && array() === $t_params['properties'] ) {
+					$t_params['properties'] = new \stdClass();
+				}
+				$declarations[] = new \WordPress\AiClient\Tools\DTO\FunctionDeclaration( $t_name, $t_desc, $t_params );
+			}
+			if ( array() !== $declarations ) {
+				$builder->using_function_declarations( ...$declarations );
+			}
+		}
+
+		return $builder;
+	}
+
+	/**
 	 * Execute a prompt via WP 7.0+ native wp_ai_client_prompt() with full tool declarations,
 	 * structured Message DTO history (including FunctionCall/FunctionResponse & thought signatures),
 	 * ModelConfig options, and GenerativeAiResult extraction.
@@ -783,12 +985,14 @@ return $result;
 		try {
 			Loader::ensure_vendor_autoload();
 
-			$effort     = (string) get_option( 'mhbo_ai_reasoning_effort', 'none' );
+			$effort     = self::opt( 'mhbo_ai_reasoning_effort', 'none' );
 			$max_tokens = match ( $effort ) {
+				'xhigh'  => 16384,
 				'high'   => 8192,
 				'medium' => 4096,
 				default  => 2048,
 			};
+			$google_effort = 'none' === $effort ? 'low' : $effort;
 
 			$configured_ids = self::get_configured_native_provider_ids();
 			$target_pid     = null;
@@ -807,62 +1011,77 @@ return $result;
 				$target_pid = $configured_ids[0];
 			}
 
-			$native_history = self::build_native_messages( $messages );
-			$builder        = array() !== $native_history
-				? \wp_ai_client_prompt( null )->with_history( ...$native_history )
-				: \wp_ai_client_prompt( self::get_fallback_user_text( $messages ) );
+			$native_history     = self::build_native_messages( $messages );
+			$fallback_user_text = self::get_fallback_user_text( $messages );
+			$scoped_provider    = ( null !== $target_pid && is_string( $provider_scope ) && isset( self::NATIVE_PROVIDER_IDS[ $provider_scope ] ) )
+				? $target_pid
+				: null;
+			$primary_pref       = $preferences[0] ?? 'gemini-3.8-flash';
+			$primary_model      = is_array( $primary_pref ) ? (string) ( $primary_pref[1] ?? 'gemini-3.8-flash' ) : (string) $primary_pref;
+			$resolved_g_effort  = ( 'google' === $target_pid )
+				? ( self::resolve_gemini_thinking_level_for_model( $primary_model, $google_effort ) ?? '' )
+				: '';
 
-			// Apply provider-specific custom ModelConfig BEFORE builder setters so builder fields take precedence.
-			if ( 'google' === $target_pid && in_array( $effort, array( 'low', 'medium', 'high' ), true ) && class_exists( '\WordPress\AiClient\Providers\Models\DTO\ModelConfig' ) ) {
-				$model_config = new \WordPress\AiClient\Providers\Models\DTO\ModelConfig();
-				$model_config->setCustomOptions(
-					array(
-						'generationConfig.thinkingConfig' => array(
-							'thinkingLevel' => $effort,
-						),
-					)
-				);
-				$builder->using_model_config( $model_config );
-			}
-
-			$builder->using_system_instruction( $system_prompt )
-				->using_max_tokens( $max_tokens );
-
-			if ( null !== $target_pid && is_string( $provider_scope ) && isset( self::NATIVE_PROVIDER_IDS[ $provider_scope ] ) ) {
-				$builder->using_provider( $target_pid );
-			}
-
-			if ( array() !== $preferences ) {
-				$builder->using_model_preference( ...$preferences );
-			}
-
-			// Attach function calling declarations when tools are provided.
-			if ( array() !== $tools && class_exists( '\WordPress\AiClient\Tools\DTO\FunctionDeclaration' ) ) {
-				$declarations = array();
-				foreach ( $tools as $tool ) {
-					$fn     = ( isset( $tool['function'] ) && is_array( $tool['function'] ) ) ? $tool['function'] : $tool;
-					$t_name = (string) ( $fn['name'] ?? '' );
-					if ( '' === $t_name ) {
-						continue;
-					}
-					$t_desc   = (string) ( $fn['description'] ?? '' );
-					$t_params = ( isset( $fn['parameters'] ) && is_array( $fn['parameters'] ) ) ? $fn['parameters'] : null;
-					if ( is_array( $t_params ) && isset( $t_params['properties'] ) && array() === $t_params['properties'] ) {
-						$t_params['properties'] = new \stdClass();
-					}
-					$declarations[] = new \WordPress\AiClient\Tools\DTO\FunctionDeclaration( $t_name, $t_desc, $t_params );
-				}
-				if ( array() !== $declarations ) {
-					$builder->using_function_declarations( ...$declarations );
-				}
-			}
+			$builder = self::create_native_builder(
+				$native_history,
+				$fallback_user_text,
+				$system_prompt,
+				$max_tokens,
+				$resolved_g_effort,
+				$scoped_provider,
+				$preferences,
+				$tools
+			);
 
 			$result = $builder->generate_text_result();
 
 			if ( is_wp_error( $result ) ) {
-				$code         = (string) $result->get_error_code();
-				$native_error = $result->get_error_message();
-				if ( in_array( $code, array( 'prompt_invalid_argument', 'prompt_network_error', 'prompt_prevented' ), true ) ) {
+				$code             = (string) $result->get_error_code();
+				$native_error     = $result->get_error_message();
+				$is_google_target = 'google' === $target_pid || ( null === $target_pid && in_array( 'google', $configured_ids, true ) );
+				$is_transient     = self::is_transient_gemini_error( $native_error )
+					|| str_contains( $native_error, '503' )
+					|| str_contains( $native_error, '429' )
+					|| str_contains( $native_error, 'high demand' )
+					|| str_contains( $native_error, 'timed out' );
+
+				if ( $is_google_target && $is_transient && self::remaining_time() >= 4.5 ) {
+					$first_pref  = $preferences[0] ?? 'gemini-3.8-flash';
+					$tried_model = is_array( $first_pref ) ? (string) ( $first_pref[1] ?? 'gemini-3.8-flash' ) : (string) $first_pref;
+					self::record_model_failure( $tried_model, 300 );
+					$chain        = ModelCatalog::get_fallback_chain( self::PROVIDER_GEMINI, $tried_model );
+					$ha_priority  = array_values( array_intersect( array( 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-flash-lite' ), $chain ) );
+					$fb_sequence  = array_values( array_unique( array_merge( $ha_priority, $chain ) ) );
+					$tries        = 0;
+
+					foreach ( $fb_sequence as $fb_model ) {
+						if ( $fb_model === $tried_model || $tries >= 2 || self::remaining_time() < 4.5 ) {
+							continue;
+						}
+						++$tries;
+						$fb_builder = self::create_native_builder(
+							$native_history,
+							$fallback_user_text,
+							$system_prompt,
+							$max_tokens,
+							self::resolve_gemini_thinking_level_for_model( $fb_model, $google_effort ) ?? '',
+							'google',
+							array( array( 'google', $fb_model ) ),
+							$tools
+						);
+						$fb_result = $fb_builder->generate_text_result();
+						if ( ! is_wp_error( $fb_result ) ) {
+							$parsed                   = self::parse_generative_ai_result( $fb_result );
+							$parsed['original_model'] = $tried_model;
+							$parsed['fallback_model'] = $fb_model;
+							return $parsed;
+						}
+						$code         = (string) $fb_result->get_error_code();
+						$native_error = $fb_result->get_error_message();
+					}
+				}
+
+				if ( 'wpai_connector_not_approved' !== $code && in_array( $code, array( 'prompt_invalid_argument', 'prompt_network_error', 'prompt_prevented' ), true ) ) {
 					self::remember_native_availability( false );
 				}
 				self::log_error( 'wp_ai_client_prompt error [' . $code . ']: ' . $native_error );
@@ -1135,14 +1354,28 @@ return $result;
 		if ( '' === $url ) {
 			return $default_url;
 		}
-		$url = rtrim( $url, '/' );
-		if ( str_ends_with( $url, '/chat/completions' ) || str_ends_with( $url, '/responses' ) ) {
-			return $url;
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+			return $default_url;
 		}
-		if ( str_ends_with( $url, '/v1' ) ) {
-			return $url . '/chat/completions';
+		$scheme = strtolower( (string) $parts['scheme'] );
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return $default_url;
 		}
-		return $url . '/v1/chat/completions';
+		$host = (string) $parts['host'];
+		if ( str_contains( $host, ':' ) && ! str_starts_with( $host, '[' ) ) {
+			$host = '[' . $host . ']';
+		}
+		$port = isset( $parts['port'] ) ? ':' . (int) $parts['port'] : '';
+		$path = rtrim( (string) ( $parts['path'] ?? '' ), '/' );
+		$base = $scheme . '://' . $host . $port . $path;
+		if ( str_ends_with( $base, '/chat/completions' ) || str_ends_with( $base, '/responses' ) ) {
+			return $base;
+		}
+		if ( str_ends_with( $base, '/v1' ) ) {
+			return $base . '/chat/completions';
+		}
+		return $base . '/v1/chat/completions';
 	}
 
 	/**
@@ -1151,12 +1384,12 @@ return $result;
 	 * @param array<mixed> $messages
 	 * @param string       $system_prompt
 	 * @param array<mixed> $tools
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null}
+	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int}
 	 */
 	private static function http_prompt( array $messages, string $system_prompt, array $tools ): array {
 		$provider = self::get_configured_provider();
 		$api_key  = self::get_fallback_api_key();
-		$model    = (string) get_option( self::OPT_PREFIX . 'model', '' );
+		$model    = self::opt( self::OPT_PREFIX . 'model', '' );
  
 		if ( self::PROVIDER_WP_CONNECTOR === $provider ) {
 			return array(
@@ -1194,12 +1427,20 @@ return $result;
  
 			case self::PROVIDER_OLLAMA:
 				// Ollama is local-only by design; localhost is intentional.
-				$base_url = self::normalize_openai_endpoint( (string) get_option( self::OPT_PREFIX . 'custom_url', '' ), 'http://localhost:11434/v1/chat/completions' );
+				$base_url = self::normalize_openai_endpoint( self::opt( self::OPT_PREFIX . 'custom_url', '' ), 'http://localhost:11434/v1/chat/completions' );
+				if ( ! Security::is_loopback_url( $base_url ) ) {
+					return array(
+						'content'       => '',
+						'tool_calls'    => array(),
+						'finish_reason' => 'error',
+						'error'         => \MHBO\Core\I18n::get_label( 'ai_error_bad_custom_url' ),
+					);
+				}
 				return self::http_openai( '', $model ?: ModelCatalog::get_recommended_model( self::PROVIDER_OLLAMA ), $messages, $system_prompt, $tools, $base_url, self::PROVIDER_OLLAMA );
  
 			case self::PROVIDER_CUSTOM:
-				$custom_url = (string) get_option( self::OPT_PREFIX . 'custom_url', '' );
-				if ( '' === trim( $custom_url ) || ! wp_http_validate_url( $custom_url ) ) {
+				$custom_url = self::opt( self::OPT_PREFIX . 'custom_url', '' );
+				if ( '' === trim( $custom_url ) || ! Security::is_safe_url( $custom_url ) ) {
 					return array(
 						'content'       => '',
 						'tool_calls'    => array(),
@@ -1231,11 +1472,12 @@ return $result;
 	 * thinkingConfig (thinkingLevel), and all current Gemini 3.x / 4.x models.
 	 *
 	 * Verified Fallback Chain (November 2026):
-	 *   gemini-3.8-flash → gemini-4-hydrogen → gemini-4-carbon → gemini-4-argon
-	 *   → gemini-3.7-flash → gemini-3.5-flash-lite → gemini-3-flash-preview
+	 *   gemini-3.8-flash → gemini-4-hydrogen → gemini-3.7-flash → gemini-3.6-flash
+	 *   → gemini-3-flash-preview → gemini-2.5-flash → gemini-2.5-flash-lite
+	 *   → gemini-3.5-flash-lite → gemini-4-neon → gemini-4-carbon → gemini-4-argon
 	 *   → gemini-3.1-pro-preview
 	 *
-	 * EOL models removed: gemini-2.5-flash / gemini-2.5-flash-lite / gemini-2.5-pro (EOL Oct 2026),
+	 * EOL models removed: gemini-2.5-pro (EOL Oct 2026),
 	 *                      gemini-3.1-flash-lite-preview (shut down 2026-05-25),
 	 *                      gemini-2.5-flash-lite-preview (shut down 2026-03-31),
 	 *                      gemini-1.5-flash (shut down 2026-03-31).
@@ -1245,7 +1487,7 @@ return $result;
 	 * @param array<mixed> $messages
 	 * @param string       $system_prompt
 	 * @param array<mixed> $tools
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null}
+	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int}
 	 */
 	private static function http_gemini( string $api_key, string $model, array $messages, string $system_prompt, array $tools ): array {
 		// Normalize retired or superseded model names to verified November 2026 equivalents.
@@ -1256,8 +1498,6 @@ return $result;
 			'gemini-2.0',
 		);
 		$retired_exact    = array(
-			'gemini-2.5-flash',              // EOL: 2026-10-20
-			'gemini-2.5-flash-lite',         // EOL: 2026-10-20
 			'gemini-2.5-pro',                // EOL: 2026-10-20
 			'gemini-3.1-flash-lite-preview', // EOL: 2026-05-25
 			'gemini-2.5-flash-lite-preview', // EOL: 2026-03-31
@@ -1322,10 +1562,12 @@ return $result;
 			'error'         => 'No models available.',
 		);
 		$cascade_start  = \microtime( true );
-		$cascade_budget = ( 'cli' === \php_sapi_name() ) ? 50.0 : 38.0; // 2026 BP: Bound web requests within 38s (FastCGI 45-60s limit).
+		$cascade_budget = ( 'cli' === \php_sapi_name() ) ? 50.0 : 22.0; // 2026 BP: Bound web requests within 22s (well under Apache mod_fcgid 40s limit).
 
-		// Respect the request-wide deadline, leaving time for the secondary provider.
-		$reserve        = self::get_configured_fallback_provider() ? self::FALLBACK_RESERVE_SECONDS : 0.0;
+		// Respect the request-wide deadline, leaving time for a distinct secondary provider.
+		$fb_provider    = self::get_configured_fallback_provider();
+		$has_distinct_fb = $fb_provider && ( self::PROVIDER_GEMINI !== $fb_provider || self::get_fallback_configured_api_key() !== $api_key );
+		$reserve        = $has_distinct_fb ? self::FALLBACK_RESERVE_SECONDS : 0.0;
 		$cascade_budget = \min( $cascade_budget, \max( 4.0, self::remaining_time() - $reserve ) );
 		$thinking_level = self::get_gemini_thinking_level();
 
@@ -1339,16 +1581,21 @@ return $result;
 				}
 			}
 
-			// Per-attempt timeout shrinks to whatever budget remains (floor 10s for model thinking/tools).
-			$attempt_timeout = (int) \max( 10, \min( ( 'cli' === \php_sapi_name() ) ? 25 : 18, (int) \floor( $cascade_budget - $elapsed ) ) );
+			// Per-attempt timeout shrinks to whatever budget remains (first hop 8s web / 20s CLI, fallbacks 6s web / 15s CLI).
+			$hop_cap         = 0 === $idx ? ( ( 'cli' === \php_sapi_name() ) ? 20 : 8 ) : ( ( 'cli' === \php_sapi_name() ) ? 15 : 6 );
+			$attempt_timeout = (int) \max( 4, \min( $hop_cap, (int) \floor( $cascade_budget - $elapsed ) ) );
 
-			// Gemini 3.8 & 4 Argon adaptive-thinking models share a unified maxOutputTokens pool across
-			// internal thinking tokens, functionCall arguments, and final text output. Scale maxOutputTokens
-			// with thinkingLevel so 'medium' and 'high' reasoning budgets never truncate mid-thought.
-			$attempt_body = $body;
-			if ( null !== $thinking_level && 'adaptive' === ModelCatalog::get_thinking_mode( self::PROVIDER_GEMINI, $try_model ) ) {
-				$attempt_body['generationConfig']['thinkingConfig']  = array( 'thinkingLevel' => $thinking_level );
-				$attempt_body['generationConfig']['maxOutputTokens'] = match ( $thinking_level ) {
+			// Gemini 3.8 & 4 (Neon/Hydrogen/Argon/Carbon) adaptive-thinking models share a unified maxOutputTokens
+			// pool across internal thinking tokens, functionCall arguments, and final text output. Scale maxOutputTokens
+			// with thinkingLevel so 'medium', 'high', and 'xhigh' reasoning budgets never truncate mid-thought.
+			$attempt_body   = $body;
+			$resolved_level = self::resolve_gemini_thinking_level_for_model( $try_model, $thinking_level );
+			if ( 'low' === $thinking_level && \str_starts_with( $try_model, 'gemini-2.5-flash' ) && ! \str_contains( $try_model, 'lite' ) ) {
+				$attempt_body['generationConfig']['thinkingConfig'] = array( 'thinkingBudget' => 0 );
+			} elseif ( null !== $resolved_level ) {
+				$attempt_body['generationConfig']['thinkingConfig']  = array( 'thinkingLevel' => $resolved_level );
+				$attempt_body['generationConfig']['maxOutputTokens'] = match ( $resolved_level ) {
+					'xhigh'  => 16384,
 					'high'   => 8192,
 					'medium' => 4096,
 					default  => 2048,
@@ -1384,7 +1631,8 @@ return $result;
 				return $last_result;
 			}
 
-			if ( ! self::is_transient_gemini_error( (string) $last_result['error'] ) ) {
+			$http_status = isset( $last_result['http_status'] ) ? (int) $last_result['http_status'] : 0;
+			if ( ! self::is_transient_http_status( $http_status ) && ! self::is_transient_gemini_error( (string) $last_result['error'] ) ) {
 				// Defensive 404 Resilience: If a model alias is not found, skip to next in chain immediately.
 				if ( \str_contains( \strtolower( (string) $last_result['error'] ), '404' ) || \str_contains( \strtolower( (string) $last_result['error'] ), 'not found' ) ) {
 					self::record_model_failure( $try_model, self::MODEL_MISSING_TTL );
@@ -1402,7 +1650,9 @@ return $result;
 			// before trying a *different* model only added up to 1.5s of dead time per hop.
 			$ttl       = 300;
 			$err_lower = \strtolower( (string) $last_result['error'] );
-			if ( \preg_match( '/retry in\s+(\d+)h/i', (string) $last_result['error'], $m_matches ) ) {
+			if ( \str_contains( $err_lower, 'limit: 0' ) ) {
+				$ttl = 43200;
+			} elseif ( \preg_match( '/retry in\s+(\d+)h/i', (string) $last_result['error'], $m_matches ) ) {
 				$ttl = \min( 86400, ( (int) $m_matches[1] ) * 3600 );
 			} elseif ( \str_contains( $err_lower, 'free_tier_requests' ) || \str_contains( $err_lower, 'daily' ) ) {
 				$ttl = 3600;
@@ -1426,11 +1676,12 @@ return $result;
 	 * November 2026 Verified Active Models:
 	 *   GA       : gemini-3.8-flash — recommended frontier workhorse
 	 *              gemini-4-hydrogen — ultra-fast frontier agentic
-	 *              gemini-4-carbon — high-intelligence reasoning flagship
-	 *              gemini-4-argon — supreme deep reasoning flagship
-	 *              gemini-3.7-flash — high-efficiency workhorse
+	 *              gemini-3.7-flash — auto-routing alias workhorse
+	 *              gemini-3.6-flash — stable production workhorse
+	 *              gemini-2.5-flash / gemini-2.5-flash-lite — active HA fallbacks
 	 *              gemini-3.5-flash-lite — ultra budget
-	 *   PREVIEW  : gemini-3-flash-preview — Computer Use support
+	 *              gemini-4-neon / gemini-4-carbon / gemini-4-argon — Paid frontier tiers
+	 *   PREVIEW  : gemini-3-flash-preview — Computer Use / HA fallback
 	 *              gemini-3.1-pro-preview — reasoning preview
 	 *
 	 * @param string $primary
@@ -1527,21 +1778,74 @@ return $result;
 	/**
 	 * Get the Gemini thinking level based on settings and speed optimization.
 	 *
-	 * Gemini 3 adaptive models support low, medium, and high thinking levels.
+	 * Gemini 3.8 & 4 adaptive models support low, medium, high, and xhigh (Gemini 4 Neon & Hydrogen).
 	 * For conversational concierges, 'low' dramatically cuts TTFT (measured 2.4s vs 5.2s)
 	 * while preserving reasoning accuracy.
 	 *
-	 * @return string|null 'low'|'medium'|'high' or null if thinkingConfig is disabled.
+	 * @return string|null 'low'|'medium'|'high'|'xhigh' or null if thinkingConfig is disabled.
 	 */
 	public static function get_gemini_thinking_level(): ?string {
-		$effort = (string) get_option( 'mhbo_ai_reasoning_effort', 'low' );
+		$effort = self::opt( 'mhbo_ai_reasoning_effort', 'low' );
 		if ( 'none' === $effort ) {
 			return 'low'; // Speed-first default for real-time guest concierge.
 		}
-		if ( in_array( $effort, array( 'low', 'medium', 'high' ), true ) ) {
+		if ( in_array( $effort, array( 'low', 'medium', 'high', 'xhigh' ), true ) ) {
 			return $effort;
 		}
 		return 'low';
+	}
+
+	/**
+	 * Resolve the Gemini `thinkingLevel` valid for a specific model ID.
+	 *
+	 * Only Gemini 4 Neon and Gemini 4 Hydrogen support `xhigh`; Gemini 4 Carbon,
+	 * Gemini 4 Argon, Gemini 3.8 Flash, and Gemini 3.6 Flash cap at `high`.
+	 * Non-adaptive models (2.5 Flash, 2.5 Flash-Lite, 3.5 Flash-Lite) return null.
+	 *
+	 * @param string      $model          Target Gemini model identifier.
+	 * @param string|null $thinking_level Desired level ('low'|'medium'|'high'|'xhigh'|'none'|null).
+	 * @return string|null Validated level or null when `thinkingLevel` is unsupported.
+	 */
+	public static function resolve_gemini_thinking_level_for_model( string $model, ?string $thinking_level ): ?string {
+		if ( null === $thinking_level || '' === $thinking_level || 'none' === $thinking_level ) {
+			return null;
+		}
+		if ( 'adaptive' !== ModelCatalog::get_thinking_mode( self::PROVIDER_GEMINI, $model ) ) {
+			return null;
+		}
+		if ( 'xhigh' === $thinking_level && ! \str_contains( $model, 'gemini-4-neon' ) && ! \str_contains( $model, 'gemini-4-hydrogen' ) ) {
+			return 'high';
+		}
+		return $thinking_level;
+	}
+
+	/**
+	 * Return unified circuit-breaker and service health telemetry.
+	 *
+	 * @return array{error_score:int,threshold:int,is_cooling:bool,remaining_seconds:int,status:string}
+	 */
+	public static function get_resilience_status(): array {
+		$raw_score  = max( 0, (int) get_transient( 'mhbo_ai_error_score' ) );
+		$quota_lock = (int) get_transient( 'mhbo_ai_quota_lock' );
+		$now        = \time();
+		$is_cooling = $quota_lock > $now;
+		$remaining  = $is_cooling ? ( $quota_lock - $now ) : 0;
+
+		if ( $is_cooling && 0 === $raw_score ) {
+			$raw_score = self::CIRCUIT_BREAKER_THRESHOLD;
+		}
+
+		$status = $is_cooling
+			? 'cooling_down'
+			: ( $raw_score > 0 ? 'degraded' : 'operational' );
+
+		return array(
+			'error_score'       => $raw_score,
+			'threshold'         => self::CIRCUIT_BREAKER_THRESHOLD,
+			'is_cooling'        => $is_cooling,
+			'remaining_seconds' => $remaining,
+			'status'            => $status,
+		);
 	}
 
 	/**
@@ -1550,6 +1854,23 @@ return $result;
 	public static function reset_failure_score(): void {
 		delete_transient( 'mhbo_ai_error_score' );
 		delete_transient( 'mhbo_ai_quota_lock' );
+	}
+
+	/**
+	 * Clear any cached temporary failure flag for an explicitly tested model.
+	 *
+	 * @param string $model Requested model identifier.
+	 */
+	public static function clear_model_failure( string $model ): void {
+		$model = trim( $model );
+		if ( '' === $model ) {
+			return;
+		}
+		delete_transient( 'mhbo_ai_model_fail_' . $model );
+		$migrated = self::migrate_legacy_model_slug( $model );
+		if ( '' !== $migrated && $migrated !== $model ) {
+			delete_transient( 'mhbo_ai_model_fail_' . $migrated );
+		}
 	}
 
 	/**
@@ -1566,20 +1887,21 @@ return $result;
 	 * 2026.4 BP: Increment system-wide failure score and apply tiered locking.
 	 */
 	private static function increment_failure_score(): void {
-		$score = (int) get_transient( 'mhbo_ai_error_score' ) + 1;
-		
-		// 2026.4 BP: Reset score if it was cold (transient naturally expires in 15m)
-		set_transient( 'mhbo_ai_error_score', $score, 900 );
+		$score = max( 0, (int) get_transient( 'mhbo_ai_error_score' ) ) + 1;
 
 		// Tiered Lock Duration:
 		// Score 1: 0s (single glitch allows immediate guest retry without lock)
 		// Score 2: 30s (active outage)
 		// Score 3+: 15m (hard block/circuit trip)
 		$duration = match ( true ) {
-			$score >= 3 => 900,
+			$score >= self::CIRCUIT_BREAKER_THRESHOLD => 900,
 			$score >= 2 => 30,
 			default     => 0,
 		};
+
+		// Keep score transient alive at least as long as any active cooldown lock (+ buffer).
+		$score_ttl = max( self::CIRCUIT_BREAKER_WINDOW_SECONDS, $duration + 60 );
+		set_transient( 'mhbo_ai_error_score', $score, $score_ttl );
 
 		if ( $duration > 0 ) {
 			$new_lock = \time() + $duration;
@@ -1604,6 +1926,16 @@ return $result;
 		}
 
 		return time() < (int) $lock;
+	}
+
+	/**
+	 * Detect transient HTTP status codes emitted by upstream AI providers or proxies.
+	 *
+	 * @param int $http_code HTTP response code.
+	 * @return bool
+	 */
+	private static function is_transient_http_status( int $http_code ): bool {
+		return in_array( $http_code, array( 429, 500, 502, 503, 504, 529 ), true );
 	}
 
 	/**
@@ -1653,15 +1985,27 @@ return $result;
 		$transient_phrases = array(
 			'high demand',
 			'temporarily unavailable',
+			'service unavailable',
 			'overloaded',
 			'resource exhausted',
 			'quota exceeded',
+			'exceeded your current quota',
+			'insufficient_quota',
 			'rate limit',
+			'rate_limit_exceeded',
 			'request limit',
+			'too many requests',
 			'capacity',
+			'internal server error',
+			'internal error',
+			'bad gateway',
+			'gateway timeout',
+			'server_error',
+			'500',
 			'502',
 			'503',
 			'504',
+			'529',
 			'429',
 			'curl error',
 			'timed out',
@@ -1686,13 +2030,14 @@ return $result;
 	 * @param string       $model           Model name (for error logging only).
 	 * @param string       $api_key         Gemini API key (sent as x-goog-api-key header).
 	 * @param int|null     $timeout_seconds Custom attempt timeout.
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,retry_after?:int}
+	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int,retry_after?:int}
 	 */
 	private static function http_gemini_request( string $url, array $body, string $model, string $api_key, ?int $timeout_seconds = null ): array {
 		$attempt_timeout = $timeout_seconds ?? ( ( 'cli' === \php_sapi_name() ) ? 25 : 15 );
 		$args = array(
 			'timeout'        => $attempt_timeout, // 2026 BP: Dynamic attempt timeout enables fast failover across model cascade before webserver ceilings (30-40s).
 			'connecttimeout' => 5,  // 2026 BP: Fast 5s connect timeout.
+			'redirection'    => 0,
 			'sslverify'      => true,
 			'headers'        => array(
 				'Content-Type'   => 'application/json',
@@ -1737,6 +2082,7 @@ return $result;
 				'tool_calls'    => array(),
 				'finish_reason' => 'error',
 				'error'         => $err,
+				'http_status'   => $http_code,
 			);
 		}
 
@@ -1748,6 +2094,7 @@ return $result;
 				'tool_calls'    => array(),
 				'finish_reason' => 'error',
 				'error'         => $err,
+				'http_status'   => $http_code,
 				'retry_after'   => $retry_after,
 			);
 		}
@@ -2049,6 +2396,41 @@ return $result;
 	}
 
 	/**
+	 * Resolve tool_call_id for a 'tool' message, looking back to the preceding assistant
+	 * turn's tool_calls by function name when legacy session rows omitted tool_call_id.
+	 *
+	 * @param array<int, mixed>    $messages Full conversation array.
+	 * @param int                  $index    Current message index.
+	 * @param array<string, mixed> $msg      Current tool message.
+	 * @return string Non-empty tool call ID.
+	 */
+	private static function resolve_tool_call_id( array $messages, int $index, array $msg ): string {
+		$call_id = trim( (string) ( $msg['tool_call_id'] ?? '' ) );
+		if ( '' !== $call_id ) {
+			return $call_id;
+		}
+		$fn_name = trim( (string) ( $msg['name'] ?? '' ) );
+		for ( $j = $index - 1; $j >= 0; $j-- ) {
+			$prev = is_array( $messages[ $j ] ?? null ) ? $messages[ $j ] : array();
+			$role = (string) ( $prev['role'] ?? '' );
+			if ( ( 'assistant' === $role || 'model' === $role ) && ! empty( $prev['tool_calls'] ) && is_array( $prev['tool_calls'] ) ) {
+				foreach ( $prev['tool_calls'] as $tc ) {
+					if ( ! is_array( $tc ) ) {
+						continue;
+					}
+					$tc_id   = trim( (string) ( $tc['id'] ?? '' ) );
+					$tc_name = trim( (string) ( $tc['function']['name'] ?? $tc['name'] ?? '' ) );
+					if ( '' !== $tc_id && ( '' === $fn_name || $tc_name === $fn_name ) ) {
+						return $tc_id;
+					}
+				}
+				break;
+			}
+		}
+		return '' !== $fn_name ? $fn_name : 'call_' . wp_generate_password( 6, false );
+	}
+
+	/**
 	 * HTTP call to an OpenAI-compatible API (OpenAI, OpenRouter, Ollama, custom).
 	 *
 	 * @param string       $api_key
@@ -2058,7 +2440,7 @@ return $result;
 	 * @param array<mixed> $tools
 	 * @param string       $endpoint
 	 * @param string       $provider      Resolved provider slug for capability & filter dispatch.
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null}
+	 * @return array{content:string,thought?:string,tool_calls:array<mixed>,usage?:array<string,mixed>,finish_reason:string,error:string|null,http_status?:int}
 	 */
 	private static function http_openai( string $api_key, string $model, array $messages, string $system_prompt, array $tools, string $endpoint, string $provider = self::PROVIDER_OPENAI ): array {
 		// Auto-migrate retired models (August–October 2026 EOL).
@@ -2081,17 +2463,27 @@ return $result;
 		}
 
 		$is_responses_api = str_contains( $endpoint, '/v1/responses' );
+		$indexed_messages = array_values( $messages );
 
 		if ( $is_responses_api ) {
 			// Modern 2026 'Responses' payload with structured conversation & tool items.
+			// GPT-6.2 appends top-level `instructions` AFTER `input`, bypassing prefix caching;
+			// supply reusable system instructions as a leading `developer` message instead.
 			$input_items = array();
-			foreach ( $messages as $msg ) {
+			if ( '' !== trim( $system_prompt ) ) {
+				$input_items[] = array(
+					'role'    => 'developer',
+					'content' => $system_prompt,
+				);
+			}
+			foreach ( $indexed_messages as $idx => $raw_msg ) {
+				$msg  = is_array( $raw_msg ) ? $raw_msg : array();
 				$role = (string) ( $msg['role'] ?? 'user' );
 				if ( 'tool' === $role ) {
-					$call_id       = (string) ( $msg['tool_call_id'] ?? $msg['name'] ?? '' );
+					$call_id       = self::resolve_tool_call_id( $indexed_messages, $idx, $msg );
 					$input_items[] = array(
 						'type'    => 'function_call_output',
-						'call_id' => '' !== $call_id ? $call_id : 'call_' . wp_generate_password( 6, false ),
+						'call_id' => $call_id,
 						'output'  => (string) ( $msg['content'] ?? '{}' ),
 					);
 					continue;
@@ -2124,10 +2516,9 @@ return $result;
 
 			// store:false — never persist guest conversations (PII) on OpenAI servers (GDPR).
 			$body = array(
-				'model'        => $model,
-				'instructions' => $system_prompt,
-				'input'        => $input_items,
-				'store'        => false,
+				'model' => $model,
+				'input' => $input_items,
+				'store' => false,
 			);
 
 			if ( array() !== $tools ) {
@@ -2160,28 +2551,91 @@ return $result;
 				}
 			}
 		} else {
+			$chat_messages = array(
+				array(
+					'role'    => 'system',
+					'content' => $system_prompt,
+				),
+			);
+			foreach ( $indexed_messages as $idx => $raw_msg ) {
+				$bm   = is_array( $raw_msg ) ? $raw_msg : array();
+				$role = (string) ( $bm['role'] ?? 'user' );
+				if ( 'tool' === $role ) {
+					$chat_messages[] = array(
+						'role'         => 'tool',
+						'tool_call_id' => self::resolve_tool_call_id( $indexed_messages, $idx, $bm ),
+						'name'         => (string) ( $bm['name'] ?? 'tool' ),
+						'content'      => (string) ( $bm['content'] ?? '{}' ),
+					);
+					continue;
+				}
+				if ( 'assistant' === $role ) {
+					$clean_assistant = array(
+						'role'    => 'assistant',
+						'content' => isset( $bm['content'] ) ? (string) $bm['content'] : '',
+					);
+					if ( '' !== (string) ( $bm['thought'] ?? '' ) ) {
+						$clean_assistant['reasoning_content'] = (string) $bm['thought'];
+					}
+					if ( ! empty( $bm['tool_calls'] ) && is_array( $bm['tool_calls'] ) ) {
+						$clean_tcs = array();
+						foreach ( $bm['tool_calls'] as $tc ) {
+							if ( ! is_array( $tc ) ) {
+								continue;
+							}
+							$tc_name = (string) ( $tc['function']['name'] ?? $tc['name'] ?? '' );
+							if ( '' === $tc_name ) {
+								continue;
+							}
+							$tc_args     = $tc['function']['arguments'] ?? $tc['arguments'] ?? '{}';
+							$clean_tcs[] = array(
+								'id'       => (string) ( $tc['id'] ?? 'call_' . wp_generate_password( 8, false ) ),
+								'type'     => 'function',
+								'function' => array(
+									'name'      => $tc_name,
+									'arguments' => is_string( $tc_args ) ? $tc_args : (string) ( wp_json_encode( $tc_args ) ?: '{}' ),
+								),
+							);
+						}
+						if ( array() !== $clean_tcs ) {
+							$clean_assistant['tool_calls'] = $clean_tcs;
+						}
+					}
+					$chat_messages[] = $clean_assistant;
+					continue;
+				}
+				$chat_messages[] = array(
+					'role'    => 'user',
+					'content' => (string) ( $bm['content'] ?? '' ),
+				);
+			}
+
 			$body = array(
 				'model'    => $model,
-				'messages' => array_merge(
-					array(
-						array(
-							'role'    => 'system',
-							'content' => $system_prompt,
-						),
-					),
-					$messages
-				),
+				'messages' => $chat_messages,
 			);
 
 			if ( array() !== $tools ) {
-				$body['tools'] = $tools;
-			}
-
-			// 2026 BP: Standardize reasoning content for multi-turn persistence.
-			foreach ( $body['messages'] as &$bm ) {
-				if ( 'assistant' === ( $bm['role'] ?? '' ) && '' !== (string) ( $bm['thought'] ?? '' ) ) {
-					$bm['reasoning_content'] = $bm['thought'];
+				$sanitized_chat_tools = $tools;
+				if ( \function_exists( 'wp_prepare_json_schema_for_client' ) ) {
+					$sanitized_chat_tools = array_map(
+						static function ( $t ) {
+							$fn = $t['function'] ?? $t;
+							if ( isset( $fn['parameters'] ) ) {
+								$prepared = \call_user_func( 'wp_prepare_json_schema_for_client', $fn['parameters'], 'draft-04' );
+								if ( is_array( $prepared ) ) {
+									$fn['parameters'] = $prepared;
+								}
+							}
+							return array(
+								'type'     => 'function',
+								'function' => $fn,
+							);
+						},
+						$sanitized_chat_tools
+					);
 				}
+				$body['tools'] = $sanitized_chat_tools;
 			}
 		}
 
@@ -2199,13 +2653,19 @@ $headers = array( 'Content-Type' => 'application/json' );
 		$args = array(
 			'timeout'        => 25, // 2026 BP: Generous 25s timeout for reasoning models.
 			'connecttimeout' => 10,
+			'redirection'    => 0,
 			'sslverify'      => true,
 			'headers'        => $headers,
 			'body'           => (string) ( wp_json_encode( $body ) ?: '{}' ),
 		);
 
 		$args     = (array) apply_filters( 'mhbo_ai_http_args', $args, $endpoint, $provider );
-		$response = wp_safe_remote_post( $endpoint, $args );
+		if ( self::PROVIDER_CUSTOM === $provider ) {
+			$args['method'] = 'POST';
+			$response       = Security::safe_remote_request( $endpoint, $args );
+		} else {
+			$response = wp_safe_remote_post( $endpoint, $args );
+		}
 
 		if ( is_wp_error( $response ) ) {
 			self::log_error( 'OpenAI-compatible HTTP error: ' . $response->get_error_message() );
@@ -2227,7 +2687,7 @@ $headers = array( 'Content-Type' => 'application/json' );
 	 * @param array<int, array<string, mixed>> $messages
 	 * @param array<int, array<string, mixed>> $tools
 	 * @param string                           $provider
-	 * @return array{content:string,thought?:string,tool_calls:array<mixed>,usage?:array<string,mixed>,finish_reason:string,error:string|null}
+	 * @return array{content:string,thought?:string,tool_calls:array<mixed>,usage?:array<string,mixed>,finish_reason:string,error:string|null,http_status?:int}
 	 */
 	private static function parse_openai_response( $response, string $endpoint, string $api_key, string $model, array $messages, string $system_prompt, array $tools, string $provider = self::PROVIDER_OPENAI ): array {
 		if ( is_wp_error( $response ) ) {
@@ -2252,6 +2712,7 @@ $headers = array( 'Content-Type' => 'application/json' );
 				'tool_calls'    => array(),
 				'finish_reason' => 'error',
 				'error'         => $err,
+				'http_status'   => $http_code,
 			);
 		}
 
@@ -2270,6 +2731,7 @@ $headers = array( 'Content-Type' => 'application/json' );
 				'tool_calls'    => array(),
 				'finish_reason' => 'error',
 				'error'         => $err,
+				'http_status'   => $http_code,
 			);
 		}
 
@@ -2352,7 +2814,7 @@ $headers = array( 'Content-Type' => 'application/json' );
 	 * @param array<mixed> $messages
 	 * @param string       $system_prompt
 	 * @param array<mixed> $tools
-	 * @return array{content:string,tool_calls:array<mixed>,finish_reason:string,error:string|null}
+	 * @return array{content:string,thought?:string,thought_signature?:string,tool_calls:array<mixed>,finish_reason:string,error:string|null,http_status?:int}
 	 */
 	private static function http_anthropic( string $api_key, string $model, array $messages, string $system_prompt, array $tools ): array {
 		$model = $model ?: 'claude-sonnet-5-5';
@@ -2370,13 +2832,15 @@ $headers = array( 'Content-Type' => 'application/json' );
 		}
 
 		$anthropic_messages = array();
-		foreach ( $messages as $m ) {
+		$indexed_messages   = array_values( $messages );
+		foreach ( $indexed_messages as $idx => $raw_m ) {
+			$m    = is_array( $raw_m ) ? $raw_m : array();
 			$role = (string) ( $m['role'] ?? 'user' );
 
 			if ( 'tool' === $role ) {
 				$tool_result_block = array(
 					'type'        => 'tool_result',
-					'tool_use_id' => (string) ( $m['tool_call_id'] ?? $m['name'] ?? '' ),
+					'tool_use_id' => self::resolve_tool_call_id( $indexed_messages, $idx, $m ),
 					'content'     => (string) ( $m['content'] ?? '{}' ),
 				);
 				$last_idx          = count( $anthropic_messages ) - 1;
@@ -2393,11 +2857,12 @@ $headers = array( 'Content-Type' => 'application/json' );
 
 			if ( 'assistant' === $role ) {
 				$blocks = array();
-				if ( '' !== (string) ( $m['thought'] ?? '' ) ) {
+				// Anthropic requires a non-empty cryptographic signature on any historical thinking block.
+				if ( '' !== trim( (string) ( $m['thought'] ?? '' ) ) && '' !== trim( (string) ( $m['thought_signature'] ?? '' ) ) ) {
 					$blocks[] = array(
 						'type'      => 'thinking',
 						'thinking'  => (string) $m['thought'],
-						'signature' => (string) ( $m['thought_signature'] ?? '' ),
+						'signature' => (string) $m['thought_signature'],
 					);
 				}
 				if ( null !== ( $m['content'] ?? null ) && '' !== (string) $m['content'] ) {
@@ -2444,6 +2909,11 @@ $headers = array( 'Content-Type' => 'application/json' );
 			}
 		}
 
+		// Anthropic Messages API requires the first message to use the 'user' role.
+		while ( array() !== $anthropic_messages && 'user' !== $anthropic_messages[0]['role'] ) {
+			array_shift( $anthropic_messages );
+		}
+
 		$body = array(
 			'model'      => $model,
 			'max_tokens' => 4096, // 2026 BP: increased for reasoning models
@@ -2475,6 +2945,11 @@ if ( array() !== $tools ) {
 				},
 				$tools 
 			);
+			// Mark the final tool with ephemeral cache_control so Anthropic caches the entire system prompt + tool catalog prefix (90% read discount).
+			$last_tool_idx = count( $body['tools'] ) - 1;
+			if ( $last_tool_idx >= 0 ) {
+				$body['tools'][ $last_tool_idx ]['cache_control'] = array( 'type' => 'ephemeral' );
+			}
 		}
 
 		// phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- 2026 BP: Direct Anthropic API endpoint for adaptive reasoning and tool execution fallback when WP 7.0 wp_ai_client_prompt() is not present.
@@ -2482,6 +2957,7 @@ if ( array() !== $tools ) {
 		$anthropic_args     = array(
 			'timeout'        => 25, // 2026 BP: Generous 25s timeout for reasoning models.
 			'connecttimeout' => 10,
+			'redirection'    => 0,
 			'sslverify'      => true,
 			'headers'        => array(
 				'x-api-key'         => $api_key,
@@ -2506,6 +2982,29 @@ if ( array() !== $tools ) {
 		$http_code = (int) wp_remote_retrieve_response_code( $response );
 		$data      = json_decode( wp_remote_retrieve_body( $response ), true );
 
+		// Cross-provider failover self-healing: if a session switches from Gemini 4 to Claude 5.5,
+		// historical Gemini thought signatures or unsupported adaptive thinking flags are stripped and retried once.
+		if ( $http_code >= 400 && is_array( $data ) && isset( $data['error'] ) ) {
+			$err_msg = strtolower( (string) ( $data['error']['message'] ?? '' ) );
+			if ( str_contains( $err_msg, 'signature' ) || str_contains( $err_msg, 'thinking' ) || str_contains( $err_msg, 'output_config' ) ) {
+				self::log_error( 'Anthropic rejected thinking block or signature on cross-model turn — stripping non-Anthropic thoughts and retrying.' );
+				unset( $body['thinking'], $body['output_config'] );
+				foreach ( $body['messages'] as &$am ) {
+					if ( 'assistant' === $am['role'] && is_array( $am['content'] ) ) {
+						$filtered      = array_values( array_filter( $am['content'], static fn( $b ) => 'thinking' !== $b['type'] ) );
+						$am['content'] = array() !== $filtered ? $filtered : '...';
+					}
+				}
+				unset( $am );
+				$anthropic_args['body'] = (string) ( wp_json_encode( $body ) ?: '{}' );
+				$response               = wp_safe_remote_post( $anthropic_endpoint, $anthropic_args );
+				if ( ! is_wp_error( $response ) ) {
+					$http_code = (int) wp_remote_retrieve_response_code( $response );
+					$data      = json_decode( wp_remote_retrieve_body( $response ), true );
+				}
+			}
+		}
+
 		if ( ! is_array( $data ) ) {
 			$err = "Anthropic returned non-JSON response (HTTP {$http_code})";
 			self::log_error( $err );
@@ -2514,6 +3013,7 @@ if ( array() !== $tools ) {
 				'tool_calls'    => array(),
 				'finish_reason' => 'error',
 				'error'         => $err,
+				'http_status'   => $http_code,
 			);
 		}
 
@@ -2525,6 +3025,7 @@ if ( array() !== $tools ) {
 				'tool_calls'    => array(),
 				'finish_reason' => 'error',
 				'error'         => $err,
+				'http_status'   => $http_code,
 			);
 		}
 

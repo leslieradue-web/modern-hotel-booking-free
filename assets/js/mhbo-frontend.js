@@ -171,6 +171,28 @@
 			return;
 		}
 
+		function getHotelTodayDate() {
+			const todayStr =
+				typeof mhbo_vars !== 'undefined' && mhbo_vars.hotel_today
+					? mhbo_vars.hotel_today
+					: '';
+			if ( /^\d{4}-\d{2}-\d{2}$/.test( todayStr ) ) {
+				const parts = todayStr.split( '-' ).map( Number );
+				return new Date( parts[ 0 ], parts[ 1 ] - 1, parts[ 2 ] );
+			}
+			const local = new Date();
+			local.setHours( 0, 0, 0, 0 );
+			return local;
+		}
+
+		function addHotelDays( baseDate, days ) {
+			return new Date(
+				baseDate.getFullYear(),
+				baseDate.getMonth(),
+				baseDate.getDate() + days
+			);
+		}
+
 		let pendingCheckIn = null; // Track first date click to detect backwards selection
 		const maxDays =
 			typeof mhbo_vars !== 'undefined' && mhbo_vars.max_advance_days
@@ -180,8 +202,8 @@
 		flatpickr( pickerInput, {
 			mode: 'range',
 			dateFormat: 'Y-m-d',
-			minDate: 'today',
-			maxDate: new Date().fp_incr( maxDays ),
+			minDate: getHotelTodayDate(),
+			maxDate: addHotelDays( getHotelTodayDate(), maxDays ),
 			disable: disabledDates,
 			disableMobile: true,
 			onChange( selectedDates, dateStr, instance ) {
@@ -255,7 +277,7 @@
 					} else {
 						instance.set(
 							'maxDate',
-							new Date().fp_incr( maxDays )
+							addHotelDays( getHotelTodayDate(), maxDays )
 						);
 					}
 					instance.set( 'disable', newDisabled );

@@ -3,6 +3,8 @@
 namespace MHBO\Database\Queries;
 
 use MHBO\Core\Cache;
+use MHBO\Core\Money;
+use MHBO\Core\Pricing;
 
 /**
  * Booking_Query
@@ -115,16 +117,28 @@ class Booking_Query {
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
-					COUNT(DISTINCT CASE WHEN status NOT IN ('cancelled', 'refunded') AND check_in <= DATE(%s) AND check_out > DATE(%s) THEN room_id END) AS occupied_rooms,
-					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded') AND check_in = DATE(%s) THEN 1 ELSE 0 END), 0) AS arrivals,
-					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded') AND check_out = DATE(%s) THEN 1 ELSE 0 END), 0) AS departures,
-					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded') AND check_in <= DATE(%s) AND check_out > DATE(%s) THEN 1 ELSE 0 END), 0) AS in_house,
+					COUNT(DISTINCT CASE WHEN status NOT IN ('cancelled', 'refunded', 'deleted') AND check_in <= DATE(%s) AND check_out > DATE(%s) THEN room_id END) AS occupied_rooms,
+					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded', 'deleted') AND check_in = DATE(%s) THEN 1 ELSE 0 END), 0) AS arrivals,
+					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded', 'deleted') AND check_out = DATE(%s) THEN 1 ELSE 0 END), 0) AS departures,
+					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded', 'deleted') AND check_in <= DATE(%s) AND check_out > DATE(%s) THEN 1 ELSE 0 END), 0) AS in_house,
 					COUNT(*) AS total_bookings,
 					COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending_count,
 					COALESCE(SUM(CASE WHEN status IN ('confirmed', 'checked_in', 'checked_out', 'completed', 'paid') THEN 1 ELSE 0 END), 0) AS confirmed_count,
-					COALESCE(SUM(CASE WHEN status IN ('confirmed', 'checked_in', 'checked_out', 'completed', 'paid') THEN total_price ELSE 0 END), 0) AS confirmed_revenue,
-					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded') THEN total_price ELSE 0 END), 0) AS total_pipeline,
-					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded') THEN (CASE WHEN payment_received = 1 OR payment_status IN ('completed', 'paid') THEN total_price WHEN deposit_received = 1 OR payment_status = 'deposit_paid' THEN deposit_amount ELSE COALESCE(payment_amount, 0) END) ELSE 0 END), 0) AS total_collected
+					COALESCE(SUM(CASE WHEN status IN ('confirmed', 'checked_in', 'checked_out', 'completed', 'paid') THEN COALESCE(NULLIF(total_gross, 0), total_price) ELSE 0 END), 0) AS confirmed_revenue,
+					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded', 'deleted') THEN COALESCE(NULLIF(total_gross, 0), total_price) ELSE 0 END), 0) AS total_pipeline,
+					COALESCE(SUM(CASE
+						WHEN status NOT IN ('cancelled', 'refunded', 'deleted') THEN (
+							CASE
+								WHEN payment_status = 'refunded' THEN 0
+								WHEN payment_amount IS NOT NULL AND payment_amount > 0 THEN payment_amount
+								WHEN payment_received = 1 OR payment_status IN ('completed', 'paid') THEN COALESCE(NULLIF(total_gross, 0), total_price)
+								WHEN (deposit_received = 1 OR payment_status = 'deposit_paid') AND deposit_amount > 0 THEN deposit_amount
+								ELSE 0
+							END
+						)
+						ELSE 0
+					END), 0) AS total_collected,
+					COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'refunded', 'deleted') AND payment_ledger IS NOT NULL AND payment_ledger != '' THEN 1 ELSE 0 END), 0) AS ledger_count
 				 FROM %i
 				 WHERE NOT ( ( status = 'pending_payment' OR LOWER(COALESCE(customer_email, '')) = 'guest@pending.local' ) AND COALESCE(payment_status, 'pending') = 'pending' AND COALESCE(deposit_received, 0) = 0 AND COALESCE(payment_received, 0) = 0 AND COALESCE(payment_amount, 0) <= 0 AND COALESCE(payment_capture_id, '') = '' AND COALESCE(balance_collected_via, '') = '' )",
 				$today_ymd,
@@ -138,6 +152,58 @@ class Booking_Query {
 			ARRAY_A
 		);
 
+		$total_collected = is_array( $row ) ? (float) ( $row['total_collected'] ?? 0 ) : 0.0;
+		$ledger_count    = is_array( $row ) ? (int) ( $row['ledger_count'] ?? 0 ) : 0;
+
+		if ( $ledger_count > 0 && is_object( $wpdb ) && method_exists( $wpdb, 'get_results' ) && method_exists( $wpdb, 'prepare' ) && class_exists( Pricing::class ) && class_exists( Money::class ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Lightweight USALI ledger reconciliation for rows with payment_ledger entries.
+			$ledger_rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, status, payment_status, payment_type, balance_status, total_price, total_gross, payment_amount, deposit_amount, payment_received, deposit_received, remaining_balance, payment_ledger
+					 FROM %i
+					 WHERE status NOT IN ('cancelled', 'refunded', 'deleted')
+					   AND payment_ledger IS NOT NULL
+					   AND payment_ledger != ''
+					   AND NOT ( ( status = 'pending_payment' OR LOWER(COALESCE(customer_email, '')) = 'guest@pending.local' ) AND COALESCE(payment_status, 'pending') = 'pending' AND COALESCE(deposit_received, 0) = 0 AND COALESCE(payment_received, 0) = 0 AND COALESCE(payment_amount, 0) <= 0 AND COALESCE(payment_capture_id, '') = '' AND COALESCE(balance_collected_via, '') = '' )",
+					$wpdb->prefix . 'mhbo_bookings'
+				)
+			);
+			if ( is_array( $ledger_rows ) && array() !== $ledger_rows ) {
+				$currency    = Pricing::get_currency_code();
+				$collected_m = Money::fromDecimal( number_format( $total_collected, 4, '.', '' ), $currency );
+				foreach ( $ledger_rows as $lb ) {
+					if ( ! is_object( $lb ) ) {
+						continue;
+					}
+					$eff_gross = ( (float) ( $lb->total_gross ?? 0 ) > 0 ) ? (string) $lb->total_gross : (string) ( $lb->total_price ?? '0' );
+					if ( (float) ( $lb->total_price ?? 0 ) <= 0 && (float) $eff_gross > 0 ) {
+						$lb->total_price = $eff_gross;
+					}
+					$p_status = (string) ( $lb->payment_status ?? 'pending' );
+					$p_amt    = (float) ( $lb->payment_amount ?? 0 );
+					$d_amt    = (float) ( $lb->deposit_amount ?? 0 );
+					if ( 'refunded' === $p_status ) {
+						$sql_row_m = Money::fromCents( 0, $currency );
+					} elseif ( $p_amt > 0 ) {
+						$sql_row_m = Money::fromDecimal( (string) $lb->payment_amount, $currency );
+					} elseif ( ! empty( $lb->payment_received ) || in_array( $p_status, array( 'completed', 'paid' ), true ) ) {
+						$sql_row_m = Money::fromDecimal( $eff_gross, $currency );
+					} elseif ( ( ! empty( $lb->deposit_received ) || 'deposit_paid' === $p_status ) && $d_amt > 0 ) {
+						$sql_row_m = Money::fromDecimal( (string) $lb->deposit_amount, $currency );
+					} else {
+						$sql_row_m = Money::fromCents( 0, $currency );
+					}
+
+					$actual_m    = Pricing::get_booking_payment_amounts( $lb )['received'];
+					$collected_m = $collected_m->add( $actual_m->subtract( $sql_row_m ) );
+				}
+				if ( $collected_m->isNegative() ) {
+					$collected_m = Money::fromCents( 0, $currency );
+				}
+				$total_collected = (float) $collected_m->toDecimal();
+			}
+		}
+
 		$metrics = array(
 			'occupied_rooms'    => is_array( $row ) ? (int) ( $row['occupied_rooms'] ?? 0 ) : 0,
 			'arrivals'          => is_array( $row ) ? (int) ( $row['arrivals'] ?? 0 ) : 0,
@@ -148,7 +214,7 @@ class Booking_Query {
 			'confirmed_count'   => is_array( $row ) ? (int) ( $row['confirmed_count'] ?? 0 ) : 0,
 			'confirmed_revenue' => is_array( $row ) ? (float) ( $row['confirmed_revenue'] ?? 0 ) : 0.0,
 			'total_pipeline'    => is_array( $row ) ? (float) ( $row['total_pipeline'] ?? 0 ) : 0.0,
-			'total_collected'   => is_array( $row ) ? (float) ( $row['total_collected'] ?? 0 ) : 0.0,
+			'total_collected'   => $total_collected,
 		);
 
 		if ( class_exists( Cache::class ) ) {
@@ -184,7 +250,7 @@ class Booking_Query {
 						 FROM %i b
 						 LEFT JOIN %i r ON b.room_id = r.id
 						 LEFT JOIN %i rt ON r.type_id = rt.id
-						 WHERE b.status NOT IN ('cancelled', 'refunded')
+						 WHERE b.status NOT IN ('cancelled', 'refunded', 'deleted')
 						   AND b.check_in = DATE(%s)
 						   AND NOT ( ( b.status = 'pending_payment' OR LOWER(COALESCE(b.customer_email, '')) = 'guest@pending.local' ) AND COALESCE(b.payment_status, 'pending') = 'pending' AND COALESCE(b.deposit_received, 0) = 0 AND COALESCE(b.payment_received, 0) = 0 AND COALESCE(b.payment_amount, 0) <= 0 AND COALESCE(b.payment_capture_id, '') = '' AND COALESCE(b.balance_collected_via, '') = '' )
 						 ORDER BY b.id DESC
@@ -207,7 +273,7 @@ class Booking_Query {
 						 FROM %i b
 						 LEFT JOIN %i r ON b.room_id = r.id
 						 LEFT JOIN %i rt ON r.type_id = rt.id
-						 WHERE b.status NOT IN ('cancelled', 'refunded')
+						 WHERE b.status NOT IN ('cancelled', 'refunded', 'deleted')
 						   AND b.check_out = DATE(%s)
 						   AND NOT ( ( b.status = 'pending_payment' OR LOWER(COALESCE(b.customer_email, '')) = 'guest@pending.local' ) AND COALESCE(b.payment_status, 'pending') = 'pending' AND COALESCE(b.deposit_received, 0) = 0 AND COALESCE(b.payment_received, 0) = 0 AND COALESCE(b.payment_amount, 0) <= 0 AND COALESCE(b.payment_capture_id, '') = '' AND COALESCE(b.balance_collected_via, '') = '' )
 						 ORDER BY b.id DESC
@@ -230,7 +296,7 @@ class Booking_Query {
 						 FROM %i b
 						 LEFT JOIN %i r ON b.room_id = r.id
 						 LEFT JOIN %i rt ON r.type_id = rt.id
-						 WHERE b.status NOT IN ('cancelled', 'refunded')
+						 WHERE b.status NOT IN ('cancelled', 'refunded', 'deleted')
 						   AND b.check_in <= DATE(%s) AND b.check_out > DATE(%s)
 						   AND NOT ( ( b.status = 'pending_payment' OR LOWER(COALESCE(b.customer_email, '')) = 'guest@pending.local' ) AND COALESCE(b.payment_status, 'pending') = 'pending' AND COALESCE(b.deposit_received, 0) = 0 AND COALESCE(b.payment_received, 0) = 0 AND COALESCE(b.payment_amount, 0) <= 0 AND COALESCE(b.payment_capture_id, '') = '' AND COALESCE(b.balance_collected_via, '') = '' )
 						 ORDER BY b.check_out ASC

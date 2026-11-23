@@ -11,6 +11,31 @@
     padding: 0 15px;
 }
 
+.mhbo-calendar-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.mhbo-calendar-room-title {
+    margin: 0 0 8px 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--mhbo-primary, #0f172a);
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+}
+
+.mhbo-calendar-room-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--mhbo-primary, #0f172a);
+    background: rgba(15, 23, 42, 0.06);
+    letter-spacing: 0.02em;
+}
+
 .mhbo-calendar-guide {
     text-align: center;
     margin-bottom: 30px;
@@ -320,10 +345,18 @@
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled {
-    background: #f7fafc !important;
-    color: #cbd5e0 !important;
+    background: rgba(239, 68, 68, 0.22) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #991b1b !important;
     cursor: not-allowed !important;
-    opacity: 0.6 !important;
+    opacity: 1 !important;
+}
+
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled .mhbo-day-number {
+    color: #991b1b !important;
+    font-weight: 700 !important;
 }
 
 /* --- Booking Status Colors (Subtle Glass Effect) --- */
@@ -417,7 +450,7 @@
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-checkin-confirmed.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkin-confirmed.mhbo-half-booked-checkin {
-    background: linear-gradient(135deg, #ffffff 50%, rgba(239, 68, 68, 0.32) 50%) !important;
+    background: linear-gradient(135deg, #ffffff 50%, rgba(239, 68, 68, 0.22) 50%) !important;
     border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
@@ -426,7 +459,7 @@
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-checkout-confirmed.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-confirmed.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkout-confirmed.mhbo-half-booked-checkout {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.32) 50%, #ffffff 50%) !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.22) 50%, #ffffff 50%) !important;
     border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
@@ -439,7 +472,7 @@
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending_payment.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing.mhbo-half-booked-checkin,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkin-pending.mhbo-half-booked-checkin {
-    background: linear-gradient(135deg, #ffffff 50%, rgba(249, 115, 22, 0.35) 50%) !important;
+    background: linear-gradient(135deg, #ffffff 50%, rgba(249, 115, 22, 0.22) 50%) !important;
     border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
@@ -452,7 +485,7 @@
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-pending_payment.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-booking-processing.mhbo-half-booked-checkout,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-checkout-pending.mhbo-half-booked-checkout {
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 50%, #ffffff 50%) !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.22) 50%, #ffffff 50%) !important;
     border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
@@ -467,14 +500,14 @@
 /* 1. Checkout Confirmed + Checkin Pending (Red morning, Orange afternoon) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-confirmed.mhbo-checkin-pending,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-confirmed.mhbo-checkin-pending {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.32) 50%, rgba(249, 115, 22, 0.35) 50%) !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.22) 50%, rgba(249, 115, 22, 0.22) 50%) !important;
     border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
 /* 2. Checkout Pending + Checkin Confirmed (Orange morning, Red afternoon) */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-pending.mhbo-checkin-confirmed,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-pending.mhbo-checkin-confirmed {
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 50%, rgba(239, 68, 68, 0.32) 50%) !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.22) 50%, rgba(239, 68, 68, 0.22) 50%) !important;
     border-color: rgba(249, 115, 22, 0.45) !important;
 }
 
@@ -505,29 +538,45 @@
     border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
-/* Overriding the text color for half-booked and turnover days to ensure readability */
+/* Overriding the text color for half-booked changeover days to ensure readability */
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkin .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-checkout .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both .mhbo-day-number,
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkin .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkout .mhbo-day-number,
-.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both .mhbo-day-number {
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-checkout .mhbo-day-number {
     color: #1e293b !important;
+    font-weight: 700 !important;
+}
+
+/* Same-day turnover (both check-out and check-in booked) text colors match standard booked red / pending orange */
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-confirmed .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-confirmed .mhbo-day-number {
+    color: #991b1b !important;
+    font-weight: 700 !important;
+}
+
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-checkout-pending:not(.mhbo-checkout-confirmed) .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-checkout-pending:not(.mhbo-checkout-confirmed) .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.mhbo-half-booked-both.mhbo-booking-pending:not(.mhbo-checkout-confirmed) .mhbo-day-number,
+.mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-half-booked-both.mhbo-booking-pending:not(.mhbo-checkout-confirmed) .mhbo-day-number {
+    color: #9a3412 !important;
     font-weight: 700 !important;
 }
 
 /* Unbookable dates (no price set) - Same red as booked */
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-unbookable {
-    background: rgba(229, 62, 62, 0.15) !important;
+    background: rgba(239, 68, 68, 0.22) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    border-color: rgba(229, 62, 62, 0.3) !important;
-    color: #742a2a !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #991b1b !important;
     opacity: 1 !important;
 }
 
 .mhbo-calendar-wrapper .flatpickr-day.flatpickr-disabled.mhbo-unbookable .mhbo-day-number {
-    color: #742a2a !important;
+    color: #991b1b !important;
+    font-weight: 700 !important;
 }
 
 /* --- Inner Day Content --- */
@@ -540,15 +589,6 @@
 }
 
 /* --- Stay Restriction Badges (PRO) --- */
-.mhbo-stay-badges {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    align-items: flex-end;
-}
 
 .mhbo-badge-min, .mhbo-badge-max {
     font-size: 0.65rem;
@@ -977,6 +1017,11 @@
     letter-spacing: 0.2px;
     border-left: 1px solid rgba(255, 255, 255, 0.3);
     padding-left: 10px;
+}
+
+.mhbo-calendar-tooltip.mhbo-tooltip-solo .mhbo-tooltip-constraint {
+    border-left: none;
+    padding-left: 0;
 }
 
 .mhbo-tooltip-nights {

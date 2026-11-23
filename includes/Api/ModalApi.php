@@ -2,8 +2,10 @@
 
 namespace MHBO\Api;
 
+use MHBO\Core\HotelTime;
 use MHBO\Core\Money;
 use MHBO\Core\Pricing;
+use MHBO\Core\Security;
 use MHBO\Frontend\Shortcode;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -56,6 +58,15 @@ class ModalApi {
 						'default'           => 0,
 						'minimum'           => 0,
 						'sanitize_callback' => 'absint',
+					),
+					'child_ages'     => array(
+						'required'          => false,
+						'type'              => 'array',
+						'default'           => array(),
+						'items'             => array(
+							'type'              => 'integer',
+							'sanitize_callback' => 'absint',
+						),
 					),
 					'total_price'    => array(
 						'required'          => false,
@@ -123,21 +134,25 @@ class ModalApi {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_booking_form( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
-		// Validate date format
-		$check_in  = $request->get_param( 'check_in' );
-		$check_out = $request->get_param( 'check_out' );
-
-		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $check_in ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $check_out ) ) {
-			return new \WP_Error( 'mhbo_invalid_dates', __( 'Invalid date format. Use YYYY-MM-DD.', 'modern-hotel-booking' ), array( 'status' => 400 ) );
+		$ip       = Security::get_client_ip();
+		$rate_key = 'mhbo_modal_form_rl_' . md5( $ip );
+		$rl       = Security::consume_fixed_window_rate_limit( $rate_key, 60, MINUTE_IN_SECONDS );
+		if ( ! $rl['allowed'] ) {
+			return new \WP_Error( 'mhbo_rate_limit', __( 'Too many requests. Please wait a moment and try again.', 'modern-hotel-booking' ), array( 'status' => 429 ) );
 		}
 
-		if ( $check_out <= $check_in ) {
-			return new \WP_Error( 'mhbo_invalid_dates', __( 'Check-out must be after check-in.', 'modern-hotel-booking' ), array( 'status' => 400 ) );
+		// Validate date format, chronological ordering, max-stay nights, and advance window.
+		$check_in        = sanitize_text_field( (string) $request->get_param( 'check_in' ) );
+		$check_out       = sanitize_text_field( (string) $request->get_param( 'check_out' ) );
+		$date_validation = HotelTime::validate_date_range( $check_in, $check_out, true );
+		if ( is_wp_error( $date_validation ) ) {
+			return $date_validation;
 		}
 
 		$room_id        = (int) $request->get_param( 'room_id' );
 		$guests         = max( 1, (int) $request->get_param( 'guests' ) );
 		$children       = max( 0, (int) $request->get_param( 'children' ) );
+		$child_ages     = Pricing::sanitize_child_ages( $request->get_param( 'child_ages' ) );
 		$page_url       = (string) $request->get_param( 'page_url' );
 		$customer_name  = (string) $request->get_param( 'customer_name' );
 		$customer_email = (string) $request->get_param( 'customer_email' );
@@ -147,7 +162,7 @@ class ModalApi {
 		$currency    = Pricing::get_currency_code();
 		$total_money = Money::fromDecimal( (string) $raw_price, $currency );
 		if ( $room_id > 0 ) {
-			$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, array(), $children );
+			$calc = Pricing::calculate_booking_money( $room_id, $check_in, $check_out, $guests, array(), $children, $child_ages );
 			if ( is_array( $calc ) && isset( $calc['total'] ) && $calc['total'] instanceof Money ) {
 				$total_money = $calc['total'];
 			}
@@ -162,6 +177,7 @@ class ModalApi {
 				'check_out'      => $check_out,
 				'guests'         => $guests,
 				'children'       => $children,
+				'child_ages'     => $child_ages,
 				'total_price'    => $total_money,
 				'page_url'       => $page_url,
 				'customer_name'  => $customer_name,
@@ -191,6 +207,13 @@ class ModalApi {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_confirmation( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$ip       = Security::get_client_ip();
+		$rate_key = 'mhbo_modal_conf_rl_' . md5( $ip );
+		$rl       = Security::consume_fixed_window_rate_limit( $rate_key, 60, MINUTE_IN_SECONDS );
+		if ( ! $rl['allowed'] ) {
+			return new \WP_Error( 'mhbo_rate_limit', __( 'Too many requests. Please wait a moment and try again.', 'modern-hotel-booking' ), array( 'status' => 429 ) );
+		}
+
 		$token  = (string) $request->get_param( 'booking_token' );
 		$status = (string) $request->get_param( 'status' );
 

@@ -10,15 +10,16 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use WP_Error;
+use MHBO\Core\Cache;
 use MHBO\Core\Capabilities;
 use MHBO\Core\GuestManager;
 use MHBO\Core\GuestIdentityResolver;
 use MHBO\Core\GuestStatsService;
 use MHBO\Core\GuestMigration;
-use MHBO\Core\Cache;
-use MHBO\Core\Money;
 use MHBO\Core\Email;
 use MHBO\Core\HotelTime;
+use MHBO\Core\Money;
+use MHBO\Core\Security;
 
 /**
  * REST API Controller for Guest CRM Administration.
@@ -172,6 +173,40 @@ register_rest_route(
 }
 
 	/**
+	 * Check if current user has Pro tier + guest CRM permissions.
+	 *
+	 * @param WP_REST_Request|null $request
+	 * @return bool|WP_Error
+	 */
+	public function check_pro_guest_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		if ( ! class_exists( '\MHBO\Core\Tier' ) || ! \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) ) {
+			return new WP_Error(
+				'rest_pro_required',
+				__( 'An active Pro license is required for advanced Guest CRM actions.', 'modern-hotel-booking' ),
+				array( 'status' => 403 )
+			);
+		}
+		return $this->check_guest_permission( $request );
+	}
+
+	/**
+	 * Check if current user has Pro tier + pricing permissions (e.g. bulk coupon).
+	 *
+	 * @param WP_REST_Request|null $request
+	 * @return bool|WP_Error
+	 */
+	public function check_pro_pricing_permission( ?WP_REST_Request $request = null ): bool|WP_Error {
+		if ( ! class_exists( '\MHBO\Core\Tier' ) || ! \MHBO\Core\Tier::is_effective_at_least( \MHBO\Core\Tier::TIER_PRO ) ) {
+			return new WP_Error(
+				'rest_pro_required',
+				__( 'An active Pro license is required for bulk VIP coupons.', 'modern-hotel-booking' ),
+				array( 'status' => 403 )
+			);
+		}
+		return $this->check_pricing_permission( $request );
+	}
+
+	/**
 	 * Check if current user has permission to manage guest CRM.
 	 *
 	 * @param WP_REST_Request|null $request
@@ -227,9 +262,9 @@ register_rest_route(
 		$page         = max( 1, (int) $request->get_param( 'page' ) );
 		$req_per_page = $request->get_param( 'per_page' );
 		if ( 'all' === strtolower( (string) $req_per_page ) || -1 === (int) $req_per_page ) {
-			$per_page = 999999;
+			$per_page = 5000;
 		} else {
-			$per_page = min( 999999, max( 1, (int) ( $req_per_page ?: 25 ) ) );
+			$per_page = min( 5000, max( 1, (int) ( $req_per_page ?: 25 ) ) );
 		}
 		$offset = ( $page - 1 ) * $per_page;
 
@@ -283,48 +318,32 @@ register_rest_route(
 
 		$where_sql = implode( ' AND ', $where_clauses );
 
+		$guests_table = $wpdb->prefix . 'mhbo_guests';
+		$count_params = array_merge( array( $guests_table ), $query_params );
+
 		// Count Query
-		$count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}mhbo_guests WHERE {$where_sql}";
-		if ( array() !== $query_params ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, $query_params ) );
-		} else {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$total = (int) $wpdb->get_var( $count_sql );
-		}
+		$count_sql = "SELECT COUNT(*) FROM %i WHERE {$where_sql}";
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$total = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$count_params ) );
 
 		$order_clause = sanitize_sql_orderby( "{$orderby} {$order}" ) ?: 'id DESC';
 
-		// Items Query
-		if ( $per_page >= 999999 ) {
-			$items_sql    = "SELECT id, first_name, last_name, email, phone, vip_status, admin_rating, internal_notes, caution_flag, total_stays, total_spend, created_at, updated_at
-                          FROM {$wpdb->prefix}mhbo_guests
-                          WHERE {$where_sql}
-                          ORDER BY {$order_clause}";
-			$items_params = $query_params;
-		} else {
-			$items_sql    = "SELECT id, first_name, last_name, email, phone, vip_status, admin_rating, internal_notes, caution_flag, total_stays, total_spend, created_at, updated_at
-                          FROM {$wpdb->prefix}mhbo_guests
-                          WHERE {$where_sql}
-                          ORDER BY {$order_clause}
-                          LIMIT %d, %d";
-			$items_params = array_merge( $query_params, array( $offset, $per_page ) );
-		}
-
-		if ( array() !== $items_params ) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$items = $wpdb->get_results( $wpdb->prepare( $items_sql, $items_params ) );
-		} else {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-			$items = $wpdb->get_results( $items_sql );
-		}
+		// Items Query (strictly bounded LIMIT %d, %d).
+		$items_sql    = "SELECT id, first_name, last_name, email, phone, vip_status, admin_rating, internal_notes, caution_flag, total_stays, total_spend, created_at, updated_at
+                         FROM %i
+                         WHERE {$where_sql}
+                         ORDER BY {$order_clause}
+                         LIMIT %d, %d";
+		$items_params = array_merge( array( $guests_table ), $query_params, array( $offset, $per_page ) );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$items = $wpdb->get_results( $wpdb->prepare( $items_sql, ...$items_params ) );
 
 		if ( ! empty( $items ) ) {
 			foreach ( $items as &$it ) {
 				$it->id           = (int) $it->id;
 				$it->caution_flag = (int) $it->caution_flag;
 				$it->total_stays  = (int) $it->total_stays;
-				$it->total_spend  = (float) $it->total_spend;
+				$it->total_spend  = (float) Money::fromDecimal( (string) ( $it->total_spend ?? '0' ) )->toDecimal();
 				if ( null !== $it->admin_rating ) {
 					$it->admin_rating = (int) $it->admin_rating;
 				}
@@ -367,7 +386,7 @@ register_rest_route(
 		$guest->id           = (int) $guest->id;
 		$guest->caution_flag = (int) ( $guest->caution_flag ?? 0 );
 		$guest->total_stays  = (int) ( $guest->total_stays ?? 0 );
-		$guest->total_spend  = (float) ( $guest->total_spend ?? 0 );
+		$guest->total_spend  = (float) Money::fromDecimal( (string) ( $guest->total_spend ?? '0' ) )->toDecimal();
 		if ( null !== $guest->admin_rating ) {
 			$guest->admin_rating = (int) $guest->admin_rating;
 		}
@@ -596,10 +615,10 @@ return $this->success( $guest );
 						$sanitized_last,
 						$sanitized_email,
 						$sanitized_phone,
-						$g['vip_status'] ?? 'none',
+						Security::sanitize_csv_cell( (string) ( $g['vip_status'] ?? 'none' ) ),
 						(int) ( $g['admin_rating'] ?? 0 ),
 						(int) ( $g['total_stays'] ?? 0 ),
-						number_format( (float) ( $g['total_spend'] ?? 0 ), 2, '.', '' ),
+						Money::fromDecimal( (string) ( $g['total_spend'] ?? '0' ) )->toDecimal( 2 ),
 						! empty( $g['created_at'] ) ? HotelTime::format_datetime( $g['created_at'] ) : '',
 					),
 					',',
@@ -621,11 +640,7 @@ return $this->success( $guest );
 	 * @return string
 	 */
 	private function sanitize_csv_cell( string $value ): string {
-		$value = trim( $value );
-		if ( '' !== $value && in_array( $value[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
-			return "'" . $value;
-		}
-		return $value;
+		return Security::sanitize_csv_cell( $value );
 	}
 
 }

@@ -13,6 +13,7 @@
 	const el = element.createElement;
 	const registerBlockType = blocks.registerBlockType;
 	const InspectorControls = blockEditor.InspectorControls;
+	const useBlockProps = blockEditor.useBlockProps;
 	const PanelBody = wp.components.PanelBody;
 	const ToggleControl = wp.components.ToggleControl;
 	const SelectControl = wp.components.SelectControl;
@@ -29,7 +30,9 @@
 			layout: { type: 'string', default: 'card' },
 		},
 		edit( props ) {
-			return [
+			return el(
+				'div',
+				useBlockProps(),
 				el(
 					InspectorControls,
 					{ key: 'inspector' },
@@ -89,8 +92,8 @@
 					block: 'modern-hotel-booking/revolut-details',
 					attributes: props.attributes,
 					key: 'preview',
-				} ),
-			];
+				} )
+			);
 		},
 		save() {
 			return null;

@@ -106,17 +106,8 @@ class Block {
 			)
 		);
 
-		// 2026 Best Practice: Register Script Modules for viewScriptModule support
-		if ( function_exists( 'wp_register_script_module' ) ) {
-			// Register Vendor Modules (Shimmed if necessary)
-			wp_register_script_module(
-				'mhbo-flatpickr-module',
-				MHBO_PLUGIN_URL . 'assets/js/vendor/flatpickr.min.js',
-				array(),
-				'4.6.13'
-			);
-
-		}
+		// 2026 Best Practice: Ensure styles are ready.
+		wp_enqueue_style( 'mhbo-style' );
 	}
 
 	/**
@@ -237,12 +228,35 @@ class Block {
 	}
 
 	/**
+	 * Wrap dynamic block output with block wrapper attributes when available.
+	 *
+	 * @param string $html Inner rendered block HTML.
+	 * @return string
+	 */
+	private static function wrap_block_html( string $html ): string {
+		if ( function_exists( 'get_block_wrapper_attributes' ) ) {
+			$wrapper_attributes = get_block_wrapper_attributes();
+			if ( '' !== $wrapper_attributes ) {
+				return '<div ' . $wrapper_attributes . '>' . $html . '</div>';
+			}
+		}
+		return $html;
+	}
+
+	/**
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_booking_block( $attributes ): string {
-		$raw_id  = $attributes['roomId'] ?? $attributes['room_id'] ?? $attributes['id'] ?? 0;
-		$room_id = self::scalar_int( $raw_id );
-		return do_shortcode( sprintf( '[modern_hotel_booking room_id="%d"]', $room_id ) );
+		$raw_id     = $attributes['roomId'] ?? $attributes['room_id'] ?? $attributes['id'] ?? 0;
+		$room_id    = self::scalar_int( $raw_id );
+		$extra_atts = '';
+		if ( array_key_exists( 'showTitle', $attributes ) && empty( $attributes['showTitle'] ) ) {
+			$extra_atts .= ' show_title="no"';
+		}
+		if ( array_key_exists( 'showBadge', $attributes ) && empty( $attributes['showBadge'] ) ) {
+			$extra_atts .= ' show_badge="no"';
+		}
+		return self::wrap_block_html( do_shortcode( sprintf( '[modern_hotel_booking room_id="%d"%s]', $room_id, $extra_atts ) ) );
 	}
 
 	/**
@@ -252,22 +266,31 @@ class Block {
 		$raw_id  = $attributes['roomId'] ?? $attributes['room_id'] ?? $attributes['id'] ?? 0;
 		$room_id = self::scalar_int( $raw_id );
 		if ( ! $room_id ) {
-			return '<div class="mhbo-block-error">' . esc_html( I18n::get_label( 'label_block_no_room' ) ) . '</div>';
+			return self::wrap_block_html( '<div class="mhbo-block-error">' . esc_html( I18n::get_label( 'label_block_no_room' ) ) . '</div>' );
 		}
-		return do_shortcode( sprintf( '[mhbo_room_calendar room_id="%d"]', $room_id ) );
+		$extra_atts = '';
+		if ( array_key_exists( 'showTitle', $attributes ) && empty( $attributes['showTitle'] ) ) {
+			$extra_atts .= ' show_title="no"';
+		}
+		if ( array_key_exists( 'showBadge', $attributes ) && empty( $attributes['showBadge'] ) ) {
+			$extra_atts .= ' show_badge="no"';
+		}
+		return self::wrap_block_html( do_shortcode( sprintf( '[mhbo_room_calendar room_id="%d"%s]', $room_id, $extra_atts ) ) );
 	}
 
 	/**
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_company_block( $attributes ): string {
-		return BusinessShortcodes::get_instance()->render_company_info(
-			array(
-				'show_logo'         => ! empty( $attributes['showLogo'] ?? true ) ? 'yes' : 'no',
-				'show_address'      => ! empty( $attributes['showAddress'] ?? true ) ? 'yes' : 'no',
-				'show_contact'      => ! empty( $attributes['showContact'] ?? true ) ? 'yes' : 'no',
-				'show_registration' => ! empty( $attributes['showRegistration'] ?? true ) ? 'yes' : 'no',
-				'layout'            => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
+		return self::wrap_block_html(
+			BusinessShortcodes::get_instance()->render_company_info(
+				array(
+					'show_logo'         => ! empty( $attributes['showLogo'] ?? true ) ? 'yes' : 'no',
+					'show_address'      => ! empty( $attributes['showAddress'] ?? true ) ? 'yes' : 'no',
+					'show_contact'      => ! empty( $attributes['showContact'] ?? true ) ? 'yes' : 'no',
+					'show_registration' => ! empty( $attributes['showRegistration'] ?? true ) ? 'yes' : 'no',
+					'layout'            => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
+				)
 			)
 		);
 	}
@@ -276,11 +299,13 @@ class Block {
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_whatsapp_block( $attributes ): string {
-		return BusinessShortcodes::get_instance()->render_whatsapp(
-			array(
-				'style'   => self::scalar_str( $attributes['style'] ?? 'button', 'button', 64 ),
-				'text'    => self::scalar_str( $attributes['text'] ?? '', '', 200 ),
-				'message' => self::scalar_str( $attributes['message'] ?? '', '', 500 ),
+		return self::wrap_block_html(
+			BusinessShortcodes::get_instance()->render_whatsapp(
+				array(
+					'style'   => self::scalar_str( $attributes['style'] ?? 'button', 'button', 64 ),
+					'text'    => self::scalar_str( $attributes['text'] ?? '', '', 200 ),
+					'message' => self::scalar_str( $attributes['message'] ?? '', '', 500 ),
+				)
 			)
 		);
 	}
@@ -289,10 +314,12 @@ class Block {
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_banking_block( $attributes ): string {
-		return BusinessShortcodes::get_instance()->render_banking(
-			array(
-				'show_instructions' => ! empty( $attributes['showInstructions'] ?? true ) ? 'yes' : 'no',
-				'layout'            => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
+		return self::wrap_block_html(
+			BusinessShortcodes::get_instance()->render_banking(
+				array(
+					'show_instructions' => ! empty( $attributes['showInstructions'] ?? true ) ? 'yes' : 'no',
+					'layout'            => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
+				)
 			)
 		);
 	}
@@ -301,11 +328,13 @@ class Block {
 	 * @param array<string, mixed> $attributes
 	 */
 	public function render_revolut_block( $attributes ): string {
-		return BusinessShortcodes::get_instance()->render_revolut(
-			array(
-				'show_qr'   => ! empty( $attributes['showQR'] ?? true ) ? 'yes' : 'no',
-				'show_link' => ! empty( $attributes['showLink'] ?? true ) ? 'yes' : 'no',
-				'layout'    => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
+		return self::wrap_block_html(
+			BusinessShortcodes::get_instance()->render_revolut(
+				array(
+					'show_qr'   => ! empty( $attributes['showQR'] ?? true ) ? 'yes' : 'no',
+					'show_link' => ! empty( $attributes['showLink'] ?? true ) ? 'yes' : 'no',
+					'layout'    => self::scalar_str( $attributes['layout'] ?? 'default', 'default', 64 ),
+				)
 			)
 		);
 	}
@@ -321,9 +350,11 @@ class Block {
 		} else {
 			$sections_str = self::scalar_str( $raw_sections, 'company,whatsapp,banking,revolut', 120 );
 		}
-		return BusinessShortcodes::get_instance()->render_business_card(
-			array(
-				'sections' => $sections_str,
+		return self::wrap_block_html(
+			BusinessShortcodes::get_instance()->render_business_card(
+				array(
+					'sections' => $sections_str,
+				)
 			)
 		);
 	}
@@ -338,6 +369,8 @@ class Block {
 		if ( class_exists( '\\MHBO\\AI\\Loader' ) && 1 === (int) get_option( 'mhbo_ai_enabled', 0 ) ) {
 			\MHBO\AI\Loader::enqueue_frontend( true );
 		}
-		return sprintf( '<div class="mhbo-chat-widget" data-variant="inline" data-position="%s" data-welcome-message="%s"></div>', $position, $welcome );
+		return self::wrap_block_html(
+			sprintf( '<div class="mhbo-chat-widget" data-variant="inline" data-position="%s" data-welcome-message="%s"></div>', $position, $welcome )
+		);
 	}
 }

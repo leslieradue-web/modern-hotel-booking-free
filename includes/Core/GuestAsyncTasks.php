@@ -24,6 +24,7 @@ class GuestAsyncTasks {
 		add_action( 'mhbo_booking_created', array( self::class, 'on_booking_updated' ), 10, 1 );
 		add_action( 'mhbo_booking_status_changed', array( self::class, 'on_booking_updated' ), 10, 1 );
 		add_action( 'mhbo_balance_collected', array( self::class, 'on_booking_updated' ), 10, 1 );
+		add_action( 'mhbo_payment_recorded', array( self::class, 'on_booking_updated' ), 10, 1 );
 		add_action( 'mhbo_booking_cancelled', array( self::class, 'on_booking_updated' ), 10, 1 );
 		add_action( 'mhbo_booking_confirmed', array( self::class, 'on_booking_updated' ), 10, 1 );
 	}
@@ -52,10 +53,11 @@ class GuestAsyncTasks {
 			return;
 		}
 
-		$guest_id = (int) ( $booking->guest_id ?? 0 );
+		$guest_id   = (int) ( $booking->guest_id ?? 0 );
+		$norm_email = strtolower( trim( (string) ( $booking->customer_email ?? '' ) ) );
 
-		// Self-healing: Resolve and link guest if missing but customer email is present
-		if ( $guest_id <= 0 && ! empty( $booking->customer_email ) && 'guest@pending.local' !== $booking->customer_email ) {
+		// Self-healing: Resolve and link guest if missing and customer email is non-synthetic.
+		if ( $guest_id <= 0 && '' !== $norm_email && 'guest@pending.local' !== $norm_email && ! str_ends_with( $norm_email, '@local.invalid' ) ) {
 			$guest_id = GuestIdentityResolver::resolve_and_link_guest(
 				array(
 					'customer_name'  => $booking->customer_name ?? '',

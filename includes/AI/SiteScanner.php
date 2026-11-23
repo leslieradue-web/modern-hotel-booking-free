@@ -18,9 +18,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use MHBO\Business\Info;
+use MHBO\Core\HotelTime;
 use MHBO\Core\Pricing;
 use MHBO\Core\I18n;
 use MHBO\Core\Tax;
+use MHBO\Core\Tier;
 use WP_Query;
 use WP_Post;
 
@@ -80,10 +82,7 @@ class SiteScanner {
 		// ── Rooms from DB ─────────────────────────────────────────────────────
 		$sections[] = self::build_rooms_section();
 
-		// ── Extras / add-ons ─────────────────────────────────────────────────
-		$sections[] = self::build_extras_section();
-
-		// ── Pricing rules (taxes, seasonal, min-stay) ─────────────────────────
+// ── Pricing rules (taxes, seasonal, min-stay) ─────────────────────────
 		$sections[] = self::build_pricing_section();
 
 		// ── Payment methods ───────────────────────────────────────────────────
@@ -215,7 +214,7 @@ class SiteScanner {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$room_types = $wpdb->get_results(
 				$wpdb->prepare(
-					'SELECT t.id, t.name, t.description, t.base_price, t.max_adults, t.max_children, t.amenities, t.image_url,
+					'SELECT t.id, t.name, t.description, t.base_price, t.max_adults, t.max_children, t.child_age_free_limit, t.child_rate, t.amenities, t.image_url,
                         COUNT(r.id) AS total_rooms,
                         GROUP_CONCAT(r.room_number) AS room_numbers
                  FROM %i t
@@ -255,6 +254,17 @@ class SiteScanner {
 				I18n::get_label( 'ai_kb_label_total_rooms' ) . ': ' . $type->total_rooms,
 			);
 
+			if ( (bool) (int) get_option( 'mhbo_children_enabled', 0 ) ) {
+				$free_age   = max( 0, (int) ( $type->child_age_free_limit ?? 0 ) );
+				$child_rate = (float) ( $type->child_rate ?? 0 );
+				$block[]    = sprintf(
+					'Children Policy: Ages 0–%d stay free (%s child surcharge after free age). If fewer adults book than Max Adults (%d), children fill empty adult slots at zero child surcharge.',
+					$free_age,
+					$child_rate > 0 ? $child_rate . ' ' . Pricing::get_currency_code() : '0',
+					(int) $type->max_adults
+				);
+			}
+
 			if ( $description ) {
 				$block[] = 'Description: ' . wp_strip_all_tags( (string) $description );
 			}
@@ -271,55 +281,6 @@ class SiteScanner {
 	}
 
 /**
-	 * Build the extras/add-ons section from Pro settings.
-	 *
-	 * Reads `mhbo_pro_extras` — the same option used by the booking form.
-	 * Returns empty string if extras are not configured or Pro is not active.
-	 *
-	 * @return string
-	 */
-	private static function build_extras_section(): string {
-		$extras    = (array) get_option( 'mhbo_pro_extras', array() );
-		$has_early = false;
-		$has_late  = false;
-
-if ( empty( $extras ) && ! $has_early && ! $has_late ) {
-			return '';
-		}
-
-		$currency = Pricing::get_currency_code();
-		$lines    = array( I18n::get_label( 'ai_kb_header_extras' ) );
-
-		foreach ( $extras as $extra ) {
-			if ( ! is_array( $extra ) || '' === (string) ( $extra['name'] ?? '' ) ) {
-				continue;
-			}
-
-			$name         = sanitize_text_field( (string) I18n::decode( (string) $extra['name'] ) );
-			$price        = (float) ( $extra['price'] ?? 0 );
-			$pricing_type = (string) ( $extra['pricing_type'] ?? $extra['type'] ?? 'fixed' );
-			$desc         = sanitize_text_field( (string) ( $extra['description'] ?? '' ) );
-
-			$type_label = match ( $pricing_type ) {
-				'per_night'           => 'per night',
-				'per_person'          => 'per person',
-				'per_adult'           => 'per adult',
-				'per_child'           => 'per child',
-				'per_person_per_night'=> 'per person per night',
-				default               => 'fixed price',
-			};
-
-			$line = "- {$name}: {$price} {$currency} ({$type_label})";
-			if ( $desc ) {
-				$line .= " — {$desc}";
-			}
-			$lines[] = $line;
-		}
-
-return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
-	}
-
-	/**
 	 * Build the pricing rules section: taxes, min/max stay, seasonal pricing note.
 	 *
 	 * @return string
@@ -328,30 +289,13 @@ return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 		$lines = array( I18n::get_label( 'ai_kb_header_pricing' ) );
 
 		// Tax configuration.
-		if ( Tax::is_enabled() ) {
-			$tax_mode        = (string) get_option( 'mhbo_tax_mode', 'disabled' );
-			$tax_label       = I18n::decode( (string) get_option( 'mhbo_tax_label', 'VAT' ) );
-			$rate_accomm     = (float) get_option( 'mhbo_tax_rate_accommodation', 0 );
-			$rate_extras_val = (float) get_option( 'mhbo_tax_rate_extras', 0 );
-			$display_mode    = $tax_mode === 'vat' ? 'inclusive (already included in quoted prices)' : 'exclusive (added on top of quoted prices)';
-
-			$lines[] = "Tax: {$tax_label} is {$display_mode}.";
-			if ( $rate_accomm > 0 ) {
-				$lines[] = "- Accommodation {$tax_label} rate: {$rate_accomm}%";
-			}
-			if ( $rate_extras_val > 0 ) {
-				$lines[] = "- Extras/Add-ons {$tax_label} rate: {$rate_extras_val}%";
-			}
-
-			$reg_number = (string) get_option( 'mhbo_tax_registration_number', '' );
-			if ( $reg_number ) {
-				$lines[] = "- Tax registration number: {$reg_number}";
-			}
-		} else {
+		$tax_line_added = false;
+		
+		if ( ! $tax_line_added ) {
 			$lines[] = 'Tax: Not applicable (no tax configured).';
 		}
 
-		// Min / max stay.
+// Min / max stay.
 		$min_stay = (int) get_option( 'mhbo_global_min_stay', 0 );
 		$max_stay = (int) get_option( 'mhbo_global_max_stay', 0 );
 		if ( $min_stay > 1 ) {
@@ -375,22 +319,7 @@ return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 			$lines[] = "Seasonal/Weekend Pricing: {$rule_count} active pricing rule(s) are configured. Prices quoted by the check_availability tool already reflect these rules — always use that tool for real-time accurate pricing.";
 		}
 
-		// Deposit (mirror what's in the system prompt, for completeness).
-		if ( get_option( 'mhbo_deposits_enabled', 0 ) ) {
-			$dep_type  = (string) get_option( 'mhbo_deposit_type', 'percentage' );
-			$dep_value = (float) get_option( 'mhbo_deposit_value', 20 );
-			$non_r     = (bool) get_option( 'mhbo_deposit_non_refundable', 0 );
-
-			$dep_label = match ( $dep_type ) {
-				'first_night' => 'first night\'s rate',
-				'fixed'       => (float) $dep_value . ' ' . (string) Pricing::get_currency_code() . ' fixed',
-				default       => (int) $dep_value . '% of total',
-			};
-			$refund_note = $non_r ? ' (non-refundable)' : ' (refundable on cancellation per policy)';
-			$lines[]     = "Deposit required at booking: {$dep_label}{$refund_note}.";
-		}
-
-		return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
+return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 	}
 
 	/**
@@ -490,6 +419,7 @@ return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 			array(
 				'post_type'              => array( 'page', 'post' ),
 				'post_status'            => 'publish',
+				'has_password'           => false,
 				'posts_per_page'         => self::MAX_POSTS,
 				'orderby'                => array(
 					'menu_order' => 'ASC',
@@ -509,6 +439,9 @@ return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 
 		foreach ( $query->posts as $post ) {
 			if ( ! ( $post instanceof WP_Post ) ) {
+				continue;
+			}
+			if ( '' !== (string) $post->post_password || post_password_required( $post ) ) {
 				continue;
 			}
 			$title     = (string) get_the_title( $post );

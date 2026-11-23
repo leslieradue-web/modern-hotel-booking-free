@@ -365,4 +365,48 @@ class Capabilities {
 		}
 		return \current_user_can( $ability );
 	}
+
+	/**
+	 * Determine whether the current user can override per-booking tax mode or variable tax rates.
+	 *
+	 * Restricted strictly to site/plugin Administrators (`manage_options` / `mhbo_manage_settings`).
+	 *
+	 * @return bool True if permitted, false otherwise.
+	 */
+	public static function can_override_booking_tax(): bool {
+		return self::current_user_can( self::MANAGE_SETTINGS );
+	}
+
+	/**
+	 * Determine whether the current user can override per-booking totals, manual discounts, or deposits.
+	 *
+	 * Permitted for Hotel Managers (`mhbo_manage_pricing`) and Administrators (`mhbo_manage_settings`).
+	 *
+	 * @return bool True if permitted, false otherwise.
+	 */
+	public static function can_override_booking_pricing(): bool {
+		return self::current_user_can( self::MANAGE_PRICING ) || self::current_user_can( self::MANAGE_SETTINGS );
+	}
+
+	/**
+	 * Determine whether the current user can collect desk payments or manage guest payment links.
+	 *
+	 * Strictly requires `mhbo_process_payments` or Administrator (`mhbo_manage_settings`).
+	 *
+	 * @return bool True if permitted, false otherwise.
+	 */
+	public static function can_process_payments(): bool {
+		return self::current_user_can( self::PROCESS_PAYMENTS ) || self::current_user_can( self::MANAGE_SETTINGS );
+	}
+
+	/**
+	 * Determine whether the current user can issue or record folio refunds.
+	 *
+	 * Restricted to Hotel Managers (`mhbo_manage_pricing`) and Administrators (`mhbo_manage_settings`).
+	 *
+	 * @return bool True if permitted, false otherwise.
+	 */
+	public static function can_issue_refunds(): bool {
+		return self::current_user_can( self::MANAGE_PRICING ) || self::current_user_can( self::MANAGE_SETTINGS );
+	}
 }

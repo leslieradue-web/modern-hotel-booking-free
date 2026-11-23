@@ -52,9 +52,7 @@ class PricingController {
 
 		// 1. ADD RULE
 		if ( isset( $_POST['submit_pricing'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_admin_referer() called immediately inside
-			if ( ! check_admin_referer( 'mhbo_add_pricing' ) ) {
-				wp_die( esc_html( I18n::get_label( 'msg_security_fail' ) ) );
-			}
+			check_admin_referer( 'mhbo_add_pricing' );
 
 			$rule_name            = isset( $_POST['rule_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rule_name'] ) ) : '';
 			$start_date           = isset( $_POST['start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['start_date'] ) ) : '';

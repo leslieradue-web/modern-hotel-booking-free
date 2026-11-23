@@ -2,8 +2,6 @@
 
 namespace MHBO\Integrations;
 
-use MHBO\Core\I18n;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
