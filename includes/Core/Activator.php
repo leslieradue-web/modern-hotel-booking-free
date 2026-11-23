@@ -423,14 +423,14 @@ self::ensure_table_columns_exist( $bookings_table, $bookings_columns );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE %i
+				'UPDATE %i
 				 SET total_gross = total_price,
 				     subtotal_net = CASE
 				         WHEN subtotal_net IS NULL OR subtotal_net = 0 THEN GREATEST(0, total_price - COALESCE(total_tax, 0))
 				         ELSE subtotal_net
 				     END
 				 WHERE total_price > 0
-				   AND (total_gross IS NULL OR total_gross = 0)",
+				   AND (total_gross IS NULL OR total_gross = 0)',
 				$bookings_table
 			)
 		);

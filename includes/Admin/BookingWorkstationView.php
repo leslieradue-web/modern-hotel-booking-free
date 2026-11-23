@@ -241,39 +241,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
 
-<tr>
-											<th scope="row"><?php echo esc_html( I18n::get_label( 'label_extras' ) ); ?></th>
-											<td>
-												<?php
-												$extras = get_option( 'mhbo_pro_extras', array() );
-												if ( count( $extras ) > 0 ) {
-													foreach ( $extras as $ex ) {
-														$lbl          = esc_html( (string) ( I18n::decode( $ex['name'] ?? '' ) ?? '' ) ) . ' (' . esc_html( I18n::format_currency( $ex['price'] ) ) . ')';
-														$pricing_type = $ex['pricing_type'] ?? 'fixed';
-														if ( isset( $ex['compulsory'] ) && $ex['compulsory'] ) {
-															echo '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:4px 8px;background:#f0f4ff;border:1px solid #c7d7fd;border-radius:4px;width:fit-content;">';
-															echo '<span style="font-size:12px;">🔒</span>';
-															echo '<span style="font-size:13px;">' . $lbl . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-															echo '<span style="font-size:11px;color:#5b72b8;font-weight:600;">' . esc_html__( '(Compulsory)', 'modern-hotel-booking' ) . '</span>';
-															echo '<input type="hidden" name="mhbo_extras[' . esc_attr( $ex['id'] ) . ']" value="1" class="mhbo-extra-input" data-extra-id="' . esc_attr( $ex['id'] ) . '" data-price="' . esc_attr( $ex['price'] ) . '" data-pricing-type="' . esc_attr( $pricing_type ) . '">';
-															echo '</div>';
-															continue;
-														}
-														if ( ( $ex['control_type'] ?? 'checkbox' ) === 'quantity' ) {
-															echo '<label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><input type="number" name="mhbo_extras[' . esc_attr( $ex['id'] ) . ']" value="0" min="0" style="width:60px;" class="mhbo-extra-input" data-extra-id="' . esc_attr( $ex['id'] ) . '" data-price="' . esc_attr( $ex['price'] ) . '" data-pricing-type="' . esc_attr( $pricing_type ) . '"> <span>' . $lbl . '</span></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-														} else {
-															echo '<label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><input type="checkbox" name="mhbo_extras[' . esc_attr( $ex['id'] ) . ']" value="1" class="mhbo-extra-input" data-extra-id="' . esc_attr( $ex['id'] ) . '" data-price="' . esc_attr( $ex['price'] ) . '" data-pricing-type="' . esc_attr( $pricing_type ) . '"> <span>' . $lbl . '</span></label>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-														}
-													}
-												} else {
-													echo '<span class="description">' . esc_html( I18n::get_label( 'label_no_extras_config' ) ) . '</span>';
-												}
-												?>
-											</td>
-										</tr>
-										<?php?>
-
-										<!-- Custom Fields -->
+<!-- Custom Fields -->
 										<?php
 										$custom_fields_defn = get_option( 'mhbo_custom_fields', array() );
 										if ( isset( $custom_fields_defn ) && count( $custom_fields_defn ) > 0 ) :

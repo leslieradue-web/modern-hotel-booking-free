@@ -989,13 +989,11 @@ $stats = array(
 							⚙️ <?php echo esc_html( I18n::get_label( 'status_title' ) ); ?>
 						</h3>
 						<div style="font-size: 12px; line-height: 2; color:#475569;">
-
 <div style="display: flex; justify-content: space-between;">
 								<span class="mhbo-free-edition-row"><?php echo esc_html( I18n::get_label( 'status_edition' ) ); ?></span>
 								<strong class="mhbo-free-edition-row" style="color: #2563eb;"><?php echo esc_html( I18n::get_label( 'status_free' ) ); ?></strong>
 							</div>
-							
-							<div style="display: flex; justify-content: space-between;">
+<div style="display: flex; justify-content: space-between;">
 								<span><?php echo esc_html( I18n::get_label( 'status_version' ) ); ?></span>
 								<strong>v<?php echo esc_html( MHBO_VERSION ); ?></strong>
 							</div>
