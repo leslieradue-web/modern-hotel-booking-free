@@ -38,7 +38,7 @@ class DashboardController {
 		$today_date = HotelTime::today();
 
 		$cache_key = 'mhbo_widget_ops_v270_' . $today_date;
-		$stats     = get_transient( $cache_key );
+		$stats     = Cache::is_enabled() ? get_transient( $cache_key ) : false;
 
 		if ( false === $stats || ! is_array( $stats ) ) {
 			// Total physical rooms in inventory
@@ -96,7 +96,9 @@ $stats = array(
 				'vacant'          => $vacant_count,
 			);
 
-			set_transient( $cache_key, $stats, 10 * MINUTE_IN_SECONDS );
+			if ( Cache::is_enabled() ) {
+				set_transient( $cache_key, $stats, 10 * MINUTE_IN_SECONDS );
+			}
 		}
 
 		$total_rooms     = (int) ( $stats['total_rooms'] ?? 0 );
@@ -223,7 +225,7 @@ $stats = array(
 
 // Kairos Protocol: Cached Dashboard Operations & Analytics
 		$cache_key = 'mhbo_dashboard_ops_v270_' . $today_date;
-		$stats     = get_transient( $cache_key );
+		$stats     = Cache::is_enabled() ? get_transient( $cache_key ) : false;
 
 		if ( false === $stats || ! is_array( $stats ) ) {
 			// Physical room counts
@@ -316,7 +318,9 @@ $stats = array(
 				'room_types_summary' => $room_types_summary,
 			);
 
-			set_transient( $cache_key, $stats, 10 * MINUTE_IN_SECONDS );
+			if ( Cache::is_enabled() ) {
+				set_transient( $cache_key, $stats, 10 * MINUTE_IN_SECONDS );
+			}
 		}
 
 		$total_rooms        = (int) ( $stats['total_rooms'] ?? 0 );
@@ -558,23 +562,23 @@ $stats = array(
 					<div class="mhbo-ops-board">
 						<div class="mhbo-ops-header">
 							<div class="mhbo-ops-nav-tabs" role="tablist">
-								<button type="button" class="mhbo-ops-tab-btn active" data-tab="arrivals">
+								<button type="button" class="mhbo-ops-tab-btn active" role="tab" aria-selected="true" data-tab="arrivals">
 									📥 <?php echo esc_html( I18n::get_label( 'dash_tab_arrivals' ) ); ?>
 									<span class="mhbo-ops-tab-badge"><?php echo esc_html( (string) count( $arrivals_list ) ); ?></span>
 								</button>
-								<button type="button" class="mhbo-ops-tab-btn" data-tab="departures">
+								<button type="button" class="mhbo-ops-tab-btn" role="tab" aria-selected="false" data-tab="departures">
 									📤 <?php echo esc_html( I18n::get_label( 'dash_tab_departures' ) ); ?>
 									<span class="mhbo-ops-tab-badge"><?php echo esc_html( (string) count( $departures_list ) ); ?></span>
 								</button>
-								<button type="button" class="mhbo-ops-tab-btn" data-tab="inhouse">
+								<button type="button" class="mhbo-ops-tab-btn" role="tab" aria-selected="false" data-tab="inhouse">
 									🛏️ <?php echo esc_html( I18n::get_label( 'dash_tab_inhouse' ) ); ?>
 									<span class="mhbo-ops-tab-badge"><?php echo esc_html( (string) count( $inhouse_list ) ); ?></span>
 								</button>
-								<button type="button" class="mhbo-ops-tab-btn" data-tab="pending">
+								<button type="button" class="mhbo-ops-tab-btn" role="tab" aria-selected="false" data-tab="pending">
 									⚠️ <?php echo esc_html( I18n::get_label( 'dash_tab_pending' ) ); ?>
 									<span class="mhbo-ops-tab-badge" style="<?php echo $pending_count > 0 ? 'background:#dc2626;color:#fff;' : ''; ?>"><?php echo esc_html( (string) $pending_count ); ?></span>
 								</button>
-								<button type="button" class="mhbo-ops-tab-btn" data-tab="recent">
+								<button type="button" class="mhbo-ops-tab-btn" role="tab" aria-selected="false" data-tab="recent">
 									🕒 <?php echo esc_html( I18n::get_label( 'dash_tab_recent' ) ); ?>
 									<span class="mhbo-ops-tab-badge"><?php echo esc_html( (string) count( $recent_list ) ); ?></span>
 								</button>
@@ -587,7 +591,7 @@ $stats = array(
 						</div>
 
 						<!-- TAB 1: Arrivals Today -->
-						<div id="mhbo-tab-arrivals" class="mhbo-ops-tab-pane active">
+						<div id="mhbo-tab-arrivals" class="mhbo-ops-tab-pane active" role="tabpanel">
 							<?php if ( empty( $arrivals_list ) ) : ?>
 								<p style="padding: 30px; text-align: center; color: #64748b; font-style: italic; margin: 0;">
 									<?php echo esc_html( I18n::get_label( 'dash_no_arrivals' ) ); ?>
@@ -654,7 +658,7 @@ $stats = array(
 						</div>
 
 						<!-- TAB 2: Departures Today -->
-						<div id="mhbo-tab-departures" class="mhbo-ops-tab-pane">
+						<div id="mhbo-tab-departures" class="mhbo-ops-tab-pane" role="tabpanel">
 							<?php if ( empty( $departures_list ) ) : ?>
 								<p style="padding: 30px; text-align: center; color: #64748b; font-style: italic; margin: 0;">
 									<?php echo esc_html( I18n::get_label( 'dash_no_departures' ) ); ?>
@@ -721,7 +725,7 @@ $stats = array(
 						</div>
 
 						<!-- TAB 3: In-House Guests -->
-						<div id="mhbo-tab-inhouse" class="mhbo-ops-tab-pane">
+						<div id="mhbo-tab-inhouse" class="mhbo-ops-tab-pane" role="tabpanel">
 							<?php if ( empty( $inhouse_list ) ) : ?>
 								<p style="padding: 30px; text-align: center; color: #64748b; font-style: italic; margin: 0;">
 									<?php echo esc_html( I18n::get_label( 'dash_no_inhouse' ) ); ?>
@@ -788,7 +792,7 @@ $stats = array(
 						</div>
 
 						<!-- TAB 4: Pending Approval -->
-						<div id="mhbo-tab-pending" class="mhbo-ops-tab-pane">
+						<div id="mhbo-tab-pending" class="mhbo-ops-tab-pane" role="tabpanel">
 							<?php if ( empty( $pending_list ) ) : ?>
 								<p style="padding: 30px; text-align: center; color: #64748b; font-style: italic; margin: 0;">
 									<?php echo esc_html( I18n::get_label( 'dash_no_pending' ) ); ?>
@@ -856,7 +860,7 @@ $stats = array(
 						</div>
 
 						<!-- TAB 5: Recent Activity -->
-						<div id="mhbo-tab-recent" class="mhbo-ops-tab-pane">
+						<div id="mhbo-tab-recent" class="mhbo-ops-tab-pane" role="tabpanel">
 							<?php if ( empty( $recent_list ) ) : ?>
 								<p style="padding: 30px; text-align: center; color: #64748b; font-style: italic; margin: 0;">
 									<?php echo esc_html( I18n::get_label( 'dash_no_bookings' ) ); ?>
@@ -977,7 +981,7 @@ $stats = array(
 							</div>
 							<div style="display:flex; justify-content:space-between;">
 								<span><?php esc_html_e( 'VIP Loyal Guests:', 'modern-hotel-booking' ); ?></span>
-								<strong style="color:#d97706;">⭐ <?php echo esc_html( (string) $vip_guests ); ?></strong>
+								<strong style="color:#b45309;">⭐ <?php echo esc_html( (string) $vip_guests ); ?></strong>
 							</div>
 						</div>
 					</div>
@@ -1028,8 +1032,8 @@ $stats = array(
 						}
 					}
 					?>
-					<div class="mhbo-card" style="border-left: 4px solid #10b981;">
-						<h3 style="color: #10b981; margin-top: 0; margin-bottom: 8px; font-size: 14px; font-weight:700;">
+					<div class="mhbo-card mhbo-card--success">
+						<h3 style="color: #047857; margin-top: 0; margin-bottom: 8px; font-size: 14px; font-weight:700;">
 							<?php
 							// translators: %s: current plugin version
 							echo esc_html( sprintf( I18n::get_label( 'label_version_updates' ), $latest_version ) );
@@ -1055,7 +1059,7 @@ $stats = array(
 						<div>
 							<a href="https://github.com/leslieradue-web/modern-hotel-booking-free" target="_blank"
 								rel="noopener noreferrer"
-								style="font-size: 12px; color: #10b981; text-decoration: none; font-weight: 700;">
+								style="font-size: 12px; color: #047857; text-decoration: none; font-weight: 700;">
 								<?php echo esc_html( I18n::get_label( 'label_view_changelog' ) ); ?> &rarr;
 							</a>
 						</div>
@@ -1152,10 +1156,14 @@ $stats = array(
 				btn.addEventListener('click', function() {
 					const tabId = btn.getAttribute('data-tab');
 
-					tabButtons.forEach(function(b) { b.classList.remove('active'); });
+					tabButtons.forEach(function(b) {
+						b.classList.remove('active');
+						b.setAttribute('aria-selected', 'false');
+					});
 					tabPanes.forEach(function(p) { p.classList.remove('active'); });
 
 					btn.classList.add('active');
+					btn.setAttribute('aria-selected', 'true');
 					const targetPane = document.getElementById('mhbo-tab-' + tabId);
 					if (targetPane) {
 						targetPane.classList.add('active');

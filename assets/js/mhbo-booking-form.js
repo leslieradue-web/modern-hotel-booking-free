@@ -117,9 +117,9 @@
 					el.style.borderColor = '';
 				}
 			);
-			form.querySelectorAll( '.mhbo-gdpr-error' ).forEach(
+			form.querySelectorAll( '.mhbo-gdpr-error, .mhbo-terms-error' ).forEach(
 				function ( el ) {
-					el.classList.remove( 'mhbo-gdpr-error' );
+					el.classList.remove( 'mhbo-gdpr-error', 'mhbo-terms-error' );
 				}
 			);
 			form.querySelectorAll( '.mhbo-field-error-msg' ).forEach(
@@ -130,6 +130,7 @@
 		}
 
 		let hasFieldErrors = false;
+		let hasTermsError = false;
 		let hasGdprError = false;
 		let firstInvalidEl = null;
 
@@ -138,6 +139,9 @@
 			v.msg_field_required || 'This field is required.';
 		const msgFillAllFields =
 			v.msg_fill_all_fields || 'Please fill in all required fields.';
+		const msgTermsRequired =
+			v.msg_terms_required ||
+			'Please accept the booking terms and cancellation policy to continue.';
 		const msgGdprRequired =
 			v.msg_gdpr_required ||
 			'Please accept the privacy policy to continue.';
@@ -197,7 +201,28 @@
 			}
 		} );
 
-		// 2. Validate GDPR consent checkbox (and any required checkboxes)
+		// 2. Validate Booking Terms & GDPR consent checkboxes
+		const termsConsent = form.querySelector(
+			'input[name="mhbo_terms_accepted"], #mhbo-terms-consent, .mhbo-terms-consent-input'
+		);
+		if ( termsConsent && ! termsConsent.checked ) {
+			hasTermsError = true;
+			if ( ! firstInvalidEl ) {
+				firstInvalidEl = termsConsent;
+			}
+			if ( ! isSilent ) {
+				termsConsent.setAttribute( 'aria-invalid', 'true' );
+				const termsGroup =
+					termsConsent.closest(
+						'.mhbo-terms-consent, .mhbo-form-group'
+					) || termsConsent.parentElement;
+				if ( termsGroup ) {
+					termsGroup.classList.add( 'mhbo-terms-error' );
+					appendFieldErrorMessage( termsGroup, msgTermsRequired );
+				}
+			}
+		}
+
 		const consent = form.querySelector(
 			'input[name="mhbo_consent"], #mhbo-consent, .mhbo-consent'
 		);
@@ -218,10 +243,12 @@
 			}
 		}
 
-		if ( hasFieldErrors || hasGdprError ) {
+		if ( hasFieldErrors || hasTermsError || hasGdprError ) {
 			if ( ! isSilent ) {
 				const bannerMsg = hasFieldErrors
 					? msgFillAllFields
+					: hasTermsError
+					? msgTermsRequired
 					: msgGdprRequired;
 				window.mhboShowBookingError( bannerMsg, form, {
 					scroll: ! firstInvalidEl,
@@ -230,7 +257,7 @@
 				if ( firstInvalidEl ) {
 					const scrollTarget =
 						firstInvalidEl.closest(
-							'.mhbo-gdpr-consent, .mhbo-form-group, .mhbo-child-age-group'
+							'.mhbo-terms-consent, .mhbo-gdpr-consent, .mhbo-form-group, .mhbo-child-age-group'
 						) || firstInvalidEl;
 					if ( typeof scrollTarget.scrollIntoView === 'function' ) {
 						scrollTarget.scrollIntoView( {
@@ -294,6 +321,9 @@
 			arrivalTotalEl.setAttribute( 'aria-atomic', 'true' );
 		}
 		const submitBtn = wrapper.querySelector( '.mhbo-submit-btn' );
+		const termsCheckbox = wrapper.querySelector(
+			'input[name="mhbo_terms_accepted"], .mhbo-terms-consent-input'
+		);
 		const consentCheckbox = wrapper.querySelector(
 			'input[name="mhbo_consent"], #mhbo-consent, .mhbo-consent'
 		);
@@ -1103,6 +1133,28 @@
 
 			if (
 				target.type === 'checkbox' &&
+				( target.name === 'mhbo_terms_accepted' ||
+					target.id === 'mhbo-terms-consent' ||
+					target.classList.contains( 'mhbo-terms-consent-input' ) )
+			) {
+				if ( target.checked ) {
+					target.removeAttribute( 'aria-invalid' );
+					const termsGroup =
+						target.closest(
+							'.mhbo-terms-consent, .mhbo-form-group'
+						) || target.parentElement;
+					if ( termsGroup ) {
+						termsGroup.classList.remove( 'mhbo-terms-error' );
+						const msg = termsGroup.querySelector(
+							'.mhbo-field-error-msg'
+						);
+						if ( msg ) {
+							msg.remove();
+						}
+					}
+				}
+			} else if (
+				target.type === 'checkbox' &&
 				( target.name === 'mhbo_consent' ||
 					target.id === 'mhbo-consent' ||
 					target.classList.contains( 'mhbo-consent' ) )
@@ -1150,8 +1202,9 @@
 			if (
 				errorBox &&
 				errorBox.style.display !== 'none' &&
-				form.querySelectorAll( '.mhbo-input-error, .mhbo-gdpr-error' )
-					.length === 0
+				form.querySelectorAll(
+					'.mhbo-input-error, .mhbo-gdpr-error, .mhbo-terms-error'
+				).length === 0
 			) {
 				errorBox.style.display = 'none';
 				errorBox.innerHTML = '';
@@ -1358,6 +1411,9 @@
 			scheduleRecalculate( 0 );
 		} );
 
+		if ( termsCheckbox ) {
+			termsCheckbox.addEventListener( 'change', updateSubmitState );
+		}
 		if ( consentCheckbox ) {
 			consentCheckbox.addEventListener( 'change', updateSubmitState );
 		}
@@ -1555,6 +1611,11 @@
 				}
 			} );
 
+			const termsEl = form.querySelector(
+				'input[name="mhbo_terms_accepted"]'
+			);
+			const termsAccepted = termsEl ? termsEl.checked : false;
+
 			const consentEl = form.querySelector(
 				'input[name="mhbo_consent"]'
 			);
@@ -1587,6 +1648,7 @@
 				update_id:
 					form.querySelector( 'input[name="mhbo_update_id"]' )
 						?.value || 0,
+				terms_accepted: termsAccepted,
 				consent,
 				booking_language: mhbo_vars.language || 'en',
 				page_url: window.location.href,

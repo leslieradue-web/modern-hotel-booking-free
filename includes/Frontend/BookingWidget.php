@@ -96,7 +96,7 @@ class BookingWidget extends \WP_Widget {
 	 * Render widget settings form.
 	 *
 	 * @param array<string, mixed> $instance Settings for the current instance.
-	 * @return void
+	 * @return string|null
 	 */
 	public function form( $instance ) {
 		$title = ( isset( $instance['title'] ) && '' !== $instance['title'] ) ? $instance['title'] : I18n::get_label( 'widget_default_title' );
@@ -110,6 +110,7 @@ class BookingWidget extends \WP_Widget {
 				value="<?php echo esc_attr( $title ); ?>">
 		</p>
 		<?php
+		return null;
 	}
 
 	/**

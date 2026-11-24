@@ -198,6 +198,8 @@ if ( is_admin() ) {
 			);
 		}
 
+		add_action( 'mhbo_cache_flushed', array( Pricing::class, 'reset_runtime_cache' ) );
+
 		$this->schedule_cron();
 	}
 
@@ -209,6 +211,7 @@ if ( is_admin() ) {
 	private function load_frontend(): void {
 		$shortcode = new Shortcode();
 		$shortcode->init();
+		add_action( 'mhbo_booking_form_after_inputs', array( \MHBO\Frontend\BookingFormView::class, 'render_terms_checkbox' ), 18 );
 	}
 
 /**
@@ -351,7 +354,7 @@ if ( is_admin() ) {
 	 * Resolve public URL for a plugin asset, preferring compiled/minified `build/` outputs.
 	 *
 	 * @param string $relative_path Relative path from plugin root (e.g. 'assets/css/mhbo-style.css').
-	 * @return string Full URL to the resolved asset.
+	 * @return non-empty-string Full URL to the resolved asset.
 	 */
 	public static function asset_url( string $relative_path ): string {
 		return MHBO_PLUGIN_URL . self::resolve_asset_relative( $relative_path );

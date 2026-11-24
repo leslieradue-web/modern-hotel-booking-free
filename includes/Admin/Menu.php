@@ -209,7 +209,7 @@ public function add_dashboard_widgets(): void {
 			$asset_file_path = MHBO_PLUGIN_DIR . 'build/admin/dataviews.asset.php';
 			if ( file_exists( $asset_file_path ) ) {
 				// phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
-				/** @var array{dependencies: list<string>, version: string} $asset_file */
+				/** @var array{dependencies: list<non-empty-string>, version: string} $asset_file */
 				$asset_file = (array) include $asset_file_path;
 				wp_enqueue_script(
 					'mhbo-dataviews',

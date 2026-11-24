@@ -511,10 +511,17 @@ add_option( 'mhbo_powered_by_link', 0 ); // Default OFF per WP.org Guideline 10 
 		add_option( 'mhbo_additional_notification_email', '' );
 		add_option( 'mhbo_modal_enabled', 1 );
 
-// Children & Stay Limits Options (Core settings promoted to all tiers)
-		add_option( 'mhbo_children_enabled', 0 );
+// Stay Limits & Guest Portal Policy Options (Core settings promoted to all tiers)
 		add_option( 'mhbo_global_min_stay', 0 );
 		add_option( 'mhbo_global_max_stay', 0 );
+		add_option( 'mhbo_portal_self_service_enabled', 0 );
+		add_option( 'mhbo_portal_modify_mode', 'request_only' );
+		add_option( 'mhbo_portal_cancel_mode', 'request_only' );
+		add_option( 'mhbo_cancellation_lead_hours', 24 );
+		add_option( 'mhbo_portal_max_modifications', 2 );
+		add_option( 'mhbo_cancellation_policy_enabled', 0 );
+		add_option( 'mhbo_cancellation_policy', '' );
+		add_option( 'mhbo_booking_terms_checkbox_enabled', 0 );
 
 // Tax System Options
 		add_option( 'mhbo_tax_mode', 'disabled' );

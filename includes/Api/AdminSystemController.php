@@ -18,6 +18,7 @@ use MHBO\Core\LicenseManager;
 use MHBO\Core\Email;
 use MHBO\Core\HotelTime;
 use MHBO\Core\Pricing;
+use MHBO\Core\Tier;
 
 /**
  * REST API Controller for Administrative System, License, Cache, and Extras Operations (Group 1).
@@ -38,18 +39,7 @@ class AdminSystemController extends AbstractAdminRestController {
 	 */
 	public function register_routes(): void {
 
-// System Cache Flush
-		register_rest_route(
-			$this->namespace,
-			'/' . $this->rest_base . '/system/cache/clear',
-			array(
-				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'clear_cache' ),
-				'permission_callback' => array( $this, 'check_system_admin_permission' ),
-			)
-		);
-
-		// Admin Upgrade Banner Dismissal
+// Admin Upgrade Banner Dismissal
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/system/banner/dismiss',
@@ -125,51 +115,6 @@ class AdminSystemController extends AbstractAdminRestController {
 	}
 
 /**
-	 * POST /admin/system/cache/clear
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function clear_cache( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		if ( class_exists( Cache::class ) ) {
-			$result = Cache::flush_all();
-			if ( $result ) {
-				$ext_cache       = function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache();
-				$group_supported = function_exists( 'wp_cache_supports' ) && wp_cache_supports( 'flush_group' );
-
-				return $this->success(
-					array(
-						'message'               => (string) I18n::get_label( 'msg_cache_cleared' ),
-						'object_cache_active'   => $ext_cache,
-						'group_flush_supported' => $group_supported,
-						'versions'              => array(
-							'bookings'           => Cache::get_version( Cache::TABLE_BOOKINGS ),
-							'rooms'              => Cache::get_version( Cache::TABLE_ROOMS ),
-							'pricing_rules'      => Cache::get_version( Cache::TABLE_PRICING_RULES ),
-							'calendar_overrides' => Cache::get_version( Cache::TABLE_CALENDAR_OVERRIDES ),
-							'settings'           => Cache::get_version( Cache::TABLE_SETTINGS ),
-							'guests'             => Cache::get_version( Cache::TABLE_GUESTS ),
-						),
-						'timestamp'             => current_time( 'mysql' ),
-					)
-				);
-			}
-
-			return $this->error(
-				'cache_clear_failed',
-				(string) I18n::get_label( 'msg_cache_failed' ),
-				500
-			);
-		}
-
-		return $this->error(
-			'cache_unavailable',
-			(string) I18n::get_label( 'msg_cache_unavailable' ),
-			500
-		);
-	}
-
-	/**
 	 * POST /admin/system/banner/dismiss
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -212,10 +157,29 @@ class AdminSystemController extends AbstractAdminRestController {
 		$append_note = "\n" . sprintf( (string) I18n::get_label( 'msg_balance_collected' ), current_time( 'mysql' ) );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$booking_before = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $wpdb->prefix . 'mhbo_bookings', $booking_id ) );
+		$pre_booking = $wpdb->get_row( $wpdb->prepare( 'SELECT room_id, status FROM %i WHERE id = %d', $wpdb->prefix . 'mhbo_bookings', $booking_id ) );
+		if ( ! $pre_booking ) {
+			return $this->error( 'booking_not_found', (string) I18n::get_label( 'msg_invalid_booking' ), 404 );
+		}
+		if ( in_array( strtolower( (string) ( $pre_booking->status ?? '' ) ), array( 'cancelled', 'refunded' ), true ) ) {
+			return $this->error( 'booking_cancelled', (string) I18n::get_label( 'msg_failed_update_booking' ), 409 );
+		}
 
-		$encoded_ledger = null;
-		if ( $booking_before ) {
+		$room_id = (int) ( $pre_booking->room_id ?? 0 );
+		if ( $room_id > 0 && ! Pricing::acquire_booking_lock( $room_id, 10 ) ) {
+			return $this->error( 'booking_busy', (string) I18n::get_label( 'label_booking_busy' ), 409 );
+		}
+
+		try {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$booking_before = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $wpdb->prefix . 'mhbo_bookings', $booking_id ) );
+			if ( ! $booking_before ) {
+				return $this->error( 'booking_not_found', (string) I18n::get_label( 'msg_invalid_booking' ), 404 );
+			}
+			if ( in_array( strtolower( (string) ( $booking_before->status ?? '' ) ), array( 'cancelled', 'refunded' ), true ) ) {
+				return $this->error( 'booking_cancelled', (string) I18n::get_label( 'msg_failed_update_booking' ), 409 );
+			}
+
 			$total_p     = Money::fromDecimal( (string) ( $booking_before->total_price ?? 0 ), $currency );
 			$paid_b      = Money::fromDecimal( (string) ( $booking_before->payment_amount ?? 0 ), $currency );
 			$rem_b       = $total_p->subtract( $paid_b );
@@ -236,60 +200,70 @@ class AdminSystemController extends AbstractAdminRestController {
 				'note'           => sprintf( __( 'Balance marked as collected by %s via Admin Overview', 'modern-hotel-booking' ), $staff_name ),
 			);
 			$encoded_ledger = wp_json_encode( $ledger );
-		}
 
-		// Write-first atomic transition: update only if not already collected (NULL-safe via COALESCE)
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table placeholder.
-		$updated = $wpdb->query(
-			$wpdb->prepare(
-				'UPDATE %i
-                 SET balance_status = %s,
-                     balance_collected_via = %s,
-                     balance_payment_date = %s,
-                     remaining_balance = %s,
-                     payment_status = %s,
-                     payment_received = %d,
-                     payment_amount = total_price,
-                     payment_date = %s,
-                     status = %s,
-                     payment_ledger = COALESCE(%s, payment_ledger),
-                     admin_notes = CONCAT(COALESCE(admin_notes, %s), %s)
-                 WHERE id = %d AND COALESCE(balance_status, %s) != %s',
-				$wpdb->prefix . 'mhbo_bookings',
-				'collected',
-				'manual',
-				current_time( 'mysql' ),
-				$zero_balance,
-				'completed',
-				1,
-				current_time( 'mysql' ),
-				'confirmed',
-				$encoded_ledger,
-				'',
-				$append_note,
-				$booking_id,
-				'',
-				'collected'
-			)
-		);
+			// Write-first atomic transition: update only if not already collected and not cancelled/refunded.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table placeholder.
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					"UPDATE %i
+                     SET balance_status = %s,
+                         balance_collected_via = %s,
+                         balance_payment_date = %s,
+                         remaining_balance = %s,
+                         payment_status = %s,
+                         payment_received = %d,
+                         payment_amount = total_price,
+                         payment_date = %s,
+                         status = CASE WHEN status IN ('checked_in', 'checked_out') THEN status ELSE %s END,
+                         payment_ledger = COALESCE(%s, payment_ledger),
+                         admin_notes = CONCAT(COALESCE(admin_notes, %s), %s)
+                     WHERE id = %d AND COALESCE(balance_status, %s) != %s AND status NOT IN (%s, %s)",
+					$wpdb->prefix . 'mhbo_bookings',
+					'collected',
+					'manual',
+					current_time( 'mysql' ),
+					$zero_balance,
+					'completed',
+					1,
+					current_time( 'mysql' ),
+					'confirmed',
+					$encoded_ledger,
+					'',
+					$append_note,
+					$booking_id,
+					'',
+					'collected',
+					'cancelled',
+					'refunded'
+				)
+			);
+		} finally {
+			if ( $room_id > 0 ) {
+				Pricing::release_booking_lock( $room_id );
+			}
+		}
 
 		if ( false === $updated ) {
 			return $this->error( 'update_failed', (string) I18n::get_label( 'msg_failed_update_booking' ), 500 );
 		}
 
 		if ( 0 === $updated ) {
-			// Disambiguate between nonexistent booking and already-collected booking
+			// Disambiguate between nonexistent booking, cancelled/refunded booking, and already-collected booking.
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: Using %i for safe table placeholder.
-			$exists = $wpdb->get_var(
+			$existing = $wpdb->get_row(
 				$wpdb->prepare(
-					'SELECT id FROM %i WHERE id = %d',
+					'SELECT id, status FROM %i WHERE id = %d',
 					$wpdb->prefix . 'mhbo_bookings',
 					$booking_id
 				)
 			);
 
-			if ( ! $exists ) {
+			if ( ! $existing ) {
 				return $this->error( 'booking_not_found', (string) I18n::get_label( 'msg_invalid_booking' ), 404 );
+			}
+
+			if ( in_array( strtolower( (string) ( $existing->status ?? '' ) ), array( 'cancelled', 'refunded' ), true ) ) {
+				return $this->error( 'booking_cancelled', (string) I18n::get_label( 'msg_failed_update_booking' ), 409 );
 			}
 
 			// Booking exists and was already collected — return idempotent 200 with zero duplicate side effects

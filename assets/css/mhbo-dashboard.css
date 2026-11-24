@@ -38,10 +38,17 @@
     transition: all 0.15s ease;
 }
 
-#dashboard-widgets #mhbo_dashboard_overview a:focus,
-#dashboard-widgets #mhbo_revenue_widget a:focus {
+#dashboard-widgets #mhbo_dashboard_overview a:focus:not(:focus-visible),
+#dashboard-widgets #mhbo_revenue_widget a:focus:not(:focus-visible) {
     box-shadow: none;
     outline: none;
+}
+
+#dashboard-widgets #mhbo_dashboard_overview a:focus-visible,
+#dashboard-widgets #mhbo_revenue_widget a:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 6px;
 }
 
 /* Root Widget Wrapper with Container Query Context */
@@ -301,6 +308,17 @@
 .mhbo-widget-meta-item:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 1px;
+}
+
+.mhbo-dash-widget a.mhbo-widget-meta-item.mhbo-widget-meta-item--alert {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #9f1239 !important;
+}
+
+.mhbo-dash-widget a.mhbo-widget-meta-item.mhbo-widget-meta-item--alert:hover {
+    background: #ffe4e6;
+    color: #881337 !important;
 }
 
 .mhbo-widget-meta-item span:last-child {

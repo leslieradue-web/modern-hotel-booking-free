@@ -358,13 +358,40 @@ class Booking_Query {
 	}
 
 	/**
-	 * Get total count of bookings, optionally filtered by status and search query.
+	 * Apply strict literal SQL payment-status filter conditions.
 	 *
-	 * @param string $status Filter by status (optional).
-	 * @param string $search Search query for guest name, email, phone, ID, or room (optional).
+	 * @param string            $payment_status Payment status filter slug.
+	 * @param string            $where          SQL WHERE accumulator.
+	 * @param array<int, mixed> $params         Prepared SQL parameter accumulator.
+	 * @return void
+	 */
+	private static function apply_payment_status_filter( string $payment_status, string &$where, array &$params ): void {
+		if ( '' === $payment_status || 'all' === $payment_status ) {
+			return;
+		}
+		if ( 'partial' === $payment_status ) {
+			$where .= " AND b.status NOT IN ('cancelled', 'refunded', 'deleted') AND (b.payment_status IN ('deposit_paid', 'partially_paid') OR (b.payment_amount > 0 AND b.remaining_balance > 0))";
+			return;
+		}
+		if ( 'unpaid' === $payment_status ) {
+			$where .= " AND b.status NOT IN ('cancelled', 'refunded', 'deleted') AND b.payment_status != 'refunded' AND (b.remaining_balance > 0 OR (b.payment_received = 0 AND b.payment_status NOT IN ('completed', 'paid')))";
+			return;
+		}
+		if ( in_array( $payment_status, array( 'deposit_paid', 'partially_paid', 'completed', 'pending', 'processing', 'refunded', 'failed' ), true ) ) {
+			$where   .= ' AND b.payment_status = %s';
+			$params[] = $payment_status;
+		}
+	}
+
+	/**
+	 * Get total count of bookings, optionally filtered by status, search query, and payment status.
+	 *
+	 * @param string $status         Filter by status (optional).
+	 * @param string $search         Search query for guest name, email, phone, ID, or room (optional).
+	 * @param string $payment_status Filter by payment status or bucket ('partial', 'unpaid', etc.) (optional).
 	 * @return int Total number of bookings.
 	 */
-	public static function count( string $status = '', string $search = '' ): int {
+	public static function count( string $status = '', string $search = '', string $payment_status = '' ): int {
 		global $wpdb;
 
 		$where  = '1=1' . self::get_completed_draft_exclusion_sql( 'b' );
@@ -373,6 +400,7 @@ class Booking_Query {
 			$where   .= ' AND b.status = %s';
 			$params[] = $status;
 		}
+		self::apply_payment_status_filter( $payment_status, $where, $params );
 
 		if ( '' !== trim( $search ) ) {
 			$clean_search = trim( $search );
@@ -412,15 +440,16 @@ class Booking_Query {
 	/**
 	 * Get bookings with full details (Room and Room Type) for admin lists.
 	 *
-	 * @param string $status Filter by status (optional).
-	 * @param int    $limit Max results (<= 0 or -1 retrieves all).
-	 * @param int    $offset Pagination offset (default 0).
-	 * @param string $orderby Column to sort by (id, guest, room, dates, total, status, created).
-	 * @param string $order Sort direction (ASC or DESC).
-	 * @param string $search Search query for guest name, email, phone, ID, or room (optional).
+	 * @param string $status         Filter by status (optional).
+	 * @param int    $limit          Max results (<= 0 or -1 retrieves all).
+	 * @param int    $offset         Pagination offset (default 0).
+	 * @param string $orderby        Column to sort by (id, guest, room, dates, total, status, created).
+	 * @param string $order          Sort direction (ASC or DESC).
+	 * @param string $search         Search query for guest name, email, phone, ID, or room (optional).
+	 * @param string $payment_status Filter by payment status or bucket ('partial', 'unpaid', etc.) (optional).
 	 * @return list<\stdClass>
 	 */
-	public static function get_list( string $status = '', int $limit = 25, int $offset = 0, string $orderby = 'id', string $order = 'DESC', string $search = '' ): array {
+	public static function get_list( string $status = '', int $limit = 25, int $offset = 0, string $orderby = 'id', string $order = 'DESC', string $search = '', string $payment_status = '' ): array {
 		global $wpdb;
 
 		$where  = '1=1' . self::get_completed_draft_exclusion_sql( 'b' );
@@ -429,6 +458,7 @@ class Booking_Query {
 			$where   .= ' AND b.status = %s';
 			$params[] = $status;
 		}
+		self::apply_payment_status_filter( $payment_status, $where, $params );
 
 		if ( '' !== trim( $search ) ) {
 			$clean_search = trim( $search );

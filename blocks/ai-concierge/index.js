@@ -140,9 +140,9 @@ function Edit( { attributes, setAttributes } ) {
 					variant +
 					( variant === 'floating'
 						? ' · ' +
-						  __( 'Position', 'modern-hotel-booking' ) +
-						  ': ' +
-						  position
+							__( 'Position', 'modern-hotel-booking' ) +
+							': ' +
+							position
 						: '' )
 			),
 			el(

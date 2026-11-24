@@ -186,6 +186,8 @@
 .mhbo-badge-confirmed { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 .mhbo-badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 .mhbo-badge-cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.mhbo-badge-refunded { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+.mhbo-badge-neutral { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 .mhbo-badge-paid { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
 
 /* Timeline */
@@ -826,6 +828,35 @@
 	color: #075985;
 }
 
+.mhbo-portal-policy-card {
+	margin: 18px 0 6px 0;
+	padding: 14px 18px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+}
+
+.mhbo-portal-policy-title {
+	font-size: 13px;
+	font-weight: 700;
+	color: #0f172a;
+	margin-bottom: 6px;
+}
+
+.mhbo-portal-policy-text,
+.mhbo-portal-policy-contact {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #475569;
+}
+
+.mhbo-portal-policy-text + .mhbo-portal-policy-contact {
+	margin-top: 6px;
+	font-weight: 500;
+	color: #334155;
+}
+
 @page {
 	size: portrait;
 	margin: 10mm 12mm;
@@ -981,6 +1012,7 @@
 	.mhbo-portal-timeline,
 	.mhbo-portal-finances,
 	.mhbo-portal-guest-info,
+	.mhbo-portal-policy-card,
 	#mhbo-hotel-contact-card,
 	#mhbo-portal-group-card {
 		border: 1px solid #cbd5e1 !important;

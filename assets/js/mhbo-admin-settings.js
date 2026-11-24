@@ -63,11 +63,23 @@
 			fetchOptions.body = JSON.stringify( data );
 		}
 		return fetch( url, fetchOptions ).then( function ( res ) {
-			return res.json().then( function ( json ) {
-				if ( ! res.ok ) {
+			return res.text().then( function ( raw ) {
+				let json = null;
+				if ( raw ) {
+					try {
+						json = JSON.parse( raw );
+					} catch ( _parseErr ) {
+						json = null;
+					}
+				}
+				if ( ! res.ok || null === json ) {
+					const fallbackMsg =
+						( config.i18n && config.i18n.connection_error ) ||
+						'Request failed';
 					const err = new Error(
-						( json && json.message ) || 'Request failed'
+						( json && json.message ) || fallbackMsg
 					);
+					err.status = res.status;
 					err.responseJSON = json;
 					throw err;
 				}
@@ -801,6 +813,7 @@
 
 		btn.addEventListener( 'click', function () {
 			btn.disabled = true;
+			btn.setAttribute( 'aria-busy', 'true' );
 			if ( spinner ) {
 				spinner.classList.add( 'is-active' );
 			}
@@ -808,8 +821,8 @@
 				resultSpan.textContent =
 					( config.i18n && config.i18n.clearing_cache ) ||
 					'Clearing cache...';
-				resultSpan.style.cssText =
-					'color: #64748b; font-weight:600; margin-left: 10px;';
+				resultSpan.classList.remove( 'is-success', 'is-error' );
+				resultSpan.classList.add( 'is-pending' );
 			}
 
 			const oldStatus = btn.parentElement
@@ -821,23 +834,32 @@
 
 			fetchApi( '/mhbo/v1/admin/system/cache/clear', 'POST' )
 				.then( function ( response ) {
-					const message =
+					const baseMessage =
 						( response &&
 							response.data &&
 							response.data.message ) ||
 						( response && response.message ) ||
 						( ( config.i18n && config.i18n.cache_cleared ) ||
 							'Cache cleared successfully.' );
+					const purgedDbRows =
+						response &&
+						response.data &&
+						typeof response.data.purged_db_rows === 'number'
+							? response.data.purged_db_rows
+							: 0;
+					const message =
+						purgedDbRows > 0
+							? baseMessage + ' (' + purgedDbRows + ')'
+							: baseMessage;
 
 					if ( resultSpan ) {
-						resultSpan.style.cssText =
-							'color: #16a34a; font-weight:600; margin-left: 10px;';
+						resultSpan.classList.remove( 'is-pending', 'is-error' );
+						resultSpan.classList.add( 'is-success' );
 						resultSpan.textContent = '✓ ' + message;
 					} else {
 						const statusSpan = document.createElement( 'span' );
-						statusSpan.className = 'mhbo-cache-status';
-						statusSpan.style.cssText =
-							'color: #16a34a; font-weight:600; margin-left: 10px;';
+						statusSpan.className =
+							'mhbo-cache-status mhbo-perf-result is-success';
 						statusSpan.textContent = '✓ ' + message;
 						btn.after( statusSpan );
 					}
@@ -855,18 +877,21 @@
 						( response && response.versions );
 					if ( versions && typeof versions === 'object' ) {
 						Object.keys( versions ).forEach( function ( key ) {
+							if ( ! /^[a-z0-9_]+$/.test( key ) ) {
+								return;
+							}
 							const el = document.querySelector(
 								'[data-kairos-table="' + key + '"]'
 							);
 							if ( el ) {
 								el.textContent = 'v' + versions[ key ];
-								el.style.transition =
-									'color 0.3s ease, transform 0.3s ease';
-								el.style.color = '#16a34a';
-								el.style.transform = 'scale(1.15)';
-								setTimeout( function () {
-									el.style.color = '#0f172a';
-									el.style.transform = 'scale(1)';
+								el.classList.add( 'is-updated' );
+								if ( el._mhboPulseTimer ) {
+									clearTimeout( el._mhboPulseTimer );
+								}
+								el._mhboPulseTimer = setTimeout( function () {
+									el.classList.remove( 'is-updated' );
+									el._mhboPulseTimer = null;
 								}, 600 );
 							}
 						} );
@@ -877,14 +902,16 @@
 						( err && err.message ) || 'Failed to clear cache.';
 
 					if ( resultSpan ) {
-						resultSpan.style.cssText =
-							'color: #dc2626; font-weight:600; margin-left: 10px;';
+						resultSpan.classList.remove(
+							'is-pending',
+							'is-success'
+						);
+						resultSpan.classList.add( 'is-error' );
 						resultSpan.textContent = '⚠ ' + message;
 					} else {
 						const statusSpan = document.createElement( 'span' );
-						statusSpan.className = 'mhbo-cache-status';
-						statusSpan.style.cssText =
-							'color: #dc2626; font-weight:600; margin-left: 10px;';
+						statusSpan.className =
+							'mhbo-cache-status mhbo-perf-result is-error';
 						statusSpan.textContent = '⚠ ' + message;
 						btn.after( statusSpan );
 					}
@@ -900,6 +927,7 @@
 					if ( spinner ) {
 						spinner.classList.remove( 'is-active' );
 					}
+					btn.setAttribute( 'aria-busy', 'false' );
 					btn.disabled = false;
 				} );
 		} );
@@ -1376,6 +1404,141 @@
 		syncConflictFields();
 	}
 
+	/**
+	 * Guest Portal Self-Service Master Toggle & Nested Policy Controls
+	 */
+	function initPortalSelfServiceControls() {
+		const masterToggle = document.getElementById(
+			'mhbo_portal_self_service_enabled'
+		);
+		const modifySelect = document.getElementById(
+			'mhbo_portal_modify_mode'
+		);
+		const cancelSelect = document.getElementById(
+			'mhbo_portal_cancel_mode'
+		);
+		const autoOnlyRows = document.querySelectorAll(
+			'.mhbo-portal-auto-only'
+		);
+		const autoModifyOnlyRows = document.querySelectorAll(
+			'.mhbo-portal-auto-modify-only'
+		);
+		const statusPill = document.getElementById(
+			'mhbo-portal-self-service-pill'
+		);
+
+		if ( ! masterToggle || ! modifySelect || ! cancelSelect ) {
+			return;
+		}
+
+		function syncStatusPill() {
+			if ( ! statusPill ) {
+				return;
+			}
+			const isOn = masterToggle.checked;
+			statusPill.classList.toggle( 'is-active', isOn );
+			statusPill.classList.toggle( 'is-protected', ! isOn );
+			const label = isOn
+				? statusPill.getAttribute( 'data-label-on' ) || 'Active'
+				: statusPill.getAttribute( 'data-label-off' ) ||
+				  'Front Desk Only';
+			statusPill.textContent = label;
+		}
+
+		function syncPortalPolicySubfields() {
+			const usesAutoAny =
+				modifySelect.value === 'auto_unpaid' ||
+				cancelSelect.value === 'auto_unpaid';
+			const usesAutoModify = modifySelect.value === 'auto_unpaid';
+
+			autoOnlyRows.forEach( function ( el ) {
+				el.style.display = usesAutoAny ? '' : 'none';
+			} );
+			autoModifyOnlyRows.forEach( function ( el ) {
+				el.style.display = usesAutoModify ? '' : 'none';
+			} );
+			syncStatusPill();
+		}
+
+		masterToggle.addEventListener( 'change', function () {
+			if (
+				masterToggle.checked &&
+				modifySelect.value === 'disabled' &&
+				cancelSelect.value === 'disabled'
+			) {
+				modifySelect.value = 'request_only';
+				cancelSelect.value = 'request_only';
+			}
+			syncPortalPolicySubfields();
+		} );
+
+		modifySelect.addEventListener( 'change', syncPortalPolicySubfields );
+		cancelSelect.addEventListener( 'change', syncPortalPolicySubfields );
+		syncPortalPolicySubfields();
+	}
+
+	/**
+	 * Dirty form change indicator & General settings Quick-Jump section navigation
+	 */
+	function initDirtyFormTracking() {
+		const submitBar = document.querySelector( '.mhbo-settings-submit-bar' );
+		const indicator = document.getElementById(
+			'mhbo-settings-dirty-indicator'
+		);
+		const settingsForm = submitBar ? submitBar.closest( 'form' ) : null;
+		if ( settingsForm && submitBar && indicator ) {
+			const activeTab = submitBar.getAttribute( 'data-tab' ) || '';
+			if ( 'labels' !== activeTab ) {
+				const markDirty = function ( evt ) {
+					if (
+						evt.target &&
+						evt.target.closest( '#mhbo-email-health-card' )
+					) {
+						return;
+					}
+					indicator.hidden = false;
+					submitBar.classList.add( 'is-dirty' );
+				};
+				settingsForm.addEventListener( 'input', markDirty );
+				settingsForm.addEventListener( 'change', markDirty );
+				settingsForm.addEventListener( 'submit', function () {
+					indicator.hidden = true;
+					submitBar.classList.remove( 'is-dirty' );
+				} );
+			}
+		}
+
+		const jumpNav = document.querySelector( '.mhbo-general-jump-nav' );
+		if ( jumpNav ) {
+			const pills = jumpNav.querySelectorAll( '.mhbo-jump-pill' );
+			const reduceMotion =
+				window.matchMedia &&
+				window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+			pills.forEach( function ( pill ) {
+				pill.addEventListener( 'click', function ( evt ) {
+					const href = pill.getAttribute( 'href' ) || '';
+					if ( ! href.startsWith( '#' ) ) {
+						return;
+					}
+					const target = document.getElementById( href.slice( 1 ) );
+					if ( ! target ) {
+						return;
+					}
+					evt.preventDefault();
+					pills.forEach( function ( p ) {
+						p.classList.remove( 'is-active' );
+					} );
+					pill.classList.add( 'is-active' );
+					target.scrollIntoView( {
+						behavior: reduceMotion ? 'auto' : 'smooth',
+						block: 'start',
+					} );
+				} );
+			} );
+		}
+	}
+
 	// Initialize on DOM ready (Vanilla JS native)
 	function initAll() {
 		initLicenseManagement();
@@ -1392,6 +1555,8 @@
 		initConfirmationButtonToggle();
 		initTaxModeToggle();
 		initConflictModeControls();
+		initPortalSelfServiceControls();
+		initDirtyFormTracking();
 	}
 
 	if ( document.readyState === 'loading' ) {

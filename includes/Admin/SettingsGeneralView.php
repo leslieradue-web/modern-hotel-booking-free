@@ -22,7 +22,7 @@ class SettingsGeneralView {
      * Render the shortcode setup guide info box at the bottom of the General tab.
      */
     public static function render_shortcode_info(): void {
-        echo '<div class="mhbo-settings-section-card" style="margin-top: 24px; border-left: 4px solid #2563eb;">';
+        echo '<div id="mhbo-sec-shortcodes" class="mhbo-settings-section-card mhbo-shortcode-guide-card">';
         echo '<div class="mhbo-settings-section-title-wrap" style="margin-bottom: 12px;">';
         echo '<div class="mhbo-settings-section-icon" style="background:#eff6ff;color:#2563eb;"><span class="dashicons dashicons-shortcode"></span></div>';
         echo '<div><h4 style="margin:0;font-size:15px;font-weight:700;color:#0f172a;">' . esc_html(I18n::get_label('setup_guide_title')) . '</h4>';
@@ -92,7 +92,7 @@ class SettingsGeneralView {
         }
 
         if (is_array($rooms) && array() !== $rooms) {
-            echo '<div class="mhbo-settings-section-card" style="margin-top: 24px;">';
+            echo '<div id="mhbo-sec-rooms-table" class="mhbo-settings-section-card mhbo-rooms-reference-card">';
             echo '<details style="cursor:pointer;" open>';
             echo '<summary style="font-weight:700;font-size:14.5px;color:#0f172a;display:flex;align-items:center;justify-content:space-between;">'
                . '<div style="display:flex;align-items:center;gap:8px;"><span class="dashicons dashicons-list-view" style="color:#2563eb;"></span> '
@@ -208,7 +208,6 @@ class SettingsGeneralView {
         $ci_time    = (string) get_option('mhbo_checkin_time', '14:00');
         $co_time    = (string) get_option('mhbo_checkout_time', '11:00');
         
-        $children_en = (int) get_option('mhbo_children_enabled', 0);
         $global_min  = (int) get_option('mhbo_global_min_stay', 0);
         $global_max  = (int) get_option('mhbo_global_max_stay', 0);
 
@@ -247,10 +246,38 @@ class SettingsGeneralView {
         $powered_by     = (int) get_option('mhbo_powered_by_link', 0);
 
         // 9. Guest Portal & Digital Compendium
-        $wifi_ssid    = (string) get_option('mhbo_hotel_wifi_ssid', '');
-        $wifi_pass    = (string) get_option('mhbo_hotel_wifi_password', '');
-        $guest_guide  = (string) get_option('mhbo_hotel_guest_instructions', '');
-        $portal_page  = (int) get_option('mhbo_guest_portal_page', 0);
+        $wifi_ssid              = (string) get_option('mhbo_hotel_wifi_ssid', '');
+        $wifi_pass              = (string) get_option('mhbo_hotel_wifi_password', '');
+        $guest_guide            = (string) get_option('mhbo_hotel_guest_instructions', '');
+        $portal_page            = (int) get_option('mhbo_guest_portal_page', 0);
+        $portal_self_service_en = class_exists(\MHBO\Api\GuestPortalController::class)
+            ? ( \MHBO\Api\GuestPortalController::is_self_service_enabled() ? 1 : 0 )
+            : (int) get_option('mhbo_portal_self_service_enabled', 0);
+        $portal_modify_mode     = class_exists(\MHBO\Api\GuestPortalController::class)
+            ? \MHBO\Api\GuestPortalController::get_stored_modify_mode()
+            : (string) get_option('mhbo_portal_modify_mode', 'request_only');
+        if ( ! in_array($portal_modify_mode, array('request_only', 'auto_unpaid', 'disabled'), true)) {
+            $portal_modify_mode = 'request_only';
+        }
+        $portal_cancel_mode     = class_exists(\MHBO\Api\GuestPortalController::class)
+            ? \MHBO\Api\GuestPortalController::get_stored_cancel_mode()
+            : (string) get_option('mhbo_portal_cancel_mode', 'request_only');
+        if ( ! in_array($portal_cancel_mode, array('request_only', 'auto_unpaid', 'disabled'), true)) {
+            $portal_cancel_mode = 'request_only';
+        }
+        $portal_uses_auto_any   = ( 'auto_unpaid' === $portal_modify_mode || 'auto_unpaid' === $portal_cancel_mode );
+        $portal_uses_auto_mod   = ( 'auto_unpaid' === $portal_modify_mode );
+        $cancel_lead_hours      = max(0, min(720, (int) get_option('mhbo_cancellation_lead_hours', 24)));
+        $portal_max_mods        = max(0, min(20, (int) get_option('mhbo_portal_max_modifications', 2)));
+        $cancel_policy_en       = (int) get_option('mhbo_cancellation_policy_enabled', 0);
+        $cancel_policy_txt      = (string) get_option('mhbo_cancellation_policy', '');
+        $booking_terms_en       = (int) get_option('mhbo_booking_terms_checkbox_enabled', 0);
+        $terms_page_general     = absint(get_option('mhbo_terms_page', 0));
+        $langs_general          = I18n::get_available_languages();
+        $is_multilingual_general = count($langs_general) > 1;
+        $raw_terms_text         = get_option('mhbo_label_booking_terms_checkbox_text', I18n::get_label('booking_terms_checkbox_text'));
+        $gdpr_co_enabled        = false;
+        $terms_page_help        = __( 'Automatically linked from the Terms checkbox when [terms_and_conditions] is used.', 'modern-hotel-booking' );
 
 // 10. Security & System
         $proxies    = (string) get_option('mhbo_trusted_proxies', '');
@@ -270,31 +297,31 @@ class SettingsGeneralView {
         ?>
 
         <!-- Pro Lean Mode: Reopen Pill Wrapper (visible when guide is dismissed) -->
-        <div id="mhbo-guide-pill-wrapper" style="display: none; justify-content: flex-end; margin-bottom: 16px;">
-            <button type="button" class="button button-secondary" onclick="mhboShowOnboardingGuide();" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; border-radius: 8px; border-color: #cbd5e1; background: #ffffff; color: #0f172a; padding: 6px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-size: 13px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#94a3b8'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.06)';">
-                <span style="font-size: 15px;">✨</span>
+        <div id="mhbo-guide-pill-wrapper" class="mhbo-guide-pill-wrapper" style="display: none;">
+            <button type="button" class="button button-secondary mhbo-guide-reopen-btn" onclick="mhboShowOnboardingGuide();">
+                <span class="dashicons dashicons-welcome-learn-more" aria-hidden="true"></span>
                 <span><?php esc_html_e('Property Setup & Shortcode Guide', 'modern-hotel-booking'); ?></span>
-                <span class="mhbo-badge" style="background: #f1f5f9; color: #475569; font-size: 11px; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0;"><?php esc_html_e('Quick Reference', 'modern-hotel-booking'); ?></span>
+                <span class="mhbo-badge mhbo-guide-reopen-badge"><?php esc_html_e('Quick Reference', 'modern-hotel-booking'); ?></span>
             </button>
         </div>
 
         <!-- Onboarding & Property Setup Guidance Banner -->
-        <div class="mhbo-onboarding-welcome-banner" id="mhbo-general-onboarding-banner" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 24px 28px; margin-bottom: 24px; color: #f8fafc; border: 1px solid #334155; box-shadow: 0 6px 20px rgba(0,0,0,0.15); position: relative;">
+        <div class="mhbo-onboarding-welcome-banner" id="mhbo-general-onboarding-banner">
             <!-- Top Action Row -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px;">
-                <div style="display: flex; gap: 14px; align-items: center;">
-                    <span style="font-size: 32px; line-height: 1;">🏨</span>
+            <div class="mhbo-onboarding-top-row">
+                <div class="mhbo-onboarding-brand">
+                    <span class="mhbo-onboarding-hero-icon" aria-hidden="true"><span class="dashicons dashicons-building"></span></span>
                     <div>
-                        <h3 style="margin: 0; color: #38bdf8; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em;">
+                        <h3 class="mhbo-onboarding-title">
                             <?php esc_html_e('Modern Hotel Booking — Quick Start & Operational Setup Guide', 'modern-hotel-booking'); ?>
                         </h3>
-                        <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 0.9rem;">
+                        <p class="mhbo-onboarding-subtitle">
                             <?php esc_html_e('Follow this 4-step roadmap to configure accommodation categories, keys, public calendars, and front desk cashiering.', 'modern-hotel-booking'); ?>
                         </p>
                     </div>
                 </div>
-                <button type="button" class="button" onclick="mhboDismissOnboardingGuide();" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 6px; font-size: 12px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.18)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.color='#cbd5e1;'" title="<?php esc_attr_e('Dismiss this guide (Pro Lean Mode)', 'modern-hotel-booking'); ?>">
-                    <span>&times;</span> <?php esc_html_e('Dismiss Guide (Lean Mode)', 'modern-hotel-booking'); ?>
+                <button type="button" class="button mhbo-onboarding-dismiss-btn" onclick="mhboDismissOnboardingGuide();" title="<?php esc_attr_e('Dismiss this guide (Pro Lean Mode)', 'modern-hotel-booking'); ?>">
+                    <span aria-hidden="true">&times;</span> <?php esc_html_e('Dismiss Guide (Lean Mode)', 'modern-hotel-booking'); ?>
                 </button>
             </div>
 
@@ -335,7 +362,7 @@ class SettingsGeneralView {
                     <p style="margin: 0 0 12px 0; font-size: 12px; color: #cbd5e1; line-height: 1.55; flex: 1;">
                         <?php esc_html_e('Always create your Room Types first (e.g. Deluxe Suite, Double Room, Villa). Room Types define base prices, guest capacity (standard & max adults/children), extra guest charges, bed setups, photos, and amenities.', 'modern-hotel-booking'); ?>
                     </p>
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-room-types')); ?>" class="button button-small" style="text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 10px; background: #0284c7; color: #fff; border-color: #0284c7;">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-room-types')); ?>" class="button button-small" style="text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 10px; background: #0369a1; color: #fff; border-color: #0369a1;">
                         <?php esc_html_e('Manage Room Types &rarr;', 'modern-hotel-booking'); ?>
                     </a>
                 </div>
@@ -385,7 +412,7 @@ class SettingsGeneralView {
                             <strong style="color: #fbbf24;">• Modal vs Page:</strong> In Card 4 below, choose slide-in drawer (zero reload) or redirecting to your Booking Page.
                         </div>
                     </div>
-                    <a href="#mhbo_booking_page" class="button button-small" style="text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 10px; background: #16a34a; color: #fff; border-color: #16a34a;">
+                    <a href="#mhbo_booking_page" class="button button-small" style="text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 10px; background: #15803d; color: #fff; border-color: #15803d;">
                         <?php esc_html_e('Configure Booking Flow &darr;', 'modern-hotel-booking'); ?>
                     </a>
                 </div>
@@ -407,7 +434,7 @@ class SettingsGeneralView {
                         <?php esc_html_e('For walk-ins or phone reservations, go to Bookings > Add New Booking. CRM Guest Quick-Fill auto-completes repeat guests with VIP/caution notes. Price breakdowns calculate live, and 1-click tender shortcuts record Cash, Card Terminal, or Bank payments instantly.', 'modern-hotel-booking'); ?>
                     </p>
                     <div style="display: flex; gap: 8px;">
-                        <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings&action=add')); ?>" class="button button-small" style="flex: 1; text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 6px; background: #d97706; color: #fff; border-color: #d97706;">
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings&action=add')); ?>" class="button button-small" style="flex: 1; text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 6px; background: #b45309; color: #fff; border-color: #b45309;">
                             <?php esc_html_e('Add Booking &rarr;', 'modern-hotel-booking'); ?>
                         </a>
                         <a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-bookings')); ?>" class="button button-small" style="text-align: center; font-weight: 600; text-decoration: none; border-radius: 6px; padding: 4px 8px; background: rgba(255,255,255,0.1); color: #cbd5e1; border-color: rgba(255,255,255,0.2);">
@@ -466,10 +493,25 @@ class SettingsGeneralView {
         })();
         </script>
 
+        <nav class="mhbo-general-jump-nav" aria-label="<?php esc_attr_e('General settings sections', 'modern-hotel-booking'); ?>">
+            <span class="mhbo-jump-nav-label"><?php esc_html_e('Jump to:', 'modern-hotel-booking'); ?></span>
+            <a href="#mhbo-sec-stay-timing" class="mhbo-jump-pill is-active"><?php esc_html_e('Stay Times', 'modern-hotel-booking'); ?></a>
+            
+            <a href="#mhbo-sec-booking-flow" class="mhbo-jump-pill"><?php esc_html_e('Booking Flow', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-notifications" class="mhbo-jump-pill"><?php esc_html_e('Notifications', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-guest-crm" class="mhbo-jump-pill"><?php esc_html_e('Guest CRM', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-custom-fields" class="mhbo-jump-pill"><?php esc_html_e('Custom Fields', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-currency" class="mhbo-jump-pill"><?php esc_html_e('Currency', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-guest-portal-section" class="mhbo-jump-pill"><?php esc_html_e('Guest Portal', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-security" class="mhbo-jump-pill"><?php esc_html_e('Security', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-shortcodes" class="mhbo-jump-pill"><?php esc_html_e('Shortcodes', 'modern-hotel-booking'); ?></a>
+            <a href="#mhbo-sec-rooms-table" class="mhbo-jump-pill"><?php esc_html_e('Rooms List', 'modern-hotel-booking'); ?></a>
+        </nav>
+
         <div class="mhbo-settings-card-container">
 
             <!-- Card 1: Property & Stay Timing -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-stay-timing">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-building"></span></div>
@@ -525,24 +567,11 @@ class SettingsGeneralView {
                         <p class="mhbo-form-help"><?php echo esc_html(__('Global maximum length of stay across all rooms (0 to disable).', 'modern-hotel-booking')); ?></p>
                     </div>
 
-                    <div class="mhbo-form-group mhbo-span-full">
-                        <div class="mhbo-switch-row">
-                            <div class="mhbo-switch-info">
-                                <span class="mhbo-switch-title"><?php echo esc_html(I18n::get_label('settings_label_children')); ?></span>
-                                <p class="mhbo-switch-desc"><?php echo esc_html(I18n::get_label('settings_desc_children')); ?></p>
-                            </div>
-                            <label class="mhbo-toggle-switch">
-                                <input type="hidden" name="mhbo_children_enabled" value="0">
-                                <input type="checkbox" id="mhbo_children_enabled" name="mhbo_children_enabled" value="1" <?php checked(1, $children_en); ?>>
-                                <span class="mhbo-toggle-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+</div>
             </div>
 
 <!-- Card 4: Booking Flow & Frontend Experience -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-booking-flow">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-desktop"></span></div>
@@ -592,11 +621,11 @@ class SettingsGeneralView {
                         ?>
                         <?php if ($b_page > 0) : ?>
                             <?php if ($has_booking_shortcode) : ?>
-                                <div style="margin-top: 6px; font-size: 11.5px; color: #16a34a; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                <div style="margin-top: 6px; font-size: 11.5px; color: #15803d; font-weight: 600; display: flex; align-items: center; gap: 4px;">
                                     <span>✓</span> <?php esc_html_e('Booking search shortcode [mhbo_booking_form] or Modern Hotel Booking block detected on this page.', 'modern-hotel-booking'); ?>
                                 </div>
                             <?php else : ?>
-                                <div style="margin-top: 6px; font-size: 11.5px; color: #d97706; font-weight: 500; display: flex; align-items: center; gap: 4px;">
+                                <div style="margin-top: 6px; font-size: 11.5px; color: #b45309; font-weight: 500; display: flex; align-items: center; gap: 4px;">
                                     <span>⚠️</span> <?php esc_html_e('Notice: Selected page does not contain [mhbo_booking_form] or the Modern Hotel Booking block yet.', 'modern-hotel-booking'); ?>
                                 </div>
                             <?php endif; ?>
@@ -612,12 +641,12 @@ class SettingsGeneralView {
                     <div class="mhbo-form-group mhbo-span-full">
                         <div class="mhbo-switch-row">
                             <div class="mhbo-switch-info">
-                                <span class="mhbo-switch-title"><?php echo esc_html(__('Enable Inline Booking Modal Drawer', 'modern-hotel-booking')); ?></span>
+                                <span id="mhbo_modal_enabled_title" class="mhbo-switch-title"><?php echo esc_html(__('Enable Inline Booking Modal Drawer', 'modern-hotel-booking')); ?></span>
                                 <p class="mhbo-switch-desc"><?php echo esc_html(__('Open the booking flow in an interactive slide-in drawer instead of navigating away.', 'modern-hotel-booking')); ?></p>
                             </div>
                             <label class="mhbo-toggle-switch">
                                 <input type="hidden" name="mhbo_modal_enabled" value="0">
-                                <input type="checkbox" id="mhbo_modal_enabled" name="mhbo_modal_enabled" value="1" <?php checked(1, $modal_en); ?>>
+                                <input type="checkbox" id="mhbo_modal_enabled" name="mhbo_modal_enabled" value="1" aria-labelledby="mhbo_modal_enabled_title" <?php checked(1, $modal_en); ?>>
                                 <span class="mhbo-toggle-slider"></span>
                             </label>
                         </div>
@@ -779,7 +808,7 @@ class SettingsGeneralView {
             </div>
 
             <!-- Card 5: Operational Notifications & Housekeeping -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-notifications">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-email-alt"></span></div>
@@ -814,7 +843,7 @@ class SettingsGeneralView {
             </div>
 
             <!-- Card 6: Guest CRM & Intelligence -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-guest-crm">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-admin-users"></span></div>
@@ -829,12 +858,12 @@ class SettingsGeneralView {
                     <div class="mhbo-form-group mhbo-span-full">
                         <div class="mhbo-switch-row">
                             <div class="mhbo-switch-info">
-                                <span class="mhbo-switch-title"><?php echo esc_html(__('Enable Guest CRM & Profiles', 'modern-hotel-booking')); ?></span>
+                                <span id="mhbo_guest_crm_enabled_title" class="mhbo-switch-title"><?php echo esc_html(__('Enable Guest CRM & Profiles', 'modern-hotel-booking')); ?></span>
                                 <p class="mhbo-switch-desc"><?php echo esc_html(__('Centralize guest profiles, lifetime stay metrics, staff ratings, and customer intelligence.', 'modern-hotel-booking')); ?></p>
                             </div>
                             <label class="mhbo-toggle-switch">
                                 <input type="hidden" name="mhbo_guest_crm_enabled" value="0">
-                                <input type="checkbox" id="mhbo_guest_crm_enabled" name="mhbo_guest_crm_enabled" value="1" <?php checked(1, $crm_en); ?>>
+                                <input type="checkbox" id="mhbo_guest_crm_enabled" name="mhbo_guest_crm_enabled" value="1" aria-labelledby="mhbo_guest_crm_enabled_title" <?php checked(1, $crm_en); ?>>
                                 <span class="mhbo-toggle-slider"></span>
                             </label>
                         </div>
@@ -845,7 +874,7 @@ class SettingsGeneralView {
             </div>
 
             <!-- Card 7: Custom Guest Checkout Fields -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-custom-fields">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-forms"></span></div>
@@ -862,7 +891,7 @@ class SettingsGeneralView {
             </div>
 
             <!-- Card 8: Currency & Display Formatting -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-currency">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-money-alt"></span></div>
@@ -910,12 +939,12 @@ class SettingsGeneralView {
                     <div class="mhbo-form-group mhbo-span-full">
                         <div class="mhbo-switch-row">
                             <div class="mhbo-switch-info">
-                                <span class="mhbo-switch-title"><?php echo esc_html(__('Show Decimals on Calendar Date Cells', 'modern-hotel-booking')); ?></span>
+                                <span id="mhbo_calendar_show_decimals_title" class="mhbo-switch-title"><?php echo esc_html(__('Show Decimals on Calendar Date Cells', 'modern-hotel-booking')); ?></span>
                                 <p class="mhbo-switch-desc"><?php echo esc_html(__('When disabled (default), daily price labels inside calendar date cells are shown as uncluttered whole numbers. When enabled, date cells display full decimals according to the setting above.', 'modern-hotel-booking')); ?></p>
                             </div>
                             <label class="mhbo-toggle-switch">
                                 <input type="hidden" name="mhbo_calendar_show_decimals" value="0">
-                                <input type="checkbox" id="mhbo_calendar_show_decimals" name="mhbo_calendar_show_decimals" value="1" <?php checked(1, $decimals); ?>>
+                                <input type="checkbox" id="mhbo_calendar_show_decimals" name="mhbo_calendar_show_decimals" value="1" aria-labelledby="mhbo_calendar_show_decimals_title" <?php checked(1, $decimals); ?>>
                                 <span class="mhbo-toggle-slider"></span>
                             </label>
                         </div>
@@ -924,12 +953,12 @@ class SettingsGeneralView {
                     <div class="mhbo-form-group mhbo-span-full">
                         <div class="mhbo-switch-row">
                             <div class="mhbo-switch-info">
-                                <span class="mhbo-switch-title"><?php echo esc_html(I18n::get_label('settings_label_powered_by')); ?></span>
+                                <span id="mhbo_powered_by_link_title" class="mhbo-switch-title"><?php echo esc_html(I18n::get_label('settings_label_powered_by')); ?></span>
                                 <p class="mhbo-switch-desc"><?php echo esc_html(I18n::get_label('settings_desc_powered_by')); ?></p>
                             </div>
                             <label class="mhbo-toggle-switch">
                                 <input type="hidden" name="mhbo_powered_by_link" value="0">
-                                <input type="checkbox" id="mhbo_powered_by_link" name="mhbo_powered_by_link" value="1" <?php checked(1, $powered_by); ?>>
+                                <input type="checkbox" id="mhbo_powered_by_link" name="mhbo_powered_by_link" value="1" aria-labelledby="mhbo_powered_by_link_title" <?php checked(1, $powered_by); ?>>
                                 <span class="mhbo-toggle-slider"></span>
                             </label>
                         </div>
@@ -944,7 +973,7 @@ class SettingsGeneralView {
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-welcome-learn-more"></span></div>
                         <div>
                             <h3 class="mhbo-settings-section-title"><?php echo esc_html(__('Guest Portal & Digital Compendium', 'modern-hotel-booking')); ?></h3>
-                            <p class="mhbo-settings-section-desc"><?php echo esc_html(__('Configure your guest self-service portal, property Wi-Fi access, and house rules. Guests access the portal to review stay details, copy Wi-Fi passwords, request stay changes, and make balance payments.', 'modern-hotel-booking')); ?></p>
+                            <p class="mhbo-settings-section-desc"><?php echo esc_html(__('Configure your Guest Portal page, digital arrival compendium (Wi-Fi and house rules), and optional self-service change or cancellation rules.', 'modern-hotel-booking')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -987,21 +1016,173 @@ class SettingsGeneralView {
                                     <?php endif; ?>
                                 </span>
                             <?php else : ?>
-                                <span style="display: block; margin-top: 6px; color: #d97706; font-size: 12px; font-weight: 500;">
+                                <span style="display: block; margin-top: 6px; color: #b45309; font-size: 12px; font-weight: 500;">
                                     ℹ️ <?php esc_html_e('To enable guest self-service, create a page (e.g. "My Booking" or "Guest Portal"), insert the [mhbo_guest_portal] shortcode, and select it above.', 'modern-hotel-booking'); ?>
                                 </span>
                             <?php endif; ?>
                         </p>
                     </div>
 
-<!-- Connected Property Data & Experience Readiness Checklist -->
+<!-- Self-Service Modification & Cancellation Policies -->
                     <div class="mhbo-form-group mhbo-span-full">
-                        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 18px 20px;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                                <span style="font-size: 18px;">✨</span>
-                                <strong style="font-size: 14px; color: #0f172a;"><?php esc_html_e('Connected Property Data & Arrival Experience', 'modern-hotel-booking'); ?></strong>
+                        <div class="mhbo-switch-row">
+                            <div class="mhbo-switch-info">
+                                <span id="mhbo_portal_self_service_enabled_title" class="mhbo-switch-title">
+                                    <?php esc_html_e('Allow Guest Self-Service Changes & Cancellations', 'modern-hotel-booking'); ?>
+                                    <span id="mhbo-portal-self-service-pill"
+                                        class="mhbo-portal-status-pill <?php echo $portal_self_service_en ? 'is-active' : 'is-protected'; ?>"
+                                        data-label-on="<?php echo esc_attr__('Active', 'modern-hotel-booking'); ?>"
+                                        data-label-off="<?php echo esc_attr__('Front Desk Only', 'modern-hotel-booking'); ?>">
+                                        <?php echo $portal_self_service_en ? esc_html__('Active', 'modern-hotel-booking') : esc_html__('Front Desk Only', 'modern-hotel-booking'); ?>
+                                    </span>
+                                </span>
+                                <p class="mhbo-switch-desc"><?php esc_html_e('Off by default to protect your calendar—guests contact your front desk directly. Turn on to allow stay change or cancellation requests (or automated unpaid changes) in the Guest Portal.', 'modern-hotel-booking'); ?></p>
                             </div>
-                            <p style="margin: 0 0 14px 0; font-size: 12.5px; color: #64748b; line-height: 1.5;">
+                            <label class="mhbo-toggle-switch">
+                                <input type="hidden" name="mhbo_portal_self_service_enabled" value="0">
+                                <input type="checkbox" id="mhbo_portal_self_service_enabled" name="mhbo_portal_self_service_enabled" value="1" aria-labelledby="mhbo_portal_self_service_enabled_title" <?php checked(1, $portal_self_service_en); ?>>
+                                <span class="mhbo-toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="mhbo-conditional-child" data-parent-toggle="mhbo_portal_self_service_enabled" style="<?php echo $portal_self_service_en ? '' : 'display:none;'; ?>">
+                            <div class="mhbo-settings-grid mhbo-grid-2col">
+                                <div class="mhbo-form-group">
+                                    <label class="mhbo-form-label" for="mhbo_portal_modify_mode"><?php esc_html_e('Guest Stay Date Changes', 'modern-hotel-booking'); ?></label>
+                                    <select name="mhbo_portal_modify_mode" id="mhbo_portal_modify_mode" class="mhbo-form-input">
+                                        <option value="request_only" <?php selected($portal_modify_mode, 'request_only'); ?>><?php esc_html_e('Require Staff Approval (Recommended)', 'modern-hotel-booking'); ?></option>
+                                        <option value="auto_unpaid" <?php selected($portal_modify_mode, 'auto_unpaid'); ?>><?php esc_html_e('Auto-Approve Unpaid (Before Cutoff)', 'modern-hotel-booking'); ?></option>
+                                        <option value="disabled" <?php selected($portal_modify_mode, 'disabled'); ?>><?php esc_html_e('Disabled (Contact Front Desk Only)', 'modern-hotel-booking'); ?></option>
+                                    </select>
+                                    <p class="mhbo-form-help"><?php esc_html_e('Paid bookings, group bookings, in-house stays, manual discounts, dropped coupons or add-ons, and requests inside the cutoff window always route to staff approval.', 'modern-hotel-booking'); ?></p>
+                                </div>
+
+                                <div class="mhbo-form-group">
+                                    <label class="mhbo-form-label" for="mhbo_portal_cancel_mode"><?php esc_html_e('Guest Cancellations', 'modern-hotel-booking'); ?></label>
+                                    <select name="mhbo_portal_cancel_mode" id="mhbo_portal_cancel_mode" class="mhbo-form-input">
+                                        <option value="request_only" <?php selected($portal_cancel_mode, 'request_only'); ?>><?php esc_html_e('Require Staff Approval (Recommended)', 'modern-hotel-booking'); ?></option>
+                                        <option value="auto_unpaid" <?php selected($portal_cancel_mode, 'auto_unpaid'); ?>><?php esc_html_e('Auto-Cancel Unpaid (Before Cutoff)', 'modern-hotel-booking'); ?></option>
+                                        <option value="disabled" <?php selected($portal_cancel_mode, 'disabled'); ?>><?php esc_html_e('Disabled (Contact Front Desk Only)', 'modern-hotel-booking'); ?></option>
+                                    </select>
+                                    <p class="mhbo-form-help"><?php esc_html_e('Paid or partially-paid bookings always route to staff review so your team can apply cancellation policies and issue refunds.', 'modern-hotel-booking'); ?></p>
+                                </div>
+
+                                <div class="mhbo-form-group mhbo-portal-auto-only" style="<?php echo $portal_uses_auto_any ? '' : 'display:none;'; ?>">
+                                    <label class="mhbo-form-label" for="mhbo_cancellation_lead_hours"><?php esc_html_e('Self-Service Cutoff Window (Hours Before Check-in)', 'modern-hotel-booking'); ?></label>
+                                    <input type="number" id="mhbo_cancellation_lead_hours" name="mhbo_cancellation_lead_hours" value="<?php echo esc_attr( (string) $cancel_lead_hours); ?>" min="0" max="720" step="1" class="mhbo-form-input">
+                                    <p class="mhbo-form-help"><?php esc_html_e('Locks both auto-cancellation and auto-modification inside this window before check-in (0 to disable cutoff), preventing last-minute date shifting to bypass penalties.', 'modern-hotel-booking'); ?></p>
+                                </div>
+
+                                <div class="mhbo-form-group mhbo-portal-auto-modify-only" style="<?php echo $portal_uses_auto_mod ? '' : 'display:none;'; ?>">
+                                    <label class="mhbo-form-label" for="mhbo_portal_max_modifications"><?php esc_html_e('Max Self-Service Date Changes per Booking', 'modern-hotel-booking'); ?></label>
+                                    <input type="number" id="mhbo_portal_max_modifications" name="mhbo_portal_max_modifications" value="<?php echo esc_attr( (string) $portal_max_mods); ?>" min="0" max="20" step="1" class="mhbo-form-input">
+                                    <p class="mhbo-form-help"><?php esc_html_e('Maximum automatic date updates allowed per reservation (0 for unlimited). Further changes route to staff approval.', 'modern-hotel-booking'); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mhbo-form-group mhbo-span-full">
+                        <div class="mhbo-switch-row">
+                            <div class="mhbo-switch-info">
+                                <span id="mhbo_cancellation_policy_enabled_title" class="mhbo-switch-title">
+                                    <?php esc_html_e('Cancellation & Modification Policy Notice', 'modern-hotel-booking'); ?>
+                                </span>
+                                <p class="mhbo-switch-desc"><?php esc_html_e('Off by default. Turn on to display your cancellation and modification policy in the Guest Portal, above the checkout terms checkbox, in emails via {cancellation_policy}, and in AI Concierge policy answers (hidden in the Guest Portal when off).', 'modern-hotel-booking'); ?></p>
+                            </div>
+                            <label class="mhbo-toggle-switch">
+                                <input type="hidden" name="mhbo_cancellation_policy_enabled" value="0">
+                                <input type="checkbox" id="mhbo_cancellation_policy_enabled" name="mhbo_cancellation_policy_enabled" value="1" aria-labelledby="mhbo_cancellation_policy_enabled_title" <?php checked(1, $cancel_policy_en); ?>>
+                                <span class="mhbo-toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="mhbo-conditional-child" data-parent-toggle="mhbo_cancellation_policy_enabled" style="<?php echo $cancel_policy_en ? '' : 'display:none;'; ?>">
+                            <div class="mhbo-settings-grid">
+                                <div class="mhbo-form-group mhbo-span-full">
+                                    <label class="mhbo-form-label" for="mhbo_cancellation_policy"><?php esc_html_e('Policy Notice Text', 'modern-hotel-booking'); ?></label>
+                                    <textarea id="mhbo_cancellation_policy" name="mhbo_cancellation_policy" rows="2" class="large-text" placeholder="<?php echo esc_attr(__('e.g. Reservations may be cancelled or modified free of charge up to 24 hours before arrival.', 'modern-hotel-booking')); ?>"><?php echo esc_textarea($cancel_policy_txt); ?></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mhbo-form-group mhbo-span-full">
+                        <div class="mhbo-switch-row">
+                            <div class="mhbo-switch-info">
+                                <span id="mhbo_booking_terms_checkbox_enabled_title" class="mhbo-switch-title">
+                                    <?php esc_html_e('Require Booking Terms Acceptance at Checkout', 'modern-hotel-booking'); ?>
+                                </span>
+                                <p class="mhbo-switch-desc"><?php esc_html_e('Off by default. Turn on to require guests to tick an acceptance checkbox for your booking, cancellation, and modification terms before submitting a reservation.', 'modern-hotel-booking'); ?></p>
+                            </div>
+                            <label class="mhbo-toggle-switch">
+                                <input type="hidden" name="mhbo_booking_terms_checkbox_enabled" value="0">
+                                <input type="checkbox" id="mhbo_booking_terms_checkbox_enabled" name="mhbo_booking_terms_checkbox_enabled" value="1" aria-labelledby="mhbo_booking_terms_checkbox_enabled_title" <?php checked(1, $booking_terms_en); ?>>
+                                <span class="mhbo-toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="mhbo-conditional-child" data-parent-toggle="mhbo_booking_terms_checkbox_enabled" style="<?php echo $booking_terms_en ? '' : 'display:none;'; ?>">
+                            <div class="mhbo-settings-grid mhbo-grid-2col">
+                                <div class="mhbo-form-group mhbo-span-full">
+                                    <label class="mhbo-form-label"><?php esc_html_e('Terms Acceptance Checkbox Text', 'modern-hotel-booking'); ?></label>
+                                    <?php
+                                    foreach ($langs_general as $code) :
+                                        $terms_str  = (string) ( I18n::decode($raw_terms_text, $code, true) ?? '' );
+                                        $lang_label = I18n::get_language_name($code);
+                                        ?>
+                                        <div style="margin-bottom: 10px;">
+                                            <?php if ($is_multilingual_general) : ?>
+                                                <span class="mhbo-badge" style="background:#eff6ff; color:#1e40af; border:1px solid #dbeafe; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; margin-bottom:4px; display:inline-block;">
+                                                    <?php echo esc_html(strtoupper($code)); ?> — <?php echo esc_html($lang_label); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <textarea name="mhbo_label_templates[booking_terms_checkbox_text][<?php echo esc_attr($code); ?>]" rows="2" class="large-text" style="width:100%; border-radius:6px; font-size:13px;"><?php echo esc_textarea($terms_str); ?></textarea>
+                                        </div>
+                                    <?php endforeach; ?>
+                                    <p class="mhbo-form-help"><?php esc_html_e('Displayed next to the required booking terms checkbox. Use [terms_and_conditions] to insert a link to the selected Terms & Conditions page.', 'modern-hotel-booking'); ?></p>
+                                </div>
+
+                                <div class="mhbo-form-group">
+                                    <label class="mhbo-form-label" for="mhbo_terms_page"><?php esc_html_e('Terms & Conditions Page (Optional)', 'modern-hotel-booking'); ?></label>
+                                    <select name="mhbo_terms_page" id="mhbo_terms_page" class="mhbo-form-input">
+                                        <option value="0"><?php esc_html_e('— Select a Page —', 'modern-hotel-booking'); ?></option>
+                                        <?php
+                                        $general_pages = get_pages();
+                                        if ( is_array( $general_pages ) ) {
+                                            foreach ($general_pages as $g_page) {
+                                                printf(
+                                                    '<option value="%d" %s>%s</option>',
+                                                    (int) $g_page->ID,
+                                                    selected($terms_page_general, $g_page->ID, false),
+                                                    esc_html($g_page->post_title)
+                                                );
+                                            }
+                                        }
+                                        ?>
+                                    </select>
+                                    <p class="mhbo-form-help"><?php echo esc_html( $terms_page_help ); ?></p>
+                                </div>
+
+                                <?php if ($gdpr_co_enabled) : ?>
+                                    <div class="mhbo-form-group mhbo-span-full">
+                                        <div style="padding:10px 14px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; font-size:12.5px; color:#1e40af;">
+                                            <?php esc_html_e('Pro GDPR Consent is also active. Both checkboxes will render together in a unified Policies & Consents panel at checkout without duplicate Terms links.', 'modern-hotel-booking'); ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connected Property Data & Experience Readiness Checklist -->
+                    <div class="mhbo-form-group mhbo-span-full">
+                        <div class="mhbo-portal-readiness-box">
+                            <div class="mhbo-portal-readiness-head">
+                                <span class="mhbo-portal-readiness-icon">✨</span>
+                                <strong class="mhbo-portal-readiness-title"><?php esc_html_e('Connected Property Data & Arrival Experience', 'modern-hotel-booking'); ?></strong>
+                            </div>
+                            <p class="mhbo-portal-readiness-desc">
                                 <?php esc_html_e('The Guest Self-Service Portal dynamically synthesizes essential details configured across your settings to create a seamless digital arrival card. When guests access their portal or read confirmation emails, these fields are automatically displayed:', 'modern-hotel-booking'); ?>
                             </p>
                             <?php
@@ -1026,80 +1207,80 @@ class SettingsGeneralView {
                             $is_wifi_ready = ! empty( $wifi_ssid );
                             $is_all_ready  = $is_name_ready && $is_addr_ready && $is_maps_ready && $is_wifi_ready;
                             ?>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; font-size: 12.5px;">
-                                <div style="background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <div class="mhbo-portal-readiness-grid">
+                                <div class="mhbo-portal-readiness-item">
+                                    <div class="mhbo-portal-readiness-item-head">
                                         <strong><?php esc_html_e('Property Name & Contact', 'modern-hotel-booking'); ?></strong>
                                         <?php if ( $is_name_ready ) : ?>
-                                            <span style="color: #16a34a; font-weight: 700;">✓ Ready</span>
+                                            <span class="mhbo-portal-readiness-badge is-ready">✓ Ready</span>
                                         <?php else : ?>
-                                            <span style="color: #d97706; font-weight: 600;">⚠️ Incomplete</span>
+                                            <span class="mhbo-portal-readiness-badge is-warn">⚠️ Incomplete</span>
                                         <?php endif; ?>
                                     </div>
                                     <?php if ( $is_name_ready ) : ?>
-                                        <div style="color: #0f172a; font-weight: 600; font-size: 12px;"><?php echo esc_html($hotel_name); ?></div>
+                                        <div class="mhbo-portal-readiness-val"><?php echo esc_html($hotel_name); ?></div>
                                         <?php if ( ! empty($hotel_email) ) : ?>
-                                            <div style="color: #64748b; font-size: 11.5px;"><?php echo esc_html($hotel_email); ?></div>
+                                            <div class="mhbo-portal-readiness-sub"><?php echo esc_html($hotel_email); ?></div>
                                         <?php endif; ?>
-                                        <div style="margin-top: 4px;"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business')); ?>" style="text-decoration: underline; color: #2563eb;"><?php esc_html_e('Edit in Business Info &rarr;', 'modern-hotel-booking'); ?></a></div>
+                                        <div class="mhbo-portal-readiness-link-wrap"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business')); ?>" class="mhbo-portal-readiness-link"><?php esc_html_e('Edit in Business Info &rarr;', 'modern-hotel-booking'); ?></a></div>
                                     <?php else : ?>
-                                        <span style="color: #64748b; font-size: 11.5px;"><?php esc_html_e('Shown in portal header & email footers.', 'modern-hotel-booking'); ?></span>
-                                        <div style="margin-top: 4px;"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business')); ?>" style="text-decoration: underline; color: #2563eb;"><?php esc_html_e('Set in Business Info &rarr;', 'modern-hotel-booking'); ?></a></div>
+                                        <span class="mhbo-portal-readiness-sub"><?php esc_html_e('Shown in portal header & email footers.', 'modern-hotel-booking'); ?></span>
+                                        <div class="mhbo-portal-readiness-link-wrap"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business')); ?>" class="mhbo-portal-readiness-link"><?php esc_html_e('Set in Business Info &rarr;', 'modern-hotel-booking'); ?></a></div>
                                     <?php endif; ?>
                                 </div>
-                                <div style="background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div class="mhbo-portal-readiness-item">
+                                    <div class="mhbo-portal-readiness-item-head">
                                         <strong><?php esc_html_e('Google Maps & Directions', 'modern-hotel-booking'); ?></strong>
                                         <?php if ( $is_maps_ready ) : ?>
-                                            <span style="color: #16a34a; font-weight: 700;">✓ Ready</span>
+                                            <span class="mhbo-portal-readiness-badge is-ready">✓ Ready</span>
                                         <?php else : ?>
-                                            <span style="color: #64748b; font-weight: 500;"><?php esc_html_e('Optional', 'modern-hotel-booking'); ?></span>
+                                            <span class="mhbo-portal-readiness-badge is-optional"><?php esc_html_e('Optional', 'modern-hotel-booking'); ?></span>
                                         <?php endif; ?>
                                     </div>
-                                    <span style="color: #64748b; font-size: 11.5px;"><?php esc_html_e('Renders 1-click navigation in portal.', 'modern-hotel-booking'); ?></span>
-                                    <div style="margin-top: 4px;"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business')); ?>" style="text-decoration: underline; color: #2563eb;"><?php echo $is_maps_ready ? esc_html__('Edit Maps Link &rarr;', 'modern-hotel-booking') : esc_html__('Add Maps URL &rarr;', 'modern-hotel-booking'); ?></a></div>
+                                    <span class="mhbo-portal-readiness-sub"><?php esc_html_e('Renders 1-click navigation in portal.', 'modern-hotel-booking'); ?></span>
+                                    <div class="mhbo-portal-readiness-link-wrap"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business')); ?>" class="mhbo-portal-readiness-link"><?php echo $is_maps_ready ? esc_html__('Edit Maps Link &rarr;', 'modern-hotel-booking') : esc_html__('Add Maps URL &rarr;', 'modern-hotel-booking'); ?></a></div>
                                 </div>
-                                <div style="background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div class="mhbo-portal-readiness-item">
+                                    <div class="mhbo-portal-readiness-item-head">
                                         <strong><?php esc_html_e('Bank & Revolut Pay', 'modern-hotel-booking'); ?></strong>
                                         <?php if ( $has_offline_pay ) : ?>
-                                            <span style="color: #16a34a; font-weight: 700;">✓ Configured</span>
+                                            <span class="mhbo-portal-readiness-badge is-ready">✓ Configured</span>
                                         <?php else : ?>
-                                            <span style="color: #64748b; font-weight: 500;"><?php esc_html_e('Optional', 'modern-hotel-booking'); ?></span>
+                                            <span class="mhbo-portal-readiness-badge is-optional"><?php esc_html_e('Optional', 'modern-hotel-booking'); ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <?php if ( $has_offline_pay ) : ?>
-                                        <div style="display: flex; gap: 4px; margin-top: 2px; margin-bottom: 4px; flex-wrap: wrap;">
+                                        <div class="mhbo-portal-readiness-chips">
                                             <?php if ( $is_bank_active || ! empty($hotel_bank) ) : ?>
-                                                <span style="background: #e0f2fe; color: #0369a1; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">Bank</span>
+                                                <span class="mhbo-portal-readiness-chip is-bank">Bank</span>
                                             <?php endif; ?>
                                             <?php if ( $is_rev_active || ! empty($hotel_rev) ) : ?>
-                                                <span style="background: #f3e8ff; color: #7e22ce; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;">Revolut</span>
+                                                <span class="mhbo-portal-readiness-chip is-revolut">Revolut</span>
                                             <?php endif; ?>
                                         </div>
-                                        <div><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business&subtab=banking')); ?>" style="text-decoration: underline; color: #2563eb;"><?php esc_html_e('Manage Offline Pay &rarr;', 'modern-hotel-booking'); ?></a></div>
+                                        <div><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business&subtab=banking')); ?>" class="mhbo-portal-readiness-link"><?php esc_html_e('Manage Offline Pay &rarr;', 'modern-hotel-booking'); ?></a></div>
                                     <?php else : ?>
-                                        <span style="color: #64748b; font-size: 11.5px;"><?php esc_html_e('Instructs offline/direct paying guests.', 'modern-hotel-booking'); ?></span>
-                                        <div style="margin-top: 4px;"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business&subtab=banking')); ?>" style="text-decoration: underline; color: #2563eb;"><?php esc_html_e('Configure in Business Info &rarr;', 'modern-hotel-booking'); ?></a></div>
+                                        <span class="mhbo-portal-readiness-sub"><?php esc_html_e('Instructs offline/direct paying guests.', 'modern-hotel-booking'); ?></span>
+                                        <div class="mhbo-portal-readiness-link-wrap"><a href="<?php echo esc_url(admin_url('admin.php?page=mhbo-settings&tab=business&subtab=banking')); ?>" class="mhbo-portal-readiness-link"><?php esc_html_e('Configure in Business Info &rarr;', 'modern-hotel-booking'); ?></a></div>
                                     <?php endif; ?>
                                 </div>
-                                <div style="background: #ffffff; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div class="mhbo-portal-readiness-item">
+                                    <div class="mhbo-portal-readiness-item-head">
                                         <strong><?php esc_html_e('Guest Wi-Fi Credentials', 'modern-hotel-booking'); ?></strong>
                                         <?php if ( $is_wifi_ready ) : ?>
-                                            <span style="color: #16a34a; font-weight: 700;">✓ Ready</span>
+                                            <span class="mhbo-portal-readiness-badge is-ready">✓ Ready</span>
                                         <?php else : ?>
-                                            <span style="color: #64748b; font-weight: 500;"><?php esc_html_e('Optional', 'modern-hotel-booking'); ?></span>
+                                            <span class="mhbo-portal-readiness-badge is-optional"><?php esc_html_e('Optional', 'modern-hotel-booking'); ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <?php if ( $is_wifi_ready ) : ?>
-                                        <div style="color: #0f172a; font-weight: 600; font-size: 12px;"><?php echo esc_html($wifi_ssid); ?></div>
+                                        <div class="mhbo-portal-readiness-val"><?php echo esc_html($wifi_ssid); ?></div>
                                     <?php endif; ?>
-                                    <span style="color: #64748b; font-size: 11.5px;"><?php esc_html_e('Instant 1-click password copy for guests.', 'modern-hotel-booking'); ?></span>
+                                    <span class="mhbo-portal-readiness-sub"><?php esc_html_e('Instant 1-click password copy for guests.', 'modern-hotel-booking'); ?></span>
                                 </div>
                             </div>
                             <?php if ( $is_all_ready ) : ?>
-                                <div style="margin-top: 12px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 8px 12px; color: #15803d; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                                <div class="mhbo-portal-readiness-all-ok">
                                     <span>🎉</span>
                                     <span><?php esc_html_e('All core property details are configured! Your Guest Portal is fully equipped to deliver an outstanding arrival experience.', 'modern-hotel-booking'); ?></span>
                                 </div>
@@ -1128,7 +1309,7 @@ class SettingsGeneralView {
             </div>
 
             <!-- Card 10: System & Security -->
-            <div class="mhbo-settings-section-card">
+            <div class="mhbo-settings-section-card" id="mhbo-sec-security">
                 <div class="mhbo-settings-section-header">
                     <div class="mhbo-settings-section-title-wrap">
                         <div class="mhbo-settings-section-icon"><span class="dashicons dashicons-shield"></span></div>
@@ -1149,12 +1330,12 @@ class SettingsGeneralView {
                     <div class="mhbo-form-group mhbo-span-full">
                         <div class="mhbo-switch-row">
                             <div class="mhbo-switch-info">
-                                <span class="mhbo-switch-title"><?php echo esc_html(I18n::get_label('settings_label_uninstall')); ?></span>
+                                <span id="mhbo_save_data_on_uninstall_title" class="mhbo-switch-title"><?php echo esc_html(I18n::get_label('settings_label_uninstall')); ?></span>
                                 <p class="mhbo-switch-desc"><?php echo esc_html(I18n::get_label('settings_desc_uninstall')); ?></p>
                             </div>
                             <label class="mhbo-toggle-switch">
                                 <input type="hidden" name="mhbo_save_data_on_uninstall" value="0">
-                                <input type="checkbox" id="mhbo_save_data_on_uninstall" name="mhbo_save_data_on_uninstall" value="1" <?php checked(1, $keep_data); ?>>
+                                <input type="checkbox" id="mhbo_save_data_on_uninstall" name="mhbo_save_data_on_uninstall" value="1" aria-labelledby="mhbo_save_data_on_uninstall_title" <?php checked(1, $keep_data); ?>>
                                 <span class="mhbo-toggle-slider"></span>
                             </label>
                         </div>
@@ -1296,9 +1477,9 @@ class SettingsGeneralView {
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; min-width: 340px; flex: 1; max-width: 720px; justify-content: flex-end; flex-wrap: wrap;">
-                        <button type="button" id="mhbo_toggle_all_cats" class="button button-secondary" onclick="mhboToggleAllCategories();" style="height: 36px; line-height: 34px; padding: 0 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" aria-expanded="true">
-                            <span class="dashicons dashicons-arrow-up-alt2" id="mhbo_toggle_icon" style="font-size: 14px; width: 14px; height: 14px; line-height: 14px;"></span>
-                            <span id="mhbo_toggle_label"><?php esc_html_e( 'Collapse All', 'modern-hotel-booking' ); ?></span>
+                        <button type="button" id="mhbo_toggle_all_cats" class="button button-secondary" onclick="mhboToggleAllCategories();" style="height: 36px; line-height: 34px; padding: 0 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" aria-expanded="false">
+                            <span class="dashicons dashicons-arrow-down-alt2" id="mhbo_toggle_icon" style="font-size: 14px; width: 14px; height: 14px; line-height: 14px;" aria-hidden="true"></span>
+                            <span id="mhbo_toggle_label"><?php esc_html_e( 'Expand All', 'modern-hotel-booking' ); ?></span>
                         </button>
                         <?php if ( 'free' !== $package_tier ) : ?>
                         <select id="mhbo_label_tier_select" class="mhbo-form-input" style="height: 36px; font-size: 13px; max-width: 135px;" onchange="mhboFilterLabels();" aria-label="<?php esc_attr_e( 'Filter by edition tier', 'modern-hotel-booking' ); ?>">
@@ -1332,28 +1513,28 @@ class SettingsGeneralView {
                 $card_icon  = ! empty( $cat_data['icon'] ) ? $cat_data['icon'] : 'dashicons-translation';
                 $cat_custom = $cat_custom_counts[ $cat_id ] ?? 0;
                 ?>
-                <div class="mhbo-settings-section-card mhbo-label-group-card" data-group="<?php echo esc_attr( $cat_id ); ?>" data-tier="<?php echo esc_attr( $cat_tier ); ?>">
-                    <div class="mhbo-settings-section-header" onclick="mhboToggleCategory(this.closest('.mhbo-label-group-card'));" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); mhboToggleCategory(this.closest('.mhbo-label-group-card'));}" style="cursor: pointer; user-select: none;" role="button" tabindex="0" aria-expanded="true">
+                <div class="mhbo-settings-section-card mhbo-label-group-card is-collapsed" data-group="<?php echo esc_attr( $cat_id ); ?>" data-tier="<?php echo esc_attr( $cat_tier ); ?>">
+                    <div class="mhbo-settings-section-header" onclick="mhboToggleCategory(this.closest('.mhbo-label-group-card'));" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); mhboToggleCategory(this.closest('.mhbo-label-group-card'));}" style="cursor: pointer; user-select: none;" role="button" tabindex="0" aria-expanded="false">
                         <div class="mhbo-settings-section-title-wrap" style="flex: 1;">
-                            <div class="mhbo-settings-section-icon"><span class="dashicons <?php echo esc_attr( $card_icon ); ?>"></span></div>
+                            <div class="mhbo-settings-section-icon"><span class="dashicons <?php echo esc_attr( $card_icon ); ?>" aria-hidden="true"></span></div>
                             <div style="flex: 1;">
                                 <h3 class="mhbo-settings-section-title" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <span><?php echo esc_html( $cat_data['title'] ); ?></span>
                                     <?php if ( 'pro' === $cat_tier ) : ?>
-                                        <span class="mhbo-tier-badge mhbo-badge-pro" style="display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">
-                                            <span class="dashicons dashicons-awards" style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;"></span> PRO
+                                        <span class="mhbo-tier-badge mhbo-tier-badge--pill mhbo-badge-pro">
+                                            <span class="dashicons dashicons-awards" aria-hidden="true"></span> PRO
                                         </span>
                                     <?php elseif ( 'starter' === $cat_tier ) : ?>
-                                        <span class="mhbo-tier-badge mhbo-badge-starter" style="display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">
-                                            <span class="dashicons dashicons-star-filled" style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;"></span> STARTER
+                                        <span class="mhbo-tier-badge mhbo-tier-badge--pill mhbo-badge-starter">
+                                            <span class="dashicons dashicons-star-filled" aria-hidden="true"></span> STARTER
                                         </span>
                                     <?php else : ?>
-                                        <span class="mhbo-tier-badge mhbo-badge-core" style="display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 700; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
-                                            <span class="dashicons dashicons-admin-generic" style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;"></span> CORE
+                                        <span class="mhbo-tier-badge mhbo-tier-badge--pill mhbo-badge-core">
+                                            <span class="dashicons dashicons-admin-generic" aria-hidden="true"></span> CORE
                                         </span>
                                     <?php endif; ?>
                                     <?php if ( $cat_custom > 0 ) : ?>
-                                        <span class="mhbo-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px;">
+                                        <span class="mhbo-badge mhbo-label-status-custom">
                                             <?php
                                             /* translators: %d: count of customized labels in category */
                                             printf( esc_html__( '%d customized', 'modern-hotel-booking' ), (int) $cat_custom );
@@ -1368,7 +1549,7 @@ class SettingsGeneralView {
                                 ?>
                                 </p>
                             </div>
-                            <span class="dashicons dashicons-arrow-down-alt2 mhbo-cat-chevron" style="transition: transform 0.2s ease; margin-left: 12px; color: #64748b; font-size: 18px; width: 18px; height: 18px;"></span>
+                            <span class="dashicons dashicons-arrow-down-alt2 mhbo-cat-chevron" aria-hidden="true"></span>
                         </div>
                     </div>
 
@@ -1381,52 +1562,52 @@ class SettingsGeneralView {
                             $default_label   = I18n::get_label( $key );
                             $placeholder_txt = ( '' !== $default_label && $default_label !== $key ) ? $default_label : $label_desc;
                             ?>
-                            <div class="mhbo-form-group mhbo-span-full mhbo-label-row" data-search="<?php echo esc_attr( $search_haystack ); ?>" data-tier="<?php echo esc_attr( $cat_tier ); ?>" style="padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                                    <strong style="font-size: 13.5px; color: #0f172a;"><?php echo esc_html( $label_desc ); ?></strong>
-                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <div class="mhbo-form-group mhbo-span-full mhbo-label-row" data-search="<?php echo esc_attr( $search_haystack ); ?>" data-tier="<?php echo esc_attr( $cat_tier ); ?>">
+                                <div class="mhbo-label-row-head">
+                                    <strong class="mhbo-label-row-title"><?php echo esc_html( $label_desc ); ?></strong>
+                                    <div class="mhbo-label-row-meta">
                                         <?php if ( 'pro' === $cat_tier ) : ?>
-                                            <span class="mhbo-tier-badge mhbo-badge-pro" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 2px;">
-                                                <span class="dashicons dashicons-awards" style="font-size: 11px; width: 11px; height: 11px; line-height: 11px;"></span> PRO
+                                            <span class="mhbo-tier-badge mhbo-badge-pro">
+                                                <span class="dashicons dashicons-awards" aria-hidden="true"></span> PRO
                                             </span>
                                         <?php elseif ( 'starter' === $cat_tier ) : ?>
-                                            <span class="mhbo-tier-badge mhbo-badge-starter" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; display: inline-flex; align-items: center; gap: 2px;">
-                                                <span class="dashicons dashicons-star-filled" style="font-size: 11px; width: 11px; height: 11px; line-height: 11px;"></span> STARTER
+                                            <span class="mhbo-tier-badge mhbo-badge-starter">
+                                                <span class="dashicons dashicons-star-filled" aria-hidden="true"></span> STARTER
                                             </span>
                                         <?php else : ?>
-                                            <span class="mhbo-tier-badge mhbo-badge-core" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 2px;">
-                                                <span class="dashicons dashicons-admin-generic" style="font-size: 11px; width: 11px; height: 11px; line-height: 11px;"></span> CORE
+                                            <span class="mhbo-tier-badge mhbo-badge-core">
+                                                <span class="dashicons dashicons-admin-generic" aria-hidden="true"></span> CORE
                                             </span>
                                         <?php endif; ?>
 
                                         <?php if ( $has_custom ) : ?>
-                                            <span class="mhbo-badge mhbo-status-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 10.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                            <span class="mhbo-badge mhbo-status-badge mhbo-label-status-custom">
                                                 <?php esc_html_e( 'Customized', 'modern-hotel-booking' ); ?>
                                             </span>
-                                            <button type="button" class="button button-small" onclick="var p = this.closest('.mhbo-label-row'); p.querySelectorAll('input.mhbo-form-input').forEach(function(i){i.value=''; i.dataset.modified='1';}); this.style.display='none'; var n = p.querySelector('.mhbo-revert-badge'); if(n) n.style.display=''; var b = p.querySelector('.mhbo-status-badge'); if(b) b.style.display='none'; mhboShowFloatingSave();" title="<?php esc_attr_e( 'Clear overrides and revert to default translation', 'modern-hotel-booking' ); ?>" style="font-size: 11px; height: 24px; min-height: 24px; line-height: 22px; padding: 0 8px;">
+                                            <button type="button" class="button button-small mhbo-label-revert-btn" onclick="var p = this.closest('.mhbo-label-row'); p.querySelectorAll('input.mhbo-form-input').forEach(function(i){i.value=''; i.dataset.modified='1';}); this.style.display='none'; var n = p.querySelector('.mhbo-revert-badge'); if(n) n.style.display=''; var b = p.querySelector('.mhbo-status-badge'); if(b) b.style.display='none'; mhboShowFloatingSave();" title="<?php esc_attr_e( 'Clear overrides and revert to default translation', 'modern-hotel-booking' ); ?>">
                                                 <?php esc_html_e( 'Revert', 'modern-hotel-booking' ); ?>
                                             </button>
                                         <?php else : ?>
-                                            <span class="mhbo-badge" style="background: #f1f5f9; color: #64748b; font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 4px;">
+                                            <span class="mhbo-badge mhbo-label-status-default">
                                                 <?php esc_html_e( 'Default', 'modern-hotel-booking' ); ?>
                                             </span>
                                         <?php endif; ?>
-                                        <span class="mhbo-badge mhbo-revert-badge" style="display:none; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                        <span class="mhbo-badge mhbo-revert-badge" style="display:none;">
                                             ✓ <?php esc_html_e( 'Reverted (Save to apply)', 'modern-hotel-booking' ); ?>
                                         </span>
-                                        <code style="font-size: 11px; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;"><?php echo esc_html( $key ); ?></code>
+                                        <code class="mhbo-label-key-code"><?php echo esc_html( $key ); ?></code>
                                     </div>
                                 </div>
-                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div class="mhbo-label-row-inputs">
                                     <?php
                                     foreach ( $langs as $lang ) :
                                         $lang_val = (string) ( I18n::decode( $val, $lang ) ?? '' );
                                         ?>
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span class="mhbo-badge" style="width: 34px; text-align: center; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 11px; font-weight: 800; padding: 2px 4px; border-radius: 4px; flex-shrink: 0;">
+                                        <div class="mhbo-label-lang-row">
+                                            <span class="mhbo-badge mhbo-label-lang-badge">
                                                 <?php echo esc_html( strtoupper( $lang ) ); ?>
                                             </span>
-                                            <input type="text" name="mhbo_label_templates[<?php echo esc_attr( $key ); ?>][<?php echo esc_attr( $lang ); ?>]" value="<?php echo esc_attr( $lang_val ); ?>" placeholder="<?php echo esc_attr( $placeholder_txt ); ?>" class="mhbo-form-input" style="flex: 1; height: 34px; font-size: 13px;" oninput="this.dataset.modified='1'; mhboShowFloatingSave();">
+                                            <input type="text" name="mhbo_label_templates[<?php echo esc_attr( $key ); ?>][<?php echo esc_attr( $lang ); ?>]" value="<?php echo esc_attr( $lang_val ); ?>" placeholder="<?php echo esc_attr( $placeholder_txt ); ?>" class="mhbo-form-input mhbo-label-input" oninput="this.dataset.modified='1'; mhboShowFloatingSave();">
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -1436,32 +1617,15 @@ class SettingsGeneralView {
                 </div>
             <?php endforeach; ?>
 
-            <!-- Floating Unsaved Changes Shortcut Bar -->
-            <div id="mhbo-floating-save-bar" style="display:none; position: fixed; bottom: 24px; right: 28px; z-index: 99999; background: #0f172a; color: #ffffff; padding: 12px 20px; border-radius: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.35); align-items: center; gap: 14px; border: 1px solid #334155;">
-                <span style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                    <span class="dashicons dashicons-saved" style="color: #38bdf8; font-size: 18px; width: 18px; height: 18px; line-height: 18px;"></span>
-                    <?php esc_html_e( 'You have unsaved label modifications.', 'modern-hotel-booking' ); ?>
-                </span>
-                <button type="button" class="button button-primary" onclick="var f = document.querySelector('.mhbo-settings-card-container').closest('form'); if(f) f.requestSubmit();" style="background: #2563eb; border-color: #1d4ed8; height: 32px; line-height: 30px; font-weight: 700; padding: 0 16px; border-radius: 6px;">
-                    <?php esc_html_e( 'Save Changes', 'modern-hotel-booking' ); ?>
-                </button>
-            </div>
-
         </div>
         <script>
         function mhboToggleCategory(card) {
             if (!card) return;
-            var grid = card.querySelector('.mhbo-cat-grid');
-            var chevron = card.querySelector('.mhbo-cat-chevron');
             var header = card.querySelector('.mhbo-settings-section-header');
-            if (!grid) return;
-            var isHidden = grid.style.display === 'none';
-            grid.style.display = isHidden ? '' : 'none';
-            if (chevron) {
-                chevron.style.transform = isHidden ? '' : 'rotate(-90deg)';
-            }
+            var willExpand = card.classList.contains('is-collapsed');
+            card.classList.toggle('is-collapsed', !willExpand);
             if (header) {
-                header.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+                header.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
             }
         }
 
@@ -1473,15 +1637,8 @@ class SettingsGeneralView {
             var nextExpanded = !isCurrentlyExpanded;
 
             document.querySelectorAll('.mhbo-label-group-card').forEach(function(card) {
-                var grid = card.querySelector('.mhbo-cat-grid');
-                var chevron = card.querySelector('.mhbo-cat-chevron');
                 var header = card.querySelector('.mhbo-settings-section-header');
-                if (grid) {
-                    grid.style.display = nextExpanded ? '' : 'none';
-                }
-                if (chevron) {
-                    chevron.style.transform = nextExpanded ? '' : 'rotate(-90deg)';
-                }
+                card.classList.toggle('is-collapsed', !nextExpanded);
                 if (header) {
                     header.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
                 }
@@ -1489,7 +1646,7 @@ class SettingsGeneralView {
 
             if (btn) btn.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
             if (icon) {
-                icon.className = nextExpanded ? 'dashicons dashicons-arrow-up-alt2' : 'dashicons-arrow-down-alt2';
+                icon.className = nextExpanded ? 'dashicons dashicons-arrow-up-alt2' : 'dashicons dashicons-arrow-down-alt2';
             }
             if (label) {
                 label.textContent = nextExpanded ? '<?php echo esc_js( __( 'Collapse All', 'modern-hotel-booking' ) ); ?>' : '<?php echo esc_js( __( 'Expand All', 'modern-hotel-booking' ) ); ?>';
@@ -1497,8 +1654,10 @@ class SettingsGeneralView {
         }
 
         function mhboShowFloatingSave() {
-            var bar = document.getElementById('mhbo-floating-save-bar');
-            if (bar) bar.style.display = 'flex';
+            var submitBar = document.querySelector('.mhbo-settings-submit-bar');
+            if (submitBar) submitBar.classList.add('is-dirty');
+            var indicator = document.getElementById('mhbo-settings-dirty-indicator');
+            if (indicator) indicator.hidden = false;
         }
 
         function mhboFilterLabels() {
@@ -1512,8 +1671,6 @@ class SettingsGeneralView {
             document.querySelectorAll('.mhbo-label-group-card').forEach(function(card) {
                 var cardGroup = card.getAttribute('data-group') || '';
                 var cardTier  = card.getAttribute('data-tier') || 'free';
-                var grid      = card.querySelector('.mhbo-cat-grid');
-                var chevron   = card.querySelector('.mhbo-cat-chevron');
                 var header    = card.querySelector('.mhbo-settings-section-header');
 
                 if (catVal && catVal !== 'all' && cardGroup !== catVal) {
@@ -1542,8 +1699,7 @@ class SettingsGeneralView {
 
                 // If searching or filtering specific category, automatically expand matching cards
                 if (visibleCount > 0 && (searchVal || catVal !== 'all')) {
-                    if (grid) grid.style.display = '';
-                    if (chevron) chevron.style.transform = '';
+                    card.classList.remove('is-collapsed');
                     if (header) header.setAttribute('aria-expanded', 'true');
                 }
             });
@@ -1659,4 +1815,71 @@ class SettingsGeneralView {
         </div>
         <?php
     }
+
+/**
+     * Render an upgrade/upsell card when a commercial-only settings tab is accessed directly in Free builds.
+     *
+     * @param string $active_tab Sanitized active tab slug.
+     * @return bool True if an upsell card was rendered for the tab, false otherwise.
+     */
+    public static function render_free_upsell_tab( string $active_tab ): bool {
+        $free_upsell_tabs = array(
+            'webhooks'    => array(
+                __( 'REST API & Webhooks', 'modern-hotel-booking' ),
+                __( 'Outgoing webhooks and API automation require Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'performance' => array(
+                __( 'Performance & Caching', 'modern-hotel-booking' ),
+                __( 'Object cache telemetry and manual cache purge controls require Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'gdpr'        => array(
+                __( 'GDPR & Privacy', 'modern-hotel-booking' ),
+                __( 'GDPR consent automation and retention controls require Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'deposits'    => array(
+                __( 'Deposits & Balances', 'modern-hotel-booking' ),
+                __( 'Deposit scheduling and balance collection require Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'reviews'     => array(
+                __( 'Guest Reviews', 'modern-hotel-booking' ),
+                __( 'Automated guest review workflows require Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'themes'      => array(
+                __( 'Booking Themes', 'modern-hotel-booking' ),
+                __( 'Premium booking theme customization requires Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'backup'      => array(
+                __( 'Backup & Restore', 'modern-hotel-booking' ),
+                __( 'Encrypted backup and disaster recovery require Modern Hotel Booking Pro.', 'modern-hotel-booking' ),
+            ),
+            'payments'    => array(
+                __( 'Payment Gateways', 'modern-hotel-booking' ),
+                __( 'Stripe, PayPal, and Braintree integrations require Modern Hotel Booking Starter or Pro.', 'modern-hotel-booking' ),
+            ),
+            'tax'         => array(
+                __( 'Tax & VAT', 'modern-hotel-booking' ),
+                __( 'Advanced tax and VAT rules require Modern Hotel Booking Starter or Pro.', 'modern-hotel-booking' ),
+            ),
+            'invoices'    => array(
+                __( 'Invoices', 'modern-hotel-booking' ),
+                __( 'PDF invoice templates require Modern Hotel Booking Starter or Pro.', 'modern-hotel-booking' ),
+            ),
+        );
+
+        if ( ! isset( $free_upsell_tabs[ $active_tab ] ) ) {
+            return false;
+        }
+
+        list( $upsell_title, $upsell_desc ) = $free_upsell_tabs[ $active_tab ];
+        if ( class_exists( Upsell::class ) ) {
+            Upsell::render_card( $upsell_title, $upsell_desc );
+        } else {
+            AdminUI::render_card_start( $upsell_title );
+            echo '<p>' . esc_html( $upsell_desc ) . '</p>';
+            AdminUI::render_card_end();
+        }
+
+        return true;
+    }
+    
 }

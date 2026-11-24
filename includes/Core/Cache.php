@@ -22,6 +22,20 @@ class Cache {
 	private static array $runtime_cache = array();
 
 	/**
+	 * Number of database transient rows removed during the latest clear_database_transients() run.
+	 *
+	 * @var int
+	 */
+	private static int $last_purged_db_rows = 0;
+
+	/**
+	 * Get the row count deleted by the most recent clear_database_transients() call.
+	 */
+	public static function get_last_purged_db_rows(): int {
+		return self::$last_purged_db_rows;
+	}
+
+	/**
 	 * Get a memoized option value for single-request performance.
 	 *
 	 * @param string $option        Option name.
@@ -114,6 +128,31 @@ class Cache {
 	const LAST_CHANGED_KEY = 'bookings_last_changed';
 
 	/**
+	 * Explicit allowlist of cache-only transient prefixes safe to purge.
+	 * Protects transactional/security transients (Stripe PaymentIntent secrets,
+	 * checkout holds, payment idempotency keys, coupon dedup guards, rate-limit
+	 * lockouts, iCal sync mutexes/UIDs, active AI chat sessions, email dedup).
+	 *
+	 * @var list<string>
+	 */
+	public const CACHE_TRANSIENT_PREFIXES = array(
+		'mhbo_cal_payload_',
+		'mhbo_avail_',
+		'mhbo_widget_',
+		'mhbo_dashboard_',
+		'mhbo_analytics_rollup',
+		'mhbo_kpi_',
+		'mhbo_occ_',
+		'mhbo_tbl_ok_',
+		'mhbo_coupons_table_ok',
+		'mhbo_kb_cache',
+		'mhbo_ai_catalog_',
+		'mhbo_mcp_feed_',
+		'mhbo_detected_guest_portal_page',
+		'mhbo_ical_platform_sources',
+	);
+
+	/**
 	 * Available tables for versioning.
 	 */
 	const TABLE_BOOKINGS           = 'bookings';
@@ -154,13 +193,47 @@ class Cache {
 	 * @param string $table The table identifier (use class constants).
 	 */
 	public static function bump( string $table ): void {
-		$version = self::get_version( $table ) + 1;
-		update_option( "mhbo_v_{$table}", $version );
-		
-		// Clear non-persistent local object cache and immediately memoize new version in runtime cache
-		wp_cache_delete( "mhbo_v_{$table}", self::GROUP );
+		$option_name = "mhbo_v_{$table}";
+		$version     = null;
+
+		global $wpdb;
+		if ( $wpdb instanceof \wpdb && ! empty( $wpdb->options ) ) {
+			// Atomic SQL increment avoids lost updates under concurrent booking/iCal requests.
+			$prepared_update = $wpdb->prepare(
+				'UPDATE %i SET option_value = CAST(option_value AS UNSIGNED) + 1 WHERE option_name = %s',
+				$wpdb->options,
+				$option_name
+			);
+			if ( is_string( $prepared_update ) && '' !== $prepared_update ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Atomic version counter increment prepared immediately above.
+				$updated = $wpdb->query( $prepared_update );
+				if ( is_int( $updated ) && $updated > 0 ) {
+					$prepared_select = $wpdb->prepare(
+						'SELECT option_value FROM %i WHERE option_name = %s',
+						$wpdb->options,
+						$option_name
+					);
+					if ( is_string( $prepared_select ) && '' !== $prepared_select ) {
+						// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Reads freshly incremented atomic counter immediately after UPDATE.
+						$db_val = $wpdb->get_var( $prepared_select );
+						if ( is_numeric( $db_val ) && (int) $db_val >= 1 ) {
+							$version = (int) $db_val;
+							wp_cache_delete( $option_name, 'options' );
+							wp_cache_delete( 'alloptions', 'options' );
+						}
+					}
+				}
+			}
+		}
+
+		if ( null === $version ) {
+			$version = self::get_version( $table ) + 1;
+			update_option( $option_name, $version );
+		}
+
+		// Immediately memoize new version in runtime cache for subsequent lookups in this request.
 		self::$runtime_cache[ 'v_' . $table ] = $version;
-		
+
 		// Ensure all versioned transients are effectively "cleared" by the new version number
 		// for any process checking them subsequently.
 	}
@@ -180,9 +253,10 @@ class Cache {
 	/**
 	 * Purge all MHBO caches, bump table generations, flush WP 7.1+ object cache groups, and clean transient DB records.
 	 *
+	 * @param list<string> $skip_tables Optional table identifiers already bumped in the current operation.
 	 * @return bool Always true on completion.
 	 */
-	public static function flush_all(): bool {
+	public static function flush_all( array $skip_tables = array() ): bool {
 		$tables = array(
 			self::TABLE_CALENDAR_OVERRIDES,
 			self::TABLE_BOOKINGS,
@@ -194,16 +268,18 @@ class Cache {
 			self::TABLE_GUESTS,
 		);
 
-		// 1. Increment generation numbers for all data tables.
+		// 1. Increment generation numbers for all data tables (skipping tables just bumped by the caller).
 		foreach ( $tables as $table ) {
-			self::bump( $table );
+			if ( ! in_array( $table, $skip_tables, true ) ) {
+				self::bump( $table );
+			}
 		}
 
 		// 2. Clear static in-memory caches for the current PHP lifecycle.
 		self::$runtime_cache = array();
 		self::$tables_exist  = array();
 
-		// 3. WordPress 6.1+ / 7.1+ Object Cache Group Flushing.
+		// 3. WordPress 6.1+ / 7.1+ Object Cache Group Flushing (only when drop-in supports flush_group).
 		$groups = array(
 			self::GROUP,
 			'mhbo',
@@ -213,7 +289,11 @@ class Cache {
 			'mhbo_privacy',
 			'mhbo_coupons',
 		);
-		if ( function_exists( 'wp_cache_flush_group' ) ) {
+		if (
+			function_exists( 'wp_cache_flush_group' )
+			&& function_exists( 'wp_cache_supports' )
+			&& wp_cache_supports( 'flush_group' )
+		) {
 			foreach ( $groups as $group ) {
 				wp_cache_flush_group( $group );
 			}
@@ -230,8 +310,9 @@ class Cache {
 			wp_cache_delete( $item[0], $item[1] );
 		}
 
-		// 5. Clear all dashboard, widget, and availability transients.
+		// 5. Clear all dashboard, widget, known unversioned, and DB-backed availability transients.
 		self::clear_dashboard_transients();
+		self::clear_known_cache_transients();
 		self::clear_database_transients();
 
 		// 6. Invalidate third-party external page caches (LiteSpeed, WP Rocket, W3TC, etc.).
@@ -245,22 +326,67 @@ class Cache {
 	}
 
 	/**
-	 * Delete cached transient records from wp_options table when external object cache is not in use.
+	 * Delete known unversioned cache-only transients via WordPress API.
+	 * Ensures external object-cache drop-ins also clear unversioned cache entries.
 	 */
-	public static function clear_database_transients(): void {
-		global $wpdb;
-		if ( ! $wpdb instanceof \wpdb || empty( $wpdb->options ) ) {
-			return;
+	public static function clear_known_cache_transients(): void {
+		$static_keys = array(
+			'mhbo_kb_cache',
+			'mhbo_coupons_table_ok',
+			'mhbo_detected_guest_portal_page',
+			'mhbo_ical_platform_sources',
+			'mhbo_mcp_feed_hotels',
+			'mhbo_mcp_feed_prices',
+		);
+
+		foreach ( $static_keys as $key ) {
+			delete_transient( $key );
 		}
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk transient cleanup during administrative cache purge.
-		$wpdb->query(
-			"DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_mhbo_%' 
-             OR option_name LIKE '_transient_timeout_mhbo_%'
-             OR option_name LIKE '_site_transient_mhbo_%'
-             OR option_name LIKE '_site_transient_timeout_mhbo_%'"
-		);
+		foreach ( array( 'gemini', 'openai', 'anthropic' ) as $provider ) {
+			delete_transient( 'mhbo_ai_catalog_' . $provider );
+		}
+	}
+
+	/**
+	 * Delete cached transient records from wp_options table when external object cache is not in use.
+	 * Only removes allowlisted cache-only prefixes so transactional holds, idempotency locks,
+	 * rate-limit counters, iCal mutexes, and active AI chat sessions are never evicted.
+	 */
+	public static function clear_database_transients(): int {
+		self::$last_purged_db_rows = 0;
+
+		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
+			return 0;
+		}
+
+		global $wpdb;
+		if ( ! $wpdb instanceof \wpdb || empty( $wpdb->options ) ) {
+			return 0;
+		}
+
+		$patterns = array();
+		foreach ( self::CACHE_TRANSIENT_PREFIXES as $prefix ) {
+			foreach ( array( '_transient_', '_transient_timeout_', '_site_transient_', '_site_transient_timeout_' ) as $wp_prefix ) {
+				$raw_prefix = $wp_prefix . $prefix;
+				$escaped    = method_exists( $wpdb, 'esc_like' )
+					? $wpdb->esc_like( $raw_prefix )
+					: addcslashes( $raw_prefix, '_%\\' );
+				$patterns[] = $escaped . '%';
+			}
+		}
+
+		$where_clause = implode( ' OR ', array_fill( 0, count( $patterns ), 'option_name LIKE %s' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Deterministic LIKE %s list from CACHE_TRANSIENT_PREFIXES constant.
+		$prepared = $wpdb->prepare( 'DELETE FROM %i WHERE ' . $where_clause, $wpdb->options, ...$patterns );
+		if ( is_string( $prepared ) && '' !== $prepared ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Prepared immediately above.
+			$deleted                   = $wpdb->query( $prepared );
+			self::$last_purged_db_rows = ( is_int( $deleted ) && $deleted > 0 ) ? $deleted : 0;
+		}
+
+		return self::$last_purged_db_rows;
 	}
 
 	/**
@@ -602,22 +728,28 @@ class Cache {
 	 * @return int Number of expired transients removed.
 	 */
 	public static function prune_expired_transients( int $batch_limit = 200 ): int {
-		/** @var \wpdb $wpdb */
-		global $wpdb;
-
-		if ( empty( $wpdb->options ) ) {
+		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
 			return 0;
 		}
 
-		$prefix = $wpdb->esc_like( '_transient_timeout_mhbo_' ) . '%';
-		$now    = time();
+		/** @var \wpdb $wpdb */
+		global $wpdb;
+
+		if ( ! $wpdb instanceof \wpdb || empty( $wpdb->options ) ) {
+			return 0;
+		}
+
+		$local_prefix = $wpdb->esc_like( '_transient_timeout_mhbo_' ) . '%';
+		$site_prefix  = $wpdb->esc_like( '_site_transient_timeout_mhbo_' ) . '%';
+		$now          = time();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bounded maintenance cleanup of expired plugin transients.
 		$expired_timeouts = $wpdb->get_col(
 			$wpdb->prepare(
-				'SELECT option_name FROM %i WHERE option_name LIKE %s AND CAST(option_value AS UNSIGNED) < %d LIMIT %d',
+				'SELECT option_name FROM %i WHERE ( option_name LIKE %s OR option_name LIKE %s ) AND CAST(option_value AS UNSIGNED) < %d LIMIT %d',
 				$wpdb->options,
-				$prefix,
+				$local_prefix,
+				$site_prefix,
 				$now,
 				max( 1, $batch_limit )
 			)
@@ -627,16 +759,55 @@ class Cache {
 			return 0;
 		}
 
-		$deleted = 0;
-		$cut     = strlen( '_transient_timeout_' );
+		$option_names = array();
+		$site_options = array();
+		$pruned_count = 0;
+
 		foreach ( $expired_timeouts as $opt_name ) {
-			$transient_name = substr( (string) $opt_name, $cut );
-			if ( '' !== $transient_name && delete_transient( $transient_name ) ) {
-				++$deleted;
+			$opt_str = (string) $opt_name;
+			if ( str_starts_with( $opt_str, '_transient_timeout_' ) ) {
+				$transient_name = substr( $opt_str, strlen( '_transient_timeout_' ) );
+				if ( '' !== $transient_name ) {
+					$option_names[] = $opt_str;
+					$option_names[] = '_transient_' . $transient_name;
+					++$pruned_count;
+				}
+			} elseif ( str_starts_with( $opt_str, '_site_transient_timeout_' ) ) {
+				$transient_name = substr( $opt_str, strlen( '_site_transient_timeout_' ) );
+				if ( '' !== $transient_name ) {
+					$option_names[] = $opt_str;
+					$option_names[] = '_site_transient_' . $transient_name;
+					$site_options[] = $opt_str;
+					$site_options[] = '_site_transient_' . $transient_name;
+					++$pruned_count;
+				}
 			}
 		}
 
-		return $deleted;
+		if ( array() === $option_names ) {
+			return 0;
+		}
+
+		$option_names = array_values( array_unique( $option_names ) );
+		$placeholders = implode( ',', array_fill( 0, count( $option_names ), '%s' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Deterministic %s IN list from bounded SELECT above.
+		$prepared = $wpdb->prepare( 'DELETE FROM %i WHERE option_name IN (' . $placeholders . ')', $wpdb->options, ...$option_names );
+		if ( ! is_string( $prepared ) || '' === $prepared ) {
+			return 0;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Prepared immediately above.
+		$wpdb->query( $prepared );
+
+		foreach ( $option_names as $deleted_opt ) {
+			wp_cache_delete( $deleted_opt, 'options' );
+		}
+		foreach ( $site_options as $deleted_site_opt ) {
+			wp_cache_delete( $deleted_site_opt, 'site-options' );
+		}
+
+		return $pruned_count;
 	}
 
 	/**

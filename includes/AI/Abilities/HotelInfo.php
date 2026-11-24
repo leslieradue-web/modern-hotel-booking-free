@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace MHBO\AI\Abilities;
 
 use MHBO\Business\Info;
+use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -102,9 +103,11 @@ class HotelInfo {
 			}
 		}
 
+		$cancel_clean = class_exists( \MHBO\Api\GuestPortalController::class ) ? \MHBO\Api\GuestPortalController::get_active_cancellation_policy() : '';
+
 		$policies_parts = array_filter(
 			array(
-				get_option( 'mhbo_cancellation_policy', '' ) ? 'Cancellation: ' . (string) get_option( 'mhbo_cancellation_policy' ) : '',
+				'' !== $cancel_clean ? 'Cancellation: ' . $cancel_clean : '',
 				get_option( 'mhbo_pet_policy', '' ) ? 'Pets: ' . (string) get_option( 'mhbo_pet_policy' ) : '',
 				get_option( 'mhbo_smoking_policy', '' ) ? 'Smoking: ' . (string) get_option( 'mhbo_smoking_policy' ) : '',
 			),

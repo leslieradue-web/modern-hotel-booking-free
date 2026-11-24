@@ -45,7 +45,7 @@ $mhbo_guests_details_row = '<tr><td style="color: #64748b">Guests:</td><td style
             
             <div style="background-color: #fffbeb;border-left: 4px solid #f59e0b;padding: 15px;margin: 25px 0;border-radius: 4px">
                 <strong style="color: #b45309;font-size: 15px;">Cancellation Request Under Review</strong><br>
-                <span style="font-size: 14px;color: #92400e;">We have received your cancellation request for Reservation #{booking_id}. Because a payment of {payment_amount} has already been collected, our management team will review your reservation in accordance with our cancellation policy and follow up with you regarding any applicable refund.</span>
+                <span style="font-size: 14px;color: #92400e;">{cancellation_review_reason}</span>
             </div>
 
             <h3 style="color: #0077b6;border-bottom: 2px solid #f0f4f8;padding-bottom: 10px;margin-bottom: 20px;font-size: 18px">Reservation Details:</h3>

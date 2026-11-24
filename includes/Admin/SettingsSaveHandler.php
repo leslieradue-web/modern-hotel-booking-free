@@ -11,6 +11,7 @@ use MHBO\Core\HotelTime;
 use MHBO\Core\I18n;
 use MHBO\Core\Money;
 use MHBO\Core\Pricing;
+use MHBO\Core\Security;
 use MHBO\Core\Tier;
 
 /**
@@ -150,6 +151,35 @@ class SettingsSaveHandler {
         if (isset($data['mhbo_guest_portal_page'])) {
             update_option('mhbo_guest_portal_page', absint(wp_unslash($data['mhbo_guest_portal_page'])));
         }
+        if (isset($data['mhbo_portal_modify_mode'])) {
+            $raw_modify_mode = sanitize_key( (string) wp_unslash($data['mhbo_portal_modify_mode']));
+            update_option('mhbo_portal_modify_mode', in_array($raw_modify_mode, array('request_only', 'auto_unpaid', 'disabled'), true) ? $raw_modify_mode : 'request_only');
+        }
+        if (isset($data['mhbo_portal_cancel_mode'])) {
+            $raw_cancel_mode = sanitize_key( (string) wp_unslash($data['mhbo_portal_cancel_mode']));
+            update_option('mhbo_portal_cancel_mode', in_array($raw_cancel_mode, array('request_only', 'auto_unpaid', 'disabled'), true) ? $raw_cancel_mode : 'request_only');
+        }
+        if (isset($data['mhbo_cancellation_lead_hours'])) {
+            update_option('mhbo_cancellation_lead_hours', min(720, absint(wp_unslash($data['mhbo_cancellation_lead_hours']))));
+        }
+        if (isset($data['mhbo_portal_max_modifications'])) {
+            update_option('mhbo_portal_max_modifications', min(20, absint(wp_unslash($data['mhbo_portal_max_modifications']))));
+        }
+        if (isset($data['mhbo_cancellation_policy'])) {
+            update_option('mhbo_cancellation_policy', sanitize_textarea_field( (string) wp_unslash($data['mhbo_cancellation_policy'])));
+        }
+        if (isset($data['mhbo_terms_page'])) {
+            update_option('mhbo_terms_page', absint(wp_unslash($data['mhbo_terms_page'])));
+        }
+        if (isset($data['mhbo_label_templates']['booking_terms_checkbox_text']) && is_array($data['mhbo_label_templates'])) {
+            $raw_terms_data = wp_unslash($data['mhbo_label_templates']['booking_terms_checkbox_text']);
+            if (is_array($raw_terms_data)) {
+                $terms_data = array_map('wp_kses_post', $raw_terms_data);
+            } else {
+                $terms_data = wp_kses_post( (string) $raw_terms_data);
+            }
+            update_option('mhbo_label_booking_terms_checkbox_text', I18n::encode($terms_data));
+        }
 
 if (isset($data['mhbo_notification_email'])) {
             // 2026 BP: Rule 11 - Individual extraction then sanitization.
@@ -203,17 +233,33 @@ if (isset($data['mhbo_trusted_proxies'])) {
             'mhbo_room_cards_show_badge',
             'mhbo_portal_show_title',
             'mhbo_portal_show_badge',
+            'mhbo_portal_self_service_enabled',
+            'mhbo_cancellation_policy_enabled',
+            'mhbo_booking_terms_checkbox_enabled',
             'mhbo_calendar_show_decimals',
             'mhbo_powered_by_link',
             'mhbo_save_data_on_uninstall',
             'mhbo_guest_crm_enabled',
-            'mhbo_children_enabled',
         );
 
 foreach ($bool_fields as $field) {
             $raw_val = isset($data[ $field ]) ? (string) wp_unslash($data[ $field ]) : '0';
             $val = ( '1' === $raw_val ) ? 1 : 0;
             update_option($field, $val);
+        }
+
+        if (
+            1 === (int) get_option('mhbo_portal_self_service_enabled', 0)
+            && 'disabled' === (string) get_option('mhbo_portal_modify_mode', 'request_only')
+            && 'disabled' === (string) get_option('mhbo_portal_cancel_mode', 'request_only')
+        ) {
+            update_option('mhbo_portal_self_service_enabled', 0);
+            add_settings_error(
+                'mhbo_settings',
+                'mhbo_portal_self_service_auto_off',
+                __('Guest self-service was turned off automatically because both Stay Date Changes and Cancellations are set to Disabled.', 'modern-hotel-booking'),
+                'info'
+            );
         }
 
 // Invalidate settings cache so API payload version hash changes immediately

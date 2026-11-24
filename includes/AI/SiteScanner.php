@@ -146,7 +146,7 @@ class SiteScanner {
 		}
 
 		$policies = array();
-		$cancel   = (string) get_option( 'mhbo_cancellation_policy', '' );
+		$cancel   = class_exists( \MHBO\Api\GuestPortalController::class ) ? \MHBO\Api\GuestPortalController::get_active_cancellation_policy() : '';
 		$pets     = (string) get_option( 'mhbo_pet_policy', '' );
 		$smoking  = (string) get_option( 'mhbo_smoking_policy', '' );
 		$children = (string) get_option( 'mhbo_children_policy', '' );
@@ -437,7 +437,7 @@ return count( $lines ) > 1 ? implode( "\n", $lines ) : '';
 
 		$output = array();
 
-		foreach ( $query->posts as $post ) {
+		foreach ( is_array( $query->posts ) ? $query->posts : array() as $post ) {
 			if ( ! ( $post instanceof WP_Post ) ) {
 				continue;
 			}

@@ -253,6 +253,7 @@ add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 			'currency_symbol'                 => get_option( 'mhbo_currency_symbol', '$' ),
 			'currency_pos'                    => get_option( 'mhbo_currency_position', 'before' ),
 			'msg_gdpr_required'               => I18n::get_label( 'msg_gdpr_required' ),
+			'msg_terms_required'              => I18n::get_label( 'msg_terms_required' ),
 			'msg_paypal_required'             => I18n::get_label( 'msg_paypal_required' ),
 			'msg_fill_all_fields'             => I18n::get_label( 'label_fill_all_fields' ),
 			'msg_field_required'              => I18n::get_label( 'label_field_required' ),

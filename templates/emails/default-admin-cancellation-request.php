@@ -15,13 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div style="background-color: #f4f7f9;padding: 20px 10px;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif">
     <div style="max-width: 650px;margin: 0 auto;background-color: #ffffff;border: 1px solid #fca5a5;border-radius: 16px;overflow: visible">
         <div style="background: #b91c1c; color: #ffffff; padding: 20px; border-radius: 15px 15px 0 0;">
-            <h2 style="margin: 0; font-size: 20px; color: #ffffff;">&#9888; Action Required: Cancellation & Refund Request &mdash; #{booking_id}</h2>
-            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">A guest has requested cancellation for a reservation with payment on file.</p>
+            <h2 style="margin: 0; font-size: 20px; color: #ffffff;">&#9888; {admin_cancellation_heading}</h2>
+            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">{admin_cancellation_subtitle}</p>
         </div>
         <div style="padding: 30px">
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; color: #991b1b; font-size: 14px; line-height: 1.5;">
-                <strong>Payment on File: {payment_amount}</strong><br>
-                This reservation cannot be automatically cancelled because payments have been collected. Please verify your property cancellation policy, process any eligible refund via your payment gateway, and update the reservation status in the PMS.
+                {admin_cancellation_review_notice}
             </div>
 
             <h3 style="color: #0f172a; border-bottom: 2px solid #f0f4f8; padding-bottom: 8px; margin-top: 0; font-size: 16px;">Reservation Details</h3>

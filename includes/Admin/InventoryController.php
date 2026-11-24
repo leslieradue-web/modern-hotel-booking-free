@@ -358,7 +358,7 @@ class InventoryController {
 										<?php else : ?>
 											<div class="mhbo-thumb-placeholder" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#94a3b8;"><span class="dashicons dashicons-format-image" style="font-size:28px; width:28px; height:28px;"></span></div>
 										<?php endif; ?>
-										<div class="mhbo-room-badge-index" style="position:absolute; top:4px; left:4px; background:rgba(15,23,42,0.8); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px;">#<?php echo esc_html( $t->id ); ?></div>
+										<div class="mhbo-room-badge-index">#<?php echo esc_html( $t->id ); ?></div>
 									</div>
 									<div class="mhbo-room-info-group" style="flex-grow:1;">
 										<h4 class="mhbo-room-title" style="margin:0 0 4px 0; font-size:15px; font-weight:700; color:#0f172a;"><?php echo esc_html( (string) ( I18n::decode( $t->name ) ?? '' ) ); ?></h4>
@@ -414,13 +414,13 @@ class InventoryController {
 								<div class="mhbo-room-card-actions" style="display:flex; gap:8px; border-top:1px solid #f1f5f9; padding-top:12px; justify-content:flex-end;">
 									<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-room-types&action=edit&id={$t->id}" ), 'mhbo_edit_room_type_' . $t->id ) ); ?>"
 										class="button button-small" title="<?php esc_attr_e( 'Edit Category', 'modern-hotel-booking' ); ?>">
-										<span class="dashicons dashicons-edit" style="margin-top:3px;"></span> <?php esc_html_e( 'Edit', 'modern-hotel-booking' ); ?>
+										<span class="dashicons dashicons-edit" aria-hidden="true"></span> <?php esc_html_e( 'Edit', 'modern-hotel-booking' ); ?>
 									</a>
 									
 									<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-room-types&action=delete&id={$t->id}" ), 'mhbo_delete_room_type_' . $t->id ) ); ?>"
-										class="button button-small button-link-delete" title="<?php esc_attr_e( 'Delete', 'modern-hotel-booking' ); ?>"
+										class="button button-small button-link-delete" title="<?php esc_attr_e( 'Delete', 'modern-hotel-booking' ); ?>" aria-label="<?php esc_attr_e( 'Delete Room Type', 'modern-hotel-booking' ); ?>"
 										onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete this room type? This may affect existing rooms.', 'modern-hotel-booking' ); ?>')">
-										<span class="dashicons dashicons-trash" style="margin-top:3px;"></span>
+										<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 									</a>
 								</div>
 							</div>
@@ -842,8 +842,8 @@ if ( $submit_ical_feed ) {
 				</form>
 			</div>
 
-			<div class="mhbo-card" style="padding: 0; overflow: hidden; border-radius: 16px;">
-				<div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; background: #ffffff;">
+			<div class="mhbo-card mhbo-card--flush">
+				<div style="display:flex; justify-content:space-between; align-items:center; padding: 20px 24px; border-bottom: 1px solid #e2e8f0; background: #ffffff; border-top-left-radius: 12px; border-top-right-radius: 12px;">
 					<h3 style="margin:0; font-size:1.15rem; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
 						<span class="dashicons dashicons-list-view" style="color: #2563eb;"></span>
 						<?php esc_html_e( 'Full Unit Inventory', 'modern-hotel-booking' ); ?>
@@ -865,20 +865,20 @@ if ( $submit_ical_feed ) {
 						</thead>
 						<tbody>
 							<?php if ( count( $rooms ) === 0 ) : ?>
-								<tr><td colspan="7" style="padding:48px 24px; text-align:center; color:#94a3b8; font-style: italic;"><?php esc_html_e( 'Inventory is completely empty. Register your first physical room unit above.', 'modern-hotel-booking' ); ?></td></tr>
+								<tr><td colspan="7" style="padding:48px 24px; text-align:center; color:#475569; font-style: italic;"><?php esc_html_e( 'Inventory is completely empty. Register your first physical room unit above.', 'modern-hotel-booking' ); ?></td></tr>
 							<?php else : ?>
 								<?php foreach ( $rooms as $r ) : ?>
 									<tr>
-										<td><span class="mhbo-id-badge">#<?php echo esc_html( $r->id ); ?></span></td>
-										<td>
+										<td data-colname="<?php echo esc_attr( I18n::get_label( 'label_col_id' ) ); ?>"><span class="mhbo-id-badge">#<?php echo esc_html( $r->id ); ?></span></td>
+										<td data-colname="<?php esc_attr_e( 'Image', 'modern-hotel-booking' ); ?>">
 											<?php $thumb = ( isset( $r->image_url ) ? (string) $r->image_url : '' ) ?: ( $r->type_image_url ?? '' ); ?>
 											<?php if ( $thumb ) : ?>
 												<img src="<?php echo esc_url( $thumb ); ?>" alt="" style="width:52px; height:38px; object-fit:cover; border-radius:6px; display:block;">
 											<?php else : ?>
-												<span style="display:flex; align-items:center; justify-content:center; width:52px; height:38px; background:#f1f5f9; border-radius:6px; color:#94a3b8;"><span class="dashicons dashicons-format-image" style="font-size:20px; width:20px; height:20px;"></span></span>
+												<span style="display:flex; align-items:center; justify-content:center; width:52px; height:38px; background:#f1f5f9; border-radius:6px; color:#64748b;"><span class="dashicons dashicons-format-image" style="font-size:20px; width:20px; height:20px;" aria-hidden="true"></span></span>
 											<?php endif; ?>
 										</td>
-										<td>
+										<td data-colname="<?php echo esc_attr( I18n::get_label( 'label_col_unit' ) ); ?>">
 											<strong style="font-size: 1.05rem; color: #0f172a;"><?php echo esc_html( $r->room_number ); ?></strong>
 											<?php
 											$r_disp = \MHBO\Frontend\Calendar::get_room_display_settings( (int) $r->id );
@@ -894,18 +894,18 @@ if ( $submit_ical_feed ) {
 												</div>
 											<?php endif; ?>
 										</td>
-										<td>
+										<td data-colname="<?php echo esc_attr( I18n::get_label( 'label_classification' ) ); ?>">
 											<span style="background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
 												<?php echo esc_html( (string) ( I18n::decode( $r->type_name ) ?? '' ) ); ?>
 											</span>
 										</td>
-										<td>
+										<td data-colname="<?php echo esc_attr( I18n::get_label( 'label_col_rate' ) ); ?>">
 											<span style="font-weight: 700; color: #166534;"><?php echo esc_html( I18n::format_currency( $r->custom_price ?: $r->base_price ) ); ?></span>
 											<?php if ( $r->custom_price ) : ?>
-												<span class="mhbo-tooltip" style="margin-left: 5px;"><i class="mhbo-help-icon" style="background:#c5a059; color:#fff;">!</i><span class="mhbo-tooltip-text"><?php esc_html_e( 'Custom rate override active for this unit.', 'modern-hotel-booking' ); ?></span></span>
+												<span class="mhbo-tooltip" style="margin-left: 5px;"><i class="mhbo-help-icon">!</i><span class="mhbo-tooltip-text"><?php esc_html_e( 'Custom rate override active for this unit.', 'modern-hotel-booking' ); ?></span></span>
 											<?php endif; ?>
 										</td>
-										<td>
+										<td data-colname="<?php echo esc_attr( I18n::get_label( 'label_col_status' ) ); ?>">
 											<?php if ( $r->status === 'available' ) : ?>
 												<span style="display: inline-flex; align-items: center; gap: 6px; color: #166534; background: #dcfce7; padding: 3px 10px; border-radius: 99px; font-weight: 700; font-size: 11px; text-transform: uppercase;">
 													<span style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e;"></span>
@@ -918,14 +918,16 @@ if ( $submit_ical_feed ) {
 												</span>
 											<?php endif; ?>
 										</td>
-										<td style="text-align: right;">
+										<td data-colname="<?php echo esc_attr( I18n::get_label( 'label_col_mgmt' ) ); ?>" style="text-align: right;">
 											<div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center; min-width: 140px;">
 												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-rooms&action=edit&id={$r->id}" ), 'mhbo_edit_room_' . $r->id ) ); ?>"
-													class="button button-small" title="<?php esc_attr_e( 'Edit Unit', 'modern-hotel-booking' ); ?>"><span class="dashicons dashicons-edit" style="margin-top:3px;"></span></a>
+													class="button button-small" title="<?php esc_attr_e( 'Edit Unit', 'modern-hotel-booking' ); ?>" aria-label="<?php esc_attr_e( 'Edit Unit', 'modern-hotel-booking' ); ?>"><span class="dashicons dashicons-edit" aria-hidden="true"></span></a>
 
 <a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-rooms&action=delete&id={$r->id}" ), 'mhbo_delete_room_' . $r->id ) ); ?>"
 													class="button button-small button-link-delete"
-													onclick="return confirm('<?php esc_attr_e( 'Permanently remove this unit from inventory?', 'modern-hotel-booking' ); ?>')"><span class="dashicons dashicons-trash" style="margin-top:3px;"></span></a>
+													title="<?php esc_attr_e( 'Delete Unit', 'modern-hotel-booking' ); ?>"
+													aria-label="<?php esc_attr_e( 'Delete Unit', 'modern-hotel-booking' ); ?>"
+													onclick="return confirm('<?php esc_attr_e( 'Permanently remove this unit from inventory?', 'modern-hotel-booking' ); ?>')"><span class="dashicons dashicons-trash" aria-hidden="true"></span></a>
 											</div>
 										</td>
 									</tr>

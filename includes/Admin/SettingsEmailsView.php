@@ -52,32 +52,32 @@ class SettingsEmailsView {
                 <div class="mhbo-diagnostic-tile" style="padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                     <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: #64748b; margin-bottom: 4px;"><?php esc_html_e('Active Mailer Engine', 'modern-hotel-booking'); ?></div>
                     <div id="mhbo-tile-mailer" style="font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;"></span>
-                        <span style="color: #94a3b8;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
+                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #475569;" aria-hidden="true"></span>
+                        <span style="color: #475569;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
                     </div>
                 </div>
 
                 <div class="mhbo-diagnostic-tile" style="padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                     <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: #64748b; margin-bottom: 4px;"><?php esc_html_e('Sender & Domain Alignment', 'modern-hotel-booking'); ?></div>
                     <div id="mhbo-tile-domain" style="font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;"></span>
-                        <span style="color: #94a3b8;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
+                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #475569;" aria-hidden="true"></span>
+                        <span style="color: #475569;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
                     </div>
                 </div>
 
                 <div class="mhbo-diagnostic-tile" style="padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                     <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: #64748b; margin-bottom: 4px;"><?php esc_html_e('SPF DNS Record', 'modern-hotel-booking'); ?></div>
                     <div id="mhbo-tile-spf" style="font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;"></span>
-                        <span style="color: #94a3b8;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
+                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #475569;" aria-hidden="true"></span>
+                        <span style="color: #475569;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
                     </div>
                 </div>
 
                 <div class="mhbo-diagnostic-tile" style="padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                     <div style="font-size: 11px; text-transform: uppercase; font-weight: 600; color: #64748b; margin-bottom: 4px;"><?php esc_html_e('DMARC Policy Record', 'modern-hotel-booking'); ?></div>
                     <div id="mhbo-tile-dmarc" style="font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;"></span>
-                        <span style="color: #94a3b8;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
+                        <span class="dashicons dashicons-update mhbo-spin" style="font-size: 16px; width: 16px; height: 16px; color: #475569;" aria-hidden="true"></span>
+                        <span style="color: #475569;"><?php esc_html_e('Inspecting…', 'modern-hotel-booking'); ?></span>
                     </div>
                 </div>
             </div>
@@ -466,6 +466,7 @@ $placeholder_categories = array(
                         '{verification_expiry}' => __('Verification code validity window (e.g. 20 minutes)', 'modern-hotel-booking'),
                         '{portal_card}'         => __('Styled Guest Self-Service Portal login card with link & token', 'modern-hotel-booking'),
                         '{security_token_row}'  => __('Table row displaying the security reference token', 'modern-hotel-booking'),
+                        '{cancellation_policy}' => __('Property cancellation & modification policy notice', 'modern-hotel-booking'),
                     ),
                     
                     __('Property & Business Information', 'modern-hotel-booking') => array(

@@ -313,7 +313,7 @@ class Security {
 					$mask_bin .= chr( 255 );
 					$bits     -= 8;
 				} elseif ( $bits > 0 ) {
-					$mask_bin .= chr( 256 - ( 1 << ( 8 - $bits ) ) );
+					$mask_bin .= chr( max( 0, min( 255, 256 - ( 1 << ( 8 - $bits ) ) ) ) );
 					$bits      = 0;
 				} else {
 					$mask_bin .= chr( 0 );
@@ -508,18 +508,16 @@ class Security {
 			return false;
 		}
 
-		if ( isset( $parsed['port'] ) ) {
-			$port          = (int) $parsed['port'];
-			$allowed_ports = array_filter(
-				array_map(
-					'intval',
-					(array) apply_filters( 'mhbo_allowed_ollama_ports', array( 11434 ) )
-				),
-				static fn( int $p ): bool => $p >= 1 && $p <= 65535
-			);
-			if ( ! in_array( $port, $allowed_ports, true ) ) {
-				return false;
-			}
+		$port          = isset( $parsed['port'] ) ? (int) $parsed['port'] : ( 'https' === $scheme ? 443 : 80 );
+		$allowed_ports = array_filter(
+			array_map(
+				'intval',
+				(array) apply_filters( 'mhbo_allowed_ollama_ports', array( 11434 ) )
+			),
+			static fn( int $p ): bool => $p >= 1 && $p <= 65535
+		);
+		if ( ! in_array( $port, $allowed_ports, true ) ) {
+			return false;
 		}
 
 		$host = strtolower( rtrim( trim( (string) $parsed['host'], '[]' ), '.' ) );
@@ -581,7 +579,7 @@ class Security {
 	 * @return string Sanitized cell string.
 	 */
 	public static function sanitize_csv_cell( string $value ): string {
-		if ( '' !== $value && 1 === preg_match( '/^(?:[\t\r\n]|[\s\t\r\n]*[=+\-@])/', $value ) ) {
+		if ( '' !== $value && 1 === preg_match( '/^(?:[\t\r\n]|[\s\t\r\n]*[=+\-@|])/', $value ) ) {
 			return "'" . $value;
 		}
 		return $value;

@@ -233,6 +233,10 @@ class Capabilities {
 					$hotel_manager->add_cap( $cap );
 				}
 			}
+			// Law 55: Strip system settings capability from Hotel Manager role during sync.
+			if ( $hotel_manager->has_cap( self::MANAGE_SETTINGS ) ) {
+				$hotel_manager->remove_cap( self::MANAGE_SETTINGS );
+			}
 		}
 
 		// 2. Hotel Front Desk Staff Role (Reception / Check-in / Folios / Walk-ins)

@@ -193,10 +193,40 @@ class EmailPortalNotifier {
 		$subject = I18n::get_translated_string( 'Email admin_cancellation_request Subject', (string) $template_subject, 'MHBO Email Templates', $lang );
 		$message = I18n::get_translated_string( 'Email admin_cancellation_request Message', (string) $template_message, 'MHBO Email Templates', $lang );
 
-		$placeholders = EmailPlaceholderBuilder::get_booking_placeholders( $booking, 'admin_cancellation_request', $lang );
+		$actual_status                       = (string) ( $booking->status ?? 'pending' );
+		$placeholders                        = EmailPlaceholderBuilder::get_booking_placeholders( $booking, $actual_status, $lang );
 		$placeholders['{cancellation_reason}'] = '' !== trim( $reason ) ? esc_html( $reason ) : esc_html__( 'None provided', 'modern-hotel-booking' );
 		$placeholders['{amount_paid}']         = $formatted_paid;
 		$placeholders['{payment_amount}']      = $formatted_paid;
+		if ( $amount_paid > 0.001 ) {
+			$placeholders['{admin_cancellation_heading}']       = sprintf(
+				/* translators: %d: booking ID */
+				esc_html__( 'Action Required: Cancellation & Refund Request — #%d', 'modern-hotel-booking' ),
+				$booking_id
+			);
+			$placeholders['{admin_cancellation_subtitle}']      = esc_html__( 'A guest has requested cancellation for a reservation with payment on file.', 'modern-hotel-booking' );
+			$placeholders['{admin_cancellation_review_notice}'] = sprintf(
+				'<strong>%s</strong><br>%s',
+				sprintf(
+					/* translators: %s: formatted amount paid */
+					esc_html__( 'Payment on File: %s', 'modern-hotel-booking' ),
+					esc_html( $formatted_paid )
+				),
+				esc_html__( 'This reservation cannot be automatically cancelled because payments have been collected. Please verify your property cancellation policy, process any eligible refund via your payment gateway, and update the reservation status in the PMS.', 'modern-hotel-booking' )
+			);
+		} else {
+			$placeholders['{admin_cancellation_heading}']       = sprintf(
+				/* translators: %d: booking ID */
+				esc_html__( 'Action Required: Cancellation Request — #%d', 'modern-hotel-booking' ),
+				$booking_id
+			);
+			$placeholders['{admin_cancellation_subtitle}']      = esc_html__( 'A guest has requested cancellation under your staff-approval policy.', 'modern-hotel-booking' );
+			$placeholders['{admin_cancellation_review_notice}'] = sprintf(
+				'<strong>%s</strong><br>%s',
+				esc_html__( 'Staff Approval Required (Unpaid Reservation)', 'modern-hotel-booking' ),
+				esc_html__( 'This guest requested cancellation under your property policy requiring front desk approval. Review the reservation details and update the booking status to Cancelled in the PMS to release room inventory.', 'modern-hotel-booking' )
+			);
+		}
 
 		$subject = EmailPlaceholderBuilder::apply_placeholders( $subject, $placeholders );
 		$message = EmailPlaceholderBuilder::apply_placeholders( $message, $placeholders );
@@ -263,12 +293,27 @@ class EmailPortalNotifier {
 		$message = I18n::get_translated_string( 'Email cancellation_request Message', (string) $template_message, 'MHBO Email Templates', $lang );
 
 		// Fetch standard booking & business placeholders
+		$actual_status  = (string) ( $booking->status ?? 'pending' );
 		$formatted_paid = Pricing::format_price( $amount_paid );
 		$reason_clean   = '' !== trim( $reason ) ? esc_html( $reason ) : esc_html__( 'None provided', 'modern-hotel-booking' );
-		$placeholders   = EmailPlaceholderBuilder::get_booking_placeholders( $booking, 'cancellation_request', $lang );
+		$placeholders   = EmailPlaceholderBuilder::get_booking_placeholders( $booking, $actual_status, $lang );
 		$placeholders['{cancellation_reason}'] = $reason_clean;
 		$placeholders['{amount_paid}']         = $formatted_paid;
 		$placeholders['{payment_amount}']      = $formatted_paid;
+		if ( $amount_paid > 0.001 ) {
+			$placeholders['{cancellation_review_reason}'] = sprintf(
+				/* translators: 1: booking ID, 2: formatted payment amount */
+				esc_html__( 'We have received your cancellation request for Reservation #%1$d. Because a payment of %2$s has already been collected, our management team will review your reservation in accordance with our cancellation policy and follow up with you regarding any applicable refund.', 'modern-hotel-booking' ),
+				$booking_id,
+				esc_html( $formatted_paid )
+			);
+		} else {
+			$placeholders['{cancellation_review_reason}'] = sprintf(
+				/* translators: %d: booking ID */
+				esc_html__( 'We have received your cancellation request for Reservation #%d. Under property policy, cancellations require front desk review before being finalized and releasing your room. Our team will confirm shortly.', 'modern-hotel-booking' ),
+				$booking_id
+			);
+		}
 
 		$subject = EmailPlaceholderBuilder::apply_placeholders( $subject, $placeholders );
 		$message = EmailPlaceholderBuilder::apply_placeholders( $message, $placeholders );
@@ -339,7 +384,8 @@ class EmailPortalNotifier {
 		$message = I18n::get_translated_string( 'Email modification_request Message', (string) $template_message, 'MHBO Email Templates', $lang );
 
 		// Fetch standard booking & business placeholders
-		$placeholders = EmailPlaceholderBuilder::get_booking_placeholders( $booking, 'modification_request', $lang );
+		$actual_status                        = (string) ( $booking->status ?? 'pending' );
+		$placeholders                         = EmailPlaceholderBuilder::get_booking_placeholders( $booking, $actual_status, $lang );
 		$placeholders['{requested_dates}']    = '' !== trim( $requested_dates ) ? esc_html( $requested_dates ) : esc_html__( 'No date changes requested', 'modern-hotel-booking' );
 		$placeholders['{requested_guests}']   = '' !== trim( $requested_guests ) ? esc_html( $requested_guests ) : esc_html__( 'No guest changes requested', 'modern-hotel-booking' );
 		$placeholders['{modification_notes}'] = '' !== trim( $notes ) ? esc_html( $notes ) : esc_html__( 'None', 'modern-hotel-booking' );
@@ -410,7 +456,8 @@ class EmailPortalNotifier {
 		$subject = I18n::get_translated_string( 'Email admin_modification_request Subject', (string) $template_subject, 'MHBO Email Templates', $lang );
 		$message = I18n::get_translated_string( 'Email admin_modification_request Message', (string) $template_message, 'MHBO Email Templates', $lang );
 
-		$placeholders = EmailPlaceholderBuilder::get_booking_placeholders( $booking, 'admin_modification_request', $lang );
+		$actual_status                        = (string) ( $booking->status ?? 'pending' );
+		$placeholders                         = EmailPlaceholderBuilder::get_booking_placeholders( $booking, $actual_status, $lang );
 		$placeholders['{requested_dates}']    = '' !== trim( $requested_dates ) ? esc_html( $requested_dates ) : esc_html__( 'No date changes requested', 'modern-hotel-booking' );
 		$placeholders['{requested_guests}']   = '' !== trim( $requested_guests ) ? esc_html( $requested_guests ) : esc_html__( 'No guest changes requested', 'modern-hotel-booking' );
 		$placeholders['{modification_notes}'] = '' !== trim( $notes ) ? esc_html( $notes ) : esc_html__( 'None provided', 'modern-hotel-booking' );
@@ -499,15 +546,16 @@ class EmailPortalNotifier {
 	}
 
 	/**
-	 * Send a confirmation email to the guest (and property staff BCC) when stay dates
+	 * Send a stay dates update email to the guest (and property staff BCC) when stay dates
 	 * are updated directly for an unpaid reservation via the Guest Self-Service Portal.
 	 *
 	 * @param int    $booking_id    The booking ID.
 	 * @param string $old_check_in  Previous check-in date.
 	 * @param string $old_check_out Previous check-out date.
+	 * @param string $old_total     Optional previous booking total decimal.
 	 * @return bool True if sent, false otherwise.
 	 */
-	public static function send_stay_dates_updated_email( int $booking_id, string $old_check_in = '', string $old_check_out = '' ): bool {
+	public static function send_stay_dates_updated_email( int $booking_id, string $old_check_in = '', string $old_check_out = '', string $old_total = '' ): bool {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -550,12 +598,29 @@ class EmailPortalNotifier {
 		$subject = I18n::get_translated_string( 'Email stay_dates_updated Subject', (string) $template_subject, 'MHBO Email Templates', $lang );
 		$message = I18n::get_translated_string( 'Email stay_dates_updated Message', (string) $template_message, 'MHBO Email Templates', $lang );
 
-		$placeholders = EmailPlaceholderBuilder::get_booking_placeholders( $booking, 'stay_dates_updated', $lang );
+		$actual_status                       = (string) ( $booking->status ?? 'pending' );
+		$placeholders                        = EmailPlaceholderBuilder::get_booking_placeholders( $booking, $actual_status, $lang );
+		$placeholders['{balance_pay_button}'] = '';
+		
 		if ( '' !== $old_check_in ) {
 			$placeholders['{old_check_in}'] = HotelTime::format_date( $old_check_in );
 		}
 		if ( '' !== $old_check_out ) {
 			$placeholders['{old_check_out}'] = HotelTime::format_date( $old_check_out );
+		}
+		if ( '' !== $old_total ) {
+			$placeholders['{old_total_price}'] = I18n::format_currency( Money::fromDecimal( $old_total ) );
+		}
+
+		if ( 'confirmed' === $actual_status ) {
+			$placeholders['{stay_update_headline}'] = esc_html__( 'Stay Dates Updated Successfully', 'modern-hotel-booking' );
+			$placeholders['{stay_update_notice}']   = esc_html__( 'Your updated stay dates have been saved for your confirmed reservation. Please review your updated itinerary and charges below.', 'modern-hotel-booking' );
+		} elseif ( 'pending' === $actual_status ) {
+			$placeholders['{stay_update_headline}'] = esc_html__( 'Requested Stay Dates Updated (Pending Confirmation)', 'modern-hotel-booking' );
+			$placeholders['{stay_update_notice}']   = esc_html__( 'Your requested stay dates have been updated. Please note that your reservation is still pending confirmation by our property team. Please review your updated details and estimated charges below.', 'modern-hotel-booking' );
+		} else {
+			$placeholders['{stay_update_headline}'] = esc_html__( 'Stay Dates Updated', 'modern-hotel-booking' );
+			$placeholders['{stay_update_notice}']   = esc_html__( 'Your stay dates have been updated. Please review your updated reservation details and current status below.', 'modern-hotel-booking' );
 		}
 
 		$subject = EmailPlaceholderBuilder::apply_placeholders( $subject, $placeholders );

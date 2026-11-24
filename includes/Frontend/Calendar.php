@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use MHBO\Api\RestApi;
+use MHBO\Core\Cache;
 use MHBO\Core\HotelTime;
 use MHBO\Core\I18n;
 use MHBO\Core\Pricing;
@@ -709,7 +710,7 @@ class Calendar {
 				$max_days       = HotelTime::get_max_advance_booking_days();
 				$version_hash   = RestApi::get_calendar_version_hash();
 				$transient_key  = 'mhbo_cal_payload_' . $room_id . '_' . $current_year . '_' . $current_month . '_o0_l' . $initial_days . '_v' . md5( $version_hash );
-				$cached_payload = get_transient( $transient_key );
+				$cached_payload = Cache::is_enabled() ? get_transient( $transient_key ) : false;
 
 				if ( false === $cached_payload ) {
 					$payload = ( $room_id > 0 )
@@ -717,7 +718,9 @@ class Calendar {
 						: RestApi::generate_aggregated_calendar_payload( $current_year, $current_month, $initial_days, 0 );
 
 					if ( ! is_wp_error( $payload ) && is_array( $payload ) && array() !== $payload ) {
-						set_transient( $transient_key, $payload, 12 * HOUR_IN_SECONDS );
+						if ( Cache::is_enabled() ) {
+							set_transient( $transient_key, $payload, 12 * HOUR_IN_SECONDS );
+						}
 						$cached_payload = $payload;
 					}
 				}

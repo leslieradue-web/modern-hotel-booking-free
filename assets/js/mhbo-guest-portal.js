@@ -24,11 +24,26 @@
 		root.setAttribute('data-initialized', '1');
 
 		var restUrl = root.getAttribute('data-rest-url') || (window.location.origin + '/wp-json/mhbo/v1/portal');
+		var nonce = root.getAttribute('data-nonce') || '';
 		var alertEl = document.getElementById('mhbo-portal-alert');
 		var lookupView = document.getElementById('mhbo-portal-lookup-view');
 		var detailsView = document.getElementById('mhbo-portal-details-view');
 		var currentBooking = null;
 		var bookingAbortController = null;
+
+		function parseJsonSafe(res) {
+			return res.text().then(function(raw) {
+				var parsed = null;
+				if (raw) {
+					try {
+						parsed = JSON.parse(raw);
+					} catch (_e) {
+						parsed = null;
+					}
+				}
+				return { ok: res.ok, status: res.status, data: parsed };
+			});
+		}
 
 		var i18n = window.mhbo_portal_i18n || {};
 		function __t(key, fallback) {
@@ -239,6 +254,12 @@
 			}
 
 			// Add to Calendar Integration (Google Calendar + Apple/Outlook .ics)
+			var isClosedCalStatus = (b.status === 'cancelled' || b.status === 'refunded');
+			var calBtn = document.getElementById('mhbo-qa-calendar-btn');
+			var calWrap = calBtn ? calBtn.closest('.mhbo-qa-dropdown-wrap') : null;
+			if (calWrap) {
+				calWrap.style.display = isClosedCalStatus ? 'none' : 'inline-flex';
+			}
 			var calGoogle = document.getElementById('mhbo-cal-google');
 			if (calGoogle && b.check_in && b.check_out) {
 				var calTitle = encodeURIComponent((b.hotel_name || 'Hotel') + ' - Reservation #' + b.booking_id);
@@ -252,6 +273,12 @@
 			if (calIcs && b.check_in && b.check_out) {
 				calIcs.onclick = function(e) {
 					e.preventDefault();
+					var icsStatus = 'CONFIRMED';
+					if (b.status === 'pending' || b.status === 'pending_payment') {
+						icsStatus = 'TENTATIVE';
+					} else if (b.status === 'cancelled' || b.status === 'refunded') {
+						icsStatus = 'CANCELLED';
+					}
 					var icsData = [
 						'BEGIN:VCALENDAR',
 						'VERSION:2.0',
@@ -264,7 +291,7 @@
 						'SUMMARY:' + (b.hotel_name || 'Hotel') + ' - ' + b.room_name,
 						'DESCRIPTION:Reservation #' + b.booking_id + ' for ' + b.customer_name,
 						'LOCATION:' + (b.hotel_address || ''),
-						'STATUS:CONFIRMED',
+						'STATUS:' + icsStatus,
 						'END:VEVENT',
 						'END:VCALENDAR'
 					].join('\r\n');
@@ -309,12 +336,13 @@
 				if (b.is_group_booking) {
 					if (groupIdLabel) groupIdLabel.textContent = '#' + (b.group_id || b.group_parent_ref || b.booking_id);
 					if (groupPayBtn) {
+						const isPayableGroupStatus = (b.status !== 'cancelled' && b.status !== 'refunded' && b.status !== 'pending_payment');
 						const groupRemaining = b.group_remaining_balance !== undefined ? parseFloat(b.group_remaining_balance) : parseFloat(b.balance_remaining || 0);
-						if (groupRemaining > 0.001 && b.group_balance_payment_url) {
+						if (isPayableGroupStatus && groupRemaining > 0.001 && b.group_balance_payment_url) {
 							groupPayBtn.href = b.group_balance_payment_url;
 							groupPayBtn.onclick = null;
 							groupPayBtn.style.display = 'inline-flex';
-						} else if (groupRemaining > 0.001 && b.group_can_pay_balance) {
+						} else if (isPayableGroupStatus && groupRemaining > 0.001 && b.group_can_pay_balance) {
 							groupPayBtn.href = '#mhbo-pay-group-balance';
 							groupPayBtn.onclick = function(e) {
 								e.preventDefault();
@@ -529,10 +557,11 @@
 			}
 
 			// Deposit breakdown
+			var isClosedBooking = (b.status === 'cancelled' || b.status === 'refunded');
 			var depositRow = document.getElementById('mhbo-res-deposit-row');
 			var depositValEl = document.getElementById('mhbo-res-deposit-val');
 			var depositNoteEl = document.getElementById('mhbo-res-deposit-status-note');
-			if (depositRow && b.deposit_amount > 0.001) {
+			if (depositRow && b.deposit_amount > 0.001 && (!isClosedBooking || b.is_deposit_paid)) {
 				if (depositValEl) depositValEl.textContent = b.deposit_formatted;
 				if (depositNoteEl) {
 					var noteText = b.is_deposit_paid
@@ -549,7 +578,7 @@
 			// Settled badge
 			var settledBadge = document.getElementById('mhbo-res-settled-badge');
 			if (settledBadge) {
-				settledBadge.style.display = (b.balance_remaining <= 0.001 && b.total_paid > 0.001) ? 'block' : 'none';
+				settledBadge.style.display = (!isClosedBooking && b.balance_remaining <= 0.001 && b.total_paid > 0.001) ? 'block' : 'none';
 			}
 
 			// Wi-Fi Access Card
@@ -643,6 +672,24 @@
 				}
 			}
 
+			// Pending self-service request banner
+			var pendingBanner = document.getElementById('mhbo-portal-pending-req-banner');
+			if (pendingBanner) {
+				var reqMsgs = [];
+				if (b.has_pending_cancellation_request) {
+					reqMsgs.push(__t('pending_cancel_request', 'A cancellation request is currently pending front desk review.'));
+				}
+				if (b.has_pending_modification_request) {
+					reqMsgs.push(__t('pending_mod_request', 'A stay modification request is currently pending front desk review.'));
+				}
+				if (reqMsgs.length > 0 && b.status !== 'cancelled' && b.status !== 'refunded') {
+					pendingBanner.textContent = reqMsgs.join(' ');
+					pendingBanner.style.display = 'block';
+				} else {
+					pendingBanner.style.display = 'none';
+				}
+			}
+
 			// Badges
 			var statusBadge = document.getElementById('mhbo-res-status-badge');
 			if (statusBadge) {
@@ -653,18 +700,25 @@
 			var paymentBadge = document.getElementById('mhbo-res-payment-badge');
 			if (paymentBadge) {
 				paymentBadge.textContent = b.payment_status_label || b.payment_status;
-				paymentBadge.className = 'mhbo-portal-badge mhbo-badge-paid';
+				var payBadgeClass = 'mhbo-badge-paid';
+				if (b.status === 'refunded' || b.payment_status === 'refunded') {
+					payBadgeClass = 'mhbo-badge-refunded';
+				} else if (b.status === 'cancelled') {
+					payBadgeClass = (parseFloat(b.total_paid || 0) > 0.001) ? 'mhbo-badge-pending' : 'mhbo-badge-neutral';
+				}
+				paymentBadge.className = 'mhbo-portal-badge ' + payBadgeClass;
 			}
 
 			// Balance payment link
 			var balanceCta = document.getElementById('mhbo-res-balance-cta');
 			var balanceBtn = document.getElementById('mhbo-res-balance-btn');
 			if (balanceCta && balanceBtn) {
-				if (b.balance_remaining > 0.001 && b.balance_payment_url) {
+				var isPayableStatus = (b.status !== 'cancelled' && b.status !== 'refunded' && b.status !== 'pending_payment');
+				if (isPayableStatus && b.balance_remaining > 0.001 && b.balance_payment_url) {
 					balanceBtn.href = b.balance_payment_url;
 					balanceBtn.onclick = null;
 					balanceCta.style.display = 'block';
-				} else if (b.balance_remaining > 0.001 && b.can_pay_balance) {
+				} else if (isPayableStatus && b.balance_remaining > 0.001 && b.can_pay_balance) {
 					balanceBtn.href = '#mhbo-pay-balance';
 					balanceBtn.onclick = function(e) {
 						e.preventDefault();
@@ -684,10 +738,10 @@
 			if (cancelBtn) {
 				if (b.cancellation_requires_staff && b.cancellation_request_allowed) {
 					cancelBtn.style.display = 'inline-flex';
-					if (cancelBtnText) cancelBtnText.textContent = 'Request Cancellation';
+					if (cancelBtnText) cancelBtnText.textContent = __t('request_cancellation', 'Request Cancellation');
 				} else if (b.cancellation_allowed) {
 					cancelBtn.style.display = 'inline-flex';
-					if (cancelBtnText) cancelBtnText.textContent = 'Cancel Reservation';
+					if (cancelBtnText) cancelBtnText.textContent = __t('cancel_reservation', 'Cancel Reservation');
 				} else {
 					cancelBtn.style.display = 'none';
 				}
@@ -697,6 +751,49 @@
 			var modifyBtn = document.getElementById('mhbo-portal-modify-btn');
 			if (modifyBtn) {
 				modifyBtn.style.display = b.modification_allowed ? 'inline-flex' : 'none';
+				var modifyBtnLabel = modifyBtn.querySelector('.mhbo-modify-btn-label');
+				var modifyText = b.modification_requires_staff
+					? __t('request_stay_change', 'Request Stay Change')
+					: __t('change_stay_dates', 'Change Stay Dates');
+				if (modifyBtnLabel) {
+					modifyBtnLabel.textContent = modifyText;
+				}
+			}
+
+			// Cancellation & Modification Policy / Front Desk Guidance Card
+			var policyCard = document.getElementById('mhbo-portal-policy-card');
+			var policyTextEl = document.getElementById('mhbo-portal-policy-text');
+			var policyContactEl = document.getElementById('mhbo-portal-policy-contact');
+			if (policyCard) {
+				var isInactiveBooking = (b.status === 'cancelled' || b.status === 'refunded' || b.status === 'checked_out' || b.status === 'completed');
+				var selfServiceHidden = !b.modification_allowed && !b.cancellation_allowed && !b.cancellation_request_allowed;
+				var policyEnabled = Boolean(b.cancellation_policy_enabled);
+				var policyText = policyEnabled ? (b.property_cancellation_policy || '').trim() : '';
+				var shouldShowPolicyCard = !isInactiveBooking && policyEnabled && (policyText !== '' || selfServiceHidden);
+
+				if (shouldShowPolicyCard) {
+					if (policyTextEl) {
+						policyTextEl.textContent = policyText;
+						policyTextEl.style.display = policyText !== '' ? 'block' : 'none';
+					}
+					if (policyContactEl) {
+						if (selfServiceHidden) {
+							var deskContact = b.hotel_phone || b.hotel_email || '';
+							policyContactEl.textContent = deskContact
+								? __t('need_changes_contact', 'Need to change or cancel your stay? Please contact our front desk directly at %s.').replace('%s', deskContact)
+								: __t('need_changes_fallback', 'Need to change or cancel your stay? Please contact our front desk directly for assistance.');
+							policyContactEl.style.display = 'block';
+						} else {
+							policyContactEl.textContent = '';
+							policyContactEl.style.display = 'none';
+						}
+					}
+					policyCard.style.display = 'block';
+				} else {
+					if (policyTextEl) policyTextEl.style.display = 'none';
+					if (policyContactEl) policyContactEl.style.display = 'none';
+					policyCard.style.display = 'none';
+				}
 			}
 
 			// AI Concierge button (Pro)
@@ -801,23 +898,40 @@
 		var cancelConfirm = document.getElementById('mhbo-cancel-modal-confirm');
 		var cancelTitle = document.getElementById('mhbo-cancel-modal-title');
 		var cancelPaidWarning = document.getElementById('mhbo-cancel-paid-warning');
+		var cancelReviewInfo = document.getElementById('mhbo-cancel-review-info');
 		var cancelPaidAmount = document.getElementById('mhbo-cancel-paid-amount');
 
 		if (cancelBtn && cancelModal) {
 			cancelBtn.addEventListener('click', function() {
 				if (!currentBooking) return;
 				var noticeEl = document.getElementById('mhbo-cancel-policy-notice');
-				if (noticeEl) noticeEl.textContent = currentBooking.cancellation_policy_notice || '';
-				
+				var hasPaid = parseFloat(currentBooking.total_paid || 0) > 0.001;
+				if (noticeEl) {
+					if (currentBooking.cancellation_requires_staff) {
+						var propPolicy = (currentBooking.property_cancellation_policy || '').trim();
+						noticeEl.textContent = propPolicy;
+						noticeEl.style.display = propPolicy ? 'block' : 'none';
+					} else {
+						noticeEl.textContent = currentBooking.cancellation_policy_notice || '';
+						noticeEl.style.display = noticeEl.textContent ? 'block' : 'none';
+					}
+				}
 				if (currentBooking.cancellation_requires_staff) {
-					if (cancelTitle) cancelTitle.textContent = 'Request Cancellation';
-					if (cancelConfirm) cancelConfirm.textContent = 'Submit Cancellation Request';
-					if (cancelPaidAmount) cancelPaidAmount.textContent = currentBooking.total_paid_formatted;
-					if (cancelPaidWarning) cancelPaidWarning.style.display = 'block';
+					if (cancelTitle) cancelTitle.textContent = __t('request_cancellation', 'Request Cancellation');
+					if (cancelConfirm) cancelConfirm.textContent = __t('submit_cancel_request', 'Submit Cancellation Request');
+					if (hasPaid) {
+						if (cancelPaidAmount) cancelPaidAmount.textContent = currentBooking.total_paid_formatted;
+						if (cancelPaidWarning) cancelPaidWarning.style.display = 'block';
+						if (cancelReviewInfo) cancelReviewInfo.style.display = 'none';
+					} else {
+						if (cancelPaidWarning) cancelPaidWarning.style.display = 'none';
+						if (cancelReviewInfo) cancelReviewInfo.style.display = 'block';
+					}
 				} else {
-					if (cancelTitle) cancelTitle.textContent = 'Cancel Reservation';
+					if (cancelTitle) cancelTitle.textContent = __t('cancel_reservation', 'Cancel Reservation');
 					if (cancelConfirm) cancelConfirm.textContent = __t('confirm_cancellation', 'Confirm Cancellation');
 					if (cancelPaidWarning) cancelPaidWarning.style.display = 'none';
+					if (cancelReviewInfo) cancelReviewInfo.style.display = 'none';
 				}
 				
 				cancelModal.style.display = 'flex';
@@ -843,11 +957,15 @@
 				cancelConfirm.textContent = __t('processing', 'Processing...');
 
 				var reason = document.getElementById('mhbo-cancel-reason').value.trim();
+				var cancelHeaders = {
+					'Content-Type': 'application/json'
+				};
+				if (nonce) {
+					cancelHeaders['X-WP-Nonce'] = nonce;
+				}
 				fetch(restUrl + '/cancel', {
 					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
+					headers: cancelHeaders,
 					body: JSON.stringify({
 						token: currentBooking.booking_token,
 						booking_id: currentBooking.booking_id,
@@ -855,22 +973,23 @@
 						reason: reason
 					})
 				})
-				.then(function(res) { return res.json(); })
-				.then(function(data) {
+				.then(parseJsonSafe)
+				.then(function(result) {
+					var data = result.data;
 					cancelConfirm.disabled = false;
-					cancelConfirm.textContent = currentBooking && currentBooking.cancellation_requires_staff ? 'Submit Cancellation Request' : __t('confirm_cancellation', 'Confirm Cancellation');
+					cancelConfirm.textContent = currentBooking && currentBooking.cancellation_requires_staff ? __t('submit_cancel_request', 'Submit Cancellation Request') : __t('confirm_cancellation', 'Confirm Cancellation');
 					cancelModal.style.display = 'none';
 					if (cancelBtn) cancelBtn.focus();
-					if (data && data.success) {
+					if (result.ok && data && data.success) {
 						showAlert(data.message, true);
 						fetchBooking(getPortalLookupParams());
 					} else {
-						showAlert(data.message || __t('cancel_failed', 'Failed to process cancellation request.'), false);
+						showAlert((data && data.message) ? data.message : __t('cancel_failed', 'Failed to process cancellation request.'), false);
 					}
 				})
-				.catch(function(err) {
+				.catch(function(_err) {
 					cancelConfirm.disabled = false;
-					cancelConfirm.textContent = currentBooking && currentBooking.cancellation_requires_staff ? 'Submit Cancellation Request' : __t('confirm_cancellation', 'Confirm Cancellation');
+					cancelConfirm.textContent = currentBooking && currentBooking.cancellation_requires_staff ? __t('submit_cancel_request', 'Submit Cancellation Request') : __t('confirm_cancellation', 'Confirm Cancellation');
 					cancelModal.style.display = 'none';
 					if (cancelBtn) cancelBtn.focus();
 					showAlert(__t('network_error', 'Network error while processing request. Please try again.'), false);
@@ -911,6 +1030,18 @@
 		var modSubmit = document.getElementById('mhbo-mod-modal-submit');
 		var modError = document.getElementById('mhbo-mod-modal-error');
 		var modPaidInfo = document.getElementById('mhbo-mod-paid-info');
+		var modPreviewBox = document.getElementById('mhbo-mod-preview-box');
+		var modPreviewStatus = document.getElementById('mhbo-mod-preview-status');
+		var modPreviewNights = document.getElementById('mhbo-mod-preview-nights');
+		var modPreviewPrice = document.getElementById('mhbo-mod-preview-price');
+		var modPreviewNote = document.getElementById('mhbo-mod-preview-note');
+		var modPriceConfirmWrap = document.getElementById('mhbo-mod-price-confirm-wrap');
+		var modConfirmPrice = document.getElementById('mhbo-mod-confirm-price');
+		var modCheckInInput = document.getElementById('mhbo-mod-checkin');
+		var modCheckOutInput = document.getElementById('mhbo-mod-checkout');
+		var lastPreview = null;
+		var previewTimer = null;
+		var previewAbortController = null;
 
 		function showModError(msg) {
 			if (!modError) return;
@@ -927,40 +1058,212 @@
 			}
 		}
 
+		function resetModPreview() {
+			lastPreview = null;
+			if (previewTimer) {
+				clearTimeout(previewTimer);
+				previewTimer = null;
+			}
+			if (previewAbortController) {
+				previewAbortController.abort();
+				previewAbortController = null;
+			}
+			if (modPreviewBox) modPreviewBox.style.display = 'none';
+			if (modPreviewStatus) modPreviewStatus.textContent = '';
+			if (modPreviewNights) modPreviewNights.textContent = '';
+			if (modPreviewPrice) modPreviewPrice.textContent = '';
+			if (modPreviewNote) {
+				modPreviewNote.textContent = '';
+				modPreviewNote.style.display = 'none';
+			}
+			if (modPriceConfirmWrap) modPriceConfirmWrap.style.display = 'none';
+			if (modConfirmPrice) modConfirmPrice.checked = false;
+		}
+
+		function applyPreviewToUi(p) {
+			lastPreview = p;
+			if (!modPreviewBox) return;
+			modPreviewBox.style.display = 'block';
+			if (modPreviewStatus) {
+				modPreviewStatus.textContent = (p.mode === 'auto')
+					? (__t('available_label', 'Available') + ' (' + (p.current_status_label || p.current_status || '') + ')')
+					: (p.review_reason || __t('review_by_front_desk', 'This request will be reviewed by our front desk team.'));
+			}
+			if (modPreviewNights) {
+				modPreviewNights.textContent = p.nights_new + ' ' + (p.nights_new === 1 ? __t('night_singular', 'night') : __t('night_plural', 'nights'));
+			}
+			if (modPreviewPrice) {
+				if (p.price_changed) {
+					modPreviewPrice.textContent = p.old_total_formatted + ' → ' + p.new_total_formatted + ' (' + p.price_delta_formatted + ')';
+				} else {
+					modPreviewPrice.textContent = p.new_total_formatted + ' (' + __t('no_price_change', 'No price change') + ')';
+				}
+			}
+			if (modPreviewNote) {
+				if (p.status_notice) {
+					modPreviewNote.textContent = p.status_notice;
+					modPreviewNote.style.display = 'block';
+				} else {
+					modPreviewNote.textContent = '';
+					modPreviewNote.style.display = 'none';
+				}
+			}
+			if (modPaidInfo) {
+				if (p.mode === 'staff_review' && p.review_reason) {
+					modPaidInfo.textContent = p.review_reason;
+					modPaidInfo.style.display = 'block';
+				} else {
+					modPaidInfo.style.display = 'none';
+				}
+			}
+			if (modPriceConfirmWrap && modConfirmPrice) {
+				if (p.mode === 'auto' && p.price_changed) {
+					modPriceConfirmWrap.style.display = 'flex';
+					modConfirmPrice.checked = false;
+				} else {
+					modPriceConfirmWrap.style.display = 'none';
+					modConfirmPrice.checked = false;
+				}
+			}
+			if (modSubmit) {
+				modSubmit.textContent = (p.mode === 'staff_review')
+					? __t('submit_mod_request', 'Submit Modification Request')
+					: __t('update_reservation', 'Update Reservation');
+			}
+		}
+
+		function scheduleStayPreview() {
+			if (!currentBooking || !modCheckInInput || !modCheckOutInput) return;
+			clearModError();
+			var ci = (modCheckInInput.value || '').trim();
+			var co = (modCheckOutInput.value || '').trim();
+			if (!ci || !co) {
+				resetModPreview();
+				return;
+			}
+			if (ci >= co) {
+				resetModPreview();
+				showModError(__t('checkout_after_checkin', 'Check-out date must be after check-in date.'));
+				return;
+			}
+			if (ci === currentBooking.check_in && co === currentBooking.check_out) {
+				resetModPreview();
+				return;
+			}
+			if (previewTimer) clearTimeout(previewTimer);
+			previewTimer = setTimeout(function() {
+				if (previewAbortController) previewAbortController.abort();
+				previewAbortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+				var reqCtrl = previewAbortController;
+				if (modPreviewBox && modPreviewStatus) {
+					modPreviewBox.style.display = 'block';
+					modPreviewStatus.textContent = __t('checking_availability', 'Checking availability and recalculating total...');
+				}
+				var payload = Object.assign({}, getPortalLookupParams(), {
+					check_in: ci,
+					check_out: co
+				});
+				var previewHeaders = { 'Content-Type': 'application/json' };
+				if (nonce) {
+					previewHeaders['X-WP-Nonce'] = nonce;
+				}
+				var opts = {
+					method: 'POST',
+					headers: previewHeaders,
+					body: JSON.stringify(payload)
+				};
+				if (reqCtrl) opts.signal = reqCtrl.signal;
+				fetch(restUrl + '/preview-stay', opts)
+					.then(function(res) { return res.json(); })
+					.then(function(data) {
+						if (reqCtrl && reqCtrl.signal.aborted) return;
+						if (data && data.success) {
+							applyPreviewToUi(data);
+						} else {
+							resetModPreview();
+							showModError((data && data.message) ? data.message : __t('modify_failed', 'Failed to validate selected dates.'));
+						}
+					})
+					.catch(function(err) {
+						if (err && err.name === 'AbortError') return;
+						resetModPreview();
+					});
+			}, 250);
+		}
+
+		function addDaysYmd(ymd, days) {
+			var parts = String(ymd || '').split('-');
+			if (parts.length !== 3) return '';
+			var dt = new Date(Date.UTC(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10) + days));
+			if (isNaN(dt.getTime())) return '';
+			return dt.toISOString().slice(0, 10);
+		}
+
+		function syncModifyDateMins() {
+			var todayStr = new Date().toISOString().slice(0, 10);
+			if (modCheckInInput) {
+				modCheckInInput.min = todayStr;
+			}
+			if (modCheckOutInput) {
+				var baseCi = (modCheckInInput && modCheckInInput.value) ? modCheckInInput.value : todayStr;
+				var minCo = addDaysYmd(baseCi, 1);
+				if (minCo) modCheckOutInput.min = minCo;
+			}
+		}
+
+		if (modCheckInInput) {
+			modCheckInInput.addEventListener('change', function() {
+				syncModifyDateMins();
+				scheduleStayPreview();
+			});
+		}
+		if (modCheckOutInput) modCheckOutInput.addEventListener('change', scheduleStayPreview);
+
 		if (modBtn && modModal) {
 			modBtn.addEventListener('click', function() {
 				clearModError();
+				resetModPreview();
 				if (currentBooking) {
-					var ciInput = document.getElementById('mhbo-mod-checkin');
-					if (ciInput) ciInput.value = currentBooking.check_in || '';
-					var coInput = document.getElementById('mhbo-mod-checkout');
-					if (coInput) coInput.value = currentBooking.check_out || '';
+					if (modCheckInInput) modCheckInInput.value = currentBooking.check_in || '';
+					if (modCheckOutInput) modCheckOutInput.value = currentBooking.check_out || '';
+					syncModifyDateMins();
 					var adultsInput = document.getElementById('mhbo-mod-adults');
 					if (adultsInput) adultsInput.value = currentBooking.guests || 1;
 					var childrenInput = document.getElementById('mhbo-mod-children');
 					if (childrenInput) childrenInput.value = currentBooking.children || 0;
 					
 					if (modPaidInfo) {
-						modPaidInfo.style.display = (currentBooking.total_paid > 0.001) ? 'block' : 'none';
+						if (currentBooking.modification_requires_staff && currentBooking.modification_policy_notice) {
+							modPaidInfo.textContent = currentBooking.modification_policy_notice;
+							modPaidInfo.style.display = 'block';
+						} else if (currentBooking.total_paid > 0.001) {
+							modPaidInfo.style.display = 'block';
+						} else {
+							modPaidInfo.style.display = 'none';
+						}
 					}
 					if (modSubmit) {
-						modSubmit.textContent = (currentBooking.total_paid > 0.001) ? 'Submit Modification Request' : 'Update Reservation';
+						modSubmit.textContent = currentBooking.modification_requires_staff
+							? __t('submit_mod_request', 'Submit Modification Request')
+							: __t('update_reservation', 'Update Reservation');
 					}
 				}
 				modModal.style.display = 'flex';
-				var initialInput = document.getElementById('mhbo-mod-checkin') || modClose;
+				var initialInput = modCheckInInput || modClose;
 				if (initialInput) initialInput.focus();
 			});
 		}
 		if (modClose && modModal) {
 			modClose.addEventListener('click', function() {
 				clearModError();
+				resetModPreview();
 				modModal.style.display = 'none';
 				if (modBtn) modBtn.focus();
 			});
 			modModal.addEventListener('click', function(e) {
 				if (e.target === modModal) {
 					clearModError();
+					resetModPreview();
 					modModal.style.display = 'none';
 					if (modBtn) modBtn.focus();
 				}
@@ -977,22 +1280,39 @@
 				var notes = (document.getElementById('mhbo-mod-notes').value || '').trim();
 
 				if (!newCheckIn || !newCheckOut) {
-					showModError('Please choose both check-in and check-out dates.');
+					showModError(__t('choose_dates_required', 'Please choose both check-in and check-out dates.'));
 					return;
 				}
 				if (newCheckIn >= newCheckOut) {
-					showModError('Check-out date must be after check-in date.');
+					showModError(__t('checkout_after_checkin', 'Check-out date must be after check-in date.'));
 					return;
+				}
+				if (lastPreview && lastPreview.mode === 'auto' && lastPreview.price_changed) {
+					if (!modConfirmPrice || !modConfirmPrice.checked) {
+						showModError(__t('confirm_price_required', 'Please check the box confirming the updated reservation total before proceeding.'));
+						return;
+					}
+				}
+
+				var confirmedTotal = '';
+				if (lastPreview && lastPreview.mode === 'auto') {
+					if (!lastPreview.price_changed || (modConfirmPrice && modConfirmPrice.checked)) {
+						confirmedTotal = String(lastPreview.new_total_decimal || lastPreview.new_total || '');
+					}
 				}
 
 				modSubmit.disabled = true;
 				modSubmit.textContent = __t('submitting', 'Submitting...');
 
+				var modHeaders = {
+					'Content-Type': 'application/json'
+				};
+				if (nonce) {
+					modHeaders['X-WP-Nonce'] = nonce;
+				}
 				fetch(restUrl + '/update-stay', {
 					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
+					headers: modHeaders,
 					body: JSON.stringify({
 						token: currentBooking.booking_token,
 						booking_id: currentBooking.booking_id,
@@ -1005,25 +1325,48 @@
 						new_check_out: newCheckOut,
 						new_guests: newAdults,
 						new_children: newChildren,
-						notes: notes
+						notes: notes,
+						confirmed_total: confirmedTotal
 					})
 				})
-				.then(function(res) { return res.json(); })
-				.then(function(data) {
+				.then(parseJsonSafe)
+				.then(function(result) {
+					var data = result.data;
 					modSubmit.disabled = false;
-					modSubmit.textContent = (currentBooking.total_paid > 0.001) ? 'Submit Modification Request' : 'Update Reservation';
-					if (data && data.success) {
+					var useStaffLabel = (lastPreview && lastPreview.mode === 'staff_review') || currentBooking.modification_requires_staff;
+					modSubmit.textContent = useStaffLabel
+						? __t('submit_mod_request', 'Submit Modification Request')
+						: __t('update_reservation', 'Update Reservation');
+					if (result.ok && data && data.success) {
 						modModal.style.display = 'none';
+						resetModPreview();
 						if (modBtn) modBtn.focus();
 						showAlert(data.message, true);
 						fetchBooking(getPortalLookupParams());
+					} else if (result.status === 409 && data && data.code === 'mhbo_price_confirmation_required' && data.data) {
+						var d = data.data;
+						applyPreviewToUi({
+							mode: 'auto',
+							nights_new: lastPreview ? lastPreview.nights_new : currentBooking.nights,
+							old_total_formatted: d.old_total_formatted || currentBooking.total_price_formatted,
+							new_total_formatted: d.new_total_formatted || '',
+							new_total_decimal: d.new_total_decimal || d.new_total || '',
+							new_total: d.new_total || 0,
+							price_delta_formatted: d.price_delta_formatted || (d.price_delta === 0 ? '$0.00' : ''),
+							price_changed: true,
+							current_status_label: currentBooking.status_label || currentBooking.status
+						});
+						showModError(data.message || __t('confirm_price_required', 'Please confirm the updated reservation total above.'));
 					} else {
 						showModError(data && data.message ? data.message : __t('modify_failed', 'Failed to update stay.'));
 					}
 				})
 				.catch(function(err) {
 					modSubmit.disabled = false;
-					modSubmit.textContent = (currentBooking.total_paid > 0.001) ? 'Submit Modification Request' : 'Update Reservation';
+					var useStaffLabel = (lastPreview && lastPreview.mode === 'staff_review') || currentBooking.modification_requires_staff;
+					modSubmit.textContent = useStaffLabel
+						? __t('submit_mod_request', 'Submit Modification Request')
+						: __t('update_reservation', 'Update Reservation');
 					showModError(__t('network_error', 'Network error while submitting request. Please try again.'));
 				});
 			});
@@ -1165,6 +1508,7 @@
 				}
 				if (modModal && modModal.style.display !== 'none') {
 					clearModError();
+					resetModPreview();
 					modModal.style.display = 'none';
 					if (modBtn) modBtn.focus();
 				}

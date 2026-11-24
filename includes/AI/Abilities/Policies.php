@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace MHBO\AI\Abilities;
 
+use MHBO\Core\I18n;
 use MHBO\Core\Tier;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -101,7 +102,12 @@ class Policies {
 
 		$all_policies = array();
 		foreach ( $option_map as $key => $option ) {
-			$value = (string) get_option( $option, '' );
+			if ( 'cancellation' === $key ) {
+				$value = class_exists( \MHBO\Api\GuestPortalController::class ) ? \MHBO\Api\GuestPortalController::get_active_cancellation_policy() : '';
+			} else {
+				$raw_value = (string) get_option( $option, '' );
+				$value     = '' !== $raw_value ? (string) ( I18n::decode( $raw_value ) ?? $raw_value ) : '';
+			}
 			if ( '' === $value ) {
 				$value = match ( (string) $key ) {
 					// translators: %s: check-in time

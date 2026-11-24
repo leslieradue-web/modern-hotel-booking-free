@@ -538,7 +538,7 @@ class AiSettings {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'MCP Server gateway is currently disabled. Toggle the switch above and save settings to activate the endpoint.', 'modern-hotel-booking' ),
+					'message' => __( 'MCP Server gateway is currently disabled. Turn on the "Enable External MCP Server Gateway" switch below and click "Apply AI Configuration" to save and activate the endpoint.', 'modern-hotel-booking' ),
 					'status'  => $status,
 				),
 				200
@@ -861,13 +861,13 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 			
 			?>
 
-			<form method="post" action="" style="max-width: 1200px;">
+			<form method="post" action="">
 				<?php wp_nonce_field( self::NONCE_SAVE, 'mhbo_ai_nonce' ); ?>
 				<input type="hidden" name="mhbo_ai_save" value="1">
 				<input type="hidden" name="active_tab" value="<?php echo esc_attr( $current_tab ); ?>">
 				<input type="text" name="username" autocomplete="username" style="display:none;" aria-hidden="true" tabindex="-1">
 
-				<div class="mhbo-settings-card-container" style="max-width: 1200px;">
+				<div class="mhbo-settings-card-container">
 					
 					<?php if ( $current_tab === 'general' ) : ?>
 						<!-- ── System Status & Engine ────────────────────────────────────────── -->
@@ -1646,7 +1646,7 @@ $discovery_sync = (string) get_option( 'mhbo_ai_discovery_last_sync', '' );
 </div>
 
 				<?php if ( 'analytics' !== $current_tab ) : ?>
-					<div class="mhbo-form-actions-dock" style="margin-top: 24px; max-width: 1200px;">
+					<div class="mhbo-form-actions-dock" style="margin-top: 24px;">
 						<?php submit_button( __( 'Apply AI Configuration', 'modern-hotel-booking' ), 'primary large', 'submit', false, array( 'style' => 'height: 42px; padding: 0 28px; font-weight: 600;' ) ); ?>
 					</div>
 				<?php endif; ?>

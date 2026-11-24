@@ -57,7 +57,7 @@ class BookingFormView {
 		global $wpdb;
 
 		$cache_key = 'mhbo_booking_ref_' . md5( $token );
-		$booking   = wp_cache_get( $cache_key, 'mhbo_bookings' );
+		$booking   = Cache::is_enabled() ? wp_cache_get( $cache_key, 'mhbo_bookings' ) : false;
 
 		if ( false === $booking ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -67,7 +67,7 @@ class BookingFormView {
 					$token
 				)
 			);
-			if ( $booking ) {
+			if ( $booking && Cache::is_enabled() ) {
 				wp_cache_set( $cache_key, $booking, 'mhbo_bookings', 300 );
 			}
 		}
@@ -275,7 +275,7 @@ $nights = 0;
 						Cache::get_version( Cache::TABLE_PRICING_RULES ) . '_' .
 						substr( $pending_cutoff, 0, 16 );
 		$cache_key    = 'mhbo_avail_rooms_v7_' . md5( $sql . wp_json_encode( $query_args ) . $version_hash );
-		$all_rooms    = wp_cache_get( $cache_key, 'mhbo_bookings' );
+		$all_rooms    = Cache::is_enabled() ? wp_cache_get( $cache_key, 'mhbo_bookings' ) : false;
 
 		if ( false === $all_rooms ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- 2026 BP: High-performance room availability search across custom relational tables. Query is safely assembled using $wpdb->prepare placeholders
@@ -283,7 +283,9 @@ $nights = 0;
 			if ( ! is_array( $all_rooms ) ) {
 				$all_rooms = array();
 			}
-			wp_cache_set( $cache_key, $all_rooms, 'mhbo_bookings', 300 );
+			if ( Cache::is_enabled() ) {
+				wp_cache_set( $cache_key, $all_rooms, 'mhbo_bookings', 300 );
+			}
 		}
 
 		// Stay restrictions & Pro calendar overrides filter (Global min/max stay active in Free/Starter/Pro)
@@ -609,11 +611,11 @@ if ( Pricing::is_closed_to_arrival( $rid, $check_in ) || Pricing::is_closed_to_d
 		}
 
 		$cache_key = 'mhbo_room_details_' . md5( (string) $room_id );
-		$room      = wp_cache_get( $cache_key, 'mhbo_bookings' );
+		$room      = Cache::is_enabled() ? wp_cache_get( $cache_key, 'mhbo_bookings' ) : false;
 		if ( false === $room ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table
 			$room = $wpdb->get_row( $wpdb->prepare( "SELECT t.id as type_id, t.image_url as type_image_url, r.image_url as room_image_url, t.name as type_name, t.base_price, t.max_adults, t.max_children, t.child_rate, t.child_age_free_limit, r.room_number, r.custom_price FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id WHERE r.id = %d", $room_id ) );
-			if ( null !== $room ) {
+			if ( null !== $room && Cache::is_enabled() ) {
 				wp_cache_set( $cache_key, $room, 'mhbo_bookings', 300 );
 			}
 		}
@@ -1188,7 +1190,7 @@ $extras_sum = Money::fromCents( 0, $currency );
 		if ( ! empty( $booking->room_id ) ) {
 			$room_id   = (int) $booking->room_id;
 			$cache_key = 'mhbo_receipt_room_' . $room_id;
-			$room_row  = wp_cache_get( $cache_key, 'mhbo' );
+			$room_row  = Cache::is_enabled() ? wp_cache_get( $cache_key, 'mhbo' ) : false;
 
 			if ( false === $room_row ) {
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Result cached in object cache above
@@ -1198,7 +1200,7 @@ $extras_sum = Money::fromCents( 0, $currency );
 						$room_id
 					)
 				);
-				if ( $room_row ) {
+				if ( $room_row && Cache::is_enabled() ) {
 					wp_cache_set( $cache_key, $room_row, 'mhbo', 3600 );
 				}
 			}
@@ -1313,14 +1315,18 @@ $extras_sum = Money::fromCents( 0, $currency );
 			$is_full_paid    = $amts ? $amts['is_paid'] : ( $booking->payment_status === 'completed' || (bool) ( $booking->payment_received ?? false ) );
 
 			$status_label = I18n::get_label( 'label_paid' );
-			if ( 'pending' === $booking->payment_status && 'arrival' === $booking->payment_method ) {
+			if ( 'failed' === $booking->payment_status ) {
+				$status_label = I18n::get_label( 'label_failed' );
+			} elseif ( $is_full_paid ) {
+				$status_label = I18n::get_label( 'label_paid' );
+			} elseif ( $is_deposit_rcvd ) {
+				$status_label = __( 'Deposit Paid', 'modern-hotel-booking' );
+			} elseif ( $received_m->isPositive() || 'partially_paid' === $booking->payment_status ) {
+				$status_label = I18n::get_label( 'label_status_partially_paid' );
+			} elseif ( 'pending' === $booking->payment_status && 'arrival' === $booking->payment_method ) {
 				$status_label = I18n::get_label( 'label_pay_arrival' );
 			} elseif ( 'pending' === $booking->payment_status ) {
 				$status_label = I18n::translate_status( 'pending' );
-			} elseif ( 'deposit_paid' === $booking->payment_status || $is_deposit_rcvd ) {
-				$status_label = __( 'Deposit Paid', 'modern-hotel-booking' );
-			} elseif ( 'failed' === $booking->payment_status ) {
-				$status_label = I18n::get_label( 'label_failed' );
 			}
 			?>
 			<p><span><strong><?php echo esc_html( I18n::get_label( 'label_payment_status' ) ); ?>:</strong></span> <span><?php echo esc_html( $status_label ); ?></span></p>
@@ -1330,15 +1336,15 @@ $extras_sum = Money::fromCents( 0, $currency );
 			<?php elseif ( $is_deposit_rcvd ) : ?>
 				<p><span><strong><?php echo esc_html( __( 'Deposit Paid', 'modern-hotel-booking' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $received_m ) ); ?></span></p>
 				<p><span><strong><?php echo esc_html( __( 'Remaining Balance (Due at Check-in)', 'modern-hotel-booking' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $remaining_m ) ); ?></span></p>
+			<?php elseif ( $received_m->isPositive() ) : ?>
+				<p><span><strong><?php echo esc_html( I18n::get_label( 'label_amount_paid' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $received_m ) ); ?></span></p>
+				<p><span><strong><?php echo esc_html( __( 'Remaining Balance', 'modern-hotel-booking' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $remaining_m ) ); ?></span></p>
 			<?php elseif ( 'arrival' === $booking->payment_method ) : ?>
 				<?php if ( $deposit_m->isPositive() ) : ?>
 					<p><span><strong><?php echo esc_html( I18n::get_label( 'label_deposit_required' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $deposit_m ) ); ?></span></p>
 				<?php endif; ?>
-				<p><span><strong><?php echo esc_html( __( 'Total Due on Arrival', 'modern-hotel-booking' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $total_m ) ); ?></span></p>
+				<p><span><strong><?php echo esc_html( __( 'Total Due on Arrival', 'modern-hotel-booking' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $remaining_m ) ); ?></span></p>
 			<?php else : ?>
-				<?php if ( $received_m->isPositive() ) : ?>
-					<p><span><strong><?php echo esc_html( I18n::get_label( 'label_amount_paid' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $received_m ) ); ?></span></p>
-				<?php endif; ?>
 				<?php if ( $deposit_m->isPositive() ) : ?>
 					<p><span><strong><?php echo esc_html( I18n::get_label( 'label_deposit_required' ) ); ?>:</strong></span> <span><?php echo esc_html( I18n::format_currency( $deposit_m ) ); ?></span></p>
 				<?php endif; ?>
@@ -1384,5 +1390,59 @@ $extras_sum = Money::fromCents( 0, $currency );
 		<?php endif; ?>
 		<?php
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Render the optional booking terms & cancellation policy acceptance checkbox on the checkout form.
+	 *
+	 * Hooked into `mhbo_booking_form_after_inputs` at priority 18 (directly above Pro GDPR consent at 19).
+	 *
+	 * @return void
+	 */
+	public static function render_terms_checkbox(): void {
+		if ( 1 !== (int) get_option( 'mhbo_booking_terms_checkbox_enabled', 0 ) ) {
+			return;
+		}
+
+		$decoded_text = (string) I18n::get_label( 'booking_terms_checkbox_text' );
+
+		$terms_page_id = (int) get_option( 'mhbo_terms_page', 0 );
+		$terms_url     = '';
+		if ( $terms_page_id > 0 ) {
+			$terms_page_id = I18n::get_translated_object_id( $terms_page_id, 'page' );
+			if ( 'publish' === get_post_status( $terms_page_id ) ) {
+				$permalink = get_permalink( $terms_page_id );
+				if ( is_string( $permalink ) ) {
+					$terms_url = $permalink;
+				}
+			}
+		}
+
+		if ( '' !== $terms_url ) {
+			$terms_link = '<a href="' . esc_url( $terms_url ) . '" target="_blank" rel="noopener noreferrer" class="mhbo-terms-link">' . esc_html( (string) I18n::get_label( 'label_terms_conditions' ) ) . '</a>';
+			if ( false !== strpos( $decoded_text, '[terms_and_conditions]' ) ) {
+				$decoded_text = str_replace( '[terms_and_conditions]', $terms_link, $decoded_text );
+			} else {
+				$decoded_text .= ' (' . $terms_link . ')';
+			}
+		} else {
+			$decoded_text = str_replace( '[terms_and_conditions]', esc_html( (string) I18n::get_label( 'label_terms_conditions' ) ), $decoded_text );
+		}
+
+		$policy_notice = class_exists( \MHBO\Api\GuestPortalController::class ) ? \MHBO\Api\GuestPortalController::get_active_cancellation_policy() : '';
+		$input_id      = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'mhbo-terms-consent-' ) : 'mhbo-terms-consent-' . wp_rand( 1000, 99999 );
+
+		echo '<div class="mhbo-form-group mhbo-consent-item mhbo-terms-consent">';
+		if ( '' !== $policy_notice ) {
+			echo '<div class="mhbo-terms-policy-preview">';
+			echo '<div class="mhbo-terms-policy-preview-title">' . esc_html__( 'Cancellation & Modification Policy', 'modern-hotel-booking' ) . '</div>';
+			echo '<div class="mhbo-terms-policy-preview-body">' . wp_kses_post( nl2br( esc_html( $policy_notice ) ) ) . '</div>';
+			echo '</div>';
+		}
+		echo '<div class="mhbo-consent-row">';
+		echo '<input type="checkbox" name="mhbo_terms_accepted" id="' . esc_attr( $input_id ) . '" class="mhbo-terms-consent-input" value="1" required data-mhbo-terms="1">';
+		echo '<label for="' . esc_attr( $input_id ) . '">' . wp_kses_post( $decoded_text ) . ' <span class="required">*</span></label>';
+		echo '</div>';
+		echo '</div>';
 	}
 }

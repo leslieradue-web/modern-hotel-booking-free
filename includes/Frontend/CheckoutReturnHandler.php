@@ -407,15 +407,14 @@ $calc_preview = Pricing::calculate_booking_money( $room_id, $check_in, $check_ou
 	 */
 	private function process_booking(): void {
 
-// SECURITY: Rate limiting for booking submissions (5 per minute per IP)
+// SECURITY: Fixed-window rate limiting for booking submissions (5 per minute per IP)
 		$ip       = Security::get_client_ip();
 		$rate_key = 'mhbo_booking_rate_' . md5( (string) $ip );
-		$count    = get_transient( $rate_key );
-		if ( false !== $count && $count >= 5 ) {
+		$rl       = Security::consume_fixed_window_rate_limit( $rate_key, 5, MINUTE_IN_SECONDS );
+		if ( ! $rl['allowed'] ) {
 			$this->booking_fail( '<div class="mhbo-error">' . esc_html( I18n::get_label( 'label_rate_limit_error' ) ) . '</div>' );
 			return;
 		}
-		set_transient( $rate_key, (int) $count + 1, 60 );
 
 		// Nonce is verified by handle_booking_form_submission.
         // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
@@ -445,6 +444,7 @@ $calc_preview = Pricing::calculate_booking_money( $room_id, $check_in, $check_ou
 			'page_url'            => $this->shortcode->get_booking_page_url(),
 			'language'            => isset( $_POST['booking_language'] ) ? sanitize_key( wp_unslash( $_POST['booking_language'] ) ) : I18n::get_current_language(),
 			'consent'             => isset( $_POST['mhbo_consent'] ) ? (bool) sanitize_text_field( wp_unslash( $_POST['mhbo_consent'] ) ) : false,
+			'terms_accepted'      => isset( $_POST['mhbo_terms_accepted'] ) ? (bool) sanitize_text_field( wp_unslash( $_POST['mhbo_terms_accepted'] ) ) : false,
 			
 		);
         // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended

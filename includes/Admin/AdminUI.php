@@ -27,7 +27,7 @@ class AdminUI {
 		<div class="mhbo-admin-page-header mhbo-animate-in">
 			<div class="mhbo-header-content">
 				<?php if ( count( $breadcrumbs ) > 0 ) : ?>
-					<nav class="mhbo-breadcrumbs" style="margin-bottom: 12px;">
+					<nav class="mhbo-breadcrumbs" aria-label="<?php esc_attr_e( 'Breadcrumb', 'modern-hotel-booking' ); ?>">
 						<?php foreach ( $breadcrumbs as $crumb ) : ?>
 							<?php
 							$crumb_label = (string) ( $crumb['label'] ?? '' );
@@ -38,10 +38,10 @@ class AdminUI {
 							?>
 							<?php if ( ! empty( $crumb_url ) ) : ?>
 								<a href="<?php echo esc_url( $crumb_url ); ?>"><?php echo esc_html( $crumb_label ); ?></a>
-								<span class="mhbo-breadcrumb-sep">/</span>
+								<span class="mhbo-breadcrumb-sep" aria-hidden="true">/</span>
 							<?php else : ?>
 								<span><?php echo esc_html( $crumb_label ); ?></span>
-								<span class="mhbo-breadcrumb-sep">/</span>
+								<span class="mhbo-breadcrumb-sep" aria-hidden="true">/</span>
 							<?php endif; ?>
 						<?php endforeach; ?>
 						<span class="mhbo-breadcrumb-current"><?php echo esc_html( $title ); ?></span>
@@ -56,7 +56,7 @@ class AdminUI {
 			<?php if ( count( $actions ) > 0 ) : ?>
 				<div class="mhbo-header-actions">
 					<?php foreach ( $actions as $action ) : ?>
-						<a href="<?php echo esc_url( $action['url'] ); ?>" class="button <?php echo esc_attr( $action['class'] ?? 'button-secondary' ); ?>"<?php echo ! empty( $action['target'] ) ? ' target="' . esc_attr( $action['target'] ) . '"' : ''; ?>>
+						<a href="<?php echo esc_url( $action['url'] ); ?>"<?php echo ! empty( $action['id'] ) ? ' id="' . esc_attr( $action['id'] ) . '"' : ''; ?> class="button <?php echo esc_attr( $action['class'] ?? 'button-secondary' ); ?>"<?php echo ! empty( $action['target'] ) ? ' target="' . esc_attr( $action['target'] ) . '"' : ''; ?>>
 							<?php echo esc_html( $action['label'] ); ?>
 						</a>
 					<?php endforeach; ?>
@@ -103,14 +103,16 @@ class AdminUI {
 	 */
 	public static function render_tabs( array $tabs, string $active_tab, string $base_url, array $icons = array() ): void {
 		?>
-		<nav class="nav-tab-wrapper wp-clearfix" style="border-bottom: 2px solid #dcdcde; margin-bottom: 30px; display: flex; gap: 5px;">
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Section navigation', 'modern-hotel-booking' ); ?>">
 			<?php foreach ( $tabs as $slug => $label ) : ?>
-				<?php $has_icon = isset( $icons[ $slug ] ) && '' !== $icons[ $slug ]; ?>
-				<a href="<?php echo esc_url( add_query_arg( 'tab', $slug, $base_url ) ); ?>" 
-					class="nav-tab <?php echo esc_attr( $active_tab === $slug ? 'nav-tab-active' : '' ); ?>"
-					style="display: flex; align-items: center; gap: 8px;">
+				<?php
+				$has_icon  = isset( $icons[ $slug ] ) && '' !== $icons[ $slug ];
+				$is_active = ( $active_tab === $slug );
+				?>
+				<a href="<?php echo esc_url( add_query_arg( 'tab', $slug, $base_url ) ); ?>"
+					class="nav-tab <?php echo esc_attr( $is_active ? 'nav-tab-active' : '' ); ?>"<?php echo $is_active ? ' aria-current="page"' : ''; ?>>
 					<?php if ( $has_icon ) : ?>
-						<span class="dashicons <?php echo esc_attr( $icons[ $slug ] ); ?>" style="font-size: 18px; width: 18px; height: 18px;"></span>
+						<span class="dashicons <?php echo esc_attr( $icons[ $slug ] ); ?>" aria-hidden="true"></span>
 					<?php endif; ?>
 					<span><?php echo esc_html( $label ); ?></span>
 				</a>

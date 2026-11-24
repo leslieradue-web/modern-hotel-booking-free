@@ -64,9 +64,14 @@ class BookingProcessor {
 	 *                                               multi-room orchestration) allowed to pass internal group
 	 *                                               coupon apportionment flags. MUST only be set via this
 	 *                                               parameter — never via $data.
+	 * @param bool                 $defer_hooks      When true, suppresses firing `mhbo_booking_created` and
+	 *                                               `mhbo_booking_confirmed` inside `process()` so a trusted
+	 *                                               internal caller (e.g. manual admin creation) can persist
+	 *                                               post-insert overrides and ledger writes before notifying once.
+	 *                                               MUST only be set via this parameter — never via $data.
 	 * @return array<string, mixed>|\WP_Error Result array on success, WP_Error on failure.
 	 */
-	public static function process( array $data, bool $bypass_lock = false, bool $trusted_internal = false ): array|\WP_Error {
+	public static function process( array $data, bool $bypass_lock = false, bool $trusted_internal = false, bool $defer_hooks = false ): array|\WP_Error {
 		global $wpdb;
 
 		// 1. Sanitize Inputs
@@ -206,6 +211,14 @@ if ( 0 === $update_id && '' !== $session_token ) {
 		}
 		if ( mb_strlen( $customer_phone ) > 30 ) {
 			return new \WP_Error( 'mhbo_phone_too_long', I18n::get_label( 'label_phone_too_long' ) );
+		}
+
+		// 2026 BP: Booking terms & cancellation policy acceptance validation (all tiers)
+		if ( ! $is_privileged && 1 === (int) get_option( 'mhbo_booking_terms_checkbox_enabled', 0 ) ) {
+			$has_terms = ! empty( $data['terms_accepted'] ) || ! empty( $data['mhbo_terms_accepted'] );
+			if ( ! $has_terms ) {
+				return new \WP_Error( 'mhbo_terms_required', I18n::get_label( 'msg_terms_required' ) );
+			}
 		}
 
 if ( ! $bypass_past ) {
@@ -367,7 +380,16 @@ if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) 
 				}
 			}
 
-			$raw_admin_notes = (string) ( $data['admin_notes'] ?? ( $data['notes'] ?? '' ) );
+			// Legal audit trail for accepted booking terms and GDPR consent on public checkouts.
+			if ( ! $is_privileged && 1 === (int) get_option( 'mhbo_booking_terms_checkbox_enabled', 0 ) ) {
+				$custom_data['_terms_accepted_at'] = HotelTime::now_mysql();
+				$policy_snapshot                   = class_exists( \MHBO\Api\GuestPortalController::class ) ? \MHBO\Api\GuestPortalController::get_active_cancellation_policy() : '';
+				if ( '' !== $policy_snapshot ) {
+					$custom_data['_terms_policy_hash'] = substr( hash( 'sha256', $policy_snapshot ), 0, 16 );
+				}
+			}
+
+$raw_admin_notes = (string) ( $data['admin_notes'] ?? ( $data['notes'] ?? '' ) );
 			if ( ! $is_privileged ) {
 				$raw_guest_req = (string) ( $data['special_requests'] ?? $raw_admin_notes );
 				$clean_lines   = array();
@@ -522,10 +544,12 @@ if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) 
 				delete_transient( 'mhbo_session_pending_booking_' . $raw_pending_session );
 			}
 
-			// Hooks
-			do_action( 'mhbo_booking_created', $booking_id );
-			if ( 'confirmed' === $status ) {
-				do_action( 'mhbo_booking_confirmed', $booking_id );
+			// Hooks (deferred when a trusted caller persists manual overrides/ledger writes before notifying once).
+			if ( ! $defer_hooks ) {
+				do_action( 'mhbo_booking_created', $booking_id );
+				if ( 'confirmed' === $status ) {
+					do_action( 'mhbo_booking_confirmed', $booking_id );
+				}
 			}
 
 			// Guest CRM Async Stats Recalculation (v2.6.0)
@@ -556,14 +580,15 @@ if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) 
 			$success_nonce = wp_create_nonce( 'mhbo_success_display' );
 			$token         = $insert_data['booking_token'];
 			
-			$success_url = add_query_arg(
+			$base_success_url = self::sanitize_same_origin_url( (string) ( $data['page_url'] ?? '' ) );
+			$success_url      = add_query_arg(
 				array(
 					'mhbo_success'       => 1,
 					'mhbo_success_nonce' => $success_nonce,
 					'mhbo_status'        => $status,
 					'reference'          => $token,
 				),
-				remove_query_arg( array( 'mhbo_auto_book', 'mhbo_nonce', 'mhbo_confirm_booking' ), $data['page_url'] ?? home_url( '/' ) )
+				remove_query_arg( array( 'mhbo_auto_book', 'mhbo_nonce', 'mhbo_confirm_booking' ), $base_success_url )
 			);
 
 			return array(
@@ -575,7 +600,7 @@ if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) 
 			);
 
 		} catch ( \Throwable $e ) {
-			return new \WP_Error( 'mhbo_exception', $e->getMessage() );
+			return new \WP_Error( 'mhbo_exception', (string) I18n::get_label( 'label_booking_error' ) );
 		} finally {
 			// 2026 BP: Zero-Leak guarantee — lock released unless caller owns it (bypass_lock).
 			if ( ! $bypass_lock ) {
@@ -690,5 +715,36 @@ if ( ! empty( $data['arrival_time'] ) && empty( $custom_data['_arrival_time'] ) 
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Restrict redirect base URLs to the current site origin (prevents open redirect / token leakage).
+	 *
+	 * @param string $raw_url Raw URL or relative path submitted by client.
+	 * @return string Validated same-origin URL or home_url('/').
+	 */
+	public static function sanitize_same_origin_url( string $raw_url ): string {
+		$default = home_url( '/' );
+		$clean   = trim( $raw_url );
+		if ( '' === $clean || 1 === preg_match( '/[\r\n\x00]/', $clean ) || str_starts_with( $clean, '//' ) ) {
+			return $default;
+		}
+		if ( str_starts_with( $clean, '/' ) ) {
+			$clean = home_url( $clean );
+		}
+		$sanitized = esc_url_raw( $clean, array( 'http', 'https' ) );
+		if ( '' === $sanitized ) {
+			return $default;
+		}
+		if ( function_exists( 'wp_validate_redirect' ) ) {
+			$sanitized = wp_validate_redirect( $sanitized, $default );
+		}
+		$scheme       = strtolower( (string) wp_parse_url( $sanitized, PHP_URL_SCHEME ) );
+		$target_host  = strtolower( (string) wp_parse_url( $sanitized, PHP_URL_HOST ) );
+		$default_host = strtolower( (string) wp_parse_url( $default, PHP_URL_HOST ) );
+		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) || '' === $target_host || $target_host !== $default_host ) {
+			return $default;
+		}
+		return $sanitized;
 	}
 }

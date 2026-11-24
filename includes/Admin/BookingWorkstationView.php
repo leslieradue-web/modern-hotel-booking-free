@@ -33,9 +33,7 @@ class BookingWorkstationView {
 	 * @param array<int, object> $all_rooms Available room records.
 	 */
 	public function render_add_booking_workstation( array $all_rooms ): void {
-		$is_pro_active = false;
-
-$currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
+		$currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() : 'USD';
 		$today_dt   = HotelTime::now();
 		$today_date = $today_dt->format( 'Y-m-d' );
 		$tom_date   = $today_dt->modify( '+1 day' )->format( 'Y-m-d' );
@@ -49,35 +47,30 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 		$can_override_pricing = Capabilities::can_override_booking_pricing();
 		$can_process_payments = Capabilities::can_process_payments();
 		?>
+				<div class="mhbo-booking-workstation">
 
 				<!-- 1. Hero Header Strip -->
 				<div class="mhbo-workstation-hero">
 					<div class="mhbo-hero-identity">
 						<div class="mhbo-hero-avatar">
-							🏨
+							<span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span>
 						</div>
 						<div class="mhbo-hero-meta">
 							<h2>
 								<span><?php esc_html_e( 'New Reservation', 'modern-hotel-booking' ); ?></span>
-								<span style="font-size: 14px; font-weight: 600; color: #64748b;"><?php esc_html_e( '(Front Desk / Phone Walk-in)', 'modern-hotel-booking' ); ?></span>
-								<span id="mhbo_add_status_badge" style="display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: #dcfce7; color: #166534;">
+								<span class="mhbo-ws-hero-subtag"><?php esc_html_e( '(Front Desk / Phone Walk-in)', 'modern-hotel-booking' ); ?></span>
+								<span id="mhbo_add_status_badge" class="mhbo-ws-status-pill is-confirmed">
 									<?php echo esc_html( I18n::translate_status( 'confirmed' ) ); ?>
 								</span>
 							</h2>
 							<div class="mhbo-hero-subtitle">
-								<span id="mhbo_add_hero_dates_text">📅 <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $today_date ) ) ); ?> → <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $tom_date ) ) ); ?></span>
-								<span>&bull;</span>
-								<span id="mhbo_add_nights_pill" style="background:#e0e7ff; color:#3730a3; font-weight:700; padding:2px 8px; border-radius:99px; font-size:11px;">🌙 1 Night</span>
-								<span>&bull;</span>
-								<span id="mhbo_add_occupancy_pill">👥 2 Guests</span>
+								<span id="mhbo_add_hero_dates_text"><span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span> <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $today_date ) ) ); ?> → <?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $tom_date ) ) ); ?></span>
+								<span aria-hidden="true">&bull;</span>
+								<span id="mhbo_add_nights_pill" class="mhbo-ws-nights-pill">1 Night</span>
+								<span aria-hidden="true">&bull;</span>
+								<span id="mhbo_add_occupancy_pill">2 Guests</span>
 							</div>
 						</div>
-					</div>
-					<div class="mhbo-hero-actions">
-						
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="mhbo-hero-btn">
-							🔙 <?php esc_html_e( 'All Bookings', 'modern-hotel-booking' ); ?>
-						</a>
 					</div>
 				</div>
 
@@ -86,28 +79,28 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 					<input type="hidden" name="guest_id" id="mhbo_add_guest_id" value="0">
 
 					<div class="mhbo-workstation-grid">
-						<!-- LEFT MAIN COLUMN (1.85fr) -->
+						<!-- LEFT MAIN COLUMN (1.75fr) -->
 						<div class="mhbo-workstation-col-main">
 
 							<!-- Card 1: Guest Profile & CRM Identity -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-admin-users" style="color:#0284c7;"></span> <?php esc_html_e( 'Guest Profile & CRM Identity', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="mhbo-ws-step-badge" aria-hidden="true">1</span> <span class="dashicons dashicons-admin-users" style="color:#0369a1;" aria-hidden="true"></span> <?php esc_html_e( 'Guest Profile & CRM Identity', 'modern-hotel-booking' ); ?></h3>
 									<?php if ( $crm_active ) : ?>
-										<span style="font-size:11px; background:#e0f2fe; color:#0369a1; font-weight:700; padding:2px 8px; border-radius:99px;">
-											CRM Enabled
+										<span class="mhbo-ws-crm-badge">
+											<?php esc_html_e( 'CRM Enabled', 'modern-hotel-booking' ); ?>
 										</span>
 									<?php endif; ?>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<?php if ( $crm_active && ! empty( $crm_guests ) ) : ?>
 										<!-- CRM Quick Select for Returning Guests -->
-										<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 14px; margin-bottom:16px;">
-											<label for="mhbo_crm_guest_select" style="display:block; font-size:12px; font-weight:700; color:#1e293b; margin-bottom:6px;">
-												🔍 <?php esc_html_e( 'Returning Guest Lookup (CRM Quick-Fill):', 'modern-hotel-booking' ); ?>
+										<div class="mhbo-ws-crm-lookup-box">
+											<label for="mhbo_crm_guest_select" class="mhbo-ws-crm-label">
+												<span class="dashicons dashicons-search" aria-hidden="true"></span> <?php esc_html_e( 'Returning Guest Lookup (CRM Quick-Fill):', 'modern-hotel-booking' ); ?>
 											</label>
-											<div class="mhbo-crm-lookup-flex" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; width:100%;">
-												<select id="mhbo_crm_guest_select" style="width:100%; max-width:100%; min-width:0; flex:1 1 260px;">
+											<div class="mhbo-crm-lookup-flex">
+												<select id="mhbo_crm_guest_select" class="mhbo-ws-crm-select">
 													<option value=""><?php esc_html_e( '-- New Guest / Walk-in (Enter Details Manually) --', 'modern-hotel-booking' ); ?></option>
 													<?php foreach ( $crm_guests as $cg ) : ?>
 														<?php
@@ -126,10 +119,10 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 														</option>
 													<?php endforeach; ?>
 												</select>
-												<span id="mhbo_crm_match_badge" style="display:none; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;"></span>
+												<span id="mhbo_crm_match_badge" style="display:none; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700;" role="status" aria-live="polite"></span>
 											</div>
-											<div id="mhbo_crm_caution_alert" style="display:none; background:#fef2f2; border:1px solid #f87171; border-radius:6px; padding:8px 12px; margin-top:10px; color:#991b1b; font-weight:600; font-size:12px;">
-												<span style="font-size:14px; margin-right:4px;">🚫</span> <?php esc_html_e( 'Caution: Problematic guest flagged by staff in CRM.', 'modern-hotel-booking' ); ?>
+											<div id="mhbo_crm_caution_alert" class="mhbo-ws-caution-alert" style="display:none;" role="alert" aria-live="assertive">
+												<span class="dashicons dashicons-warning" aria-hidden="true"></span> <?php esc_html_e( 'Caution: Problematic guest flagged by staff in CRM.', 'modern-hotel-booking' ); ?>
 											</div>
 										</div>
 									<?php endif; ?>
@@ -162,19 +155,19 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 							<!-- Card 2: Room Unit Assignment & Stay Calendar -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-calendar-alt" style="color:#059669;"></span> <?php esc_html_e( 'Room Unit Assignment & Stay Dates', 'modern-hotel-booking' ); ?></h3>
-									<span style="font-size:12px; font-weight:600; color:#059669;" id="mhbo_add_calendar_nights_indicator">
-										🌙 1 Night Stay
+									<h3><span class="mhbo-ws-step-badge" aria-hidden="true">2</span> <span class="dashicons dashicons-calendar-alt" style="color:#047857;" aria-hidden="true"></span> <?php esc_html_e( 'Room Unit Assignment & Stay Dates', 'modern-hotel-booking' ); ?></h3>
+									<span class="mhbo-ws-nights-indicator" id="mhbo_add_calendar_nights_indicator">
+										<?php esc_html_e( '1 Night Stay', 'modern-hotel-booking' ); ?>
 									</span>
 								</div>
 								<div class="mhbo-card-body-padded">
-									<div id="mhbo_add_room_avail_banner" style="display:none; margin-bottom:14px; padding:10px 14px; border-radius:6px; font-weight:600; font-size:13px;"></div>
+									<div id="mhbo_add_room_avail_banner" style="display:none; margin-bottom:14px; padding:10px 14px; border-radius:6px; font-weight:600; font-size:13px;" role="status" aria-live="polite"></div>
 
 									<table class="form-table" style="margin: 0;">
 										<tr>
 											<th scope="row"><label for="mhbo_add_room_id"><?php echo esc_html( I18n::get_label( 'label_room' ) ); ?> <span style="color:#dc2626;">*</span></label></th>
 											<td>
-												<select name="room_id" id="mhbo_add_room_id" required style="width:100%; max-width:420px;">
+												<select name="room_id" id="mhbo_add_room_id" required class="mhbo-ws-input-lg">
 													<option value=""><?php echo esc_html( I18n::get_label( 'label_select_room' ) ); ?></option>
 													<?php foreach ( $all_rooms as $rm ) : ?>
 														<option value="<?php echo esc_attr( $rm->id ); ?>" data-price="<?php echo esc_attr( $rm->base_price ); ?>" data-room-name="<?php echo esc_attr( $rm->room_number . ' (' . I18n::decode( $rm->type_name ) . ')' ); ?>">
@@ -187,10 +180,10 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 										<tr>
 											<th scope="row"><label for="mhbo_add_date_range_picker"><?php esc_html_e( 'Stay Dates (Interactive Calendar)', 'modern-hotel-booking' ); ?> <span style="color:#dc2626;">*</span></label></th>
 											<td>
-												<div style="position:relative; max-width:420px; width:100%;">
-													<input type="text" id="mhbo_add_date_range_picker" class="regular-text" style="width:100%; padding-left:34px; padding-right:32px; font-weight:600; cursor:text; background:#fff;" placeholder="<?php esc_attr_e( 'e.g. 2026-10-08 to 2026-10-12, 08/10/2026 - 12/10/2026, or click calendar', 'modern-hotel-booking' ); ?>">
-													<span class="dashicons dashicons-calendar-alt" style="position:absolute; left:8px; top:50%; transform:translateY(-50%); color:#64748b; font-size:18px; pointer-events:none;"></span>
-													<button type="button" id="mhbo_add_clear_dates_btn" title="<?php esc_attr_e( 'Clear stay dates', 'modern-hotel-booking' ); ?>" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; color:#64748b; font-size:14px; font-weight:700; cursor:pointer; width:22px; height:22px; line-height:1; display:flex; align-items:center; justify-content:center; padding:0; transition:all 0.15s ease;">&times;</button>
+												<div class="mhbo-ws-date-range-wrap">
+													<input type="text" id="mhbo_add_date_range_picker" class="regular-text mhbo-ws-date-range-input" placeholder="<?php esc_attr_e( 'e.g. 2026-10-08 to 2026-10-12, 08/10/2026 - 12/10/2026, or click calendar', 'modern-hotel-booking' ); ?>">
+													<span class="dashicons dashicons-calendar-alt mhbo-ws-date-range-icon" aria-hidden="true"></span>
+													<button type="button" id="mhbo_add_clear_dates_btn" class="mhbo-ws-clear-dates-btn" aria-label="<?php esc_attr_e( 'Clear stay dates', 'modern-hotel-booking' ); ?>" title="<?php esc_attr_e( 'Clear stay dates', 'modern-hotel-booking' ); ?>"><span aria-hidden="true">&times;</span></button>
 												</div>
 												<input type="hidden" name="check_in" id="mhbo_add_check_in" value="<?php echo esc_attr( $today_date ); ?>" required>
 												<input type="hidden" name="check_out" id="mhbo_add_check_out" value="<?php echo esc_attr( $tom_date ); ?>" required>
@@ -205,7 +198,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 									<div id="mhbo_add_calendar_mount" class="mhbo-pms-calendar-wrapper" style="margin-top:16px; display:none;"></div>
 
 									<!-- PMS Calendar Legend -->
-									<div class="mhbo-calendar-legend mhbo-pms-calendar-legend" id="mhbo_add_calendar_legend" style="display:none; margin-top:12px; display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:#475569; align-items:center;">
+									<div class="mhbo-calendar-legend mhbo-pms-calendar-legend" id="mhbo_add_calendar_legend" style="display:none;">
 										<span style="display:inline-flex; align-items:center; gap:6px;">
 											<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#10b981;"></span>
 											<span><?php esc_html_e( 'Available (Nightly Rate)', 'modern-hotel-booking' ); ?></span>
@@ -235,8 +228,8 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 							<!-- Card 3: Stay Enhancements & Extras -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-tag" style="color:#8b5cf6;"></span> <?php esc_html_e( 'Stay Enhancements & Extras', 'modern-hotel-booking' ); ?></h3>
-									<span style="font-size:12px; color:#64748b;"><?php esc_html_e( 'Optional add-ons, early/late check-in', 'modern-hotel-booking' ); ?></span>
+									<h3><span class="mhbo-ws-step-badge" aria-hidden="true">3</span> <span class="dashicons dashicons-tag" style="color:#7c3aed;" aria-hidden="true"></span> <?php esc_html_e( 'Stay Enhancements & Extras', 'modern-hotel-booking' ); ?></h3>
+									<span class="mhbo-ws-header-hint"><?php esc_html_e( 'Optional add-ons, early/late check-in', 'modern-hotel-booking' ); ?></span>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
@@ -247,14 +240,17 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 										if ( isset( $custom_fields_defn ) && count( $custom_fields_defn ) > 0 ) :
 											?>
 											<?php foreach ( $custom_fields_defn as $defn ) : ?>
-												<?php $label = (string) ( I18n::decode( I18n::encode( $defn['label'] ) ) ?? '' ); ?>
+												<?php
+												$label    = (string) ( I18n::decode( I18n::encode( $defn['label'] ) ) ?? '' );
+												$cf_id    = 'mhbo_add_custom_' . sanitize_html_class( (string) $defn['id'] );
+												?>
 												<tr>
-													<th scope="row"><label><?php echo esc_html( $label ); ?></label></th>
+													<th scope="row"><label for="<?php echo esc_attr( $cf_id ); ?>"><?php echo esc_html( $label ); ?></label></th>
 													<td>
 														<?php if ( $defn['type'] === 'textarea' ) : ?>
-															<textarea name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" rows="3" class="regular-text" style="width:100%; max-width:420px;"></textarea>
+															<textarea id="<?php echo esc_attr( $cf_id ); ?>" name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" rows="3" class="regular-text mhbo-ws-input-lg"></textarea>
 														<?php else : ?>
-															<input type="<?php echo esc_attr( $defn['type'] ); ?>" name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" class="regular-text" style="width:100%; max-width:420px;">
+															<input id="<?php echo esc_attr( $cf_id ); ?>" type="<?php echo esc_attr( $defn['type'] ); ?>" name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" class="regular-text mhbo-ws-input-lg">
 														<?php endif; ?>
 													</td>
 												</tr>
@@ -272,7 +268,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 									$card4_title = __( 'Discounts & Concessions', 'modern-hotel-booking' );
 									
 									?>
-									<h3><span class="dashicons dashicons-tickets-alt" style="color:#d97706;"></span> <?php echo esc_html( $card4_title ); ?></h3>
+									<h3><span class="mhbo-ws-step-badge" aria-hidden="true">4</span> <span class="dashicons dashicons-tickets-alt" style="color:#b45309;" aria-hidden="true"></span> <?php echo esc_html( $card4_title ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
@@ -280,8 +276,8 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 <tr>
 											<th scope="row"><label for="mhbo_add_discount_amount"><?php echo esc_html( I18n::get_label( 'label_discount_amount' ) ); ?></label></th>
 											<td>
-												<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-													<input type="number" step="any" name="discount_amount" id="mhbo_add_discount_amount" value="0.00" class="small-text" style="width:110px;<?php echo ! $can_override_pricing ? ' background:#f1f5f9; cursor:not-allowed;' : ''; ?>"<?php echo ! $can_override_pricing ? ' readonly' : ''; ?>>
+												<div class="mhbo-ws-inline-pair">
+													<input type="number" step="any" name="discount_amount" id="mhbo_add_discount_amount" value="0.00" class="small-text mhbo-ws-input-sm"<?php echo ! $can_override_pricing ? ' readonly' : ''; ?>>
 													<span class="description" style="font-weight:600;"><?php echo esc_html( $currency ); ?></span>
 												</div>
 												<?php
@@ -299,10 +295,10 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 							<!-- Card 5: Real-time Charges & Folio Breakdown Preview -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-media-spreadsheet" style="color:#3b82f6;"></span> <?php esc_html_e( 'Live Folio & Charges Breakdown', 'modern-hotel-booking' ); ?></h3>
-									<span style="font-size:12px; font-weight:600; color:#64748b;"><?php esc_html_e( 'Real-time USALI preview', 'modern-hotel-booking' ); ?></span>
+									<h3><span class="mhbo-ws-step-badge" aria-hidden="true">5</span> <span class="dashicons dashicons-media-spreadsheet" style="color:#2563eb;" aria-hidden="true"></span> <?php esc_html_e( 'Live Folio & Charges Breakdown', 'modern-hotel-booking' ); ?></h3>
+									<span class="mhbo-ws-header-hint"><?php esc_html_e( 'Real-time USALI preview', 'modern-hotel-booking' ); ?></span>
 								</div>
-								<div class="mhbo-table-responsive" style="overflow-x:auto;">
+								<div class="mhbo-table-responsive">
 									<table class="mhbo-charges-table" id="mhbo_add_folio_table">
 										<thead>
 											<tr>
@@ -315,19 +311,19 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 											</tr>
 										</thead>
 										<tbody id="mhbo_add_folio_tbody">
-											<tr>
-												<td colspan="6" style="text-align:center; padding:20px; color:#64748b;">
+											<tr class="mhbo-ws-empty-row">
+												<td colspan="6" style="text-align:center; padding:20px; color:#475569;">
 													<?php esc_html_e( 'Select room and dates above to calculate itemized folio charges.', 'modern-hotel-booking' ); ?>
 												</td>
 											</tr>
 										</tbody>
 										<tfoot style="background:#f8fafc; border-top:2px solid #cbd5e1; font-weight:700;">
 											<tr id="mhbo_add_folio_foot_subtotal_row" class="mhbo-hidden" style="display:none !important;" hidden>
-												<td colspan="5" style="text-align:right; padding:8px 12px; color:#64748b; font-size:12px;" id="mhbo_add_folio_foot_subtotal_label"><?php echo esc_html( ( class_exists( Tax::class ) && Tax::is_vat() ) ? sprintf( I18n::get_label( 'label_subtotal_net_vat' ), Tax::get_label( null, 'vat' ) ) : esc_html__( 'Subtotal Net (excl. tax):', 'modern-hotel-booking' ) ); ?></td>
+												<td colspan="5" style="text-align:right; padding:8px 12px; color:#475569; font-size:12px;" id="mhbo_add_folio_foot_subtotal_label"><?php echo esc_html( ( class_exists( Tax::class ) && Tax::is_vat() ) ? sprintf( I18n::get_label( 'label_subtotal_net_vat' ), Tax::get_label( null, 'vat' ) ) : esc_html__( 'Subtotal Net (excl. tax):', 'modern-hotel-booking' ) ); ?></td>
 												<td style="text-align:right; padding:8px 12px; font-variant-numeric:tabular-nums;" id="mhbo_add_folio_foot_subtotal_net">0.00</td>
 											</tr>
 											<tr id="mhbo_add_folio_foot_tax_row" class="mhbo-hidden" style="display:none !important;" hidden>
-												<td colspan="5" style="text-align:right; padding:6px 12px; color:#64748b; font-size:12px;" id="mhbo_add_folio_foot_tax_label">
+												<td colspan="5" style="text-align:right; padding:6px 12px; color:#475569; font-size:12px;" id="mhbo_add_folio_foot_tax_label">
 													<?php
 													if ( class_exists( Tax::class ) && Tax::is_vat() ) {
 														echo esc_html( Tax::get_label( null, 'vat' ) . ' (included):' );
@@ -337,7 +333,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 													}
 													?>
 												</td>
-												<td style="text-align:right; padding:6px 12px; font-variant-numeric:tabular-nums; color:#64748b;" id="mhbo_add_folio_foot_tax">0.00</td>
+												<td style="text-align:right; padding:6px 12px; font-variant-numeric:tabular-nums; color:#475569;" id="mhbo_add_folio_foot_tax">0.00</td>
 											</tr>
 											<tr style="border-top:1px solid #e2e8f0; font-size:14px;">
 												<td colspan="5" style="text-align:right; padding:12px; font-weight:800; color:#0f172a;" id="mhbo_add_folio_foot_total_label"><?php echo esc_html( ( class_exists( Tax::class ) && Tax::is_vat() ) ? esc_html__( 'Estimated Total (VAT incl.):', 'modern-hotel-booking' ) : esc_html__( 'Estimated Total Gross:', 'modern-hotel-booking' ) ); ?></td>
@@ -356,7 +352,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 							<!-- Card 1: Financial Overview KPIs -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-chart-pie" style="color:#0284c7;"></span> <?php esc_html_e( 'Financial Overview', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-chart-pie" style="color:#0369a1;" aria-hidden="true"></span> <?php esc_html_e( 'Financial Overview', 'modern-hotel-booking' ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<div class="mhbo-kpi-grid">
@@ -380,7 +376,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 							<!-- Card 2: Billing & Initial Settlement -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-money-alt" style="color:#10b981;"></span> <?php esc_html_e( 'Billing & Initial Payment', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-money-alt" style="color:#047857;" aria-hidden="true"></span> <?php esc_html_e( 'Billing & Initial Payment', 'modern-hotel-booking' ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
@@ -404,13 +400,17 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 												<input type="number" step="any" name="payment_amount" id="mhbo_add_payment_amount" value="0.00" class="regular-text" style="width:100%;<?php echo ! $can_process_payments ? ' background:#f1f5f9; cursor:not-allowed;' : ''; ?>"<?php echo ! $can_process_payments ? ' readonly' : ''; ?>>
 												<?php if ( $can_process_payments ) : ?>
 													<!-- Quick Tender Buttons -->
-													<div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;">
+													<div class="mhbo-quick-tender-grid">
 														<button type="button" class="button button-small mhbo-quick-tender-btn" data-action="full">
-															⚡ <?php esc_html_e( 'Pay in Full', 'modern-hotel-booking' ); ?>
+															<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span> <?php esc_html_e( 'Pay in Full', 'modern-hotel-booking' ); ?>
 														</button>
 														
 														<button type="button" class="button button-small mhbo-quick-tender-btn" data-action="zero">
-															⚡ <?php esc_html_e( 'Pay on Arrival ($0)', 'modern-hotel-booking' ); ?>
+															<span class="dashicons dashicons-clock" aria-hidden="true"></span>
+															<?php
+															/* translators: %s: zero currency formatted amount */
+															echo esc_html( sprintf( __( 'Pay on Arrival (%s)', 'modern-hotel-booking' ), I18n::format_currency( 0 ) ) );
+															?>
 														</button>
 													</div>
 												<?php else : ?>
@@ -422,7 +422,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 										<tr>
 											<th scope="row"><?php echo esc_html( I18n::get_label( 'label_payment_rcvd' ) ); ?></th>
 											<td>
-												<label style="display:flex; align-items:center; gap:8px;">
+												<label class="mhbo-ws-checkbox-row">
 													<input type="hidden" name="payment_received" value="0">
 													<input type="checkbox" name="payment_received" id="mhbo_add_payment_received" value="1" <?php disabled( ! $can_process_payments ); ?>>
 													<span><?php echo esc_html( I18n::get_label( 'label_mark_rcvd' ) ); ?></span>
@@ -430,7 +430,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 											</td>
 										</tr>
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_payment_method' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_add_payment_method"><?php echo esc_html( I18n::get_label( 'label_payment_method' ) ); ?></label></th>
 											<td>
 												<?php if ( ! $can_process_payments ) : ?>
 													<input type="hidden" name="payment_method" value="arrival">
@@ -463,7 +463,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 										<tr>
 											<th scope="row"><label for="mhbo_add_amount_outstanding"><?php echo esc_html( I18n::get_label( 'label_amt_out' ) ); ?></label></th>
 											<td>
-												<input type="text" id="mhbo_add_amount_outstanding" readonly class="regular-text" style="width:100%; background:#f8fafc; font-weight:700; color:#dc2626;">
+												<input type="text" id="mhbo_add_amount_outstanding" readonly class="regular-text mhbo-ws-outstanding-input mhbo-ws-outstanding-due">
 											</td>
 										</tr>
 									</table>
@@ -473,7 +473,7 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 							<!-- Card 3: Lifecycle & Internal Front Desk Notes -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-admin-generic" style="color:#64748b;"></span> <?php echo esc_html( I18n::get_label( 'title_booking_mgmt' ) ); ?></h3>
+									<h3><span class="dashicons dashicons-admin-generic" style="color:#475569;" aria-hidden="true"></span> <?php echo esc_html( I18n::get_label( 'title_booking_mgmt' ) ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
@@ -487,9 +487,9 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 											</td>
 										</tr>
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_booking_lang' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_add_booking_language"><?php echo esc_html( I18n::get_label( 'label_booking_lang' ) ); ?></label></th>
 											<td>
-												<select name="booking_language" style="width:100%;">
+												<select name="booking_language" id="mhbo_add_booking_language" style="width:100%;">
 													<?php foreach ( I18n::get_available_languages() as $lang ) : ?>
 														<option value="<?php echo esc_attr( $lang ); ?>" <?php selected( $lang, I18n::get_current_language() ); ?>><?php echo esc_html( strtoupper( $lang ) ); ?></option>
 													<?php endforeach; ?>
@@ -511,14 +511,23 @@ $currency   = ( class_exists( Pricing::class ) ) ? Pricing::get_currency_code() 
 
 					<!-- Sticky Bottom Action Dock -->
 					<div class="mhbo-form-actions-dock">
-						<button type="submit" name="submit_manual_booking" class="button button-primary" style="padding: 6px 20px; font-weight: 700; font-size: 14px;">
-							🏨 <?php echo esc_html( I18n::get_label( 'label_add_booking' ) ); ?>
-						</button>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="button">
-							<?php echo esc_html( I18n::get_label( 'label_cancel' ) ); ?>
-						</a>
+						<div class="mhbo-ws-dock-summary">
+							<span><?php esc_html_e( 'Total:', 'modern-hotel-booking' ); ?> <strong class="mhbo-ws-dock-total">0.00</strong></span>
+							<span class="mhbo-ws-dock-sep" aria-hidden="true">&bull;</span>
+							<span><?php esc_html_e( 'Balance:', 'modern-hotel-booking' ); ?> <strong class="mhbo-ws-dock-balance">0.00</strong></span>
+						</div>
+						<div class="mhbo-ws-dock-actions">
+							<button type="submit" name="submit_manual_booking" class="button button-primary">
+								<span class="dashicons dashicons-plus-alt" aria-hidden="true"></span>
+								<span><?php echo esc_html( I18n::get_label( 'label_add_booking' ) ); ?></span>
+							</button>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="button button-secondary">
+								<?php echo esc_html( I18n::get_label( 'label_cancel' ) ); ?>
+							</a>
+						</div>
 					</div>
 				</form>
+				</div><!-- .mhbo-booking-workstation -->
 		<?php
 	}
 
@@ -625,7 +634,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 		} elseif ( ! empty( $folio['is_paid_in_full'] ) ) {
 			$badge_bg    = '#dcfce7';
 			$badge_color = '#166534';
-		} elseif ( 'deposit_paid' === $status_key ) {
+		} elseif ( in_array( $status_key, array( 'deposit_paid', 'partially_paid' ), true ) ) {
 			$badge_bg    = '#fef3c7';
 			$badge_color = '#92400e';
 		} elseif ( in_array( $status_key, array( 'urgent_unpaid', 'overdue' ), true ) ) {
@@ -633,6 +642,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 			$badge_color = '#991b1b';
 		}
 		?>
+				<div class="mhbo-booking-workstation">
 
 						<?php if ( $is_group_booking ) : ?>
 							<?php
@@ -651,30 +661,30 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							$grp_master_url = $grp_magic_base ? add_query_arg( 'pay_scope', 'group', $grp_magic_base ) : '';
 							$grp_room_url   = $grp_magic_base ? add_query_arg( 'pay_scope', 'room', $grp_magic_base ) : '';
 							?>
-					<div class="mhbo-group-ribbon" style="background:#eef2ff; border:1px solid #c7d2fe; border-radius:12px; padding:16px 20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-						<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
-							<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-								<span style="font-size:24px; line-height:1;">👥</span>
+					<div class="mhbo-group-ribbon">
+						<div class="mhbo-group-ribbon-head">
+							<div class="mhbo-group-ribbon-title-wrap">
+								<span class="dashicons dashicons-groups mhbo-group-ribbon-icon" aria-hidden="true"></span>
 								<div>
-									<h3 style="margin:0; font-size:16px; font-weight:800; color:#1e1b4b; display:flex; align-items:center; gap:8px;">
+									<h3 class="mhbo-group-ribbon-title">
 										<span>
 											<?php
 											/* translators: %d: Number of rooms in group reservation */
 											echo esc_html( sprintf( __( 'Group Reservation (%d Rooms in Party)', 'modern-hotel-booking' ), (int) $group_amts['rooms_count'] ) );
 											?>
 										</span>
-										<span style="font-family:monospace; font-size:12px; font-weight:600; background:#e0e7ff; color:#3730a3; padding:2px 8px; border-radius:4px;">
+										<span class="mhbo-group-token-badge">
 											<?php echo esc_html( $group_amts['parent_token'] ); ?>
 										</span>
 										<span style="background:<?php echo esc_attr( $grp_badge_bg ); ?>; color:<?php echo esc_attr( $grp_badge_color ); ?>; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:700;">
 											<?php echo esc_html( $grp_badge_lbl ); ?>
 										</span>
 									</h3>
-									<div style="font-size:12px; color:#4338ca; margin-top:3px;">
+									<div class="mhbo-group-ribbon-totals">
 										<span><strong><?php esc_html_e( 'Group Total:', 'modern-hotel-booking' ); ?></strong> <?php echo esc_html( I18n::format_currency( $group_amts['total'] ) ); ?></span>
-										<span> &bull; </span>
+										<span aria-hidden="true"> &bull; </span>
 										<span><strong><?php esc_html_e( 'Total Paid:', 'modern-hotel-booking' ); ?></strong> <?php echo esc_html( I18n::format_currency( $group_amts['received'] ) ); ?></span>
-										<span> &bull; </span>
+										<span aria-hidden="true"> &bull; </span>
 										<span><strong><?php esc_html_e( 'Remaining Balance:', 'modern-hotel-booking' ); ?></strong> <?php echo esc_html( I18n::format_currency( $group_amts['remaining'] ) ); ?></span>
 									</div>
 								</div>
@@ -683,8 +693,8 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 </div>
 
 						<!-- Sibling Rooms Switcher Chips -->
-						<div style="border-top:1px solid #c7d2fe; padding-top:10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
-							<span style="font-size:12px; font-weight:700; color:#3730a3; margin-right:4px;"><?php esc_html_e( 'Rooms in this group:', 'modern-hotel-booking' ); ?></span>
+						<div class="mhbo-group-chips-row">
+							<span class="mhbo-group-chips-label"><?php esc_html_e( 'Rooms in this group:', 'modern-hotel-booking' ); ?></span>
 							<?php foreach ( $group_amts['bookings'] as $sib ) : ?>
 								<?php
 								$is_curr_sib = ( (int) $sib->id === (int) $edit_data->id );
@@ -697,12 +707,12 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 								$sib_url     = wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=edit&id={$sib->id}" ), 'mhbo_edit_booking_' . $sib->id );
 								?>
 								<?php if ( $is_curr_sib ) : ?>
-									<span style="background:#4338ca; color:#ffffff; font-weight:700; font-size:12px; padding:4px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 1px 3px rgba(0,0,0,0.2);">
-										🛏️ <?php echo esc_html( $sib_label ); ?> (<?php esc_html_e( 'This Room', 'modern-hotel-booking' ); ?>) &bull; <?php echo esc_html( $sib_amt_str ); ?> (<?php echo esc_html( $sib_state ); ?>)
+									<span class="mhbo-group-chip mhbo-group-chip--active">
+										<span class="dashicons dashicons-building" aria-hidden="true"></span> <?php echo esc_html( $sib_label ); ?> (<?php esc_html_e( 'This Room', 'modern-hotel-booking' ); ?>) &bull; <?php echo esc_html( $sib_amt_str ); ?> (<?php echo esc_html( $sib_state ); ?>)
 									</span>
 								<?php else : ?>
-									<a href="<?php echo esc_url( $sib_url ); ?>" style="background:#ffffff; color:#3730a3; border:1px solid #a5b4fc; font-weight:600; font-size:12px; padding:4px 12px; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s ease;">
-										🛏️ <?php echo esc_html( $sib_label ); ?> &bull; <?php echo esc_html( $sib_amt_str ); ?> (<?php echo esc_html( $sib_state ); ?>) &rarr;
+									<a href="<?php echo esc_url( $sib_url ); ?>" class="mhbo-group-chip">
+										<span class="dashicons dashicons-building" aria-hidden="true"></span> <?php echo esc_html( $sib_label ); ?> &bull; <?php echo esc_html( $sib_amt_str ); ?> (<?php echo esc_html( $sib_state ); ?>) &rarr;
 									</a>
 								<?php endif; ?>
 							<?php endforeach; ?>
@@ -714,23 +724,23 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 				<div class="mhbo-workstation-hero">
 					<div class="mhbo-hero-identity">
 						<div class="mhbo-hero-avatar">
-							🏨
+							<span class="dashicons dashicons-id-alt" aria-hidden="true"></span>
 						</div>
 						<div class="mhbo-hero-meta">
 							<h2>
 								<span><?php echo esc_html( $edit_data->customer_name ); ?></span>
-								<span style="font-size: 15px; font-weight: 600; color: #64748b;">#<?php echo (int) $edit_data->id; ?></span>
-								<span style="display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: <?php echo esc_attr( $badge_bg ); ?>; color: <?php echo esc_attr( $badge_color ); ?>;">
+								<span class="mhbo-ws-hero-subtag">#<?php echo (int) $edit_data->id; ?></span>
+								<span class="mhbo-ws-status-pill" style="background: <?php echo esc_attr( $badge_bg ); ?>; color: <?php echo esc_attr( $badge_color ); ?>;">
 									<?php echo esc_html( $status_label ); ?>
 								</span>
 							</h2>
 							<div class="mhbo-hero-subtitle">
-								<span>📅 <?php echo esc_html( $folio['check_in_formatted'] ?? $edit_data->check_in ); ?> → <?php echo esc_html( $folio['check_out_formatted'] ?? $edit_data->check_out ); ?> (<?php echo (int) ( $folio['nights'] ?? 1 ); ?> <?php esc_html_e( 'nights', 'modern-hotel-booking' ); ?>)</span>
-								<span>&bull;</span>
-								<span>🛏️ <?php echo esc_html( $room_title ); ?><?php echo ! empty( $room_num ) ? ' (Room ' . esc_html( $room_num ) . ')' : ''; ?></span>
+								<span><span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span> <?php echo esc_html( $folio['check_in_formatted'] ?? $edit_data->check_in ); ?> → <?php echo esc_html( $folio['check_out_formatted'] ?? $edit_data->check_out ); ?> (<span id="mhbo_edit_hero_nights_pill"><?php echo (int) ( $folio['nights'] ?? 1 ); ?></span> <?php esc_html_e( 'nights', 'modern-hotel-booking' ); ?>)</span>
+								<span aria-hidden="true">&bull;</span>
+								<span><span class="dashicons dashicons-building" aria-hidden="true"></span> <?php echo esc_html( $room_title ); ?><?php echo ! empty( $room_num ) ? ' (Room ' . esc_html( $room_num ) . ')' : ''; ?></span>
 								<?php if ( $crm_guest && ! empty( $crm_guest->vip_status ) && 'none' !== $crm_guest->vip_status ) : ?>
-									<span>&bull;</span>
-									<span style="background: #fef3c7; color: #92400e; padding: 2px 7px; border-radius: 99px; font-size: 10px; font-weight: 800; text-transform: uppercase;">⭐ <?php echo esc_html( str_replace( '_', ' ', $crm_guest->vip_status ) ); ?></span>
+									<span aria-hidden="true">&bull;</span>
+									<span class="mhbo-ws-vip-pill">⭐ <?php echo esc_html( str_replace( '_', ' ', $crm_guest->vip_status ) ); ?></span>
 								<?php endif; ?>
 							</div>
 						</div>
@@ -743,14 +753,11 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 									if ( '' !== $clean_phone ) :
 										$wa_url = 'https://api.whatsapp.com/send?phone=' . rawurlencode( $clean_phone );
 										?>
-								<a href="<?php echo esc_url( $wa_url ); ?>" target="_blank" class="mhbo-hero-btn mhbo-hero-btn-whatsapp" title="<?php esc_attr_e( 'Chat with guest on WhatsApp', 'modern-hotel-booking' ); ?>">
-									📱 <?php esc_html_e( 'WhatsApp', 'modern-hotel-booking' ); ?>
+								<a href="<?php echo esc_url( $wa_url ); ?>" target="_blank" rel="noopener noreferrer" class="mhbo-hero-btn mhbo-hero-btn-whatsapp" title="<?php esc_attr_e( 'Chat with guest on WhatsApp', 'modern-hotel-booking' ); ?>">
+									<span class="dashicons dashicons-format-chat" aria-hidden="true"></span> <?php esc_html_e( 'WhatsApp', 'modern-hotel-booking' ); ?>
 								</a>
 									<?php endif; ?>
 						<?php endif; ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="mhbo-hero-btn">
-							🔙 <?php esc_html_e( 'All Bookings', 'modern-hotel-booking' ); ?>
-						</a>
 					</div>
 				</div>
 
@@ -763,25 +770,74 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<?php if ( class_exists( GuestManager::class ) && GuestManager::is_enabled() ) : ?>
 						<input type="hidden" name="guest_id" value="<?php echo esc_attr( (string) $crm_guest_id ); ?>">
 					<?php endif; ?>
+					<button type="submit" name="submit_booking_update" class="screen-reader-text" tabindex="-1"><?php esc_html_e( 'Save Reservation Changes', 'modern-hotel-booking' ); ?></button>
+
+					<?php
+					$ws_mod_req    = ( is_array( $saved_custom ) && ! empty( $saved_custom['_mhbo_modification_requested'] ) && is_array( $saved_custom['_mhbo_modification_requested'] ) ) ? $saved_custom['_mhbo_modification_requested'] : null;
+					$ws_cancel_req = ( is_array( $saved_custom ) && ! empty( $saved_custom['_mhbo_cancellation_requested'] ) && is_array( $saved_custom['_mhbo_cancellation_requested'] ) ) ? $saved_custom['_mhbo_cancellation_requested'] : null;
+					if ( ! in_array( (string) ( $edit_data->status ?? '' ), array( 'cancelled', 'refunded' ), true ) && ( null !== $ws_mod_req || null !== $ws_cancel_req ) ) :
+						?>
+					<div class="mhbo-ws-guest-request-banner" role="status">
+						<div class="mhbo-ws-guest-request-head">
+							<span class="dashicons dashicons-email-alt" aria-hidden="true"></span>
+							<strong><?php esc_html_e( 'Pending Guest Portal Request', 'modern-hotel-booking' ); ?></strong>
+						</div>
+						<?php if ( null !== $ws_mod_req ) : ?>
+							<div class="mhbo-ws-guest-request-item">
+								<strong><?php esc_html_e( 'Stay Modification Request:', 'modern-hotel-booking' ); ?></strong>
+								<?php if ( ! empty( $ws_mod_req['requested_dates'] ) ) : ?>
+									<span><?php esc_html_e( 'Dates:', 'modern-hotel-booking' ); ?> <?php echo esc_html( (string) $ws_mod_req['requested_dates'] ); ?></span>
+								<?php endif; ?>
+								<?php if ( ! empty( $ws_mod_req['requested_guests'] ) ) : ?>
+									<span> &bull; <?php esc_html_e( 'Guests:', 'modern-hotel-booking' ); ?> <?php echo esc_html( (string) $ws_mod_req['requested_guests'] ); ?></span>
+								<?php endif; ?>
+								<?php if ( ! empty( $ws_mod_req['notes'] ) ) : ?>
+									<div class="mhbo-ws-guest-request-meta"><?php esc_html_e( 'Guest Notes:', 'modern-hotel-booking' ); ?> <?php echo esc_html( (string) $ws_mod_req['notes'] ); ?></div>
+								<?php endif; ?>
+								<div class="mhbo-ws-guest-request-meta">
+									<?php esc_html_e( 'Updating check-in/check-out dates and clicking "Save Reservation Changes" automatically emails the guest their updated stay schedule and clears this notice.', 'modern-hotel-booking' ); ?>
+								</div>
+							</div>
+						<?php endif; ?>
+						<?php if ( null !== $ws_cancel_req ) : ?>
+							<div class="mhbo-ws-guest-request-item">
+								<strong><?php esc_html_e( 'Cancellation Request:', 'modern-hotel-booking' ); ?></strong>
+								<?php if ( ! empty( $ws_cancel_req['reason'] ) ) : ?>
+									<span><?php esc_html_e( 'Reason:', 'modern-hotel-booking' ); ?> <?php echo esc_html( (string) $ws_cancel_req['reason'] ); ?></span>
+								<?php else : ?>
+									<span><?php esc_html_e( 'Submitted via Guest Portal.', 'modern-hotel-booking' ); ?></span>
+								<?php endif; ?>
+								<div class="mhbo-ws-guest-request-meta">
+									<?php esc_html_e( 'Changing status to Cancelled and saving automatically dispatches a cancellation email to the guest and clears this notice.', 'modern-hotel-booking' ); ?>
+								</div>
+							</div>
+						<?php endif; ?>
+						<label class="mhbo-ws-guest-request-resolve">
+							<input type="hidden" name="mhbo_clear_portal_requests" value="0">
+							<input type="checkbox" name="mhbo_clear_portal_requests" value="1">
+							<span><?php esc_html_e( 'Mark guest portal request(s) as reviewed/resolved on save (if declining without changing dates or cancelling)', 'modern-hotel-booking' ); ?></span>
+						</label>
+					</div>
+					<?php endif; ?>
 
 					<div class="mhbo-workstation-grid">
-						<!-- LEFT MAIN COLUMN (1.85fr) -->
+						<!-- LEFT MAIN COLUMN (1.75fr) -->
 						<div class="mhbo-workstation-col-main">
 
 							<!-- Card 1: Guest Profile & Stay Details -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-admin-users" style="color:#0284c7;"></span> <?php esc_html_e( 'Guest & Reservation Details', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-admin-users" style="color:#0369a1;" aria-hidden="true"></span> <?php esc_html_e( 'Guest & Reservation Details', 'modern-hotel-booking' ); ?></h3>
 									<?php if ( $crm_guest && ! empty( $crm_guest->id ) ) : ?>
-										<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-guests&guest_id=' . (int) $crm_guest->id ) ); ?>" target="_blank" class="button button-small">
+										<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-guests&guest_id=' . (int) $crm_guest->id ) ); ?>" target="_blank" rel="noopener noreferrer" class="button button-small">
 											<?php esc_html_e( 'View CRM Profile ↗', 'modern-hotel-booking' ); ?>
 										</a>
 									<?php endif; ?>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<?php if ( $crm_guest && ! empty( $crm_guest->caution_flag ) ) : ?>
-										<div style="background:#fef2f2; border:1px solid #f87171; border-radius:6px; padding:8px 12px; margin-bottom:16px; color:#991b1b; font-weight:600; font-size:12px; display:flex; align-items:center; gap:8px;">
-											<span style="font-size:16px;">🚫</span>
+										<div class="mhbo-ws-caution-alert" style="margin-top:0; margin-bottom:16px;" role="alert">
+											<span class="dashicons dashicons-warning" aria-hidden="true"></span>
 											<span><?php esc_html_e( 'Caution: Problematic guest flagged by staff in CRM.', 'modern-hotel-booking' ); ?></span>
 										</div>
 									<?php endif; ?>
@@ -821,11 +877,11 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										</tr>
 										<tr>
 											<th scope="row"><label for="mhbo_edit_check_in"><?php echo esc_html( I18n::get_label( 'label_check_in' ) ); ?></label></th>
-											<td><input type="date" name="check_in" id="mhbo_edit_check_in" value="<?php echo esc_attr( $edit_data->check_in ); ?>" required></td>
+											<td><input type="date" name="check_in" id="mhbo_edit_check_in" class="mhbo-ws-date-input" value="<?php echo esc_attr( $edit_data->check_in ); ?>" required></td>
 										</tr>
 										<tr>
 											<th scope="row"><label for="mhbo_edit_check_out"><?php echo esc_html( I18n::get_label( 'label_check_out' ) ); ?></label></th>
-											<td><input type="date" name="check_out" id="mhbo_edit_check_out" value="<?php echo esc_attr( $edit_data->check_out ); ?>" required></td>
+											<td><input type="date" name="check_out" id="mhbo_edit_check_out" class="mhbo-ws-date-input" value="<?php echo esc_attr( $edit_data->check_out ); ?>" required></td>
 										</tr>
 
 										<!-- Custom Fields -->
@@ -838,14 +894,15 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 														<?php
 														$label   = (string) ( I18n::decode( I18n::encode( $defn['label'] ) ) ?? '' );
 														$def_val = $saved_custom[ $defn['id'] ] ?? '';
+														$cf_id   = 'mhbo_edit_custom_' . sanitize_html_class( (string) $defn['id'] );
 														?>
 												<tr>
-													<th scope="row"><label><?php echo esc_html( $label ); ?></label></th>
+													<th scope="row"><label for="<?php echo esc_attr( $cf_id ); ?>"><?php echo esc_html( $label ); ?></label></th>
 													<td>
 														<?php if ( $defn['type'] === 'textarea' ) : ?>
-															<textarea name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" rows="2" class="regular-text" style="width:100%; max-width:420px;"><?php echo esc_textarea( $def_val ); ?></textarea>
+															<textarea id="<?php echo esc_attr( $cf_id ); ?>" name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" rows="2" class="regular-text mhbo-ws-input-lg"><?php echo esc_textarea( $def_val ); ?></textarea>
 														<?php else : ?>
-															<input type="<?php echo esc_attr( $defn['type'] ); ?>" name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" value="<?php echo esc_attr( $def_val ); ?>" class="regular-text" style="width:100%; max-width:420px;">
+															<input id="<?php echo esc_attr( $cf_id ); ?>" type="<?php echo esc_attr( $defn['type'] ); ?>" name="mhbo_custom[<?php echo esc_attr( $defn['id'] ); ?>]" value="<?php echo esc_attr( $def_val ); ?>" class="regular-text mhbo-ws-input-lg">
 														<?php endif; ?>
 													</td>
 												</tr>
@@ -863,7 +920,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 									$edit_card2_title = __( 'Discounts & Concessions', 'modern-hotel-booking' );
 									
 									?>
-									<h3><span class="dashicons <?php echo esc_attr( $edit_card2_icon ); ?>" style="color:#f59e0b;"></span> <?php echo esc_html( $edit_card2_title ); ?></h3>
+									<h3><span class="dashicons <?php echo esc_attr( $edit_card2_icon ); ?>" style="color:#b45309;" aria-hidden="true"></span> <?php echo esc_html( $edit_card2_title ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
@@ -874,8 +931,8 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										<tr>
 											<th scope="row"><label for="mhbo_edit_discount_amount"><?php echo esc_html( I18n::get_label( 'label_discount_amount' ) ); ?></label></th>
 											<td>
-												<div style="display:flex; align-items:center; gap:8px;">
-													<input type="number" step="any" name="discount_amount" id="mhbo_edit_discount_amount" value="<?php echo esc_attr( Money::fromDecimal( (string) ( $edit_data->discount_amount ?? 0 ) )->toDecimal() ); ?>" class="small-text" style="width:110px;<?php echo ! $can_override_pricing ? ' background:#f1f5f9; cursor:not-allowed;' : ''; ?>"<?php echo ! $can_override_pricing ? ' readonly' : ''; ?>>
+												<div class="mhbo-ws-inline-pair">
+													<input type="number" step="any" name="discount_amount" id="mhbo_edit_discount_amount" value="<?php echo esc_attr( Money::fromDecimal( (string) ( $edit_data->discount_amount ?? 0 ) )->toDecimal() ); ?>" class="small-text mhbo-ws-input-sm"<?php echo ! $can_override_pricing ? ' readonly' : ''; ?>>
 													<span class="description" style="font-weight:600;"><?php echo esc_html( $currency ); ?></span>
 												</div>
 												<?php
@@ -893,10 +950,10 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<!-- Card 3: Itemized Charges & Folio Breakdown -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-media-spreadsheet" style="color:#3b82f6;"></span> <?php esc_html_e( 'Charges & Folio Breakdown', 'modern-hotel-booking' ); ?></h3>
-									<span style="font-size:12px; font-weight:600; color:#64748b;"><?php esc_html_e( 'Room rates, extras & taxes', 'modern-hotel-booking' ); ?></span>
+									<h3><span class="dashicons dashicons-media-spreadsheet" style="color:#2563eb;" aria-hidden="true"></span> <?php esc_html_e( 'Charges & Folio Breakdown', 'modern-hotel-booking' ); ?></h3>
+									<span class="mhbo-ws-header-hint"><?php esc_html_e( 'Room rates, extras & taxes', 'modern-hotel-booking' ); ?></span>
 								</div>
-								<div class="mhbo-table-responsive" style="overflow-x:auto;">
+								<div class="mhbo-table-responsive">
 									<table class="mhbo-charges-table" id="mhbo_edit_folio_table">
 										<thead>
 											<tr>
@@ -910,8 +967,8 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										</thead>
 										<tbody id="mhbo_edit_folio_tbody">
 													<?php if ( empty( $folio['charges'] ) ) : ?>
-												<tr>
-													<td colspan="6" style="text-align:center; padding:20px; color:#64748b;">
+												<tr class="mhbo-ws-empty-row">
+													<td colspan="6" style="text-align:center; padding:20px; color:#475569;">
 														<?php esc_html_e( 'No billable charge items recorded.', 'modern-hotel-booking' ); ?>
 													</td>
 												</tr>
@@ -943,21 +1000,21 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 													$is_disc = ( $c['amount'] ?? ( $c['total'] ?? 0 ) ) < 0;
 	?>
 													<tr>
-														<td>
+														<td class="mhbo-ws-td-cat" data-label="<?php esc_attr_e( 'Category', 'modern-hotel-booking' ); ?>">
 															<span class="mhbo-charge-category-badge <?php echo esc_attr( $cat_class ); ?>">
 																<?php echo esc_html( $cat_lbl ); ?>
 															</span>
 														</td>
-														<td>
+														<td class="mhbo-ws-td-desc" data-label="<?php esc_attr_e( 'Charge Description', 'modern-hotel-booking' ); ?>">
 															<strong><?php echo esc_html( $c_name ); ?></strong>
 															<?php if ( ! empty( $c['details'] ) ) : ?>
-																<div style="font-size:11px; color:#64748b; margin-top:2px;"><?php echo esc_html( $c['details'] ); ?></div>
+																<div style="font-size:11px; color:#475569; margin-top:2px;"><?php echo esc_html( $c['details'] ); ?></div>
 															<?php endif; ?>
 														</td>
-														<td style="text-align:right; font-variant-numeric:tabular-nums;"><?php echo esc_html( $c['unit_price_formatted'] ); ?></td>
-														<td style="text-align:center; font-variant-numeric:tabular-nums;"><?php echo esc_html( (string) $c_qty ); ?></td>
-														<td style="text-align:right; color:#64748b; font-size:12px; font-variant-numeric:tabular-nums;"><?php echo esc_html( ( isset( $c['tax_amount'] ) && ! Money::fromDecimal( (string) $c['tax_amount'], Pricing::get_currency_code() )->isPositive() ) ? '—' : $c['tax_formatted'] ); ?></td>
-														<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:<?php echo $is_disc ? '#166534' : '#0f172a'; ?>;">
+														<td class="mhbo-ws-td-rate" data-label="<?php esc_attr_e( 'Rate', 'modern-hotel-booking' ); ?>" style="text-align:right; font-variant-numeric:tabular-nums;"><?php echo esc_html( $c['unit_price_formatted'] ); ?></td>
+														<td class="mhbo-ws-td-qty" data-label="<?php esc_attr_e( 'Qty / Nights', 'modern-hotel-booking' ); ?>" style="text-align:center; font-variant-numeric:tabular-nums;"><?php echo esc_html( (string) $c_qty ); ?></td>
+														<td class="mhbo-ws-td-tax" data-label="<?php esc_attr_e( 'Tax', 'modern-hotel-booking' ); ?>" style="text-align:right; color:#475569; font-size:12px; font-variant-numeric:tabular-nums;"><?php echo esc_html( ( isset( $c['tax_amount'] ) && ! Money::fromDecimal( (string) $c['tax_amount'], Pricing::get_currency_code() )->isPositive() ) ? '—' : $c['tax_formatted'] ); ?></td>
+														<td class="mhbo-ws-td-total" data-label="<?php esc_attr_e( 'Total', 'modern-hotel-booking' ); ?>" style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:<?php echo $is_disc ? '#166534' : '#0f172a'; ?>;">
 															<?php echo esc_html( $c_tot ); ?>
 														</td>
 													</tr>
@@ -967,7 +1024,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										<tfoot style="background:#f8fafc; border-top:2px solid #cbd5e1; font-weight:600;">
 													<?php $show_tax_rows = ! empty( $folio['tax_enabled'] ) && ! empty( $folio['total_tax'] ) && Money::fromDecimal( (string) $folio['total_tax'], Pricing::get_currency_code() )->isPositive(); ?>
 											<tr id="mhbo_edit_folio_foot_subtotal_row" class="<?php echo ! $show_tax_rows ? 'mhbo-hidden' : ''; ?>" style="<?php echo ! $show_tax_rows ? 'display:none !important;' : ''; ?>" <?php echo ! $show_tax_rows ? 'hidden' : ''; ?>>
-												<td colspan="5" style="text-align:right; padding:8px 12px; color:#64748b; font-size:12px;" id="mhbo_edit_folio_foot_subtotal_label">
+												<td colspan="5" style="text-align:right; padding:8px 12px; color:#475569; font-size:12px;" id="mhbo_edit_folio_foot_subtotal_label">
 													<?php
 													if ( ! empty( $folio['is_vat'] ) ) {
 														/* translators: %s: Tax label */
@@ -980,7 +1037,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 												<td style="text-align:right; padding:8px 12px; font-variant-numeric:tabular-nums;" id="mhbo_edit_folio_foot_subtotal_net"><?php echo esc_html( $folio['subtotal_net_formatted'] ?? '' ); ?></td>
 											</tr>
 											<tr id="mhbo_edit_folio_foot_tax_row" class="<?php echo ! $show_tax_rows ? 'mhbo-hidden' : ''; ?>" style="<?php echo ! $show_tax_rows ? 'display:none !important;' : ''; ?>" <?php echo ! $show_tax_rows ? 'hidden' : ''; ?>>
-												<td colspan="5" style="text-align:right; padding:6px 12px; color:#64748b; font-size:12px;" id="mhbo_edit_folio_foot_tax_label">
+												<td colspan="5" style="text-align:right; padding:6px 12px; color:#475569; font-size:12px;" id="mhbo_edit_folio_foot_tax_label">
 													<?php
 													if ( ! empty( $folio['is_vat'] ) ) {
 														echo esc_html( ( $folio['base_tax_label'] ?? 'VAT' ) . ' (included):' );
@@ -990,7 +1047,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 													}
 													?>
 												</td>
-												<td style="text-align:right; padding:6px 12px; font-variant-numeric:tabular-nums; color:#64748b;" id="mhbo_edit_folio_foot_tax"><?php echo esc_html( $folio['total_tax_formatted'] ?? '' ); ?></td>
+												<td style="text-align:right; padding:6px 12px; font-variant-numeric:tabular-nums; color:#475569;" id="mhbo_edit_folio_foot_tax"><?php echo esc_html( $folio['total_tax_formatted'] ?? '' ); ?></td>
 											</tr>
 											<tr style="border-top:1px solid #e2e8f0; font-size:14px;">
 												<td colspan="5" style="text-align:right; padding:12px; font-weight:800; color:#0f172a;" id="mhbo_edit_folio_foot_total_label">
@@ -1013,10 +1070,10 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<!-- Card 4: Payment Ledger & Transactions -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-money-alt" style="color:#10b981;"></span> <?php esc_html_e( 'Payment Ledger & Transactions', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-money-alt" style="color:#047857;" aria-hidden="true"></span> <?php esc_html_e( 'Payment Ledger & Transactions', 'modern-hotel-booking' ); ?></h3>
 									<span style="font-size:12px; font-weight:600; color:#166534;"><?php esc_html_e( 'Verified Transactions', 'modern-hotel-booking' ); ?></span>
 								</div>
-								<div class="mhbo-table-responsive" style="overflow-x:auto;">
+								<div class="mhbo-table-responsive">
 									<table class="mhbo-ledger-table">
 										<thead>
 											<tr>
@@ -1031,8 +1088,8 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										</thead>
 										<tbody>
 													<?php if ( empty( $folio['payments'] ) ) : ?>
-												<tr>
-													<td colspan="7" style="text-align:center; padding:24px; color:#64748b;">
+												<tr class="mhbo-ws-empty-row">
+													<td colspan="7" style="text-align:center; padding:24px; color:#475569;">
 														<?php esc_html_e( 'No payments or transactions recorded in folio yet.', 'modern-hotel-booking' ); ?>
 													</td>
 												</tr>
@@ -1047,28 +1104,28 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 													$is_split_txn = ( '' !== $p_txn_id && isset( $group_txn_allocs[ $p_txn_id ] ) && ! empty( $group_txn_allocs[ $p_txn_id ]['is_split'] ) );
 													?>
 													<tr>
-														<td style="font-size:12px; color:#64748b;"><?php echo esc_html( $p['date_formatted'] ); ?></td>
-														<td>
+														<td class="mhbo-ws-td-date" data-label="<?php esc_attr_e( 'Date / Time', 'modern-hotel-booking' ); ?>" style="font-size:12px; color:#475569;"><?php echo esc_html( $p['date_formatted'] ); ?></td>
+														<td class="mhbo-ws-td-type" data-label="<?php esc_attr_e( 'Type', 'modern-hotel-booking' ); ?>">
 															<span style="display:inline-block; padding:2px 7px; border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase; background:<?php echo $is_ref ? '#fee2e2' : '#dcfce7'; ?>; color:<?php echo $is_ref ? '#991b1b' : '#166534'; ?>;">
 																<?php echo esc_html( $p['type_label'] ); ?>
 															</span>
 														</td>
-														<td style="font-size:12px;"><?php echo esc_html( $p['method_label'] ); ?></td>
-														<td style="font-size:11px; font-family:monospace; color:#475569;">
+														<td class="mhbo-ws-td-method" data-label="<?php esc_attr_e( 'Method', 'modern-hotel-booking' ); ?>" style="font-size:12px;"><?php echo esc_html( $p['method_label'] ); ?></td>
+														<td class="mhbo-ws-td-ref" data-label="<?php esc_attr_e( 'Txn / Gateway Ref', 'modern-hotel-booking' ); ?>" style="font-size:11px; font-family:monospace; color:#475569;">
 															<?php echo esc_html( $p['transaction_id'] ?: '—' ); ?>
 															<?php if ( $is_split_txn ) : ?>
 																<div>
 																	<span style="display:inline-block; margin-top:3px; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:700; background:#e0e7ff; color:#3730a3;">
-																		👥 <?php esc_html_e( 'Group Split Payment', 'modern-hotel-booking' ); ?>
+																		<span class="dashicons dashicons-groups" style="font-size:11px;width:11px;height:11px;vertical-align:text-bottom;" aria-hidden="true"></span> <?php esc_html_e( 'Group Split Payment', 'modern-hotel-booking' ); ?>
 																	</span>
 																</div>
 															<?php endif; ?>
 														</td>
-														<td style="font-size:12px;"><?php echo esc_html( $p['staff'] ); ?></td>
-														<td style="font-size:12px; color:#64748b;">
+														<td class="mhbo-ws-td-source" data-label="<?php esc_attr_e( 'Source', 'modern-hotel-booking' ); ?>" style="font-size:12px;"><?php echo esc_html( $p['staff'] ); ?></td>
+														<td class="mhbo-ws-td-memo" data-label="<?php esc_attr_e( 'Memo / Notes', 'modern-hotel-booking' ); ?>" style="font-size:12px; color:#475569;">
 															<?php echo esc_html( $p['note'] ?: '—' ); ?>
 															<?php if ( $is_split_txn ) : ?>
-																<div style="font-size:11px; color:#4338ca; margin-top:2px;">
+																<div style="font-size:11px; color:#3730a3; margin-top:2px;">
 																	<?php
 																	/* translators: %s: Formatted total group transaction amount */
 																	echo esc_html( sprintf( __( 'Allocated from %s total group transaction', 'modern-hotel-booking' ), I18n::format_currency( $group_txn_allocs[ $p_txn_id ]['total_amount'] ) ) );
@@ -1076,7 +1133,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 																</div>
 															<?php endif; ?>
 														</td>
-														<td style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:<?php echo $is_ref ? '#dc2626' : '#166534'; ?>;">
+														<td class="mhbo-ws-td-amount" data-label="<?php esc_attr_e( 'Amount', 'modern-hotel-booking' ); ?>" style="text-align:right; font-weight:700; font-variant-numeric:tabular-nums; color:<?php echo $is_ref ? '#dc2626' : '#166534'; ?>;">
 															<?php echo esc_html( $p['amount_formatted'] ); ?>
 														</td>
 													</tr>
@@ -1090,10 +1147,10 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 											</tr>
 											<?php $has_rem_due = isset( $folio['balance_remaining'] ) && Money::fromDecimal( (string) $folio['balance_remaining'], Pricing::get_currency_code() )->isPositive(); ?>
 											<tr>
-												<td colspan="6" style="text-align:right; padding:10px 12px; color:<?php echo ! empty( $folio['is_overpaid'] ) ? '#0284c7' : ( $has_rem_due ? '#dc2626' : '#166534' ); ?>; font-size:13px;" id="mhbo_ledger_balance_due_label">
+												<td colspan="6" style="text-align:right; padding:10px 12px; color:<?php echo ! empty( $folio['is_overpaid'] ) ? '#0369a1' : ( $has_rem_due ? '#dc2626' : '#166534' ); ?>; font-size:13px;" id="mhbo_ledger_balance_due_label">
 															<?php echo ! empty( $folio['is_overpaid'] ) ? esc_html__( 'Credit Balance:', 'modern-hotel-booking' ) : esc_html__( 'Balance Due:', 'modern-hotel-booking' ); ?>
 												</td>
-												<td style="text-align:right; padding:10px 12px; font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; color:<?php echo ! empty( $folio['is_overpaid'] ) ? '#0284c7' : ( $has_rem_due ? '#dc2626' : '#166534' ); ?>;" id="mhbo_ledger_balance_due_val">
+												<td style="text-align:right; padding:10px 12px; font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; color:<?php echo ! empty( $folio['is_overpaid'] ) ? '#0369a1' : ( $has_rem_due ? '#dc2626' : '#166534' ); ?>;" id="mhbo_ledger_balance_due_val">
 															<?php echo ! empty( $folio['is_overpaid'] ) ? '−' . esc_html( (string) ( $folio['credit_balance_formatted'] ?? '' ) ) : esc_html( (string) ( $folio['balance_remaining_formatted'] ?? '' ) ); ?>
 												</td>
 											</tr>
@@ -1105,8 +1162,8 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<!-- Card 5: Record Payment or Refund -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-insert" style="color:#6366f1;"></span> <?php echo $can_issue_refunds ? esc_html__( 'Record Payment or Refund', 'modern-hotel-booking' ) : esc_html__( 'Record Payment', 'modern-hotel-booking' ); ?></h3>
-									<span style="font-size:12px; color:#64748b;"><?php esc_html_e( 'Front desk cashier', 'modern-hotel-booking' ); ?></span>
+									<h3><span class="dashicons dashicons-insert" style="color:#4f46e5;" aria-hidden="true"></span> <?php echo $can_issue_refunds ? esc_html__( 'Record Payment or Refund', 'modern-hotel-booking' ) : esc_html__( 'Record Payment', 'modern-hotel-booking' ); ?></h3>
+									<span class="mhbo-ws-header-hint"><?php esc_html_e( 'Front desk cashier', 'modern-hotel-booking' ); ?></span>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<?php if ( ! $can_process_payments ) : ?>
@@ -1116,20 +1173,20 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 									<div class="mhbo-quick-tender-bar">
 												<?php if ( $has_rem_due ) : ?>
 											<button type="button" class="button button-primary button-small mhbo-quick-pay-btn" data-amount="<?php echo esc_attr( (string) ( $folio['balance_remaining'] ?? 0 ) ); ?>" data-type="balance" data-note="<?php esc_attr_e( 'Settlement of remaining balance', 'modern-hotel-booking' ); ?>">
-												⚡ <?php esc_html_e( 'Pay Remaining Balance', 'modern-hotel-booking' ); ?> (<?php echo esc_html( (string) ( $folio['balance_remaining_formatted'] ?? '' ) ); ?>)
+												<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span> <?php esc_html_e( 'Pay Remaining Balance', 'modern-hotel-booking' ); ?> (<?php echo esc_html( (string) ( $folio['balance_remaining_formatted'] ?? '' ) ); ?>)
 											</button>
 										<?php endif; ?>
 
 												<?php if ( ! empty( $folio['deposit_required'] ) && empty( $folio['deposit_received'] ) ) : ?>
 											<button type="button" class="button button-secondary button-small mhbo-quick-pay-btn" data-amount="<?php echo esc_attr( (string) $folio['deposit_amount'] ); ?>" data-type="deposit" data-note="<?php esc_attr_e( 'Deposit collection', 'modern-hotel-booking' ); ?>">
-												⚡ <?php esc_html_e( 'Collect Deposit', 'modern-hotel-booking' ); ?> (<?php echo esc_html( $folio['deposit_amount_formatted'] ); ?>)
+												<span class="dashicons dashicons-vault" aria-hidden="true"></span> <?php esc_html_e( 'Collect Deposit', 'modern-hotel-booking' ); ?> (<?php echo esc_html( $folio['deposit_amount_formatted'] ); ?>)
 											</button>
 										<?php endif; ?>
 
 												<?php if ( ! empty( $folio['is_overpaid'] ) ) : ?>
 													<?php if ( $can_issue_refunds ) : ?>
 											<button type="button" class="button button-secondary button-small mhbo-quick-pay-btn" data-amount="<?php echo esc_attr( (string) $folio['credit_balance'] ); ?>" data-type="refund" data-note="<?php esc_attr_e( 'Stay modification refund', 'modern-hotel-booking' ); ?>" style="color:#0369a1; border-color:#7dd3fc; background:#f0f9ff;">
-												⚡ <?php esc_html_e( 'Issue / Record Refund', 'modern-hotel-booking' ); ?> (<?php echo esc_html( $folio['credit_balance_formatted'] ); ?>)
+												<span class="dashicons dashicons-undo" aria-hidden="true"></span> <?php esc_html_e( 'Issue / Record Refund', 'modern-hotel-booking' ); ?> (<?php echo esc_html( $folio['credit_balance_formatted'] ); ?>)
 											</button>
 													<?php else : ?>
 											<span style="font-size:12px; color:#0369a1; font-weight:600;"><?php esc_html_e( 'Credit balance detected — issuing or recording refunds requires Hotel Manager or Administrator permissions.', 'modern-hotel-booking' ); ?></span>
@@ -1138,15 +1195,15 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 									</div>
 
 									<!-- Cashier Tender Form Fields -->
-									<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:16px;">
-										<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; align-items:end;">
+									<div class="mhbo-ws-cashier-box">
+										<div class="mhbo-ws-cashier-grid">
 											<div>
-												<label for="mhbo_record_payment_amount" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px; color:#334155;"><?php esc_html_e( 'Amount', 'modern-hotel-booking' ); ?> (<?php echo esc_html( $currency ); ?>):</label>
-												<input type="number" step="any" min="0.01" name="record_payment_amount" id="mhbo_record_payment_amount" class="regular-text" style="width:100%; height:34px;" placeholder="0.00">
+												<label for="mhbo_record_payment_amount" class="mhbo-ws-cashier-label"><?php esc_html_e( 'Amount', 'modern-hotel-booking' ); ?> (<?php echo esc_html( $currency ); ?>):</label>
+												<input type="number" step="any" min="0.01" name="record_payment_amount" id="mhbo_record_payment_amount" class="regular-text mhbo-ws-cashier-field" placeholder="0.00">
 											</div>
 											<div>
-												<label for="mhbo_record_payment_method" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px; color:#334155;"><?php esc_html_e( 'Payment Method:', 'modern-hotel-booking' ); ?></label>
-												<select name="record_payment_method" id="mhbo_record_payment_method" style="width:100%; height:34px;">
+												<label for="mhbo_record_payment_method" class="mhbo-ws-cashier-label"><?php esc_html_e( 'Payment Method:', 'modern-hotel-booking' ); ?></label>
+												<select name="record_payment_method" id="mhbo_record_payment_method" class="mhbo-ws-cashier-field">
 													<option value="arrival"><?php esc_html_e( '💵 Cash / Terminal at Desk', 'modern-hotel-booking' ); ?></option>
 													<option value="credit_card"><?php esc_html_e( '💳 Credit Card', 'modern-hotel-booking' ); ?></option>
 													<option value="bank_transfer"><?php esc_html_e( '🏦 Bank Transfer / Wire', 'modern-hotel-booking' ); ?></option>
@@ -1156,8 +1213,8 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 												</select>
 											</div>
 											<div>
-												<label for="mhbo_record_payment_type" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px; color:#334155;"><?php esc_html_e( 'Payment Type:', 'modern-hotel-booking' ); ?></label>
-												<select name="record_payment_type" id="mhbo_record_payment_type" style="width:100%; height:34px;">
+												<label for="mhbo_record_payment_type" class="mhbo-ws-cashier-label"><?php esc_html_e( 'Payment Type:', 'modern-hotel-booking' ); ?></label>
+												<select name="record_payment_type" id="mhbo_record_payment_type" class="mhbo-ws-cashier-field">
 													<option value="payment"><?php esc_html_e( 'Standard Payment', 'modern-hotel-booking' ); ?></option>
 													<option value="deposit"><?php esc_html_e( 'Deposit', 'modern-hotel-booking' ); ?></option>
 													<option value="balance"><?php esc_html_e( 'Balance Settlement', 'modern-hotel-booking' ); ?></option>
@@ -1168,23 +1225,23 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 												</select>
 											</div>
 											<div>
-												<label for="mhbo_record_payment_txn_id" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px; color:#334155;"><?php esc_html_e( 'Transaction / Reference ID:', 'modern-hotel-booking' ); ?></label>
-												<input type="text" name="record_payment_txn_id" id="mhbo_record_payment_txn_id" class="regular-text" style="width:100%; height:34px;" placeholder="<?php esc_attr_e( 'e.g. pi_..., ch_...', 'modern-hotel-booking' ); ?>">
+												<label for="mhbo_record_payment_txn_id" class="mhbo-ws-cashier-label"><?php esc_html_e( 'Transaction / Reference ID:', 'modern-hotel-booking' ); ?></label>
+												<input type="text" name="record_payment_txn_id" id="mhbo_record_payment_txn_id" class="regular-text mhbo-ws-cashier-field" placeholder="<?php esc_attr_e( 'e.g. pi_..., ch_...', 'modern-hotel-booking' ); ?>">
 											</div>
 										</div>
-										<div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; align-items:end;">
-											<div style="flex:1; min-width:240px;">
-												<label for="mhbo_record_payment_note" style="display:block; font-size:12px; font-weight:700; margin-bottom:4px; color:#334155;"><?php esc_html_e( 'Notes / Memo:', 'modern-hotel-booking' ); ?></label>
-												<input type="text" name="record_payment_note" id="mhbo_record_payment_note" class="regular-text" style="width:100%; height:34px;" placeholder="<?php esc_attr_e( 'e.g. Cash collected at front desk', 'modern-hotel-booking' ); ?>">
+										<div class="mhbo-ws-cashier-row">
+											<div class="mhbo-ws-cashier-memo-col">
+												<label for="mhbo_record_payment_note" class="mhbo-ws-cashier-label"><?php esc_html_e( 'Notes / Memo:', 'modern-hotel-booking' ); ?></label>
+												<input type="text" name="record_payment_note" id="mhbo_record_payment_note" class="regular-text mhbo-ws-cashier-field" placeholder="<?php esc_attr_e( 'e.g. Cash collected at front desk', 'modern-hotel-booking' ); ?>">
 											</div>
-											<div style="display:flex; align-items:center; height:34px;">
-												<label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:#334155; cursor:pointer; margin:0;">
-													<input type="checkbox" name="record_payment_send_email" id="mhbo_record_payment_send_email" value="1" checked style="margin:0;">
-													<?php esc_html_e( 'Send receipt to guest & admin', 'modern-hotel-booking' ); ?>
+											<div class="mhbo-ws-cashier-check-col">
+												<label class="mhbo-ws-checkbox-row">
+													<input type="checkbox" name="record_payment_send_email" id="mhbo_record_payment_send_email" value="1" checked>
+													<span><?php esc_html_e( 'Send receipt to guest & admin', 'modern-hotel-booking' ); ?></span>
 												</label>
 											</div>
-											<div>
-												<input type="submit" name="submit_record_folio_payment" class="button button-secondary" value="<?php esc_attr_e( 'Record Payment', 'modern-hotel-booking' ); ?>" style="height:34px; font-weight:600;">
+											<div class="mhbo-ws-cashier-submit-col">
+												<input type="submit" name="submit_record_folio_payment" class="button button-secondary mhbo-ws-cashier-btn" value="<?php esc_attr_e( 'Record Payment', 'modern-hotel-booking' ); ?>">
 											</div>
 										</div>
 									</div>
@@ -1200,7 +1257,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<!-- Card 1: Financial & Collection Overview KPIs -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-chart-pie" style="color:#0284c7;"></span> <?php esc_html_e( 'Financial Overview', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-chart-pie" style="color:#0369a1;" aria-hidden="true"></span> <?php esc_html_e( 'Financial Overview', 'modern-hotel-booking' ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<div class="mhbo-kpi-grid">
@@ -1253,7 +1310,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 													<span class="mhbo-kpi-value"><?php echo esc_html( (string) (int) $group_amts['rooms_count'] ); ?></span>
 												</div>
 											<?php endif; ?>
-											<div class="mhbo-kpi-tile" style="grid-column: span 2;">
+											<div class="mhbo-kpi-tile mhbo-kpi-tile--full">
 												<span class="mhbo-kpi-label"><?php esc_html_e( 'Group Balance Due', 'modern-hotel-booking' ); ?></span>
 												<span class="mhbo-kpi-value <?php echo $group_amts['remaining']->isPositive() ? 'mhbo-kpi-value-due' : 'mhbo-kpi-value-paid'; ?>">
 													<?php echo $group_amts['remaining']->isPositive() ? esc_html( I18n::format_currency( $group_amts['remaining'] ) ) : esc_html__( '✓ Group Settled in Full', 'modern-hotel-booking' ); ?>
@@ -1262,11 +1319,11 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										</div>
 										<?php if ( ! empty( $grp_master_url ) ) : ?>
 											<div style="margin-top:12px; padding-top:12px; border-top:1px solid #e0e7ff;">
-												<label style="display:block; font-size:11px; font-weight:700; color:#3730a3; margin-bottom:4px;">
+												<label for="mhbo_edit_group_portal_url" style="display:block; font-size:11px; font-weight:700; color:#3730a3; margin-bottom:4px;">
 													<?php esc_html_e( 'Master Group Payment Portal URL:', 'modern-hotel-booking' ); ?>
 												</label>
 												<div style="display:flex; gap:6px;">
-													<input type="text" readonly value="<?php echo esc_url( $grp_master_url ); ?>" style="width:100%; font-size:11px; padding:4px 8px; border:1px solid #c7d2fe; border-radius:4px; background:#fff;" onclick="this.select();">
+													<input type="text" id="mhbo_edit_group_portal_url" readonly value="<?php echo esc_url( $grp_master_url ); ?>" style="width:100%; font-size:11px; padding:4px 8px; border:1px solid #c7d2fe; border-radius:4px; background:#fff;" onclick="this.select();">
 													<button type="button" class="button button-small mhbo-copy-trigger" data-copy="<?php echo esc_url( $grp_master_url ); ?>"><?php esc_html_e( 'Copy', 'modern-hotel-booking' ); ?></button>
 												</div>
 											</div>
@@ -1278,7 +1335,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<!-- Card 2: Billing & Payment Details -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-admin-generic" style="color:#475569;"></span> <?php esc_html_e( 'Billing & Payment Details', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-admin-generic" style="color:#475569;" aria-hidden="true"></span> <?php esc_html_e( 'Billing & Payment Details', 'modern-hotel-booking' ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
@@ -1305,12 +1362,12 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										</tr>
 										
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_payment_method' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_edit_payment_method"><?php echo esc_html( I18n::get_label( 'label_payment_method' ) ); ?></label></th>
 											<td>
 												<?php if ( ! $can_process_payments ) : ?>
 													<input type="hidden" name="payment_method" value="<?php echo esc_attr( $curr_pay_method ); ?>">
 												<?php endif; ?>
-												<select name="payment_method" style="width:100%;" <?php disabled( ! $can_process_payments ); ?>>
+												<select name="payment_method" id="mhbo_edit_payment_method" style="width:100%;" <?php disabled( ! $can_process_payments ); ?>>
 													<option value="arrival" <?php selected( $curr_pay_method, 'arrival' ); ?>>
 																<?php echo esc_html( I18n::get_payment_method_label( 'arrival' ) ); ?>
 													</option>
@@ -1333,13 +1390,14 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 											</td>
 										</tr>
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_payment_status' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_edit_payment_status"><?php echo esc_html( I18n::get_label( 'label_payment_status' ) ); ?></label></th>
 											<td>
 												<?php if ( $pay_status_locked ) : ?>
 													<input type="hidden" name="payment_status" value="<?php echo esc_attr( $curr_pay_status ); ?>">
 												<?php endif; ?>
 												<select name="payment_status" id="mhbo_edit_payment_status" style="width:100%;" <?php disabled( $pay_status_locked ); ?>>
 													<option value="pending" <?php selected( $curr_pay_status, 'pending' ); ?>><?php echo esc_html( I18n::get_label( 'status_pending' ) ); ?></option>
+													<option value="partially_paid" <?php selected( $curr_pay_status, 'partially_paid' ); ?>><?php echo esc_html( I18n::get_label( 'label_status_partially_paid' ) ); ?></option>
 													
 													<option value="processing" <?php selected( $curr_pay_status, 'processing' ); ?>><?php echo esc_html( I18n::get_label( 'status_processing' ) ); ?></option>
 													<option value="completed" <?php selected( $curr_pay_status, 'completed' ); ?>><?php echo esc_html( I18n::get_label( 'status_completed' ) ); ?></option>
@@ -1353,7 +1411,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										<tr>
 											<th scope="row"><?php echo esc_html( I18n::get_label( 'label_payment_rcvd' ) ); ?></th>
 											<td>
-												<label style="display:flex; align-items:center; gap:8px;">
+												<label class="mhbo-ws-checkbox-row">
 													<input type="hidden" name="payment_received" value="0">
 													<input type="checkbox" name="payment_received" id="mhbo_edit_payment_received" value="1" <?php checked( $edit_amts ? $edit_amts['is_paid'] : ( (int) ( $edit_data->payment_received ?? 0 ) === 1 ) ); ?> <?php disabled( ! $can_process_payments ); ?>>
 													<span><?php echo esc_html( I18n::get_label( 'label_mark_rcvd' ) ); ?></span>
@@ -1369,11 +1427,11 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										<tr>
 											<th scope="row"><label for="mhbo_edit_amount_outstanding"><?php echo esc_html( I18n::get_label( 'label_amt_out' ) ); ?></label></th>
 											<td>
-												<input type="text" id="mhbo_edit_amount_outstanding" readonly class="regular-text" style="width:100%; background:#f1f5f9; font-weight:700; color:#0f172a;" value="<?php echo esc_attr( Money::fromDecimal( (string) ( $folio['balance_remaining'] ?? 0 ), $currency )->toDecimal() ); ?>">
+												<input type="text" id="mhbo_edit_amount_outstanding" readonly class="regular-text mhbo-ws-outstanding-input" value="<?php echo esc_attr( Money::fromDecimal( (string) ( $folio['balance_remaining'] ?? 0 ), $currency )->toDecimal() ); ?>">
 											</td>
 										</tr>
-												
 									</table>
+												
 								</div>
 							</div>
 
@@ -1382,14 +1440,14 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 <!-- Card 4: Reservation Status & Notes -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-header-bar">
-									<h3><span class="dashicons dashicons-clipboard" style="color:#475569;"></span> <?php esc_html_e( 'Reservation Status & Notes', 'modern-hotel-booking' ); ?></h3>
+									<h3><span class="dashicons dashicons-clipboard" style="color:#475569;" aria-hidden="true"></span> <?php esc_html_e( 'Reservation Status & Notes', 'modern-hotel-booking' ); ?></h3>
 								</div>
 								<div class="mhbo-card-body-padded">
 									<table class="form-table" style="margin: 0;">
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_status' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_edit_status"><?php echo esc_html( I18n::get_label( 'label_status' ) ); ?></label></th>
 											<td>
-												<select name="status" style="width:100%;">
+												<select name="status" id="mhbo_edit_status" style="width:100%;">
 													<option value="pending" <?php selected( $edit_data->status, 'pending' ); ?>><?php echo esc_html( I18n::translate_status( 'pending' ) ); ?></option>
 													<option value="confirmed" <?php selected( $edit_data->status, 'confirmed' ); ?>><?php echo esc_html( I18n::translate_status( 'confirmed' ) ); ?></option>
 													<option value="cancelled" <?php selected( $edit_data->status, 'cancelled' ); ?>><?php echo esc_html( I18n::translate_status( 'cancelled' ) ); ?></option>
@@ -1399,9 +1457,9 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 											</td>
 										</tr>
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_booking_lang' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_edit_booking_language"><?php echo esc_html( I18n::get_label( 'label_booking_lang' ) ); ?></label></th>
 											<td>
-												<select name="booking_language" style="width:100%;">
+												<select name="booking_language" id="mhbo_edit_booking_language" style="width:100%;">
 													<?php foreach ( I18n::get_available_languages() as $lang ) : ?>
 														<option value="<?php echo esc_attr( $lang ); ?>" <?php selected( $edit_data->booking_language ?? '', $lang ); ?>><?php echo esc_html( strtoupper( $lang ) ); ?></option>
 													<?php endforeach; ?>
@@ -1410,7 +1468,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										</tr>
 												<?php if ( isset( $edit_data->guest_rating ) ) : ?>
 											<tr>
-												<th scope="row"><label><?php esc_html_e( 'Guest Experience Rating', 'modern-hotel-booking' ); ?></label></th>
+												<th scope="row"><label for="mhbo_edit_guest_rating"><?php esc_html_e( 'Guest Experience Rating', 'modern-hotel-booking' ); ?></label></th>
 												<td>
 													<select name="guest_rating" id="mhbo_edit_guest_rating" style="width:100%;">
 														<option value="0" <?php selected( (int) $edit_data->guest_rating, 0 ); ?>><?php esc_html_e( 'Not Rated', 'modern-hotel-booking' ); ?></option>
@@ -1424,9 +1482,9 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 											</tr>
 										<?php endif; ?>
 										<tr>
-											<th scope="row"><label><?php echo esc_html( I18n::get_label( 'label_admin_notes' ) ); ?></label></th>
+											<th scope="row"><label for="mhbo_edit_admin_notes"><?php echo esc_html( I18n::get_label( 'label_admin_notes' ) ); ?></label></th>
 											<td>
-												<textarea name="admin_notes" rows="4" style="width:100%;" class="large-text"><?php echo esc_textarea( $edit_data->admin_notes ?? '' ); ?></textarea>
+												<textarea name="admin_notes" id="mhbo_edit_admin_notes" rows="4" style="width:100%;" class="large-text"><?php echo esc_textarea( $edit_data->admin_notes ?? '' ); ?></textarea>
 											</td>
 										</tr>
 									</table>
@@ -1436,7 +1494,7 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 							<!-- Card 5: Save & Action Dock -->
 							<div class="mhbo-workstation-card">
 								<div class="mhbo-card-body-padded">
-									<input type="submit" name="submit_booking_update" class="button button-primary button-hero" value="<?php esc_attr_e( '💾 Save Reservation Changes', 'modern-hotel-booking' ); ?>" style="width:100%; text-align:center; justify-content:center; height:44px; font-size:14px; font-weight:700;">
+									<input type="submit" name="submit_booking_update" class="button button-primary button-hero" value="<?php esc_attr_e( 'Save Reservation Changes', 'modern-hotel-booking' ); ?>" style="width:100%; text-align:center; justify-content:center; height:44px; font-size:14px; font-weight:700;">
 
 									<?php if ( Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) : ?>
 										<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=delete&id={$edit_data->id}" ), 'mhbo_delete_booking_' . $edit_data->id ) ); ?>" class="button button-link-delete mhbo-delete-action" style="margin-top:14px; display:block; text-align:center; color:#dc2626;" data-confirm="<?php echo esc_attr( I18n::get_label( 'msg_confirm_delete_bk' ) ); ?>">
@@ -1448,7 +1506,26 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 
 						</div><!-- End .mhbo-workstation-col-sidebar -->
 					</div><!-- End .mhbo-workstation-grid -->
+
+					<!-- Compact Sticky Action Dock for Tablet & Mobile (<= 1200px) -->
+					<div class="mhbo-form-actions-dock mhbo-ws-mobile-dock">
+						<div class="mhbo-ws-dock-summary">
+							<span><?php esc_html_e( 'Total:', 'modern-hotel-booking' ); ?> <strong class="mhbo-ws-dock-total"><?php echo esc_html( (string) ( $folio['total_charges_formatted'] ?? '' ) ); ?></strong></span>
+							<span class="mhbo-ws-dock-sep" aria-hidden="true">&bull;</span>
+							<span><?php esc_html_e( 'Balance:', 'modern-hotel-booking' ); ?> <strong class="mhbo-ws-dock-balance"><?php echo esc_html( ! empty( $folio['is_overpaid'] ) ? '−' . (string) ( $folio['credit_balance_formatted'] ?? '' ) : (string) ( $folio['balance_remaining_formatted'] ?? '' ) ); ?></strong></span>
+						</div>
+						<div class="mhbo-ws-dock-actions">
+							<button type="submit" name="submit_booking_update" class="button button-primary">
+								<span class="dashicons dashicons-saved" aria-hidden="true"></span>
+								<span><?php esc_html_e( 'Save Changes', 'modern-hotel-booking' ); ?></span>
+							</button>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ); ?>" class="button button-secondary">
+								<?php echo esc_html( I18n::get_label( 'label_cancel' ) ); ?>
+							</a>
+						</div>
+					</div>
 				</form>
+				</div><!-- .mhbo-booking-workstation -->
 		<?php
 	}
 
@@ -1612,19 +1689,19 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 					'preventTurnover' => ( class_exists( '\MHBO\Core\Tier' ) && \MHBO\Core\Tier::has_feature( 'prevent_same_day_turnover' ) ) && (int) get_option( 'mhbo_prevent_same_day_turnover', 0 ) === 1,
 				);
 				wp_add_inline_script( 'mhbo-admin-bookings', 'window.mhboCalendarConfig = ' . wp_json_encode( $calendar_config ) . ';', 'before' );
-				wp_add_inline_script( 'mhbo-admin-bookings', 'document.addEventListener("DOMContentLoaded", function() { document.querySelectorAll(".mhbo-schedule-balance-link").forEach(function(btn) { btn.addEventListener("click", function() { var id = this.getAttribute("data-id"); var nonce = this.getAttribute("data-nonce"); var rule = document.getElementById("mhbo-schedule-rule-" + id).value; if (!rule) { alert("Please select a schedule rule."); return; } window.location.href = "' . esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ) . '&action=schedule_balance_link&id=" + id + "&rule=" + rule + "&_wpnonce=" + nonce; }); }); });', 'after' );
+				wp_add_inline_script( 'mhbo-admin-bookings', 'document.addEventListener("DOMContentLoaded", function() { document.querySelectorAll(".mhbo-schedule-balance-link").forEach(function(btn) { btn.addEventListener("click", function() { var id = this.getAttribute("data-id"); var nonce = this.getAttribute("data-nonce"); var ruleEl = document.getElementById("mhbo-schedule-rule-" + id); var rule = ruleEl ? ruleEl.value : ""; if (!rule) { if (ruleEl) { ruleEl.style.borderColor = "#dc2626"; ruleEl.focus(); ruleEl.addEventListener("change", function() { ruleEl.style.borderColor = ""; }, { once: true }); } return; } window.location.href = "' . esc_url( admin_url( 'admin.php?page=mhbo-bookings' ) ) . '&action=schedule_balance_link&id=" + id + "&rule=" + rule + "&_wpnonce=" + nonce; }); }); });', 'after' );
 				?>
-			<div class="mhbo-table-container mhbo-card">
+			<div class="mhbo-table-container mhbo-card mhbo-card--flush">
 				<form method="post" id="mhbo-bookings-bulk-form">
 					<?php wp_nonce_field( 'mhbo_bulk_bookings_action', 'mhbo_bulk_nonce' ); ?>
 					<div class="mhbo-table-live-filter-bar">
 						
 						<div class="mhbo-search-box">
 							<div class="mhbo-search-input-wrap">
-								<span class="dashicons dashicons-search mhbo-search-icon" id="mhbo-search-submit-icon" title="<?php esc_attr_e( 'Click to search', 'modern-hotel-booking' ); ?>"></span>
-								<input type="text" id="mhbo-live-table-search" name="s" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Quick search bookings by Guest Name, Email, Phone, #ID, or Room...', 'modern-hotel-booking' ); ?>" class="mhbo-search-input" data-base-url="<?php echo esc_url( remove_query_arg( array( 's', 'paged' ), $bookings_base_url ) ); ?>" autocomplete="off">
+								<span class="dashicons dashicons-search mhbo-search-icon" id="mhbo-search-submit-icon" title="<?php esc_attr_e( 'Click to search', 'modern-hotel-booking' ); ?>" aria-hidden="true"></span>
+								<input type="text" id="mhbo-live-table-search" name="s" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Quick search bookings by Guest Name, Email, Phone, #ID, or Room...', 'modern-hotel-booking' ); ?>" aria-label="<?php esc_attr_e( 'Search bookings', 'modern-hotel-booking' ); ?>" class="mhbo-search-input" data-base-url="<?php echo esc_url( remove_query_arg( array( 's', 'paged' ), $bookings_base_url ) ); ?>" autocomplete="off">
 								<?php if ( ! empty( $search_query ) ) : ?>
-									<a href="<?php echo esc_url( remove_query_arg( array( 's', 'paged' ), $bookings_base_url ) ); ?>" class="mhbo-search-clear-btn" id="mhbo-search-clear-btn" title="<?php esc_attr_e( 'Clear search', 'modern-hotel-booking' ); ?>">&times;</a>
+									<a href="<?php echo esc_url( remove_query_arg( array( 's', 'paged' ), $bookings_base_url ) ); ?>" class="mhbo-search-clear-btn" id="mhbo-search-clear-btn" aria-label="<?php esc_attr_e( 'Clear search', 'modern-hotel-booking' ); ?>" title="<?php esc_attr_e( 'Clear search', 'modern-hotel-booking' ); ?>"><span aria-hidden="true">&times;</span></a>
 								<?php endif; ?>
 							</div>
 							<button type="button" id="mhbo-table-search-btn" class="button action mhbo-search-submit-btn" title="<?php esc_attr_e( 'Search bookings', 'modern-hotel-booking' ); ?>"><?php esc_html_e( 'Search', 'modern-hotel-booking' ); ?></button>
@@ -1930,12 +2007,9 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 											if ( $amts ) {
 												if ( $amts['is_paid'] ) {
 													echo '<span class="mhbo-balance-pill paid">' . esc_html( I18n::get_label( 'label_paid_full_short' ) ) . '</span>';
-												} elseif ( $amts['deposit_received'] && $amts['remaining']->isPositive() ) {
+												} elseif ( ( $amts['deposit_received'] || $amts['received']->isPositive() ) && $amts['remaining']->isPositive() ) {
 													/* translators: %s: balance pending amount */
 													echo '<span class="mhbo-balance-pill pending">' . esc_html( sprintf( I18n::get_label( 'label_bal_sprintf' ), I18n::format_currency( $amts['remaining']->toDecimal() ) ) ) . '</span>';
-												} elseif ( $amts['received']->isPositive() && $amts['remaining']->isPositive() ) {
-													/* translators: %s: pending balance amount */
-													echo '<span class="mhbo-balance-pill pending">' . esc_html( sprintf( I18n::get_label( 'label_pending_sprintf' ), I18n::format_currency( $amts['remaining']->toDecimal() ) ) ) . '</span>';
 												} else {
 													/* translators: %s: pending total amount */
 													echo '<span class="mhbo-balance-pill pending">' . esc_html( sprintf( I18n::get_label( 'label_pending_sprintf' ), I18n::format_currency( $amts['total']->toDecimal() ) ) ) . '</span>';
@@ -1980,17 +2054,20 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 												<?php echo esc_html( I18n::get_payment_method_label( $bk->payment_method ?? 'arrival' ) ); ?>
 											</span>
 											<?php
-											$p_status = sanitize_key( (string) ( $bk->payment_status ?? 'pending' ) );
-											if ( 'paid' === $p_status || 'completed' === $p_status || 'paid_full' === $p_status ) {
-												echo '<span class="mhbo-balance-pill paid">' . esc_html( I18n::get_label( 'status_completed' ) ) . '</span>';
-											} elseif ( 'deposit_paid' === $p_status || ( $bk->deposit_received ?? 0 ) ) {
-												echo '<span class="mhbo-balance-pill deposit-paid" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;">' . esc_html( I18n::get_label( 'label_deposit_paid' ) ) . '</span>';
-											} elseif ( 'processing' === $p_status ) {
-												echo '<span class="mhbo-balance-pill processing" style="background:#fef3c7; color:#92400e;">' . esc_html( I18n::get_label( 'status_processing' ) ) . '</span>';
-											} elseif ( 'refunded' === $p_status ) {
+											$p_status       = sanitize_key( (string) ( $bk->payment_status ?? 'pending' ) );
+											$eff_pay_status = $amts ? (string) $amts['effective_payment_status'] : $p_status;
+											if ( 'refunded' === $p_status ) {
 												echo '<span class="mhbo-balance-pill refunded" style="background:#fef2f2; color:#991b1b;">' . esc_html( I18n::get_label( 'status_refunded' ) ) . '</span>';
 											} elseif ( 'failed' === $p_status ) {
 												echo '<span class="mhbo-balance-pill failed" style="background:#fef2f2; color:#991b1b;">' . esc_html( I18n::get_label( 'status_failed' ) ) . '</span>';
+											} elseif ( 'processing' === $p_status ) {
+												echo '<span class="mhbo-balance-pill processing" style="background:#fef3c7; color:#92400e;">' . esc_html( I18n::get_label( 'status_processing' ) ) . '</span>';
+											} elseif ( $amts ? $amts['is_paid'] : in_array( $p_status, array( 'paid', 'completed', 'paid_full' ), true ) ) {
+												echo '<span class="mhbo-balance-pill paid">' . esc_html( I18n::get_label( 'status_completed' ) ) . '</span>';
+											} elseif ( 'deposit_paid' === $eff_pay_status || ( $amts && $amts['deposit_received'] ) ) {
+												echo '<span class="mhbo-balance-pill deposit-paid" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;">' . esc_html( I18n::get_label( 'label_deposit_paid' ) ) . '</span>';
+											} elseif ( 'partially_paid' === $eff_pay_status || 'partially_paid' === $p_status || ( $amts && $amts['received']->isPositive() && $amts['remaining']->isPositive() ) ) {
+												echo '<span class="mhbo-balance-pill partially-paid" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd;">' . esc_html( I18n::get_label( 'label_status_partially_paid' ) ) . '</span>';
 											} else {
 												echo '<span class="mhbo-balance-pill pending">' . esc_html( I18n::get_label( 'status_pending' ) ) . '</span>';
 											}
@@ -2004,33 +2081,37 @@ $early_fee_raw = ( is_array( $saved_custom ) && array_key_exists( '_early_checki
 										<div class="mhbo-actions-group">
 											<?php if ( $can_manage_bookings ) : ?>
 												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=edit&id={$bk->id}" ), 'mhbo_edit_booking_' . $bk->id ) ); ?>"
-													class="mhbo-action-btn mhbo-btn-edit" 
-													title="<?php esc_attr_e( 'Edit Booking', 'modern-hotel-booking' ); ?>">
-													<span class="dashicons dashicons-edit"></span>
+													class="mhbo-action-btn mhbo-btn-edit"
+													title="<?php esc_attr_e( 'Edit Booking', 'modern-hotel-booking' ); ?>"
+													aria-label="<?php esc_attr_e( 'Edit Booking', 'modern-hotel-booking' ); ?>">
+													<span class="dashicons dashicons-edit" aria-hidden="true"></span>
 												</a>
 												<?php if ( 'pending' === $bk->status ) : ?>
 													<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=confirm&id={$bk->id}" ), 'mhbo_confirm_booking_' . $bk->id ) ); ?>"
-														class="mhbo-action-btn mhbo-btn-confirm" 
+														class="mhbo-action-btn mhbo-btn-confirm"
 														title="<?php esc_attr_e( 'Confirm Booking', 'modern-hotel-booking' ); ?>"
+														aria-label="<?php esc_attr_e( 'Confirm Booking', 'modern-hotel-booking' ); ?>"
 														onclick="return confirm('<?php echo esc_js( __( 'Confirm this reservation and send confirmation email to guest?', 'modern-hotel-booking' ) ); ?>');">
-														<span class="dashicons dashicons-yes-alt"></span>
+														<span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
 													</a>
 												<?php endif; ?>
 											<?php endif; ?>
 											
 											<?php if ( $can_manage_bookings ) : ?>
 												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=cancel&id={$bk->id}" ), 'mhbo_cancel_booking_' . $bk->id ) ); ?>"
-													class="mhbo-action-btn mhbo-btn-cancel" 
-													title="<?php esc_attr_e( 'Cancel Booking', 'modern-hotel-booking' ); ?>">
-													<span class="dashicons dashicons-no-alt"></span>
+													class="mhbo-action-btn mhbo-btn-cancel"
+													title="<?php esc_attr_e( 'Cancel Booking', 'modern-hotel-booking' ); ?>"
+													aria-label="<?php esc_attr_e( 'Cancel Booking', 'modern-hotel-booking' ); ?>">
+													<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
 												</a>
 											<?php endif; ?>
 											<?php if ( $can_delete_bookings ) : ?>
 												<a href="<?php echo esc_url( wp_nonce_url( admin_url( "admin.php?page=mhbo-bookings&action=delete&id={$bk->id}" ), 'mhbo_delete_booking_' . $bk->id ) ); ?>"
-													class="mhbo-action-btn mhbo-btn-delete mhbo-confirm-delete" 
+													class="mhbo-action-btn mhbo-btn-delete mhbo-confirm-delete"
 													title="<?php esc_attr_e( 'Delete Booking', 'modern-hotel-booking' ); ?>"
+													aria-label="<?php esc_attr_e( 'Delete Booking', 'modern-hotel-booking' ); ?>"
 													data-confirm="<?php echo esc_attr( I18n::get_label( 'msg_confirm_remove' ) ); ?>">
-													<span class="dashicons dashicons-trash"></span>
+													<span class="dashicons dashicons-trash" aria-hidden="true"></span>
 												</a>
 											<?php endif; ?>
 										</div>

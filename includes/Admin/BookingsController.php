@@ -107,18 +107,12 @@ class BookingsController {
 				
 			} elseif ( $id > 0 ) {
 				$verified_booking_action = false;
-				if ( 'edit' === $action ) {
+				if ( 'edit' === $action || 'view' === $action ) {
 					if ( ! Capabilities::current_user_can( Capabilities::MANAGE_LHBO ) && ! Capabilities::current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 						wp_die( esc_html( I18n::get_label( 'msg_insufficient_permissions' ) ) );
 					}
-					if ( '' === $nonce ) {
-						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
-					}
-					if ( ! wp_verify_nonce( $nonce, 'mhbo_edit_booking_' . $id ) ) {
-						if ( ! wp_verify_nonce( $nonce, 'mhbo_booking_action' ) ) {
-							wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
-						}
-					}
+					// Opening the reservation editor is a read-only GET view (matching WP core post.php?post=ID&action=edit),
+					// enabling admin email, iCal, and bookmark deep links. All state mutations enforce check_admin_referer() / nonces.
 					$edit_mode = true;
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 					$edit_data = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $id ) );
@@ -130,9 +124,11 @@ class BookingsController {
 						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 					}
 					$verified_booking_action = true;
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read room_id for cache invalidation.
+					$confirm_room_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT room_id FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $id ) );
 					$wpdb->update( $tb, array( 'status' => 'confirmed' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-					Cache::invalidate_booking( $id );
-					Email::send_email( $id, 'confirmed' );
+					Cache::invalidate_booking( $id, $confirm_room_id );
+					Pricing::clear_payment_amounts_cache();
 					do_action( 'mhbo_booking_confirmed', $id );
 					do_action( 'mhbo_booking_status_changed', $id, 'confirmed' );
 					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_booking_confirmed_email' ) ) . '</p></div>';
@@ -144,9 +140,20 @@ class BookingsController {
 						wp_die( esc_html( I18n::get_label( 'msg_security_check_failed' ) ) );
 					}
 					$verified_booking_action = true;
-					$wpdb->update( $tb, array( 'status' => 'cancelled' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
-					Cache::invalidate_booking( $id );
-					Email::send_email( $id, 'cancelled' );
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read room_id and custom_fields to clear pending portal requests cleanly.
+					$cancel_meta     = $wpdb->get_row( $wpdb->prepare( "SELECT room_id, custom_fields FROM {$wpdb->prefix}mhbo_bookings WHERE id = %d", $id ) );
+					$cancel_room_id  = $cancel_meta ? (int) ( $cancel_meta->room_id ?? 0 ) : 0;
+					$cancel_update   = array( 'status' => 'cancelled' );
+					if ( $cancel_meta && ! empty( $cancel_meta->custom_fields ) ) {
+						$cancel_cf = json_decode( (string) $cancel_meta->custom_fields, true );
+						if ( is_array( $cancel_cf ) && ( isset( $cancel_cf['_mhbo_cancellation_requested'] ) || isset( $cancel_cf['_mhbo_modification_requested'] ) ) ) {
+							unset( $cancel_cf['_mhbo_cancellation_requested'], $cancel_cf['_mhbo_modification_requested'] );
+							$cancel_update['custom_fields'] = array() !== $cancel_cf ? wp_json_encode( $cancel_cf ) : null;
+						}
+					}
+					$wpdb->update( $tb, $cancel_update, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table
+					Cache::invalidate_booking( $id, $cancel_room_id );
+					Pricing::clear_payment_amounts_cache();
 					do_action( 'mhbo_booking_cancelled', $id );
 					do_action( 'mhbo_booking_status_changed', $id, 'cancelled' );
 					echo '<div class="notice notice-warning is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_booking_cancelled' ) ) . '</p></div>';
@@ -302,29 +309,41 @@ class BookingsController {
 				}
 			}
 
+			$raw_payment_amount  = ( $can_process_payments && isset( $_POST['payment_amount'] ) ) ? sanitize_text_field( (string) wp_unslash( $_POST['payment_amount'] ) ) : '';
+			$has_initial_payment = $can_process_payments && (
+				$payment_received
+				|| ( '' !== $raw_payment_amount && floatval( $raw_payment_amount ) > 0 )
+				|| ( 0 !== $deposit_received && ( $deposit_amount > 0 || ( Tier::is_feature_enabled( 'deposits' ) && (bool) get_option( 'mhbo_deposits_enabled', 0 ) ) ) )
+			);
+			if ( $has_initial_payment && 'pending' === $post_status ) {
+				$post_status = 'confirmed';
+			}
+
 			$process_payload = array(
-				'customer_name'    => $customer_name,
-				'customer_email'   => $customer_email,
-				'customer_phone'   => $customer_phone,
-				'room_id'          => $room_id,
-				'check_in'         => $check_in,
-				'check_out'        => $check_out,
-				'guests'           => $guests,
-				'children'         => $children_count,
-				'child_ages'       => $child_ages,
-				'status'           => $post_status,
-				'payment_method'   => $payment_method,
-				'payment_received' => $payment_received ? 1 : 0,
-				'payment_status'   => $payment_received ? 'completed' : 'pending',
-				'source'           => 'manual',
-				'admin_notes'      => $admin_notes . "\n" . I18n::get_label( 'booking_msg_manual_admin' ),
-				'custom_fields'    => $mhbo_custom,
-				'extras'           => $post_extras,
-				'language'         => $booking_language,
-				'bypass_past'      => true, // Admin can book past dates
-				'tax_mode'         => $posted_tax_mode,
-				'consent'          => 1,
-				'mhbo_consent'     => 1,
+				'customer_name'       => $customer_name,
+				'customer_email'      => $customer_email,
+				'customer_phone'      => $customer_phone,
+				'room_id'             => $room_id,
+				'check_in'            => $check_in,
+				'check_out'           => $check_out,
+				'guests'              => $guests,
+				'children'            => $children_count,
+				'child_ages'          => $child_ages,
+				'status'              => $post_status,
+				'payment_method'      => $payment_method,
+				'payment_received'    => 0,
+				'payment_status'      => 'pending',
+				'source'              => 'manual',
+				'admin_notes'         => $admin_notes . "\n" . I18n::get_label( 'booking_msg_manual_admin' ),
+				'custom_fields'       => $mhbo_custom,
+				'extras'              => $post_extras,
+				'language'            => $booking_language,
+				'bypass_past'         => true, // Admin can book past dates
+				'tax_mode'            => $posted_tax_mode,
+				'consent'             => 1,
+				'mhbo_consent'        => 1,
+				'terms_accepted'      => 1,
+				'mhbo_terms_accepted' => 1,
 			);
 			if ( $can_override_pricing ) {
 				$process_payload['total_price'] = $total_price;
@@ -337,7 +356,7 @@ class BookingsController {
 					$process_payload['tax_rate_extras'] = $manual_tax_rates['extras'];
 				}
 			}
-			$result = BookingProcessor::process( $process_payload );
+			$result = BookingProcessor::process( $process_payload, false, false, true );
 
 			if ( is_wp_error( $result ) ) {
 				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $result->get_error_message() ) . '</p></div>';
@@ -384,14 +403,12 @@ if ( ! $can_override_pricing ) {
 					'total_price'       => $total_m->toDecimal(),
 					'discount_amount'   => $eff_disc_m->toDecimal(),
 					'deposit_amount'    => $deposit_m->toDecimal(),
-					'deposit_received'  => $deposit_received,
-					'payment_amount'    => $submitted_pay_m->toDecimal(),
-					'remaining_balance' => $rem_balance_m->toDecimal(),
+					'deposit_received'  => 0,
+					'payment_amount'    => '0.00',
+					'remaining_balance' => $total_m->toDecimal(),
+					'payment_received'  => 0,
+					'payment_status'    => 'pending',
 				);
-				if ( ! $can_process_payments ) {
-					$update_data['payment_received'] = 0;
-					$update_data['payment_status']   = 'pending';
-				}
 
 // Link CRM guest ID if provided
 				$posted_guest_id = isset( $_POST['guest_id'] ) ? absint( wp_unslash( $_POST['guest_id'] ) ) : 0;
@@ -452,7 +469,8 @@ if ( ! $can_override_pricing ) {
 					);
 				}
 
-				Cache::invalidate_booking( $new_id );
+				Cache::invalidate_booking( $new_id, $room_id );
+				Pricing::clear_payment_amounts_cache();
 				do_action( 'mhbo_booking_created', $new_id );
 				if ( 'confirmed' === $post_status ) {
 					do_action( 'mhbo_booking_confirmed', $new_id );
@@ -490,8 +508,11 @@ if ( ! $can_override_pricing ) {
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only admin table filter, sort, and pagination query parameters.
-		$status_filter     = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
-		$search_query      = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+		$status_filter         = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$raw_payment_filter    = isset( $_GET['payment_status'] ) ? sanitize_key( wp_unslash( $_GET['payment_status'] ) ) : '';
+		$allowed_pay_filters   = array( 'partial', 'unpaid', 'deposit_paid', 'partially_paid', 'completed', 'pending', 'processing', 'refunded', 'failed' );
+		$payment_status_filter = in_array( $raw_payment_filter, $allowed_pay_filters, true ) ? $raw_payment_filter : '';
+		$search_query          = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
 		$allowed_sort_cols = array( 'id', 'guest', 'room', 'dates', 'total', 'status' );
 		$orderby           = isset( $_GET['orderby'] ) && in_array( strtolower( sanitize_key( wp_unslash( $_GET['orderby'] ) ) ), $allowed_sort_cols, true )
 			? strtolower( sanitize_key( wp_unslash( $_GET['orderby'] ) ) )
@@ -521,7 +542,7 @@ if ( ! $can_override_pricing ) {
 			$per_page = $default_per_page;
 		}
 
-		$total_bookings = Booking_Query::count( $status_filter, $search_query );
+		$total_bookings = Booking_Query::count( $status_filter, $search_query, $payment_status_filter );
 		$total_pages    = ( $per_page > 0 ) ? max( 1, (int) ceil( $total_bookings / $per_page ) ) : 1;
 		$paged          = isset( $_GET['paged'] ) ? max( 1, min( absint( wp_unslash( $_GET['paged'] ) ), $total_pages ) ) : 1;
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
@@ -529,7 +550,7 @@ if ( ! $can_override_pricing ) {
 		$limit          = ( $per_page > 0 ) ? $per_page : -1;
 
 		// Table bookings (paginated, with status and search filters)
-		$bookings = Booking_Query::get_list( $status_filter, $limit, $offset, $orderby, $order, $search_query );
+		$bookings = Booking_Query::get_list( $status_filter, $limit, $offset, $orderby, $order, $search_query, $payment_status_filter );
 
 		// Calendar bookings (comprehensive, up to 500 active/upcoming reservations)
 		$calendar_bookings = Booking_Query::get_list( '', 500, 0, 'dates', 'ASC' );
@@ -537,6 +558,9 @@ if ( ! $can_override_pricing ) {
 		$base_url_args = array( 'page' => 'mhbo-bookings' );
 		if ( $status_filter && 'all' !== $status_filter ) {
 			$base_url_args['status'] = $status_filter;
+		}
+		if ( '' !== $payment_status_filter ) {
+			$base_url_args['payment_status'] = $payment_status_filter;
 		}
 		if ( '' !== $search_query ) {
 			$base_url_args['s'] = $search_query;
@@ -552,7 +576,7 @@ if ( ! $can_override_pricing ) {
 		}
 		$bookings_base_url = add_query_arg( $base_url_args, admin_url( 'admin.php' ) );
 
-		$all_rooms = wp_cache_get( 'mhbo_all_rooms', 'mhbo_rooms' );
+		$all_rooms = Cache::is_enabled() ? wp_cache_get( 'mhbo_all_rooms', 'mhbo_rooms' ) : false;
 		if ( false === $all_rooms ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$all_rooms = $wpdb->get_results( "SELECT r.id, r.room_number, t.name as type_name, t.base_price FROM {$wpdb->prefix}mhbo_rooms r JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id ORDER BY (r.room_number + 0) ASC, r.room_number ASC, r.id ASC" );
@@ -568,7 +592,9 @@ if ( ! $can_override_pricing ) {
 					}
 				);
 			}
-			wp_cache_set( 'mhbo_all_rooms', $all_rooms, 'mhbo_rooms', HOUR_IN_SECONDS );
+			if ( Cache::is_enabled() ) {
+				wp_cache_set( 'mhbo_all_rooms', $all_rooms, 'mhbo_rooms', HOUR_IN_SECONDS );
+			}
 		}
 
 		$calendar_data  = $this->build_bookings_calendar_data( is_array( $all_rooms ) ? $all_rooms : array(), is_array( $calendar_bookings ) ? $calendar_bookings : array(), MHBO_IS_PRO );
@@ -602,7 +628,7 @@ if ( ! $can_override_pricing ) {
 			if ( $add_mode ) {
 				$header_actions = array(
 					array(
-						'label' => '← ' . esc_html__( 'All Reservations', 'modern-hotel-booking' ),
+						'label' => __( 'All Reservations', 'modern-hotel-booking' ),
 						'url'   => admin_url( 'admin.php?page=mhbo-bookings' ),
 						'class' => 'button-secondary',
 					),
@@ -626,7 +652,7 @@ AdminUI::render_header(
 			} elseif ( $edit_mode && $edit_data ) {
 				$header_actions = array(
 					array(
-						'label' => '← ' . esc_html__( 'All Reservations', 'modern-hotel-booking' ),
+						'label' => __( 'All Reservations', 'modern-hotel-booking' ),
 						'url'   => admin_url( 'admin.php?page=mhbo-bookings' ),
 						'class' => 'button-secondary',
 					),
@@ -713,6 +739,26 @@ if ( Capabilities::current_user_can( Capabilities::MANAGE_GUESTS ) && class_exis
 							echo esc_html( sprintf( I18n::get_label( 'msg_filtering_status' ), ucfirst( $status_filter ) ) );
 							?>
 							<a href="<?php echo esc_url( remove_query_arg( array( 'status', 'paged' ), $bookings_base_url ) ); ?>" class="button button-small" style="margin-left:10px;">
+								<?php echo esc_html( I18n::get_label( 'btn_clear_filter' ) ); ?>
+							</a>
+						</p>
+					</div>
+				<?php endif; ?>
+				<?php if ( '' !== $payment_status_filter ) : ?>
+					<?php
+					$pay_filter_label = match ( $payment_status_filter ) {
+						'unpaid'  => I18n::get_label( 'label_outstanding_balance' ),
+						'partial' => I18n::get_label( 'label_status_partially_paid' ),
+						default   => I18n::translate_payment_status( $payment_status_filter ),
+					};
+					?>
+					<div class="notice notice-info is-dismissible" style="margin-top:15px;">
+						<p>
+							<?php
+							/* translators: %s: payment status filter label */
+							echo esc_html( sprintf( I18n::get_label( 'msg_filtering_status' ), $pay_filter_label ) );
+							?>
+							<a href="<?php echo esc_url( remove_query_arg( array( 'payment_status', 'paged' ), $bookings_base_url ) ); ?>" class="button button-small" style="margin-left:10px;">
 								<?php echo esc_html( I18n::get_label( 'btn_clear_filter' ) ); ?>
 							</a>
 						</p>
@@ -1085,7 +1131,7 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 		$payment_method      = $can_process_payments ? sanitize_key( wp_unslash( $_POST['payment_method'] ?? 'arrival' ) ) : 'arrival';
 		$posted_tax_mode     = null;
 		
-		$mhbo_custom         = isset( $_POST['mhbo_custom'] ) && is_array( $_POST['mhbo_custom'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mhbo_custom'] ) ) : array();
+		$raw_posted_custom   = isset( $_POST['mhbo_custom'] ) && is_array( $_POST['mhbo_custom'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mhbo_custom'] ) ) : array();
 		$mhbo_extras_raw     = isset( $_POST['mhbo_extras'] ) && is_array( $_POST['mhbo_extras'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['mhbo_extras'] ) ) : array();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1095,8 +1141,51 @@ if ( ! $staged_discount_m->equals( $old_discount_m ) ) {
 		}
 
 		$old_status            = (string) ( $old_booking->status ?? '' );
+		$old_check_in          = (string) ( $old_booking->check_in ?? '' );
+		$old_check_out         = (string) ( $old_booking->check_out ?? '' );
+		$old_room_id           = (int) ( $old_booking->room_id ?? 0 );
+		$old_total_str         = Money::fromDecimal( (string) ( $old_booking->total_price ?? '0' ) )->toDecimal();
 		$was_payment_received  = ! empty( $old_booking->payment_received );
 		$existing_payment_date = $old_booking->payment_date ?? null;
+
+		// Preserve internal (_-prefixed) portal/system metadata while updating user-editable custom fields.
+		$existing_custom = array();
+		if ( ! empty( $old_booking->custom_fields ) ) {
+			$decoded_existing_custom = is_string( $old_booking->custom_fields )
+				? json_decode( $old_booking->custom_fields, true )
+				: (array) $old_booking->custom_fields;
+			if ( is_array( $decoded_existing_custom ) ) {
+				$existing_custom = $decoded_existing_custom;
+			}
+		}
+
+		$mhbo_custom = array();
+		foreach ( $existing_custom as $cf_key => $cf_val ) {
+			$cf_key_str = (string) $cf_key;
+			if ( str_starts_with( $cf_key_str, '_' ) ) {
+				$mhbo_custom[ $cf_key_str ] = $cf_val;
+			}
+		}
+		foreach ( $raw_posted_custom as $cf_key => $cf_val ) {
+			$cf_key_str = (string) $cf_key;
+			if ( ! str_starts_with( $cf_key_str, '_' ) ) {
+				$mhbo_custom[ $cf_key_str ] = $cf_val;
+			}
+		}
+
+		$dates_changed        = ( $old_check_in !== $check_in || $old_check_out !== $check_out );
+		$stay_details_changed = $dates_changed
+			|| ( $room_id !== $old_room_id )
+			|| ( $guests !== (int) ( $old_booking->guests ?? 1 ) )
+			|| ( $children_count !== (int) ( $old_booking->children ?? 0 ) );
+		$clear_portal_reqs    = ! empty( $_POST['mhbo_clear_portal_requests'] ) && '1' === sanitize_text_field( (string) wp_unslash( $_POST['mhbo_clear_portal_requests'] ) );
+
+		if ( $stay_details_changed || $clear_portal_reqs ) {
+			unset( $mhbo_custom['_mhbo_modification_requested'] );
+		}
+		if ( in_array( $new_status, array( 'cancelled', 'refunded' ), true ) || $clear_portal_reqs ) {
+			unset( $mhbo_custom['_mhbo_cancellation_requested'], $mhbo_custom['_mhbo_modification_requested'] );
+		}
 
 		// Guest CRM Stay Rating & Link
 		$guest_rating    = isset( $_POST['guest_rating'] ) ? min( 5, max( 0, absint( wp_unslash( $_POST['guest_rating'] ) ) ) ) : 0;
@@ -1240,7 +1329,13 @@ $calc_curr = $curr_code;
 		$dep_edit_m       = Money::fromDecimal( (string) ( $old_booking->deposit_amount ?? '0' ), $calc_curr );
 		$deposit_received = (int) ( $old_booking->deposit_received ?? 0 );
 
-if ( ! $can_process_payments ) {
+/** @var array{amount: string, type: string, note: string, staff: string}|null $pending_ledger_adj */
+		$pending_ledger_adj = null;
+		$is_deposit_booking_edit = ( 'deposit' === (string) ( $old_booking->payment_type ?? '' ) )
+			|| $dep_edit_m->isPositive()
+			|| ( $can_use_deposits_ed && 0 !== $deposit_received );
+
+		if ( ! $can_process_payments ) {
 			$final_pay_m      = $old_pay_m;
 			$payment_method   = (string) ( $old_booking->payment_method ?? 'arrival' );
 			$payment_status   = (string) ( $old_booking->payment_status ?? 'pending' );
@@ -1250,8 +1345,13 @@ if ( ! $can_process_payments ) {
 			$remaining_balance_str = $rem_diff->isPositive() ? $rem_diff->toDecimal() : '0.00';
 			if ( $rem_diff->isPositive() ) {
 				$payment_received = 0;
-				if ( 'completed' === $payment_status ) {
-					$payment_status = $final_pay_m->isPositive() ? 'deposit_paid' : 'pending';
+				if ( in_array( $payment_status, array( 'completed', 'deposit_paid', 'partially_paid' ), true ) ) {
+					$payment_status = $final_pay_m->isPositive()
+						? ( $is_deposit_booking_edit ? 'deposit_paid' : 'partially_paid' )
+						: 'pending';
+				}
+				if ( ! $is_deposit_booking_edit ) {
+					$deposit_received = 0;
 				}
 			}
 		} else {
@@ -1294,7 +1394,7 @@ if ( ! $can_process_payments ) {
 				$remaining_balance_str = '0.00';
 				$payment_received      = 1;
 				$deposit_received      = 0;
-				if ( 'pending' === $payment_status || 'deposit_paid' === $payment_status ) {
+				if ( in_array( $payment_status, array( 'pending', 'deposit_paid', 'partially_paid' ), true ) ) {
 					$payment_status = 'completed';
 				}
 				if ( 'pending' === $new_status ) {
@@ -1305,23 +1405,31 @@ if ( ! $can_process_payments ) {
 				$rem_diff              = $total_money_val->subtract( $final_pay_m );
 				$remaining_balance_str = $rem_diff->isPositive() ? $rem_diff->toDecimal() : '0.00';
 				$payment_received      = 0;
-				if ( 0 !== $deposit_received || $final_pay_m->isPositive() ) {
+				if ( $is_deposit_booking_edit && ( 0 !== $deposit_received || $final_pay_m->isPositive() ) ) {
 					$deposit_received = 1;
-					if ( 'pending' === $payment_status || 'completed' === $payment_status ) {
+					if ( in_array( $payment_status, array( 'pending', 'completed', 'partially_paid' ), true ) ) {
 						$payment_status = 'deposit_paid';
+					}
+					if ( 'pending' === $new_status ) {
+						$new_status = 'confirmed';
+					}
+				} elseif ( $final_pay_m->isPositive() ) {
+					$deposit_received = 0;
+					if ( in_array( $payment_status, array( 'pending', 'completed', 'deposit_paid' ), true ) ) {
+						$payment_status = 'partially_paid';
 					}
 					if ( 'pending' === $new_status ) {
 						$new_status = 'confirmed';
 					}
 				} else {
 					$deposit_received = 0;
-					if ( 'completed' === $payment_status ) {
+					if ( in_array( $payment_status, array( 'completed', 'deposit_paid', 'partially_paid' ), true ) ) {
 						$payment_status = 'pending';
 					}
 				}
 			}
 
-			// If manual payment amount input changed compared to DB, or if the booking lacks ledger transactions, record audit adjustment to folio ledger
+			// Stage ledger adjustment to commit AFTER room lock + availability check + DB update succeed.
 			$existing_ledger_txns  = class_exists( Pricing::class ) ? Pricing::get_payment_ledger( $old_booking ) : array();
 			$has_ledger_txns       = ! empty( $existing_ledger_txns );
 			$should_record_initial = ! $has_ledger_txns && $final_pay_m->isPositive() && ( 1 === $payment_received || 1 === $deposit_received );
@@ -1332,36 +1440,45 @@ if ( ! $can_process_payments ) {
 				$staff_label  = ( $current_user && $current_user->exists() ) ? $current_user->display_name : 'Staff';
 				$rec_amount_m = ( $should_record_initial && $pay_diff_m->isZero() ) ? $final_pay_m : $pay_diff_m;
 				if ( $rec_amount_m->isPositive() ) {
-					Pricing::record_payment(
-						$booking_id,
-						$rec_amount_m->toDecimal(),
-						$payment_method,
-						( 1 === $payment_received ) ? 'balance' : 'deposit',
-						'',
-						'Manual Payment Adjustment',
-						'Staff: ' . $staff_label
+					$pending_ledger_adj = array(
+						'amount' => $rec_amount_m->toDecimal(),
+						'type'   => ( 1 === $payment_received ) ? 'balance' : ( $is_deposit_booking_edit ? 'deposit' : 'payment' ),
+						'note'   => 'Manual Payment Adjustment',
+						'staff'  => 'Staff: ' . $staff_label,
 					);
 				} elseif ( $can_issue_refunds && $rec_amount_m->isNegative() ) {
-					Pricing::record_payment(
-						$booking_id,
-						$rec_amount_m->abs()->toDecimal(),
-						$payment_method,
-						'refund',
-						'',
-						'Manual Refund / Adjustment',
-						'Staff: ' . $staff_label
+					$pending_ledger_adj = array(
+						'amount' => $rec_amount_m->abs()->toDecimal(),
+						'type'   => 'refund',
+						'note'   => 'Manual Refund / Adjustment',
+						'staff'  => 'Staff: ' . $staff_label,
 					);
 				}
 			}
 		}
 
-		// Availability Check (excluding current booking).
-		$available = Pricing::is_room_available( $room_id, $check_in, $check_out, $booking_id );
-		if ( true !== $available ) {
-			$err_msg = is_string( $available ) ? I18n::get_label( $available ) : I18n::get_label( 'error_room_unavailable' );
-			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $err_msg ) . '</p></div>';
-			$edit_mode = true;
-		} else {
+		// Concurrency Guard (Law 5): acquire MySQL advisory lock when changing room or stay dates.
+		$needs_room_lock = $dates_changed || ( $room_id !== $old_room_id );
+		$lock_acquired   = false;
+		if ( $needs_room_lock && $room_id > 0 && class_exists( Pricing::class ) ) {
+			$lock_acquired = Pricing::acquire_booking_lock( $room_id, 10 );
+			if ( ! $lock_acquired ) {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'This room is currently being booked or modified by another request. Please try again.', 'modern-hotel-booking' ) . '</p></div>';
+				$edit_mode = true;
+				return;
+			}
+		}
+
+		try {
+			// Availability Check (excluding current booking).
+			$available = Pricing::is_room_available( $room_id, $check_in, $check_out, $booking_id );
+			if ( true !== $available ) {
+				$err_msg = is_string( $available ) ? I18n::get_label( $available ) : I18n::get_label( 'error_room_unavailable' );
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $err_msg ) . '</p></div>';
+				$edit_mode = true;
+				return;
+			}
+
 			$preserve_financial_ledger = ! $can_override_pricing && ! $can_override_tax && ! $pricing_inputs_changed;
 			$update_booking_fields     = array(
 				'customer_name'           => $customer_name,
@@ -1416,6 +1533,18 @@ if ( ! $can_process_payments ) {
 				array( 'id' => $booking_id )
 			);
 
+			if ( is_array( $pending_ledger_adj ) && class_exists( Pricing::class ) ) {
+				Pricing::record_payment(
+					$booking_id,
+					$pending_ledger_adj['amount'],
+					$payment_method,
+					$pending_ledger_adj['type'],
+					'',
+					$pending_ledger_adj['note'],
+					$pending_ledger_adj['staff']
+				);
+			}
+
 			if ( class_exists( GuestAsyncTasks::class ) ) {
 				if ( $target_guest_id > 0 ) {
 					GuestAsyncTasks::queue_stats_recalculation( $target_guest_id );
@@ -1425,18 +1554,44 @@ if ( ! $can_process_payments ) {
 				}
 			}
 
-if ( $old_status !== $new_status ) {
+// Invalidate booking, date-range & payment caches BEFORE firing email hooks so templates read fresh DB data.
+			Cache::invalidate_booking( $booking_id, $room_id );
+			if ( $old_room_id > 0 && $old_room_id !== $room_id ) {
+				Cache::invalidate_booking( $booking_id, $old_room_id );
+			}
+			if ( $dates_changed || ( $old_room_id > 0 && $old_room_id !== $room_id ) ) {
+				Cache::invalidate_date_range( $old_check_in, $old_check_out, $old_room_id > 0 ? $old_room_id : $room_id );
+				Cache::invalidate_date_range( $check_in, $check_out, $room_id );
+			}
+			Pricing::clear_payment_amounts_cache();
+
+			if ( $dates_changed ) {
+				$bseq = (int) get_option( 'mhbo_bseq_' . $booking_id, 0 );
+				update_option( 'mhbo_bseq_' . $booking_id, $bseq + 1, false );
+				do_action( 'mhbo_booking_dates_updated', $booking_id, $check_in, $check_out );
+			}
+
+			$status_email_dispatched = false;
+			if ( $old_status !== $new_status ) {
 				// Send email notification when status changes
 				do_action( 'mhbo_booking_status_changed', $booking_id, $new_status );
 				if ( 'confirmed' === $new_status ) {
 					do_action( 'mhbo_booking_confirmed', $booking_id );
+					$status_email_dispatched = ( 0 === (int) ( $old_booking->email_sent ?? 0 ) );
 				} elseif ( 'cancelled' === $new_status ) {
 					do_action( 'mhbo_booking_cancelled', $booking_id );
+					$status_email_dispatched = true;
 				}
 			}
 
-			Cache::invalidate_booking( $booking_id, $room_id );
-			Pricing::clear_payment_amounts_cache();
+			if (
+				$dates_changed
+				&& ! $status_email_dispatched
+				&& in_array( $new_status, array( 'pending', 'confirmed', 'checked_in' ), true )
+				&& class_exists( Email::class )
+			) {
+				Email::send_stay_dates_updated_email( $booking_id, $old_check_in, $old_check_out, $old_total_str );
+			}
 
 			// Invalidate dashboard statistics transients
 			$today_date = wp_date( 'Y-m-d' );
@@ -1449,6 +1604,10 @@ if ( $old_status !== $new_status ) {
 
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( I18n::get_label( 'msg_booking_updated' ) ) . '</p></div>';
 			$edit_mode = false;
+		} finally {
+			if ( $lock_acquired && class_exists( Pricing::class ) ) {
+				Pricing::release_booking_lock( $room_id );
+			}
 		}
 	}
 

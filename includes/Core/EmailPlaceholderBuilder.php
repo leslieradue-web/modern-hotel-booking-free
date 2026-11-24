@@ -187,9 +187,28 @@ $start_dt = new \DateTime( $check_in_date . ' ' . $ci_time, $tz );
 
 		$portal_card_html = '';
 		if ( '' !== $view_url ) {
+			$can_modify  = class_exists( \MHBO\Api\GuestPortalController::class ) && 'disabled' !== \MHBO\Api\GuestPortalController::get_modify_mode();
+			$can_cancel  = class_exists( \MHBO\Api\GuestPortalController::class ) && 'disabled' !== \MHBO\Api\GuestPortalController::get_cancel_mode();
+			$has_self_sv = $can_modify || $can_cancel;
+			$has_balance = function_exists( 'mhbo_is_pro' ) && mhbo_is_pro();
+
+			$portal_card_heading = $has_self_sv
+				? __( 'Manage Your Reservation Online', 'modern-hotel-booking' )
+				: __( 'View Your Reservation Online', 'modern-hotel-booking' );
+
+			if ( $has_self_sv && $has_balance ) {
+				$portal_card_desc = __( 'Review stay details, pay outstanding balances, manage stay requests, or print your itinerary anytime in our Guest Self-Service Portal.', 'modern-hotel-booking' );
+			} elseif ( $has_self_sv ) {
+				$portal_card_desc = __( 'Review stay details, manage stay requests, access arrival info, or print your itinerary anytime in our Guest Self-Service Portal.', 'modern-hotel-booking' );
+			} elseif ( $has_balance ) {
+				$portal_card_desc = __( 'Review stay details, pay outstanding balances, access arrival info, or print your travel itinerary anytime in our Guest Portal.', 'modern-hotel-booking' );
+			} else {
+				$portal_card_desc = __( 'Review your stay details, access check-in and arrival info, or print your travel itinerary anytime in our Guest Portal.', 'modern-hotel-booking' );
+			}
+
 			$portal_card_html = '<div style="margin: 24px 0; padding: 20px 24px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">'
-				. '<h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 15px; font-weight: 700;">' . esc_html__( 'Manage Your Reservation Online', 'modern-hotel-booking' ) . '</h4>'
-				. '<p style="margin: 0 0 16px 0; color: #64748b; font-size: 13px; line-height: 1.5;">' . esc_html__( 'Review stay details, pay outstanding balances, request stay modifications, or view your itinerary anytime in our Guest Self-Service Portal.', 'modern-hotel-booking' ) . '</p>'
+				. '<h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 15px; font-weight: 700;">' . esc_html( $portal_card_heading ) . '</h4>'
+				. '<p style="margin: 0 0 16px 0; color: #64748b; font-size: 13px; line-height: 1.5;">' . esc_html( $portal_card_desc ) . '</p>'
 				. '<a href="' . $view_url . '" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 12px 26px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 0.3px;">' . esc_html__( 'Access Guest Portal &rarr;', 'modern-hotel-booking' ) . '</a>'
 				. ( '' !== $booking_token ? '<p style="margin: 14px 0 0 0; font-size: 12px; color: #94a3b8;">' . esc_html__( 'Security Token for manual portal login:', 'modern-hotel-booking' ) . ' <code style="background: #e2e8f0; color: #0f172a; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px;">' . esc_html( $booking_token ) . '</code></p>' : '' )
 				. '</div>';
@@ -200,7 +219,18 @@ $start_dt = new \DateTime( $check_in_date . ' ' . $ci_time, $tz );
 			: '';
 
 		// Cache payment amounts once — avoids repeated ledger parsing per email.
-		$ph_amts = class_exists( Pricing::class ) ? Pricing::get_booking_payment_amounts( $booking ) : null;
+		$ph_amts                  = class_exists( Pricing::class ) ? Pricing::get_booking_payment_amounts( $booking ) : null;
+		$is_cancelled_or_refunded = in_array( (string) $status, array( 'cancelled', 'refunded' ), true )
+			|| in_array( (string) ( $booking->status ?? '' ), array( 'cancelled', 'refunded' ), true );
+		$ph_zero_currency_fmt     = ( null !== $ph_amts )
+			? I18n::format_currency( Money::fromCents( 0, $ph_amts['remaining']->getCurrency() )->toDecimal() )
+			: '';
+		$ph_due_now_fmt           = ( null !== $ph_amts )
+			? ( $is_cancelled_or_refunded ? $ph_zero_currency_fmt : I18n::format_currency( $ph_amts['due_now']->toDecimal() ) )
+			: '';
+		$ph_remaining_fmt         = ( null !== $ph_amts )
+			? ( $is_cancelled_or_refunded ? $ph_zero_currency_fmt : I18n::format_currency( $ph_amts['remaining']->toDecimal() ) )
+			: '';
 
 		// Cache reservation breakdown once — avoids repeating heavy query & formatting logic.
 		$reservation_breakdown_html = EmailHtmlRenderer::render_reservation_breakdown_html( $booking, $lang );
@@ -219,6 +249,7 @@ $placeholders = array(
 			'{admin_booking_url}'       => admin_url( 'admin.php?page=mhbo-bookings&action=edit&id=' . (int) ( $booking->id ?? 0 ) ),
 			'{portal_card}'             => $portal_card_html,
 			'{security_token_row}'      => $security_token_row,
+			'{cancellation_policy}'     => esc_html( class_exists( \MHBO\Api\GuestPortalController::class ) ? \MHBO\Api\GuestPortalController::get_active_cancellation_policy( $lang ) : '' ),
 
 			// Stay Information
 			'{check_in}'                => $check_in > 0 ? HotelTime::format_date( $check_in ) : '--',
@@ -231,12 +262,14 @@ $placeholders = array(
 			'{children_ages}'           => '',
 			'{children_total}'          => '',
 			'{total_price}'             => I18n::format_currency( Money::fromDecimal( (string) ( $booking->total_price ?? 0 ) ) ),
-			'{payment_amount}'          => I18n::format_currency( Money::fromDecimal( (string) ( $booking->payment_amount ?? 0 ) ) ),
-			'{due_now}'                 => ( null !== $ph_amts ? I18n::format_currency( $ph_amts['due_now']->toDecimal() ) : '' ),
-			'{amount_due_now}'          => ( null !== $ph_amts ? I18n::format_currency( $ph_amts['due_now']->toDecimal() ) : '' ),
+			'{payment_amount}'          => null !== $ph_amts
+				? I18n::format_currency( $ph_amts['received']->toDecimal() )
+				: I18n::format_currency( Money::fromDecimal( (string) ( $booking->payment_amount ?? 0 ) ) ),
+			'{due_now}'                 => $ph_due_now_fmt,
+			'{amount_due_now}'          => $ph_due_now_fmt,
 			'{due_type}'                => ( null !== $ph_amts ? ( 'deposit' === $ph_amts['due_type'] ? I18n::get_label( 'label_deposit_required' ) : I18n::get_label( 'label_balance_due' ) ) : '' ),
-			'{remaining_balance}'       => ( null !== $ph_amts ? I18n::format_currency( $ph_amts['remaining']->toDecimal() ) : '' ),
-			'{amount_outstanding}'      => ( null !== $ph_amts ? I18n::format_currency( $ph_amts['remaining']->toDecimal() ) : '' ),
+			'{remaining_balance}'       => $ph_remaining_fmt,
+			'{amount_outstanding}'      => $ph_remaining_fmt,
 			'{payment_ledger}'          => EmailHtmlRenderer::render_payment_ledger_html( $booking ),
 			'{payment_transaction_id}'  => esc_html( $booking->payment_transaction_id ?? '' ),
 			'{payment_date}'            => esc_html( $booking->payment_date ?? '' ),

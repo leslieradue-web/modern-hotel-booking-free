@@ -192,7 +192,7 @@ $admin_email = self::get_notification_email();
 		$payment_label = I18n::translate_payment_method( (string) ( $booking->payment_method ?? 'arrival' ) );
 		$total_price   = I18n::format_currency( Money::fromDecimal( (string) ( $booking->total_price ?? 0 ) ) );
 
-		$admin_url = admin_url( 'admin.php?page=mhbo-bookings&action=view&id=' . $booking_id );
+		$admin_url = admin_url( 'admin.php?page=mhbo-bookings&action=edit&id=' . $booking_id );
 
 		// Build admin notification email HTML
 		$body  = '<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#222;">';
@@ -251,7 +251,7 @@ $admin_email = self::get_notification_email();
 			);
 			if ( array() !== $sanitized_ages ) {
 				$guests_summary .= ' (' . sprintf(
-					/* translators: %s: comma-separated child ages */
+					/* translators: %s: comma-separated list of child ages */
 					__( 'Ages: %s', 'modern-hotel-booking' ),
 					implode( ', ', $sanitized_ages )
 				) . ')';
@@ -343,7 +343,7 @@ $body .= '</div></div>';
 
 		$lang         = I18n::get_current_language();
 		$site_name    = self::sanitize_header_value( (string) get_bloginfo( 'name' ) );
-		$admin_url    = admin_url( 'admin.php?page=mhbo-bookings&action=view&id=' . $booking_id );
+		$admin_url    = admin_url( 'admin.php?page=mhbo-bookings&action=edit&id=' . $booking_id );
 		$status_label = I18n::translate_status( (string) ( $booking->status ?? 'confirmed' ) );
 		$room_name        = (string) ( I18n::decode( (string) ( $booking->room_name ?? '' ), $lang ) ?? '' );
 		$amount_paid      = isset( $payment_data['amount'] ) ? I18n::format_currency( Money::fromDecimal( (string) $payment_data['amount'] ) ) : I18n::format_currency( Money::fromDecimal( (string) ( $booking->payment_amount ?? 0 ) ) );
@@ -480,8 +480,13 @@ $body .= '</div></div>';
 		$payment_status = isset( $booking->payment_status ) ? $booking->payment_status : 'pending';
 		$payment_method = isset( $booking->payment_method ) ? $booking->payment_method : 'arrival';
 
-		// DEDUPLICATION: Prevent duplicate confirmation emails unless explicitly forced (manual resend)
+		// DEDUPLICATION: Prevent duplicate confirmation emails unless explicitly forced (manual resend),
+		// and guard all statuses with a short-lived per-(booking, status) transient to prevent double-sends.
 		if ( ! $force && isset( $booking->email_sent ) && (int) $booking->email_sent === 1 && 'confirmed' === $status ) {
+			return false;
+		}
+		$dedup_key = 'mhbo_guest_email_sent_' . $booking_id . '_' . sanitize_key( $status );
+		if ( ! $force && false !== get_transient( $dedup_key ) ) {
 			return false;
 		}
 
@@ -500,7 +505,16 @@ $body .= '</div></div>';
 			return false;
 		}
 
+		// SECURITY: Validate email address before arming dedup transients or mutating email_sent.
+		$to = sanitize_email( (string) ( $booking->customer_email ?? '' ) );
+		if ( ! is_email( $to ) ) {
+			return false;
+		}
+
 		// UPDATE STATUS: Mark as sent BEFORE wp_mail to avoid race conditions with webhooks
+		if ( ! $force ) {
+			set_transient( $dedup_key, 1, 120 );
+		}
 		if ( 'confirmed' === $status ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update
 			$wpdb->update(
@@ -514,113 +528,108 @@ $body .= '</div></div>';
 			wp_cache_delete( $cache_key, 'mhbo_bookings' );
 		}
 
-		$lang = $booking->booking_language ?: I18n::get_current_language();
+		$lang   = $booking->booking_language ?: I18n::get_current_language();
+		$result = false;
 		I18n::switch_language_context( $lang );
 
-		// Load multilingual templates from options with hardcoded fallbacks if empty
-		$template_subject = get_option( "mhbo_email_{$status}_subject" );
-		if ( '' === (string) $template_subject ) {
-			$status_subject_key = "email_{$status}_subject";
-			$template_subject   = I18n::get_label( $status_subject_key );
-			if ( $status_subject_key === $template_subject ) {
-				$template_subject = I18n::get_label( 'email_booking_status_subject' );
+		try {
+			// Load multilingual templates from options with hardcoded fallbacks if empty
+			$template_subject = get_option( "mhbo_email_{$status}_subject" );
+			if ( '' === (string) $template_subject ) {
+				$status_subject_key = "email_{$status}_subject";
+				$template_subject   = I18n::get_label( $status_subject_key );
+				if ( $status_subject_key === $template_subject ) {
+					$template_subject = I18n::get_label( 'email_booking_status_subject' );
+				}
 			}
-		}
 
-		$template_message = get_option( "mhbo_email_{$status}_message" );
-		if ( '' === (string) $template_message ) {
-			$template_message = self::get_default_email_template( $status );
-		}
+			$template_message = get_option( "mhbo_email_{$status}_message" );
+			if ( '' === (string) $template_message ) {
+				$template_message = self::get_default_email_template( $status );
+			}
 
-		// SECURITY: Validate email address before sending
-		$to = sanitize_email( (string) ( $booking->customer_email ?? '' ) );
-		if ( ! is_email( $to ) ) {
-			// Invalid email - skip sending
-			I18n::restore_language_context();
-			return false;
-		}
-		$subject = I18n::get_translated_string( "Email {$status} Subject", (string) $template_subject, 'MHBO Email Templates', $lang );
-		$message = I18n::get_translated_string( "Email {$status} Message", (string) $template_message, 'MHBO Email Templates', $lang );
+			$subject = I18n::get_translated_string( "Email {$status} Subject", (string) $template_subject, 'MHBO Email Templates', $lang );
+			$message = I18n::get_translated_string( "Email {$status} Message", (string) $template_message, 'MHBO Email Templates', $lang );
 
-		// Room Name Placeholder - JOIN-aware (Kairos optimized)
-		$room_name = (string) ( I18n::decode( (string) ( $booking->room_name ?? '' ), $lang ) ?? '' );
-		if ( '' === $room_name && isset( $booking->room_id ) ) {
-			// FALLBACK: Only if JOIN failed for some reason, check cache or DB
-			$room_name_cache_key = 'mhbo_room_name_' . $booking->room_id;
-			$room_name           = wp_cache_get( $room_name_cache_key, 'mhbo' );
+			// Room Name Placeholder - JOIN-aware (Kairos optimized)
+			$room_name = (string) ( I18n::decode( (string) ( $booking->room_name ?? '' ), $lang ) ?? '' );
+			if ( '' === $room_name && isset( $booking->room_id ) ) {
+				// FALLBACK: Only if JOIN failed for some reason, check cache or DB
+				$room_name_cache_key = 'mhbo_room_name_' . $booking->room_id;
+				$room_name           = wp_cache_get( $room_name_cache_key, 'mhbo' );
 
-			if ( false === $room_name ) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$room_name = $wpdb->get_var(
+				if ( false === $room_name ) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+					$room_name = $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT t.name FROM {$wpdb->prefix}mhbo_rooms r 
                      JOIN {$wpdb->prefix}mhbo_room_types t ON r.type_id = t.id 
                      WHERE r.id = %d",
 						$booking->room_id
 					)
-				);
-				wp_cache_set( $room_name_cache_key, $room_name, 'mhbo', HOUR_IN_SECONDS );
+					);
+					wp_cache_set( $room_name_cache_key, $room_name, 'mhbo', HOUR_IN_SECONDS );
+				}
+				$room_name = I18n::decode( (string) ( $room_name ?? '' ), $lang );
 			}
-			$room_name = I18n::decode( (string) ( $room_name ?? '' ), $lang );
-		}
 
-		// Format Custom Fields for placeholder
-		$custom_fields_formatted = '';
-		if ( '' !== (string) ( $booking->custom_fields ?? '' ) ) {
-			$custom_data = json_decode( $booking->custom_fields, true );
-			$custom_defn = get_option( 'mhbo_custom_fields', array() );
-			if ( is_array( $custom_data ) && count( $custom_defn ) > 0 ) {
-				foreach ( $custom_defn as $defn ) {
-					if ( isset( $custom_data[ $defn['id'] ] ) ) {
-						$f_label                  = (string) ( I18n::decode( I18n::encode( $defn['label'] ), $lang ) ?? '' );
-						$custom_fields_formatted .= esc_html( $f_label ) . ': ' . esc_html( $custom_data[ $defn['id'] ] ) . "<br>\n";
+			// Format Custom Fields for placeholder
+			$custom_fields_formatted = '';
+			if ( '' !== (string) ( $booking->custom_fields ?? '' ) ) {
+				$custom_data = json_decode( $booking->custom_fields, true );
+				$custom_defn = get_option( 'mhbo_custom_fields', array() );
+				if ( is_array( $custom_data ) && count( $custom_defn ) > 0 ) {
+					foreach ( $custom_defn as $defn ) {
+						if ( isset( $custom_data[ $defn['id'] ] ) ) {
+							$f_label                  = (string) ( I18n::decode( I18n::encode( $defn['label'] ), $lang ) ?? '' );
+							$custom_fields_formatted .= esc_html( $f_label ) . ': ' . esc_html( $custom_data[ $defn['id'] ] ) . "<br>\n";
+						}
 					}
 				}
 			}
-		}
 
-		// Build payment details section
-		$payment_details = '';
-		if ( 'completed' === $payment_status ) {
-			$payment_details  = '<div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 5px;">';
-			$payment_details .= '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">' . esc_html( I18n::get_label( 'label_payment_confirmation' ) ) . '</h4>';
-			$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_payment_status' ) ) . '</strong> ' . esc_html( I18n::get_label( 'label_paid' ) ) . '</p>';
-			if ( (float) ( $booking->payment_amount ?? 0 ) > 0 ) {
-				$p_amt            = Money::fromDecimal( (string) $booking->payment_amount );
-				$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_amount_paid' ) ) . '</strong> ' . I18n::format_currency( $p_amt ) . '</p>';
+			// Build payment details section
+			$payment_details = '';
+			if ( 'completed' === $payment_status ) {
+				$payment_details  = '<div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 5px;">';
+				$payment_details .= '<h4 style="margin: 0 0 10px 0; color: #2e7d32;">' . esc_html( I18n::get_label( 'label_payment_confirmation' ) ) . '</h4>';
+				$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_payment_status' ) ) . '</strong> ' . esc_html( I18n::get_label( 'label_paid' ) ) . '</p>';
+				if ( (float) ( $booking->payment_amount ?? 0 ) > 0 ) {
+					$p_amt            = Money::fromDecimal( (string) $booking->payment_amount );
+					$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_amount_paid' ) ) . '</strong> ' . I18n::format_currency( $p_amt ) . '</p>';
+				}
+				if ( '' !== (string) ( $booking->payment_transaction_id ?? '' ) ) {
+					$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_transaction_id' ) ) . '</strong> ' . esc_html( (string) $booking->payment_transaction_id ) . '</p>';
+				}
+				if ( '' !== (string) ( $booking->payment_date ?? '' ) ) {
+					$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_payment_date' ) ) . '</strong> ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $booking->payment_date ) ) . '</p>';
+				}
+				if ( '' !== (string) ( $booking->payment_method ?? '' ) ) {
+					$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_payment_method' ) ) . '</strong> ' . esc_html( I18n::translate_payment_method( (string) $booking->payment_method ) ) . '</p>';
+				}
+				$payment_details .= '</div>';
+			} elseif ( 'arrival' === $payment_method || 'onsite' === $payment_method ) {
+				$payment_details = self::get_business_payment_details_html( $booking_id, Money::fromDecimal( (string) ( $booking->total_price ?? 0 ) ) );
+			} elseif ( 'bank_transfer' === $payment_method || 'bank' === $payment_method ) {
+				
+			} elseif ( 'revolut' === $payment_method ) {
+				
+			} elseif ( 'payment_link' === $payment_method ) {
+				
 			}
-			if ( '' !== (string) ( $booking->payment_transaction_id ?? '' ) ) {
-				$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_transaction_id' ) ) . '</strong> ' . esc_html( (string) $booking->payment_transaction_id ) . '</p>';
-			}
-			if ( '' !== (string) ( $booking->payment_date ?? '' ) ) {
-				$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_payment_date' ) ) . '</strong> ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $booking->payment_date ) ) . '</p>';
-			}
-			if ( '' !== (string) ( $booking->payment_method ?? '' ) ) {
-				$payment_details .= '<p style="margin: 5px 0;"><strong>' . esc_html( I18n::get_label( 'label_payment_method' ) ) . '</strong> ' . esc_html( I18n::translate_payment_method( (string) $booking->payment_method ) ) . '</p>';
-			}
-			$payment_details .= '</div>';
-		} elseif ( 'arrival' === $payment_method || 'onsite' === $payment_method ) {
-			$payment_details = self::get_business_payment_details_html( $booking_id, Money::fromDecimal( (string) ( $booking->total_price ?? 0 ) ) );
-		} elseif ( 'bank_transfer' === $payment_method || 'bank' === $payment_method ) {
-			
-		} elseif ( 'revolut' === $payment_method ) {
-			
-		} elseif ( 'payment_link' === $payment_method ) {
-			
-		}
 
-		// Build tax breakdown section
-		$tax_breakdown_html      = '';
-		$tax_breakdown_text      = '';
-		$tax_total               = '';
-		$tax_registration_number = '';
+			// Build tax breakdown section
+			$tax_breakdown_html      = '';
+			$tax_breakdown_text      = '';
+			$tax_total               = '';
+			$tax_registration_number = '';
 
 // Format extras
-		$booking_extras_html = EmailHtmlRenderer::format_extras( $booking, $lang, 'html' );
-		$booking_extras_text = EmailHtmlRenderer::format_extras( $booking, $lang, 'text' );
+			$booking_extras_html = EmailHtmlRenderer::format_extras( $booking, $lang, 'html' );
+			$booking_extras_text = EmailHtmlRenderer::format_extras( $booking, $lang, 'text' );
 
-		// Fetch placeholder collection
-		$placeholders = self::get_booking_placeholders(
+			// Fetch placeholder collection
+			$placeholders = self::get_booking_placeholders(
 			$booking,
 			$status,
 			$lang,
@@ -636,67 +645,72 @@ $body .= '</div></div>';
 				'room_number'             => esc_html( (string) ( $booking->room_number ?? '' ) ),
 				'payment_details'         => $payment_details,
 			)
-		);
+			);
 
-		// Append tax breakdown or reservation breakdown if not in the template.
-		// Must check BEFORE replacement, since apply_placeholders removes the literal placeholder.
-		$has_tax_placeholder       = ( false !== strpos( $message, '{tax_breakdown}' ) );
-		$has_breakdown_placeholder = ( false !== strpos( $message, '{reservation_breakdown}' ) );
-		$has_deposit_placeholder   = ( false !== strpos( $message, '{deposit_details}' ) );
-		$has_map_placeholder       = ( false !== strpos( $message, '{google_map}' ) );
-		$has_social_placeholder    = ( false !== strpos( $message, '{social_links}' ) );
+			// Append tax breakdown or reservation breakdown if not in the template.
+			// Must check BEFORE replacement, since apply_placeholders removes the literal placeholder.
+			$has_tax_placeholder       = ( false !== strpos( $message, '{tax_breakdown}' ) );
+			$has_breakdown_placeholder = ( false !== strpos( $message, '{reservation_breakdown}' ) );
+			$has_deposit_placeholder   = ( false !== strpos( $message, '{deposit_details}' ) );
+			$has_map_placeholder       = ( false !== strpos( $message, '{google_map}' ) );
+			$has_social_placeholder    = ( false !== strpos( $message, '{social_links}' ) );
 
-		// Replace placeholders with smart cleanup
-		$subject = self::sanitize_header_value( self::apply_placeholders( (string) $subject, $placeholders ) );
-		$message = self::apply_placeholders( (string) $message, $placeholders );
+			// Replace placeholders with smart cleanup
+			$subject = self::sanitize_header_value( self::apply_placeholders( (string) $subject, $placeholders ) );
+			$message = self::apply_placeholders( (string) $message, $placeholders );
 
-		if ( ! $has_breakdown_placeholder && ! $has_deposit_placeholder && ! $has_tax_placeholder ) {
-			$message .= self::render_reservation_breakdown_html( $booking, $lang );
-		}
+			if ( ! $has_breakdown_placeholder && ! $has_deposit_placeholder && ! $has_tax_placeholder ) {
+				$message .= self::render_reservation_breakdown_html( $booking, $lang );
+			}
 
 $headers = self::get_transactional_headers( true, (string) $to );
 
-		$attachments = array();
+			$attachments = array();
 
-		// Add iCal attachment for confirmed bookings.
-		if ( 'confirmed' === $status ) {
-			$ics_content = EmailPlaceholderBuilder::generate_simple_ics( $booking );
-			$file_path   = self::create_ics_attachment_file(
+			// Add iCal attachment for confirmed bookings.
+			if ( 'confirmed' === $status ) {
+				$ics_content = EmailPlaceholderBuilder::generate_simple_ics( $booking );
+				$file_path   = self::create_ics_attachment_file(
 				$ics_content,
 				sprintf( 'booking-%d.ics', (int) ( $booking->id ?? 0 ) )
-			);
-			if ( '' !== $file_path ) {
-				$attachments[] = $file_path;
+				);
+				if ( '' !== $file_path ) {
+					$attachments[] = $file_path;
+				}
 			}
-		}
 
-		try {
-			$result = (bool) wp_mail( $to, (string) $subject, (string) $message, $headers, $attachments );
-		} finally {
-			if ( array() !== $attachments ) {
-				foreach ( $attachments as $temp_file ) {
-					if ( is_string( $temp_file ) && file_exists( $temp_file ) ) {
-						wp_delete_file( $temp_file );
+			try {
+				$result = (bool) wp_mail( $to, (string) $subject, (string) $message, $headers, $attachments );
+			} finally {
+				if ( array() !== $attachments ) {
+					foreach ( $attachments as $temp_file ) {
+						if ( is_string( $temp_file ) && file_exists( $temp_file ) ) {
+							wp_delete_file( $temp_file );
+						}
 					}
 				}
 			}
-		}
 
-		if ( ! $result && 'confirmed' === $status ) {
-			// Roll back email_sent marker if wp_mail failed.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update
-			$wpdb->update(
-				$wpdb->prefix . 'mhbo_bookings',
-				array( 'email_sent' => 0 ),
-				array( 'id' => $booking_id ),
-				array( '%d' ),
-				array( '%d' )
-			);
-			wp_cache_delete( $cache_key, 'mhbo_bookings' );
-		}
+			if ( ! $result ) {
+				if ( ! $force ) {
+					delete_transient( $dedup_key );
+				}
+				if ( 'confirmed' === $status ) {
+					// Roll back email_sent marker if wp_mail failed.
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table update
+					$wpdb->update(
+					$wpdb->prefix . 'mhbo_bookings',
+					array( 'email_sent' => 0 ),
+					array( 'id' => $booking_id ),
+					array( '%d' ),
+					array( '%d' )
+					);
+					wp_cache_delete( $cache_key, 'mhbo_bookings' );
+				}
+			}
 
-		if ( class_exists( ProRemoved::class ) ) {
-			ProRemoved::log(
+			if ( class_exists( ProRemoved::class ) ) {
+				ProRemoved::log(
 				isset( $booking->guest_id ) ? (int) $booking->guest_id : null,
 				$booking_id,
 				'booking_' . $status,
@@ -704,7 +718,10 @@ $headers = self::get_transactional_headers( true, (string) $to );
 				(string) $subject,
 				(string) $message,
 				$result
-			);
+				);
+			}
+		} finally {
+			I18n::restore_language_context();
 		}
 
 		return $result;
@@ -1205,15 +1222,16 @@ $headers = self::get_transactional_headers( true, (string) $to );
 	}
 
 	/**
-	 * Send a confirmation email to the guest when stay dates are updated directly.
+	 * Send a stay dates update email to the guest when stay dates are updated directly.
 	 *
 	 * @param int    $booking_id    The booking ID.
 	 * @param string $old_check_in  Previous check-in date.
 	 * @param string $old_check_out Previous check-out date.
+	 * @param string $old_total     Optional previous booking total decimal.
 	 * @return bool True if sent, false otherwise.
 	 */
-	public static function send_stay_dates_updated_email( int $booking_id, string $old_check_in = '', string $old_check_out = '' ): bool {
-		return EmailPortalNotifier::send_stay_dates_updated_email( $booking_id, $old_check_in, $old_check_out );
+	public static function send_stay_dates_updated_email( int $booking_id, string $old_check_in = '', string $old_check_out = '', string $old_total = '' ): bool {
+		return EmailPortalNotifier::send_stay_dates_updated_email( $booking_id, $old_check_in, $old_check_out, $old_total );
 	}
 
 	/**

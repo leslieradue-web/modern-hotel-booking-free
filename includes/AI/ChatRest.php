@@ -456,6 +456,9 @@ class ChatRest {
 
 				if ( $auth_booking && is_string( $auth_booking->booking_token ) && hash_equals( $auth_booking->booking_token, $portal_token ) ) {
 					$amts               = Pricing::get_booking_payment_amounts( $auth_booking );
+					$portal_rem_money   = in_array( (string) ( $auth_booking->status ?? '' ), array( 'cancelled', 'refunded' ), true )
+						? \MHBO\Core\Money::fromCents( 0, $amts['remaining']->getCurrency() )
+						: $amts['remaining'];
 					$clean_room_type    = self::sanitize_prompt_field( (string) ( I18n::decode( (string) $auth_booking->room_type_name ) ?? $auth_booking->room_type_name ), 80 );
 					$clean_portal_name  = self::sanitize_prompt_field( (string) $auth_booking->customer_name, 80 );
 					$clean_portal_email = sanitize_email( (string) $auth_booking->customer_email );
@@ -474,10 +477,10 @@ class ChatRest {
 						. '- Stay Dates: ' . (string) $auth_booking->check_in . ' to ' . (string) $auth_booking->check_out . "\n"
 						. '- Party: ' . (int) $auth_booking->guests . ' Adults' . $children_text . "\n"
 						. '- Status: ' . (string) $auth_booking->status . "\n"
-						. '- Financial Summary: Total ' . $amts['total']->format() . ', Paid ' . $amts['received']->format() . ', Remaining Due: ' . $amts['remaining']->format() . "\n"
+						. '- Financial Summary: Total ' . $amts['total']->format() . ', Paid ' . $amts['received']->format() . ', Remaining Due: ' . $portal_rem_money->format() . "\n"
 						. "</untrusted_guest_data>\n"
 						. "PERSONALIZATION INSTRUCTIONS:\n"
-						. '- Greet the guest warmly by their name (' . $clean_portal_name . ").\n"
+						. "- Greet the guest warmly using the Guest Name inside <untrusted_guest_data>.\n"
 						. "- You already know their reservation details; NEVER ask them for their booking ID or email address.\n"
 						. "- Provide immediate, personalized assistance regarding their check-in time, directions, room amenities, balance payment, or stay modifications.\n"
 						. "===========================================\n";

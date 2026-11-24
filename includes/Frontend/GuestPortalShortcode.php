@@ -115,6 +115,27 @@ class GuestPortalShortcode {
 							'modify_failed'        => __( 'Failed to submit request.', 'modern-hotel-booking' ),
 							'deposit_paid'         => __( 'Deposit Paid', 'modern-hotel-booking' ),
 							'due_at_booking'       => __( 'Due at booking', 'modern-hotel-booking' ),
+							'confirm_price_required' => __( 'Please check the box confirming the updated reservation total before proceeding.', 'modern-hotel-booking' ),
+							'checking_availability'  => __( 'Checking availability and recalculating total...', 'modern-hotel-booking' ),
+							'submit_mod_request'     => __( 'Submit Modification Request', 'modern-hotel-booking' ),
+							'update_reservation'     => __( 'Update Reservation', 'modern-hotel-booking' ),
+							'change_stay_dates'      => __( 'Change Stay Dates', 'modern-hotel-booking' ),
+							'request_stay_change'    => __( 'Request Stay Change', 'modern-hotel-booking' ),
+							'submit_cancel_request'  => __( 'Submit Cancellation Request', 'modern-hotel-booking' ),
+							'cancel_reservation'     => __( 'Cancel Reservation', 'modern-hotel-booking' ),
+							'request_cancellation'   => __( 'Request Cancellation', 'modern-hotel-booking' ),
+							'pending_cancel_request' => __( 'A cancellation request is currently pending front desk review.', 'modern-hotel-booking' ),
+							'pending_mod_request'    => __( 'A stay modification request is currently pending front desk review.', 'modern-hotel-booking' ),
+							'available_label'        => __( 'Available', 'modern-hotel-booking' ),
+							'review_by_front_desk'   => __( 'This request will be reviewed by our front desk team.', 'modern-hotel-booking' ),
+							'night_singular'         => __( 'night', 'modern-hotel-booking' ),
+							'night_plural'           => __( 'nights', 'modern-hotel-booking' ),
+							'no_price_change'        => __( 'No price change', 'modern-hotel-booking' ),
+							'choose_dates_required'  => __( 'Please choose both check-in and check-out dates.', 'modern-hotel-booking' ),
+							'checkout_after_checkin' => __( 'Check-out date must be after check-in date.', 'modern-hotel-booking' ),
+							/* translators: %s: front desk phone number or email address. */
+							'need_changes_contact'   => __( 'Need to change or cancel your stay? Please contact our front desk directly at %s.', 'modern-hotel-booking' ),
+							'need_changes_fallback'  => __( 'Need to change or cancel your stay? Please contact our front desk directly for assistance.', 'modern-hotel-booking' ),
 						)
 					);
 				}
@@ -268,6 +289,8 @@ ob_start();
 					</div>
 				</div>
 
+				<div id="mhbo-portal-pending-req-banner" style="display: none; margin: 0 0 16px 0; padding: 10px 14px; background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 8px; font-size: 13px; color: #92400e;"></div>
+
 				<div class="mhbo-portal-timeline">
 					<div class="mhbo-timeline-col">
 						<div class="mhbo-timeline-label"><?php echo esc_html( __( 'CHECK IN', 'modern-hotel-booking' ) ); ?></div>
@@ -354,7 +377,7 @@ ob_start();
 						<span id="mhbo-res-balance" style="color: var(--gp-accent);"></span>
 					</div>
 					<div id="mhbo-res-settled-badge" style="display: none; margin-top: 10px; padding: 8px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 12.5px; color: #166534; font-weight: 600; text-align: center;">
-						✓ <?php esc_html_e( 'Reservation Folio Fully Settled & Confirmed', 'modern-hotel-booking' ); ?>
+						✓ <?php esc_html_e( 'Reservation Folio Fully Settled', 'modern-hotel-booking' ); ?>
 					</div>
 				</div>
 
@@ -426,13 +449,22 @@ ob_start();
 					<div id="mhbo-guide-content" class="mhbo-guide-content" style="display: none;"></div>
 				</div>
 
-<div class="mhbo-portal-actions">
-					<button type="button" id="mhbo-portal-modify-btn" class="mhbo-portal-btn mhbo-portal-btn-secondary">
+<!-- Cancellation & Modification Policy / Front Desk Guidance -->
+				<div id="mhbo-portal-policy-card" class="mhbo-portal-policy-card" style="display: none;">
+					<div class="mhbo-portal-policy-title">
+						<?php esc_html_e( 'Cancellation & Modification Policy', 'modern-hotel-booking' ); ?>
+					</div>
+					<p id="mhbo-portal-policy-text" class="mhbo-portal-policy-text" style="display: none;"></p>
+					<p id="mhbo-portal-policy-contact" class="mhbo-portal-policy-contact" style="display: none;"></p>
+				</div>
+
+				<div class="mhbo-portal-actions">
+					<button type="button" id="mhbo-portal-modify-btn" class="mhbo-portal-btn mhbo-portal-btn-secondary" style="display: none;">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-						<?php esc_html_e( 'Request Stay Change', 'modern-hotel-booking' ); ?>
+						<span class="mhbo-modify-btn-label"><?php esc_html_e( 'Request Stay Change', 'modern-hotel-booking' ); ?></span>
 					</button>
 
-					<button type="button" id="mhbo-portal-cancel-btn" class="mhbo-portal-btn mhbo-portal-btn-danger">
+					<button type="button" id="mhbo-portal-cancel-btn" class="mhbo-portal-btn mhbo-portal-btn-danger" style="display: none;">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
 						<span id="mhbo-cancel-btn-text"><?php esc_html_e( 'Cancel Reservation', 'modern-hotel-booking' ); ?></span>
 					</button>
@@ -456,6 +488,9 @@ ob_start();
 					<div id="mhbo-cancel-paid-warning" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: #991b1b;">
 						<strong><?php esc_html_e( 'Payment on File:', 'modern-hotel-booking' ); ?></strong> <span id="mhbo-cancel-paid-amount"></span><br>
 						<?php esc_html_e( 'Because a payment has been received, this cancellation requires front desk review to process any applicable refund according to policy.', 'modern-hotel-booking' ); ?>
+					</div>
+					<div id="mhbo-cancel-review-info" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; color: #1e40af;">
+						<?php esc_html_e( 'Under property policy, cancellations require front desk approval before your room is released. Submit your request below and our team will confirm promptly.', 'modern-hotel-booking' ); ?>
 					</div>
 					<p id="mhbo-cancel-policy-notice" style="font-size: 13px; color: #64748b; margin-bottom: 16px; line-height: 1.5;"></p>
 					<label class="mhbo-portal-label" for="mhbo-cancel-reason"><?php esc_html_e( 'Reason for cancellation (optional)', 'modern-hotel-booking' ); ?></label>
@@ -490,12 +525,21 @@ ob_start();
 							<label class="mhbo-portal-label" for="mhbo-mod-adults"><?php esc_html_e( 'Adults (Current Occupancy)', 'modern-hotel-booking' ); ?></label>
 							<input type="number" id="mhbo-mod-adults" class="mhbo-portal-input" readonly style="background:#f8fafc; cursor:not-allowed;" value="1">
 						</div>
-						<div>
-							<label class="mhbo-portal-label" for="mhbo-mod-children"><?php esc_html_e( 'Children (Current Occupancy)', 'modern-hotel-booking' ); ?></label>
-							<input type="number" id="mhbo-mod-children" class="mhbo-portal-input" readonly style="background:#f8fafc; cursor:not-allowed;" value="0">
+<input type="hidden" id="mhbo-mod-children" value="0">
+</div>
+					<p style="font-size: 11.5px; color: #64748b; margin: 0 0 14px 0;"><?php esc_html_e( 'Guest occupancy remains the same as your current reservation.', 'modern-hotel-booking' ); ?></p>
+					<div id="mhbo-mod-preview-box" style="display: none; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; font-size: 13px;">
+						<div id="mhbo-mod-preview-status" style="color: #475569; margin-bottom: 6px;"></div>
+						<div id="mhbo-mod-preview-totals" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 600; color: #0f172a;">
+							<span><?php esc_html_e( 'Updated Stay Quote:', 'modern-hotel-booking' ); ?> <span id="mhbo-mod-preview-nights"></span></span>
+							<span id="mhbo-mod-preview-price"></span>
 						</div>
+						<div id="mhbo-mod-preview-note" style="display: none; margin-top: 6px; font-size: 12px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 6px 10px;"></div>
+						<label id="mhbo-mod-price-confirm-wrap" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; align-items: flex-start; gap: 8px; font-size: 12.5px; font-weight: 600; color: #0f172a; cursor: pointer;">
+							<input type="checkbox" id="mhbo-mod-confirm-price" style="margin-top: 2px;">
+							<span><?php esc_html_e( 'I confirm the updated reservation total above.', 'modern-hotel-booking' ); ?></span>
+						</label>
 					</div>
-					<p style="font-size: 11.5px; color: #64748b; margin: 0 0 14px 0;"><?php esc_html_e( 'Guest occupancy remains the same as your confirmed reservation.', 'modern-hotel-booking' ); ?></p>
 					<div style="margin-bottom: 20px;">
 						<label class="mhbo-portal-label" for="mhbo-mod-notes"><?php esc_html_e( 'Special Requests / Reason for Change', 'modern-hotel-booking' ); ?></label>
 						<textarea id="mhbo-mod-notes" class="mhbo-portal-input" rows="2" placeholder="<?php esc_attr_e( 'Additional notes for the front desk...', 'modern-hotel-booking' ); ?>"></textarea>

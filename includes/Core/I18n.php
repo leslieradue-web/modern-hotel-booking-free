@@ -1215,6 +1215,9 @@ class I18n {
 			case 'deposit_paid':
 			case 'status_deposit_paid':
 				return self::get_label( 'label_deposit_paid' );
+			case 'partially_paid':
+			case 'partial':
+				return self::get_label( 'label_status_partially_paid' );
 			case 'completed':
 			case 'paid':
 				return self::get_label( 'status_completed' );
@@ -1268,6 +1271,9 @@ class I18n {
 			case 'deposit_paid':
 			case 'status_deposit_paid':
 				return self::get_label( 'label_deposit_paid' );
+			case 'partially_paid':
+			case 'partial':
+				return self::get_label( 'label_status_partially_paid' );
 			case 'overdue':
 				return self::get_label( 'status_overdue' );
 			case 'urgent_unpaid':

@@ -435,7 +435,7 @@ class HotelTime {
 				sprintf(
 					/* translators: %d: maximum stay nights */
 					__( 'Stays cannot exceed %d nights per reservation.', 'modern-hotel-booking' ),
-					$max_stays
+					absint( $max_stays )
 				),
 				array( 'status' => 400 )
 			);

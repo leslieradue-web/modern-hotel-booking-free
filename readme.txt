@@ -128,7 +128,7 @@ Every core feature needed to accept direct bookings and run your property is **1
 #### 3. 🔑 Passwordless Guest Self-Service Portal (`[mhbo_guest_portal]`)
 * **1-Click Magic Links & Verified Lookup** — Guests open their portal via an authenticated email link or by entering Booking ID and email.
 * **Itemized Billing Ledger** — USALI accounting breakdown showing nightly rates, taxes, payments received, and remaining balance due.
-* **Self-Service Cancellations & Changes** — Guests can cancel unpaid bookings instantly or submit modification requests for confirmed stays.
+* **Opt-In Self-Service Cancellations & Changes** — Disabled by default to protect your calendar; toggle on anytime for staff-approved requests or instant unpaid changes with cutoff rules.
 * **1-Tap Printable Travel Voucher** — Ink-friendly confirmation voucher with property address, directions, and check-in times.
 * **Digital Compendium** — Display Wi-Fi credentials, keybox codes, and house rules directly on the guest portal.
 
@@ -419,6 +419,3 @@ All booking and guest data is stored locally in your WordPress database. The plu
 
 = 3.0.4 =
 Major v3.0.4 release: ~98% smaller Guest CRM DataViews assets, modular PSR-4 refactor, USALI folio/analytics/AI pricing parity, per-booking variable tax locks, and least-privilege hospitality role boundaries.
-
-= 3.0.3 =
-GDPR self-hosted fonts, minified asset delivery, third-party jQuery compatibility, and security hardening release. Recommended for all users.

@@ -55,7 +55,6 @@ class Settings {
             'restNonce' => wp_create_nonce('wp_rest'),
             'nonces' => array(
                 
-                'clear_cache' => wp_create_nonce('mhbo_clear_cache_nonce_field'),
             ),
             'i18n' => array(
                 
@@ -88,7 +87,6 @@ class Settings {
         register_setting('mhbo_settings_group', 'mhbo_additional_notification_email', array('default' => '', 'sanitize_callback' => array($this, 'sanitize_additional_notification_emails')));
         register_setting('mhbo_settings_group', 'mhbo_modal_enabled', array('default' => 1, 'sanitize_callback' => 'absint'));
         
-        register_setting('mhbo_settings_group', 'mhbo_children_enabled', array('default' => 0, 'sanitize_callback' => 'absint'));
         // Global Stay Limits
         register_setting('mhbo_settings_group', 'mhbo_global_min_stay', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
         register_setting('mhbo_settings_group', 'mhbo_global_max_stay', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
@@ -96,6 +94,15 @@ class Settings {
 
         // Guest Portal & Digital Compendium
         register_setting('mhbo_settings_group', 'mhbo_guest_portal_page', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
+        register_setting('mhbo_settings_group', 'mhbo_portal_self_service_enabled', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
+        register_setting('mhbo_settings_group', 'mhbo_portal_modify_mode', array('type' => 'string', 'sanitize_callback' => array(\MHBO\Api\GuestPortalController::class, 'sanitize_policy_mode'), 'default' => 'request_only'));
+        register_setting('mhbo_settings_group', 'mhbo_portal_cancel_mode', array('type' => 'string', 'sanitize_callback' => array(\MHBO\Api\GuestPortalController::class, 'sanitize_policy_mode'), 'default' => 'request_only'));
+        register_setting('mhbo_settings_group', 'mhbo_cancellation_lead_hours', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 24));
+        register_setting('mhbo_settings_group', 'mhbo_portal_max_modifications', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 2));
+        register_setting('mhbo_settings_group', 'mhbo_cancellation_policy_enabled', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
+        register_setting('mhbo_settings_group', 'mhbo_cancellation_policy', array('type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => ''));
+        register_setting('mhbo_settings_group', 'mhbo_booking_terms_checkbox_enabled', array('type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0));
+        register_setting('mhbo_settings_group', 'mhbo_label_booking_terms_checkbox_text', array('type' => 'string', 'sanitize_callback' => 'wp_kses_post', 'default' => ''));
         
         register_setting('mhbo_settings_group', 'mhbo_hotel_wifi_ssid', array('type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => ''));
         register_setting('mhbo_settings_group', 'mhbo_hotel_wifi_password', array('type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => ''));
@@ -167,10 +174,6 @@ class Settings {
             'description' => __('Open the booking form in a slide-in drawer instead of navigating to a separate booking page.', 'modern-hotel-booking'),
         ));
         
-        add_settings_field('mhbo_children_enabled', I18n::get_label('settings_label_children'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
-            'label_for'   => 'mhbo_children_enabled',
-            'description' => I18n::get_label('settings_desc_children'),
-        ));
         add_settings_field('mhbo_global_min_stay', I18n::get_label('settings_label_global_min_stay'), array($this, 'render_global_stay_fields'), 'mhbo-settings', 'mhbo_general_section');
         
         add_settings_field('mhbo_guest_crm_enabled', __('Enable Guest CRM & Profiles', 'modern-hotel-booking'), array($this, 'render_checkbox_field'), 'mhbo-settings', 'mhbo_general_section', array(
@@ -712,7 +715,8 @@ return false;
         $active_tab   = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab navigation, no state change.
 
         // Restore PRG settings errors from redirect transient if available
-        $transient_errors = get_transient('settings_errors');
+        $transient_errors     = get_transient('settings_errors');
+        $has_transient_errors = is_array($transient_errors) && array() !== $transient_errors;
         if (is_array($transient_errors)) {
             delete_transient('settings_errors');
             foreach ($transient_errors as $err) {
@@ -727,9 +731,15 @@ return false;
             }
         }
 
-        // Targeted success notice for manual redirects (e.g. Business tab)
-        // Others (General, Performance, etc.) use settings_errors() via register_setting()
-        if (isset($_GET['settings-updated']) && sanitize_key(wp_unslash($_GET['settings-updated']))) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WP core redirect param, display-only.
+        // Targeted fallback notice only when no specific settings_errors() notice was registered/restored.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WP core redirect param, display-only.
+        $settings_updated = isset($_GET['settings-updated']) ? sanitize_key(wp_unslash($_GET['settings-updated'])) : '';
+        if (
+            '' !== $settings_updated
+            && ! $has_transient_errors
+            && array() === get_settings_errors('mhbo_settings')
+            && array() === get_settings_errors('mhbo_amenities')
+        ) {
             echo '<div class="updated notice is-dismissible"><p>' . esc_html(I18n::get_label('settings_msg_saved')) . '</p></div>';
         }
 
@@ -749,20 +759,29 @@ return false;
             ?>
             <?php settings_errors('mhbo_settings'); ?>
             <?php settings_errors('mhbo_amenities'); ?>
-            <h2 class="nav-tab-wrapper">
+            <nav class="nav-tab-wrapper mhbo-settings-tabs" aria-label="<?php esc_attr_e( 'Settings sections', 'modern-hotel-booking' ); ?>">
                 
                 <a href="?page=mhbo-settings&tab=general"
-                    class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_general'); ?></a>
+                    class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"<?php echo 'general' === $active_tab ? ' aria-current="page"' : ''; ?>><span class="dashicons dashicons-admin-settings" aria-hidden="true"></span><span><?php I18n::esc_html_e('tab_general'); ?></span></a>
                 <a href="?page=mhbo-settings&tab=emails"
-                    class="nav-tab <?php echo 'emails' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_emails'); ?></a>
+                    class="nav-tab <?php echo 'emails' === $active_tab ? 'nav-tab-active' : ''; ?>"<?php echo 'emails' === $active_tab ? ' aria-current="page"' : ''; ?>><span class="dashicons dashicons-email-alt" aria-hidden="true"></span><span><?php I18n::esc_html_e('tab_emails'); ?></span></a>
                 <a href="?page=mhbo-settings&tab=labels"
-                    class="nav-tab <?php echo 'labels' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_labels'); ?></a>
+                    class="nav-tab <?php echo 'labels' === $active_tab ? 'nav-tab-active' : ''; ?>"<?php echo 'labels' === $active_tab ? ' aria-current="page"' : ''; ?>><span class="dashicons dashicons-translation" aria-hidden="true"></span><span><?php I18n::esc_html_e('tab_labels'); ?></span></a>
                 <a href="?page=mhbo-settings&tab=amenities"
-                    class="nav-tab <?php echo 'amenities' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_amenities'); ?></a>
+                    class="nav-tab <?php echo 'amenities' === $active_tab ? 'nav-tab-active' : ''; ?>"<?php echo 'amenities' === $active_tab ? ' aria-current="page"' : ''; ?>><span class="dashicons dashicons-tag" aria-hidden="true"></span><span><?php I18n::esc_html_e('tab_amenities'); ?></span></a>
                 <a href="?page=mhbo-settings&tab=business"
-                    class="nav-tab <?php echo 'business' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php I18n::esc_html_e('tab_business'); ?></a>
+                    class="nav-tab <?php echo 'business' === $active_tab ? 'nav-tab-active' : ''; ?>"<?php echo 'business' === $active_tab ? ' aria-current="page"' : ''; ?>><span class="dashicons dashicons-building" aria-hidden="true"></span><span><?php I18n::esc_html_e('tab_business'); ?></span></a>
 
-</h2>
+</nav>
+
+            <?php
+
+if ( SettingsGeneralView::render_free_upsell_tab( $active_tab ) ) {
+                echo '</div>';
+                return;
+            }
+            
+            ?>
 
 <?php AdminUI::render_card_start('', 'settings-card'); ?>
                 <?php
@@ -774,6 +793,9 @@ return false;
                     'business',
                     'general',
                 );
+                if ( ! in_array($active_tab, $manual_tabs, true)) {
+                    $active_tab = 'general';
+                }
                 $action = in_array($active_tab, $manual_tabs, true) ? '' : 'options.php';
                 ?>
                 <form method="post" action="<?php echo esc_url($action); ?>">
@@ -798,36 +820,28 @@ return false;
 
 } elseif ('business' === $active_tab) {
                         \MHBO\Business\Info::render_settings_tab();
-                    } elseif ('webhooks' === $active_tab) {
-
-if ( class_exists( Upsell::class ) ) {
-                            Upsell::render_card(
-                                __( 'REST API & Webhooks', 'modern-hotel-booking' ),
-                                __( 'Outgoing webhooks and API automation require Modern Hotel Booking Pro.', 'modern-hotel-booking' )
-                            );
-                        }
 						
                     }
 
                     // Show save button — license tab uses its own dedicated action buttons
                     $show_save = true;
                     
-                    if ('webhooks' === $active_tab) {
-                        $show_save = false;
-                    }
-
-if ($show_save) {
+                    if ($show_save) {
                         echo '<input type="hidden" name="mhbo_save_tab" value="' . esc_attr($active_tab) . '">';
-                        submit_button();
+                        echo '<div class="mhbo-settings-submit-bar" data-tab="' . esc_attr($active_tab) . '">';
+                        echo '<span class="mhbo-dirty-indicator" id="mhbo-settings-dirty-indicator" aria-live="polite" hidden><span class="dashicons dashicons-warning" aria-hidden="true"></span> ' . esc_html__('You have unsaved changes', 'modern-hotel-booking') . '</span>';
+                        submit_button('', 'primary large', 'submit', false);
+                        echo '</div>';
                     }
 
-                    if ('general' === $active_tab) {
-                        self::render_shortcode_info();
-                        self::render_rooms_table();
-                    }
-
-?>
+                    ?>
                 </form>
+                <?php
+                if ('general' === $active_tab) {
+                    self::render_shortcode_info();
+                    self::render_rooms_table();
+                }
+                ?>
             <?php AdminUI::render_card_end(); ?>
         </div>
         <?php

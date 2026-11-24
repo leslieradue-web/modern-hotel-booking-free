@@ -94,7 +94,7 @@ register_rest_route(
 					'status'   => array(
 						'required'          => false,
 						'validate_callback' => function ( $value ) {
-							return '' === $value || in_array( $value, array( 'pending', 'confirmed', 'cancelled', 'completed', 'deposit_paid', 'refunded' ), true );
+							return '' === $value || in_array( $value, array( 'pending', 'confirmed', 'cancelled', 'completed', 'deposit_paid', 'partially_paid', 'refunded' ), true );
 						},
 						'sanitize_callback' => 'sanitize_key',
 					),
@@ -682,7 +682,7 @@ return implode( '_', $parts );
 		$version_hash = self::get_calendar_version_hash();
 		
 		$transient_key  = 'mhbo_cal_payload_' . $room_id . '_' . $year . '_' . $month . '_o' . $offset_days . '_l' . $days_limit . '_v' . md5( $version_hash );
-		$cached_payload = get_transient( $transient_key );
+		$cached_payload = Cache::is_enabled() ? get_transient( $transient_key ) : false;
 
 		if ( false !== $cached_payload ) {
 			$cached_response = rest_ensure_response( $cached_payload );
@@ -698,7 +698,7 @@ return implode( '_', $parts );
 			$response = rest_ensure_response( $data );
 			$response->header( 'X-MHBO-Calendar-Hash', md5( $version_hash ) );
 
-			if ( is_array( $data ) && array() !== $data ) {
+			if ( Cache::is_enabled() && is_array( $data ) && array() !== $data ) {
 				set_transient( $transient_key, $data, 12 * HOUR_IN_SECONDS );
 			}
 
@@ -717,8 +717,8 @@ $data = self::generate_calendar_payload( $room_id, $year, $month, $days_limit, $
 		// The JS reads this to detect whether preloaded DOM data is still valid.
 		$response->header( 'X-MHBO-Calendar-Hash', md5( $version_hash ) );
 		
-		// Save to transient for caching ONLY if payload is a non-empty array
-		if ( is_array( $data ) && array() !== $data ) {
+		// Save to transient for caching ONLY if caching is enabled and payload is a non-empty array
+		if ( Cache::is_enabled() && is_array( $data ) && array() !== $data ) {
 			set_transient( $transient_key, $data, 12 * HOUR_IN_SECONDS );
 		}
 		
@@ -905,7 +905,7 @@ $data = self::generate_calendar_payload( $room_id, $year, $month, $days_limit, $
 			$period = new \DatePeriod( $ext_start, new \DateInterval( 'P1D' ), $ext_end );
 			foreach ( $period as $dt ) {
 				$date_str     = $dt->format( 'Y-m-d' );
-				$next_day_str = ( clone $dt )->modify( '+1 day' )->format( 'Y-m-d' );
+				$next_day_str = \DateTimeImmutable::createFromInterface( $dt )->modify( '+1 day' )->format( 'Y-m-d' );
 				$price_money  = Pricing::calculate_daily_price_money( $room_id, $date_str );
 				$price        = (float) $price_money->toDecimal();
 
@@ -1961,6 +1961,9 @@ return $response;
 			if ( is_string( $param_key ) && str_starts_with( $param_key, '_' ) ) {
 				unset( $params[ $param_key ] );
 			}
+		}
+		if ( isset( $params['page_url'] ) ) {
+			$params['page_url'] = \MHBO\Core\BookingProcessor::sanitize_same_origin_url( (string) $params['page_url'] );
 		}
 		$params['source']      = 'public';
 		$params['bypass_past'] = false;

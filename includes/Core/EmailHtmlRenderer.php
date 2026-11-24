@@ -197,46 +197,77 @@ class EmailHtmlRenderer {
 		$html .= '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-top: 8px;">';
 		$html .= '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
 
-		$amts             = Pricing::get_booking_payment_amounts( $booking );
-		$payment_type     = (string) ( $booking->payment_type ?? 'full' );
-		$deposit_received = $amts['deposit_received'];
-		$paid             = $amts['received'];
-		$remaining        = $amts['remaining'];
-		$total            = $amts['total'];
+		$amts                     = Pricing::get_booking_payment_amounts( $booking );
+		$payment_type             = (string) ( $booking->payment_type ?? 'full' );
+		$deposit_received         = $amts['deposit_received'];
+		$paid                     = $amts['received'];
+		$remaining                = $amts['remaining'];
+		$total                    = $amts['total'];
+		$is_cancelled_or_refunded = in_array( (string) ( $booking->status ?? '' ), array( 'cancelled', 'refunded' ), true );
+		$is_arrival_method        = in_array( (string) ( $booking->payment_method ?? '' ), array( 'arrival', 'onsite' ), true );
+		$status_label             = esc_html( rtrim( I18n::get_label( 'label_payment_status' ), ':' ) );
 
-		if ( 'deposit' === $payment_type || $amts['deposit']->isPositive() ) {
+		if ( $is_cancelled_or_refunded ) {
+			$zero_money = Money::fromCents( 0, $total->getCurrency() );
+			if ( 'refunded' === (string) ( $booking->status ?? '' ) || 'refunded' === (string) ( $booking->payment_status ?? '' ) ) {
+				$closed_status_text = __( 'Refunded', 'modern-hotel-booking' );
+				$closed_color       = '#6b21a8';
+			} elseif ( $paid->isPositive() ) {
+				$closed_status_text = __( 'Cancelled (Payment on File)', 'modern-hotel-booking' );
+				$closed_color       = '#d97706';
+			} else {
+				$closed_status_text = __( 'Cancelled — No Balance Due', 'modern-hotel-booking' );
+				$closed_color       = '#475569';
+			}
+			$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: ' . $closed_color . '; font-weight: 700;">' . esc_html( $closed_status_text ) . '</td></tr>';
+			if ( $paid->isPositive() ) {
+				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_paid' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; font-weight: 700;">' . I18n::format_currency( $paid ) . '</td></tr>';
+			}
+			$html .= '<tr style="border-top: 1px dashed #e2e8f0;"><td style="padding: 6px 0 2px 0; color: #0f172a; font-weight: 600;">' . esc_html( rtrim( I18n::get_label( 'label_amt_out' ), ':' ) ) . ':</td><td style="padding: 6px 0 2px 0; text-align: right; color: #475569; font-weight: 700; font-size: 14px;">' . I18n::format_currency( $zero_money ) . '</td></tr>';
+		} elseif ( $amts['is_paid'] ) {
+			if ( ! empty( $folio['is_overpaid'] ) ) {
+				$zero_money = Money::fromCents( 0, $total->getCurrency() );
+				$html      .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #0369a1; font-weight: 700;">' . esc_html__( 'Overpaid / Credit Balance', 'modern-hotel-booking' ) . '</td></tr>';
+				$html      .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_paid' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . I18n::format_currency( $paid ) . '</td></tr>';
+				$html      .= '<tr><td style="padding: 3px 0; color: #0369a1; font-weight: 600;">' . esc_html__( 'Credit Balance / Overpayment', 'modern-hotel-booking' ) . ':</td><td style="padding: 3px 0; text-align: right; color: #0369a1; font-weight: 700;">−' . esc_html( (string) ( $folio['credit_balance_formatted'] ?? '' ) ) . '</td></tr>';
+				$html      .= '<tr style="border-top: 1px dashed #e2e8f0;"><td style="padding: 6px 0 2px 0; color: #0f172a; font-weight: 600;">' . esc_html( rtrim( I18n::get_label( 'label_amt_out' ), ':' ) ) . ':</td><td style="padding: 6px 0 2px 0; text-align: right; color: #166534; font-weight: 700; font-size: 14px;">' . I18n::format_currency( $zero_money ) . '</td></tr>';
+			} else {
+				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . esc_html( I18n::get_label( 'label_paid' ) ) . '</td></tr>';
+				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_paid' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; font-weight: 700;">' . I18n::format_currency( $paid->isPositive() ? $paid : $total ) . '</td></tr>';
+				$html .= '<tr style="border-top: 1px dashed #e2e8f0;"><td colspan="2" style="padding: 6px 0 2px 0; text-align: center; color: #166534; font-weight: 700;">' . esc_html( I18n::get_label( 'label_email_paid_full' ) ) . '</td></tr>';
+			}
+		} elseif ( 'deposit' === $payment_type || $amts['deposit']->isPositive() ) {
 			if ( $deposit_received ) {
 				$deposit_label = esc_html( rtrim( I18n::get_label( 'label_email_deposit_paid' ), ':' ) );
+				$rem_label     = esc_html( rtrim( I18n::get_label( 'label_email_remaining_balance' ), ':' ) );
+				$html         .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . esc_html( I18n::get_label( 'label_deposit_paid' ) ) . '</td></tr>';
 				$html         .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $deposit_label . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . I18n::format_currency( $paid ) . '</td></tr>';
-
-				if ( ! $remaining->isZero() ) {
-					$rem_label = esc_html( rtrim( I18n::get_label( 'label_email_remaining_balance' ), ':' ) );
-					$html     .= '<tr style="border-top: 1px dashed #e2e8f0;"><td style="padding: 6px 0 2px 0; color: #0f172a; font-weight: 600;">' . $rem_label . ':</td><td style="padding: 6px 0 2px 0; text-align: right; color: #f97316; font-weight: 700; font-size: 14px;">' . I18n::format_currency( $remaining ) . '</td></tr>';
-					$html     .= '<tr><td colspan="2" style="padding: 2px 0 0 0; font-size: 11px; color: #64748b;">' . esc_html( I18n::get_label( 'label_email_due_at_checkin' ) ) . '</td></tr>';
-				} else {
-					$html .= '<tr style="border-top: 1px dashed #e2e8f0;"><td colspan="2" style="padding: 6px 0; text-align: center; color: #166534; font-weight: 700;">' . esc_html( I18n::get_label( 'label_email_paid_full' ) ) . '</td></tr>';
-				}
+				$html         .= '<tr style="border-top: 1px dashed #e2e8f0;"><td style="padding: 6px 0 2px 0; color: #0f172a; font-weight: 600;">' . $rem_label . ':</td><td style="padding: 6px 0 2px 0; text-align: right; color: #f97316; font-weight: 700; font-size: 14px;">' . I18n::format_currency( $remaining ) . '</td></tr>';
+				$html         .= '<tr><td colspan="2" style="padding: 2px 0 0 0; font-size: 11px; color: #64748b;">' . esc_html( I18n::get_label( 'label_email_due_at_checkin' ) ) . '</td></tr>';
 			} else {
-				$status_label = esc_html( rtrim( I18n::get_label( 'label_payment_status' ), ':' ) );
-				$method_label = ( 'arrival' === ( $booking->payment_method ?? '' ) ) ? esc_html( I18n::get_label( 'label_pay_arrival' ) ) : esc_html( I18n::translate_status( 'pending' ) );
-				$html        .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #d97706; font-weight: 700;">' . $method_label . '</td></tr>';
+				if ( $paid->isPositive() ) {
+					$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #0369a1; font-weight: 700;">' . esc_html( I18n::get_label( 'label_status_partially_paid' ) ) . '</td></tr>';
+					$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_paid' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . I18n::format_currency( $paid ) . '</td></tr>';
+				} else {
+					$method_label = $is_arrival_method ? esc_html( I18n::get_label( 'label_pay_arrival' ) ) : esc_html( I18n::translate_status( 'pending' ) );
+					$html        .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #d97706; font-weight: 700;">' . $method_label . '</td></tr>';
+				}
 				if ( $amts['deposit']->isPositive() ) {
 					$deposit_label = esc_html( rtrim( I18n::get_label( 'label_email_deposit_required' ), ':' ) );
 					$html         .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $deposit_label . ':</td><td style="padding: 3px 0; text-align: right; color: #f97316; font-weight: 700;">' . I18n::format_currency( $amts['deposit'] ) . '</td></tr>';
 				}
-				$due_label = ( 'arrival' === ( $booking->payment_method ?? '' ) ) ? esc_html( rtrim( I18n::get_label( 'label_amount_due' ), ':' ) ) : esc_html( rtrim( I18n::get_label( 'label_amt_out' ), ':' ) );
+				$due_label = $is_arrival_method ? esc_html( rtrim( I18n::get_label( 'label_amount_due' ), ':' ) ) : esc_html( rtrim( I18n::get_label( 'label_amt_out' ), ':' ) );
 				$html     .= '<tr style="border-top: 1px dashed #e2e8f0;"><td style="padding: 6px 0 2px 0; color: #0f172a; font-weight: 600;">' . $due_label . ':</td><td style="padding: 6px 0 2px 0; text-align: right; color: #d97706; font-weight: 700; font-size: 14px;">' . I18n::format_currency( $remaining ) . '</td></tr>';
 			}
+		} elseif ( $paid->isPositive() ) {
+			$rem_label = esc_html( rtrim( I18n::get_label( 'label_email_remaining_balance' ), ':' ) );
+			$html     .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #0369a1; font-weight: 700;">' . esc_html( I18n::get_label( 'label_status_partially_paid' ) ) . '</td></tr>';
+			$html     .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_paid' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . I18n::format_currency( $paid ) . '</td></tr>';
+			$html     .= '<tr style="border-top: 1px dashed #e2e8f0;"><td style="padding: 6px 0 2px 0; color: #0f172a; font-weight: 600;">' . $rem_label . ':</td><td style="padding: 6px 0 2px 0; text-align: right; color: #f97316; font-weight: 700; font-size: 14px;">' . I18n::format_currency( $remaining ) . '</td></tr>';
 		} else {
-			$is_paid_full = $amts['is_paid'];
-			$status_label = esc_html( rtrim( I18n::get_label( 'label_payment_status' ), ':' ) );
-			if ( $is_paid_full ) {
-				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #16a34a; font-weight: 700;">' . esc_html( I18n::get_label( 'label_paid' ) ) . '</td></tr>';
-				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_paid' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; font-weight: 700;">' . I18n::format_currency( $paid->isPositive() ? $paid : $total ) . '</td></tr>';
-			} else {
-				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #d97706; font-weight: 700;">' . esc_html( I18n::get_label( 'label_pay_arrival' ) ) . '</td></tr>';
-				$html .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_due' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; font-weight: 700; color: #d97706;">' . I18n::format_currency( $total ) . '</td></tr>';
-			}
+			$unpaid_label = $is_arrival_method ? esc_html( I18n::get_label( 'label_pay_arrival' ) ) : esc_html( I18n::translate_status( 'pending' ) );
+			$html        .= '<tr><td style="padding: 3px 0; color: #64748b;">' . $status_label . ':</td><td style="padding: 3px 0; text-align: right; color: #d97706; font-weight: 700;">' . $unpaid_label . '</td></tr>';
+			$html        .= '<tr><td style="padding: 3px 0; color: #64748b;">' . esc_html( rtrim( I18n::get_label( 'label_amount_due' ), ':' ) ) . ':</td><td style="padding: 3px 0; text-align: right; font-weight: 700; color: #d97706;">' . I18n::format_currency( $remaining ) . '</td></tr>';
 		}
 
 		$html .= '</table></div>';
@@ -366,7 +397,6 @@ $in_ts   = strtotime( (string) ( $booking->check_in ?? '' ) );
 		}
 
 		$total        = I18n::format_currency( Money::fromDecimal( (string) ( $booking->total_price ?? 0 ) ) );
-		$paid         = I18n::format_currency( Money::fromDecimal( (string) ( $booking->payment_amount ?? 0 ) ) );
 		$status_label = I18n::translate_status( (string) ( $booking->status ?? 'pending' ) );
 
 		$adults = (int) ( $booking->guests ?? 1 );
@@ -396,8 +426,11 @@ $title_text = ( 'pending' === ( $booking->status ?? '' ) )
 				$lines[] = "\u{23F3} *Balance After Deposit:* " . I18n::format_currency( $after_dep_wa );
 			}
 		}
-		if ( (float) ( $booking->payment_amount ?? 0 ) > 0 ) {
-			$lines[] = "\u{1F4B3} *Amount Paid:* " . $paid;
+		if ( $wa_amts['received']->isPositive() ) {
+			$lines[] = "\u{1F4B3} *Amount Paid:* " . I18n::format_currency( $wa_amts['received'] );
+			if ( $wa_amts['remaining']->isPositive() ) {
+				$lines[] = "\u{23F3} *Remaining Balance:* " . I18n::format_currency( $wa_amts['remaining'] );
+			}
 		}
 
 $wa_pro_special_req = BookingProcessor::extract_guest_special_requests( $booking );

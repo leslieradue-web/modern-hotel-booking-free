@@ -169,7 +169,7 @@ AdminUI::render_header(
 
 			<?php settings_errors( 'mhbo_settings' ); ?>
 
-			<div class="mhbo-settings-card-container" style="max-width: 1200px;">
+			<div class="mhbo-settings-card-container">
 
 				<!-- Card 1: Add Dynamic Pricing Rule -->
 				<div class="mhbo-settings-section-card">
@@ -300,7 +300,7 @@ AdminUI::render_header(
 												$is_expired  = $rule->end_date < $rule_today;
 												$is_upcoming = $rule->start_date > $rule_today;
 												?>
-												<tr style="<?php echo $is_expired ? 'opacity: 0.65;' : ''; ?>">
+												<tr<?php echo $is_expired ? ' class="mhbo-row-expired"' : ''; ?>>
 													<td class="mhbo-col-pricing-name" data-colname="<?php echo esc_attr( I18n::get_label( 'pricing_rule_name' ) ); ?>" style="font-weight: 600; color: #0f172a;">
 														<?php echo esc_html( (string) I18n::decode( $rule->name ) ); ?>
 														<?php if ( $is_expired ) : ?>

@@ -481,7 +481,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 			</div>
 
 			<!-- Subtab Navigation Bar -->
-			<div class="mhbo-subtabs-nav" style="display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+			<nav class="mhbo-subtabs-nav" aria-label="<?php esc_attr_e( 'Business Info Sections', 'modern-hotel-booking' ); ?>">
 				<?php
 				foreach ( $tabs as $slug => $tab_info ) :
                     // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reading page slug for tab URL only, not processing form data.
@@ -496,13 +496,12 @@ update_option( self::OPT_COMPANY, $clean_data );
 					$is_active    = ( $slug === $active_subtab );
 					?>
 					<a href="<?php echo esc_url( $tab_url ); ?>"
-						class="mhbo-subtab-btn <?php echo esc_attr( $is_active ? 'active' : '' ); ?>"
-						style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; text-decoration: none; transition: all 0.15s ease; <?php echo $is_active ? 'background: #2563eb; color: #ffffff; box-shadow: 0 2px 4px rgba(37,99,235,0.2);' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
-						<span class="dashicons dashicons-<?php echo esc_attr( $tab_info['icon'] ); ?>" style="font-size: 17px; width: 17px; height: 17px; margin-top: 1px;"></span>
+						class="mhbo-subtab-btn <?php echo esc_attr( $is_active ? 'active' : '' ); ?>"<?php echo $is_active ? ' aria-current="page"' : ''; ?>>
+						<span class="dashicons dashicons-<?php echo esc_attr( $tab_info['icon'] ); ?>" aria-hidden="true"></span>
 						<span><?php echo esc_html( $tab_info['label'] ); ?></span>
 					</a>
 				<?php endforeach; ?>
-			</div>
+			</nav>
 
 			<div class="mhbo-tab-content">
 				<input type="hidden" name="mhbo_business_subtab" value="<?php echo esc_attr( (string) $active_subtab ); ?>">
@@ -863,7 +862,7 @@ update_option( self::OPT_COMPANY, $clean_data );
 					</div>
 
 					<div class="mhbo-form-group mhbo-span-full">
-						<label class="mhbo-form-label"><?php echo esc_html( I18n::get_label( 'business_label_rev_qr' ) ); ?></label>
+						<span class="mhbo-form-label" id="mhbo-qr-code-label"><?php echo esc_html( I18n::get_label( 'business_label_rev_qr' ) ); ?></span>
 						<?php $this->render_media_field( 'mhbo_qr_code', (int) $data['qr_code_id'], (string) $data['qr_code_url'], I18n::get_label( 'business_label_rev_select_qr' ) ); ?>
 					</div>
 
@@ -1053,7 +1052,7 @@ $shortcodes = array(
 						<?php endif; ?>
 					</div>
 					<div style="flex: 1; min-width: 200px; max-width: 320px;">
-						<input type="text" id="mhbo-shortcode-search" placeholder="<?php esc_attr_e( 'Search shortcodes or attributes...', 'modern-hotel-booking' ); ?>"
+						<input type="text" id="mhbo-shortcode-search" aria-label="<?php esc_attr_e( 'Search shortcodes or attributes', 'modern-hotel-booking' ); ?>" placeholder="<?php esc_attr_e( 'Search shortcodes or attributes...', 'modern-hotel-booking' ); ?>"
 							oninput="mhboSearchShortcodes(this.value)"
 							style="width: 100%; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff;" />
 					</div>
@@ -1066,10 +1065,7 @@ $shortcodes = array(
 								<?php
 								$tier_slug = ( 'all' === $sc['tier'] ) ? 'all-tier' : $sc['tier'];
 								?>
-								<div class="mhbo-shortcode-row" data-tier="<?php echo esc_attr( $tier_slug ); ?>" data-search="<?php echo esc_attr( strtolower( $sc['tag'] . ' ' . $sc['alias'] . ' ' . $sc['desc'] . ' ' . $sc['attrs'] . ' ' . $sc['category'] ) ); ?>"
-									style="display: flex; align-items: flex-start; justify-content: space-between; padding: 16px 18px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; flex-wrap: wrap; gap: 14px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);"
-									onmouseover="this.style.borderColor='#93c5fd'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)';"
-									onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.03)';">
+								<div class="mhbo-shortcode-row" data-tier="<?php echo esc_attr( $tier_slug ); ?>" data-search="<?php echo esc_attr( strtolower( $sc['tag'] . ' ' . $sc['alias'] . ' ' . $sc['desc'] . ' ' . $sc['attrs'] . ' ' . $sc['category'] ) ); ?>">
 									
 									<div style="display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 300px;">
 										<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -1080,7 +1076,7 @@ $shortcodes = array(
 											</code>
 											
 											<?php if ( ! empty( $sc['alias'] ) ) : ?>
-												<span style="font-size: 12px; color: #94a3b8; font-weight: 500;"><?php esc_html_e( 'or', 'modern-hotel-booking' ); ?></span>
+												<span style="font-size: 12px; color: #64748b; font-weight: 500;"><?php esc_html_e( 'or', 'modern-hotel-booking' ); ?></span>
 												<code onclick="mhboCopyShortcode(this)"
 													title="<?php esc_attr_e( 'Click to copy shortcode', 'modern-hotel-booking' ); ?>"
 													style="font-size: 12px; font-weight: 600; color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s ease;">

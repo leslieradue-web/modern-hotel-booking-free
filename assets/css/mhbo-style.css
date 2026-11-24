@@ -1246,49 +1246,120 @@ textarea.mhbo-admin-notes-textarea {
     line-height: 1.6;
 }
 
-/* GDPR Consent (Pro) */
-.mhbo-gdpr-consent {
-    margin-top: 25px !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: flex-start !important;
-    gap: 10px 15px !important;
-    transition: background-color 0.2s ease, border-color 0.2s ease, padding 0.2s ease;
+/* Booking Terms & GDPR Consent Panel */
+.mhbo-consent-item {
+    width: 100%;
+    margin-top: 20px !important;
+    margin-bottom: 0 !important;
+    padding: 14px 16px;
+    background: var(--mhbo-surface-subtle, #f8fafc);
+    border: 1px solid var(--mhbo-border, #e2e8f0);
+    border-radius: 10px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.mhbo-gdpr-consent input[type="checkbox"] {
-    width: 22px !important;
-    height: 22px !important;
-    margin-top: 4px !important;
+.mhbo-terms-consent:has(+ .mhbo-gdpr-consent) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.mhbo-terms-consent + .mhbo-gdpr-consent {
+    margin-top: -1px !important;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.mhbo-consent-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px 14px;
+}
+
+.mhbo-consent-item input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    margin-top: 3px !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
+    accent-color: var(--mhbo-primary);
 }
 
-.mhbo-gdpr-consent label {
-    flex: 1 1 calc(100% - 40px) !important;
+.mhbo-consent-item label {
+    flex: 1 1 calc(100% - 36px) !important;
     min-width: 0 !important;
-    font-size: 1rem !important;
-    line-height: 1.6 !important;
-    color: #4a5568 !important;
+    margin-bottom: 0 !important;
+    font-size: 0.96rem !important;
+    line-height: 1.55 !important;
+    color: var(--mhbo-text, #334155) !important;
     font-weight: 500 !important;
     cursor: pointer !important;
 }
 
-.mhbo-gdpr-consent label a {
+.mhbo-consent-item label a {
     color: var(--mhbo-primary) !important;
     font-weight: 700 !important;
     text-decoration: underline !important;
 }
 
-.mhbo-gdpr-consent.mhbo-gdpr-error {
-    padding: 12px 16px !important;
-    background: #fef2f2 !important;
-    border: 1.5px solid #ef4444 !important;
-    border-radius: 10px !important;
+.mhbo-terms-policy-preview {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--mhbo-card-bg, #ffffff);
+    border: 1px solid var(--mhbo-border, #e2e8f0);
+    border-left: 3px solid var(--mhbo-primary);
+    border-radius: 6px;
 }
 
-.mhbo-gdpr-consent.mhbo-gdpr-error label {
+.mhbo-terms-policy-preview-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mhbo-text, #1e293b);
+    margin-bottom: 4px;
+}
+
+.mhbo-terms-policy-preview-body {
+    max-height: 110px;
+    overflow-y: auto;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--mhbo-text-light, #475569);
+}
+
+.mhbo-consent-item.mhbo-gdpr-error,
+.mhbo-consent-item.mhbo-terms-error {
+    position: relative;
+    z-index: 1;
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+}
+
+.mhbo-consent-item.mhbo-gdpr-error label,
+.mhbo-consent-item.mhbo-terms-error label {
     color: #991b1b !important;
+}
+
+.mhbo-theme-dark .mhbo-consent-item {
+    background: rgba(15, 23, 42, 0.55);
+    border-color: var(--mhbo-border);
+}
+
+.mhbo-theme-dark .mhbo-terms-policy-preview {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: var(--mhbo-border);
+}
+
+.mhbo-theme-dark .mhbo-consent-item.mhbo-gdpr-error,
+.mhbo-theme-dark .mhbo-consent-item.mhbo-terms-error {
+    background: rgba(127, 29, 29, 0.3) !important;
+    border-color: #f87171 !important;
+}
+
+.mhbo-theme-dark .mhbo-consent-item.mhbo-gdpr-error label,
+.mhbo-theme-dark .mhbo-consent-item.mhbo-terms-error label {
+    color: #fecaca !important;
 }
 
 .mhbo-form-group .mhbo-input-error,
@@ -1308,10 +1379,9 @@ textarea.mhbo-admin-notes-textarea {
     line-height: 1.4;
 }
 
-.mhbo-gdpr-consent .mhbo-field-error-msg {
-    flex-basis: 100%;
-    margin-top: 2px;
-    margin-left: 37px;
+.mhbo-consent-item .mhbo-field-error-msg {
+    margin-top: 8px;
+    padding-left: 34px;
 }
 
 /* Child Ages Layout */

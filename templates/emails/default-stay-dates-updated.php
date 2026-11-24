@@ -44,8 +44,8 @@ $mhbo_guests_details_row = '<tr><td style="color: #64748b">Guests:</td><td style
             <p>Your reservation dates at <strong>{company_name}</strong> have been successfully updated!</p>
             
             <div style="background-color: #ecfdf5;border-left: 4px solid #10b981;padding: 16px;margin: 25px 0;border-radius: 4px">
-                <strong style="color: #065f46;font-size: 15px;">Stay Dates Updated Successfully</strong><br>
-                <span style="font-size: 14px;color: #047857;">Your new stay dates are confirmed. Please review your updated itinerary and schedule below.</span>
+                <strong style="color: #065f46;font-size: 15px;">{stay_update_headline}</strong><br>
+                <span style="font-size: 14px;color: #047857;">{stay_update_notice}</span>
             </div>
 
             <h3 style="color: #0077b6;border-bottom: 2px solid #f0f4f8;padding-bottom: 10px;margin-bottom: 20px;font-size: 18px">Updated Stay Details:</h3>
@@ -65,6 +65,8 @@ $mhbo_guests_details_row = '<tr><td style="color: #64748b">Guests:</td><td style
             </table>
 
             {reservation_breakdown}
+
+            {balance_pay_button}
 
             {portal_card}
 

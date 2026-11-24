@@ -49,7 +49,7 @@ class Pricing {
 	public static function get_room_pricing_data( int $room_id ): ?\stdClass {
 		$version   = Cache::get_prices_version();
 		$cache_key = 'mhbo_room_policy_' . $room_id . '_' . $version;
-		$cached    = wp_cache_get( $cache_key, 'mhbo' );
+		$cached    = Cache::is_enabled() ? wp_cache_get( $cache_key, 'mhbo' ) : false;
 
 		if ( false !== $cached ) {
 			return ( $cached instanceof \stdClass ) ? $cached : null;
@@ -67,7 +67,7 @@ class Pricing {
 			)
 		);
 
-		if ( $row ) {
+		if ( $row && Cache::is_enabled() ) {
 			wp_cache_set( $cache_key, $row, 'mhbo', 86400 );
 		}
 
@@ -192,9 +192,17 @@ class Pricing {
 	}
 
 	/**
+	 * Reset per-request static caches (called on mhbo_cache_flushed and Pricing::clear_cache).
+	 */
+	public static function reset_runtime_cache(): void {
+		self::$payment_amounts_cache = array();
+	}
+
+	/**
 	 * Clear pricing cache.
 	 */
 	public static function clear_cache(): void {
+		self::reset_runtime_cache();
 		Cache::bump( Cache::TABLE_PRICING_RULES );
 	}
 
@@ -288,7 +296,7 @@ class Pricing {
 	 */
 	public static function prime_room_cache( array $room_ids ): void {
 		global $wpdb;
-		if ( array() === $room_ids ) {
+		if ( array() === $room_ids || ! Cache::is_enabled() ) {
 			return;
 		}
 
@@ -891,21 +899,24 @@ return true;
 			}
 		}
 
-		// Detect whether this booking involves a partial deposit
+		// Detect whether this booking involves deposit terms vs a generic partial payment.
+		$has_deposit_terms  = $deposit->isPositive() || 'deposit' === $payment_type || $ledger_has_deposit;
 		$is_deposit_booking = ( $deposit->isPositive() && $deposit->lessThan( $total ) )
 			|| ( 'deposit' === $payment_type && $deposit->lessThan( $total ) )
-			|| ( (bool) ( $booking->deposit_received ?? false ) && $payment->lessThan( $total ) );
+			|| ( $ledger_has_deposit && $ledger_total->lessThan( $total ) );
 
-		// Detect if deposit was truly received with an audit trace
+		// Detect if deposit was truly received with an audit trace (only when deposit terms apply).
 		$deposit_received = false;
-		if ( $has_ledger_entries ) {
-			$deposit_received = $ledger_has_deposit || ( $is_deposit_booking && $ledger_total->greaterThanOrEqual( $deposit ) );
-		} elseif ( $payment->isPositive() && ( $payment->greaterThanOrEqual( $deposit ) || 'deposit_paid' === $payment_status ) ) {
-			$deposit_received = true;
-		} elseif ( (bool) ( $booking->deposit_received ?? false ) ) {
-			$deposit_received = true;
-		} elseif ( ! empty( $booking->payment_transaction_id ) && in_array( $payment_status, array( 'completed', 'deposit_paid' ), true ) ) {
-			$deposit_received = true;
+		if ( $has_deposit_terms ) {
+			if ( $has_ledger_entries ) {
+				$deposit_received = $ledger_has_deposit || ( $is_deposit_booking && $ledger_total->greaterThanOrEqual( $deposit ) );
+			} elseif ( $payment->isPositive() && ( $payment->greaterThanOrEqual( $deposit ) || 'deposit_paid' === $payment_status ) ) {
+				$deposit_received = true;
+			} elseif ( (bool) ( $booking->deposit_received ?? false ) ) {
+				$deposit_received = true;
+			} elseif ( ! empty( $booking->payment_transaction_id ) && in_array( $payment_status, array( 'completed', 'deposit_paid' ), true ) ) {
+				$deposit_received = true;
+			}
 		}
 
 		// Determine received amount according to USALI Folio Truth (Law 59)
@@ -1000,8 +1011,10 @@ return true;
 			$effective_payment_status = 'urgent_unpaid';
 		} elseif ( $is_overdue ) {
 			$effective_payment_status = 'overdue';
-		} elseif ( $deposit_received ) {
+		} elseif ( $deposit_received && $has_deposit_terms ) {
 			$effective_payment_status = 'deposit_paid';
+		} elseif ( $received->isPositive() ) {
+			$effective_payment_status = 'partially_paid';
 		} else {
 			$effective_payment_status = 'pending';
 		}
@@ -1459,7 +1472,8 @@ return true;
 		$ledger[]  = $new_entry;
 
 		// Recompute net payment amount from ledger (deducting refunds)
-		$total_paid_m = Money::fromCents( 0, $currency );
+		$total_paid_m       = Money::fromCents( 0, $currency );
+		$ledger_has_deposit = false;
 		foreach ( $ledger as $entry ) {
 			$e_amt  = Money::fromDecimal( (string) ( $entry['amount'] ?? 0 ), $currency );
 			$e_type = strtolower( (string) ( $entry['type'] ?? '' ) );
@@ -1467,6 +1481,9 @@ return true;
 				$total_paid_m = $total_paid_m->subtract( $e_amt->abs() );
 			} else {
 				$total_paid_m = $total_paid_m->add( $e_amt );
+			}
+			if ( in_array( $e_type, array( 'deposit', 'initial_deposit' ), true ) ) {
+				$ledger_has_deposit = true;
 			}
 		}
 		if ( $total_paid_m->isNegative() ) {
@@ -1488,14 +1505,16 @@ return true;
 			$existing_txns[] = $txn_id;
 		}
 
+		$is_deposit_ctx = ( 'deposit' === $sanitized_type )
+			|| ( 'deposit' === (string) ( $booking->payment_type ?? '' ) )
+			|| Money::fromDecimal( (string) ( $booking->deposit_amount ?? '0' ), $currency )->isPositive()
+			|| $ledger_has_deposit;
+
 		$calc_status = $is_full
 			? 'completed'
-			: ( 'deposit' === $sanitized_type
-				? 'deposit_paid'
-				: ( $total_paid_m->isPositive()
-					? 'deposit_paid'
-					: ( $is_refund ? 'refunded' : 'pending' )
-				)
+			: ( $total_paid_m->isPositive()
+				? ( $is_deposit_ctx ? 'deposit_paid' : 'partially_paid' )
+				: ( $is_refund ? 'refunded' : 'pending' )
 			);
 
 		$old_status    = (string) ( $booking->status ?? '' );
@@ -1507,7 +1526,7 @@ return true;
 			'balance_status'          => $is_full ? 'collected' : 'pending',
 			'payment_status'          => $calc_status,
 			'payment_received'        => $is_full ? 1 : 0,
-			'deposit_received'        => ( ! $is_full && ( 'deposit' === $sanitized_type || ! empty( $booking->deposit_received ) || $total_paid_m->isPositive() ) ) ? 1 : 0,
+			'deposit_received'        => ( ! $is_full && $is_deposit_ctx && $total_paid_m->isPositive() ) ? 1 : 0,
 			'payment_transaction_id'  => implode( ', ', $existing_txns ),
 			'payment_date'            => empty( $booking->payment_date ) ? HotelTime::now_mysql() : $booking->payment_date,
 		);
@@ -1812,7 +1831,7 @@ return true;
 		}
 
 		if ( $children_count > 0 ) {
-			/* translators: %s: Comma-separated list of child ages */
+			/* translators: %s: comma-separated list of child ages */
 			$ages_str = ! empty( $children_ages ) ? sprintf( __( 'Ages: %s', 'modern-hotel-booking' ), implode( ', ', $children_ages ) ) : '';
 			$ch_calc  = class_exists( Tax::class ) ? Tax::calculate_tax_money( $children_total_m, $acc_rate, $tax_mode ) : array( 'net' => $children_total_m, 'tax' => Money::fromCents( 0, $currency ), 'gross' => $children_total_m );
 
@@ -2941,7 +2960,39 @@ $fn_tax_input = array(
 			}
 		}
 
-$recalc = self::calculate_booking_money( $room_id, $check_in, $check_out, max( 1, $adults ), $calc_extras, max( 0, $children ), $child_ages, null, null, $allow_calendar_override );
+// Preserve booking-time tax mode & rates when stored on the reservation (Law 77).
+		$recalc_tax_mode  = null;
+		$recalc_tax_rates = null;
+		$tb_recalc_dec    = ! empty( $booking->tax_breakdown )
+			? ( is_string( $booking->tax_breakdown ) ? json_decode( $booking->tax_breakdown, true ) : (array) $booking->tax_breakdown )
+			: array();
+		$saved_recalc_tm  = sanitize_key( (string) ( $booking->tax_mode ?? ( is_array( $tb_recalc_dec ) ? ( $tb_recalc_dec['mode'] ?? '' ) : '' ) ) );
+		if ( '' !== $saved_recalc_tm ) {
+			$recalc_tax_mode = class_exists( Tax::class ) ? Tax::normalize_mode( $saved_recalc_tm ) : $saved_recalc_tm;
+			if ( ( class_exists( Tax::class ) ? Tax::MODE_DISABLED : 'disabled' ) === $recalc_tax_mode ) {
+				$recalc_tax_rates = array(
+					'accommodation' => 0.0,
+					'extras'        => 0.0,
+				);
+			} else {
+				$preserved_recalc_rates = array();
+				if ( isset( $booking->tax_rate_accommodation ) && '' !== (string) $booking->tax_rate_accommodation ) {
+					$preserved_recalc_rates['accommodation'] = floatval( $booking->tax_rate_accommodation );
+				} elseif ( is_array( $tb_recalc_dec ) && isset( $tb_recalc_dec['rates']['accommodation'] ) ) {
+					$preserved_recalc_rates['accommodation'] = floatval( $tb_recalc_dec['rates']['accommodation'] );
+				}
+				if ( isset( $booking->tax_rate_extras ) && '' !== (string) $booking->tax_rate_extras ) {
+					$preserved_recalc_rates['extras'] = floatval( $booking->tax_rate_extras );
+				} elseif ( is_array( $tb_recalc_dec ) && isset( $tb_recalc_dec['rates']['extras'] ) ) {
+					$preserved_recalc_rates['extras'] = floatval( $tb_recalc_dec['rates']['extras'] );
+				}
+				if ( array() !== $preserved_recalc_rates ) {
+					$recalc_tax_rates = $preserved_recalc_rates;
+				}
+			}
+		}
+
+		$recalc = self::calculate_booking_money( $room_id, $check_in, $check_out, max( 1, $adults ), $calc_extras, max( 0, $children ), $child_ages, $recalc_tax_mode, $recalc_tax_rates, $allow_calendar_override );
 		if ( ! is_array( $recalc ) || ! isset( $recalc['total'] ) || ! ( $recalc['total'] instanceof Money ) ) {
 			return null;
 		}
@@ -3008,7 +3059,35 @@ $zero_str  = Money::fromCents( 0, $currency )->toDecimal();
 			'remaining_balance'  => $rem_money->toDecimal(),
 		);
 
-return array(
+// Keep payment status and balance settlement flags synchronized with recalculated total.
+		$effective_dep_str = $db_fields['deposit_amount'] ?? (string) ( $booking->deposit_amount ?? '0' );
+		$is_dep_recalc     = ( 'deposit' === (string) ( $booking->payment_type ?? '' ) )
+			|| Money::fromDecimal( $effective_dep_str, $currency )->isPositive();
+		$cur_pay_status    = (string) ( $booking->payment_status ?? 'pending' );
+		if ( $rem_money->isZero() && $new_total->isPositive() && $pay_amts['received']->isPositive() ) {
+			$db_fields['balance_status']   = 'collected';
+			$db_fields['payment_received'] = '1';
+			$db_fields['deposit_received'] = '0';
+			if ( 'refunded' !== $cur_pay_status ) {
+				$db_fields['payment_status'] = 'completed';
+			}
+		} elseif ( $rem_money->isPositive() && $pay_amts['received']->isPositive() ) {
+			$db_fields['balance_status']   = 'pending';
+			$db_fields['payment_received'] = '0';
+			$db_fields['deposit_received'] = $is_dep_recalc ? '1' : '0';
+			if ( 'refunded' !== $cur_pay_status ) {
+				$db_fields['payment_status'] = $is_dep_recalc ? 'deposit_paid' : 'partially_paid';
+			}
+		} elseif ( $rem_money->isPositive() ) {
+			$db_fields['balance_status']   = 'pending';
+			$db_fields['payment_received'] = '0';
+			$db_fields['deposit_received'] = '0';
+			if ( in_array( $cur_pay_status, array( 'completed', 'deposit_paid', 'partially_paid' ), true ) ) {
+				$db_fields['payment_status'] = 'pending';
+			}
+		}
+
+		return array(
 			'total'     => $new_total,
 			'discount'  => $discount_m,
 			'db_fields' => $db_fields,
